@@ -1,0 +1,324 @@
+import 'package:flutter/material.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+
+import '../resources/colors.dart';
+import '../services/theme/theme.dart';
+
+/// Rounded surface used for almost every block in the app.
+class KCard extends StatelessWidget {
+  const KCard({
+    super.key,
+    required this.child,
+    this.padding = const EdgeInsets.all(14),
+    this.color,
+    this.radius = 26,
+    this.onTap,
+    this.border,
+    this.semanticLabel,
+  });
+
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+  final Color? color;
+  final double radius;
+  final VoidCallback? onTap;
+  final BoxBorder? border;
+  final String? semanticLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final shape = BorderRadius.circular(radius);
+    final content = AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      padding: padding,
+      decoration: BoxDecoration(
+        color: color ?? context.k.card,
+        borderRadius: shape,
+        border: border,
+      ),
+      child: child,
+    );
+    if (onTap == null) return content;
+    return Semantics(
+      button: true,
+      label: semanticLabel,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: shape,
+        child: InkWell(
+          borderRadius: shape,
+          onTap: onTap,
+          child: content,
+        ),
+      ),
+    );
+  }
+}
+
+/// A Fluent 3D illustration. Decorative, so hidden from screen readers.
+class ThreeD extends StatelessWidget {
+  const ThreeD(this.asset, {super.key, this.size = 40});
+
+  final String asset;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Image.asset(
+      asset,
+      width: size,
+      height: size,
+      filterQuality: FilterQuality.medium,
+      excludeFromSemantics: true,
+      gaplessPlayback: true,
+    );
+  }
+}
+
+/// Gently bobs its child up and down. Stays still when the user has
+/// asked the system to reduce motion.
+class Floaty extends StatefulWidget {
+  const Floaty({super.key, required this.child, this.distance = 6, this.delayMs = 0});
+
+  final Widget child;
+  final double distance;
+  final int delayMs;
+
+  @override
+  State<Floaty> createState() => _FloatyState();
+}
+
+class _FloatyState extends State<Floaty> with SingleTickerProviderStateMixin {
+  late final AnimationController _c;
+
+  @override
+  void initState() {
+    super.initState();
+    _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 2600));
+    Future<void>.delayed(Duration(milliseconds: widget.delayMs), () {
+      if (mounted && !MediaQuery.disableAnimationsOf(context)) _c.repeat(reverse: true);
+    });
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (MediaQuery.disableAnimationsOf(context)) return widget.child;
+    return AnimatedBuilder(
+      animation: _c,
+      builder: (context, child) {
+        final t = Curves.easeInOut.transform(_c.value);
+        return Transform.translate(
+          offset: Offset(0, -widget.distance * t),
+          child: child,
+        );
+      },
+      child: widget.child,
+    );
+  }
+}
+
+/// Small on/off switch that matches the design.
+class KSwitch extends StatelessWidget {
+  const KSwitch({super.key, required this.value, this.width = 44});
+
+  final bool value;
+  final double width;
+
+  @override
+  Widget build(BuildContext context) {
+    final h = width * 0.6;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      width: width,
+      height: h,
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: value ? AppColors.violet : context.k.border,
+        borderRadius: BorderRadius.circular(h / 2),
+      ),
+      child: AnimatedAlign(
+        duration: const Duration(milliseconds: 180),
+        alignment: value ? Alignment.centerRight : Alignment.centerLeft,
+        child: Container(
+          width: h - 6,
+          height: h - 6,
+          decoration: const BoxDecoration(color: AppColors.white, shape: BoxShape.circle),
+        ),
+      ),
+    );
+  }
+}
+
+/// A full-width row with a label and a [KSwitch].
+class SwitchRow extends StatelessWidget {
+  const SwitchRow({
+    super.key,
+    required this.label,
+    required this.value,
+    required this.onChanged,
+    this.sub,
+    this.leading,
+    this.padding = const EdgeInsets.symmetric(vertical: 6),
+  });
+
+  final String label;
+  final String? sub;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+  final Widget? leading;
+  final EdgeInsetsGeometry padding;
+
+  @override
+  Widget build(BuildContext context) {
+    return MergeSemantics(
+      child: Semantics(
+        toggled: value,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () => onChanged(!value),
+          child: Padding(
+            padding: padding,
+            child: Row(
+              children: [
+                if (leading != null) ...[leading!, const SizedBox(width: 12)],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(label, style: AppText.title),
+                      if (sub != null)
+                        Text(sub!, style: AppText.small.copyWith(color: context.k.muted)),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                KSwitch(value: value),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 44 px round icon button (back, close, calendar …).
+class CircleIconButton extends StatelessWidget {
+  const CircleIconButton({
+    super.key,
+    required this.icon,
+    required this.onTap,
+    required this.label,
+    this.size = 44,
+    this.background,
+    this.foreground,
+  });
+
+  final IconData icon;
+  final VoidCallback onTap;
+  final String label;
+  final double size;
+  final Color? background;
+  final Color? foreground;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: label,
+      child: Material(
+        color: background ?? context.k.card,
+        shape: const CircleBorder(),
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onTap,
+          child: SizedBox(
+            width: size,
+            height: size,
+            child: Center(
+              child: PhosphorIcon(icon, size: size * 0.45, color: foreground ?? context.k.text),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class BackCircle extends StatelessWidget {
+  const BackCircle({super.key, required this.onTap, this.dark = false});
+
+  final VoidCallback onTap;
+  final bool dark;
+
+  @override
+  Widget build(BuildContext context) {
+    return CircleIconButton(
+      icon: PhosphorIconsBold.caretLeft,
+      label: 'Back',
+      onTap: onTap,
+      background: dark ? const Color(0xFF22213F) : null,
+      foreground: dark ? AppColors.white : null,
+    );
+  }
+}
+
+/// Upper-case section title.
+class SectionLabel extends StatelessWidget {
+  const SectionLabel(this.text, {super.key, this.color});
+
+  final String text;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      header: true,
+      child: Text(
+        text.toUpperCase(),
+        style: AppText.caps.copyWith(color: color ?? context.k.muted),
+      ),
+    );
+  }
+}
+
+/// Small rounded tag such as "PLUS" or "FREE".
+class KTag extends StatelessWidget {
+  const KTag(this.text, {super.key, required this.bg, required this.fg});
+
+  final String text;
+  final Color bg;
+  final Color fg;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(9)),
+      child: Text(
+        text.toUpperCase(),
+        style: AppText.tiny.copyWith(color: fg, fontWeight: FontWeight.w800, letterSpacing: 0.5),
+      ),
+    );
+  }
+}
+
+/// Plus tag in brand colours.
+class PlusTag extends StatelessWidget {
+  const PlusTag({super.key, this.onDark = false});
+
+  final bool onDark;
+
+  @override
+  Widget build(BuildContext context) {
+    return onDark
+        ? const KTag('Plus', bg: AppColors.lime, fg: AppColors.hero)
+        : KTag('Plus', bg: context.k.tint, fg: context.k.tintText);
+  }
+}
