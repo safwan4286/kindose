@@ -28,6 +28,8 @@ class WeightPage extends GetView<OnboardingController> {
   double get _max => _shown(OnboardingController.maxWeightKg).floorToDouble();
 
   Future<void> _type(BuildContext context) async {
+    // Unit at the moment the sheet opens; the answer is in that unit.
+    final kg = controller.useKg.value;
     final v = await askNumber(
       context,
       title: 'Weight today',
@@ -36,7 +38,7 @@ class WeightPage extends GetView<OnboardingController> {
       min: _min,
       max: _max,
     );
-    if (v != null && !v.isNaN) controller.setWeight(_toKg(v));
+    if (v != null && !v.isNaN) controller.setWeight(kg ? v : v / Imperial.lbPerKg);
   }
 
   void _step(int tenths) {
@@ -50,7 +52,7 @@ class WeightPage extends GetView<OnboardingController> {
     final motion = !MediaQuery.disableAnimationsOf(context);
 
     return StepScaffold(
-      title: 'What do you weigh today?',
+      title: "What's your current weight?",
       subtitle: 'Your starting point. Only you see it.',
       cta: PillButton(label: 'Continue', onPressed: controller.confirmWeight),
       children: [
@@ -79,8 +81,13 @@ class WeightPage extends GetView<OnboardingController> {
         }).enter(motion, delay: 160),
         SizedBox(height: 26.sp),
         Obx(() {
+          // Capture the unit this ruler was built for. A fling that is still
+          // running when the unit is switched must convert with the old unit,
+          // and the key gives each unit its own ruler so the fling stops.
+          final kg = controller.useKg.value;
           final shown = double.parse(_shown(controller.weightKg.value).toStringAsFixed(1));
           return KRuler(
+            key: ValueKey(kg),
             semanticLabel: 'Weight in $_unit',
             value: shown,
             min: _min,
@@ -90,7 +97,7 @@ class WeightPage extends GetView<OnboardingController> {
             midEvery: 5,
             labelOf: (v) => v.round().toString(),
             semanticValueOf: (v) => '${v.toStringAsFixed(1)} $_unit',
-            onChanged: (v) => controller.setWeight(_toKg(v)),
+            onChanged: (v) => controller.setWeight(kg ? v : v / Imperial.lbPerKg),
           );
         }).enter(motion, delay: 220),
         SizedBox(height: 8.sp),

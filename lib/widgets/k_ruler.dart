@@ -51,6 +51,15 @@ class _KRulerState extends State<KRuler> with SingleTickerProviderStateMixin {
   double get _pxPerStep => 10.sp;
 
   @override
+  void didUpdateWidget(covariant KRuler old) {
+    super.didUpdateWidget(old);
+    if (old.step != widget.step || old.min != widget.min || old.max != widget.max) {
+      _fling.stop();
+      _pendingPx = 0;
+    }
+  }
+
+  @override
   void dispose() {
     _fling.dispose();
     super.dispose();

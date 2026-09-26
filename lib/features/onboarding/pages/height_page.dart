@@ -96,6 +96,7 @@ class HeightPage extends GetView<OnboardingController> {
           final cm = controller.heightShownCm;
           if (controller.heightInCm.value) {
             return KRuler(
+              key: const ValueKey('cm'),
               semanticLabel: 'Height in centimetres',
               value: cm.roundToDouble(),
               min: OnboardingController.minHeightCm,
@@ -107,6 +108,7 @@ class HeightPage extends GetView<OnboardingController> {
             );
           }
           return KRuler(
+            key: const ValueKey('in'),
             semanticLabel: 'Height in feet and inches',
             value: (cm / Imperial.cmPerInch).roundToDouble(),
             min: _minIn.ceilToDouble(),

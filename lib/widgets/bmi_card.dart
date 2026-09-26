@@ -89,6 +89,8 @@ class BmiCard extends StatelessWidget {
                         child: SizedBox(
                           height: 8.sp,
                           child: Row(
+                            // Stretch so the empty colour boxes fill the 8px height.
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               for (var i = 0; i < _bands.length; i++)
                                 Expanded(
