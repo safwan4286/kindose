@@ -28,7 +28,7 @@ class MeController extends GetxController {
   String get medicineSub {
     final p = tracker.profile.value;
     if (p == null) return '';
-    return '${Catalog.medicine(p.medicineId).name} · ${Catalog.mg(p.strengthMg)} mg · ${Catalog.formLabel(p.form)}';
+    return '${Catalog.medicineName(p.medicineId, p.customMedicine)} · ${Catalog.mgLabel(p.strengthMg)} · ${Catalog.formLabel(p.form)}';
   }
 
   String get scheduleSub {
@@ -94,7 +94,7 @@ class MeController extends GetxController {
       doses.writeln([
         Dates.key(d.takenAt),
         Dates.time(d.takenAt),
-        Catalog.medicine(d.medicineId).name,
+        Catalog.medicineName(d.medicineId, tracker.profile.value?.customMedicine),
         d.strengthMg,
         d.site.isEmpty ? '' : Catalog.siteName(d.site),
         d.site.isEmpty ? '' : d.pain,

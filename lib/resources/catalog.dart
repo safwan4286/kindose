@@ -2,27 +2,66 @@ import 'package:flutter/material.dart';
 
 import 'images.dart';
 
-/// Static reference data used across the app. Strengths are the pack sizes
-/// printed on each product. Kindose only records what the user's doctor
+/// Static reference data used across the app. Strengths are the doses on
+/// each product's label. Kindose only records what the user's doctor
 /// prescribed. It never suggests a dose.
+
+/// Sections on the medication question.
+enum MedGroup { tirzepatide, semaglutide, other, notListed }
+
 class Medicine {
   const Medicine({
     required this.id,
     required this.name,
     required this.sub,
-    required this.color,
-    required this.dark,
+    required this.group,
     required this.strengths,
-    this.isTablet = false,
+    this.mark,
+    this.pickTitle,
+    this.form = 'pen',
+    this.everyDays = 7,
+    this.color = const Color(0xFFD6F84C),
+    this.dark = const Color(0xFF15142B),
   });
 
   final String id;
+
+  /// Name shown around the app ("Mounjaro").
   final String name;
+
+  /// Second line on the medication question ("Weekly pen").
   final String sub;
+  final MedGroup group;
+
+  /// Label strengths in mg, lowest first. Empty when unknown.
+  final List<double> strengths;
+
+  /// "®" after brand names, null for generic and compounded.
+  final String? mark;
+
+  /// Title on the medication question when it differs from [name].
+  final String? pickTitle;
+
+  /// Default form: 'pen', 'vial' or 'tablet'.
+  final String form;
+
+  /// Default days between doses (7 weekly, 1 daily).
+  final int everyDays;
+
+  /// Pen illustration colours.
   final Color color;
   final Color dark;
-  final List<double> strengths;
-  final bool isTablet;
+
+  bool get isTablet => form == 'tablet';
+
+  /// Active ingredient in lower case, or null when unknown.
+  String? get molecule => switch (group) {
+        MedGroup.tirzepatide => 'tirzepatide',
+        MedGroup.semaglutide => 'semaglutide',
+        MedGroup.other => sub.split(' · ').first.toLowerCase(),
+        MedGroup.notListed => null,
+      };
+  String get title => pickTitle ?? name;
 }
 
 class Food {
@@ -64,60 +103,161 @@ class FocusItem {
 class Catalog {
   Catalog._();
 
+  static const List<double> _tirzepatide = [2.5, 5, 7.5, 10, 12.5, 15];
+  static const List<double> _semaWeekly = [0.25, 0.5, 1, 1.7, 2, 2.4];
+
+  /// Order here is the order on the medication question.
   static const List<Medicine> medicines = [
     Medicine(
       id: 'mounjaro',
       name: 'Mounjaro',
-      sub: 'Tirzepatide · weekly',
+      mark: '®',
+      sub: 'Weekly pen',
+      group: MedGroup.tirzepatide,
+      strengths: _tirzepatide,
       color: Color(0xFF8B7CFF),
       dark: Color(0xFF4336D9),
-      strengths: [2.5, 5, 7.5, 10, 12.5, 15],
     ),
     Medicine(
       id: 'zepbound',
       name: 'Zepbound',
-      sub: 'Tirzepatide · weekly',
+      mark: '®',
+      sub: 'Weekly pen or vial',
+      group: MedGroup.tirzepatide,
+      strengths: _tirzepatide,
       color: Color(0xFFFF9A62),
       dark: Color(0xFFD4581B),
-      strengths: [2.5, 5, 7.5, 10, 12.5, 15],
     ),
     Medicine(
-      id: 'wegovy',
-      name: 'Wegovy',
-      sub: 'Semaglutide · weekly',
-      color: Color(0xFF5CCBF0),
-      dark: Color(0xFF1788B0),
-      strengths: [0.25, 0.5, 1, 1.7, 2.4],
+      id: 'ctirz',
+      name: 'Tirzepatide',
+      pickTitle: 'Compounded tirzepatide',
+      sub: 'Weekly · vial and syringe',
+      group: MedGroup.tirzepatide,
+      strengths: _tirzepatide,
+      form: 'vial',
     ),
     Medicine(
       id: 'ozempic',
       name: 'Ozempic',
-      sub: 'Semaglutide · weekly',
+      mark: '®',
+      sub: 'Weekly pen',
+      group: MedGroup.semaglutide,
+      strengths: [0.25, 0.5, 1, 2],
       color: Color(0xFF7BD8B0),
       dark: Color(0xFF2E9C6D),
-      strengths: [0.25, 0.5, 1, 2],
     ),
     Medicine(
-      id: 'generic',
-      name: 'Generic',
-      sub: 'Semaglutide · other brands',
-      color: Color(0xFFC9E86A),
-      dark: Color(0xFF7FA11C),
-      strengths: [0.25, 0.5, 1, 1.7, 2.4],
+      id: 'wegovy',
+      name: 'Wegovy',
+      mark: '®',
+      sub: 'Weekly pen',
+      group: MedGroup.semaglutide,
+      strengths: [0.25, 0.5, 1, 1.7, 2.4, 7.2],
+      color: Color(0xFF5CCBF0),
+      dark: Color(0xFF1788B0),
+    ),
+    Medicine(
+      id: 'wegovypill',
+      name: 'Wegovy pill',
+      mark: '®',
+      sub: 'Daily tablet',
+      group: MedGroup.semaglutide,
+      strengths: [1.5, 4, 9, 25],
+      form: 'tablet',
+      everyDays: 1,
     ),
     Medicine(
       id: 'rybelsus',
       name: 'Rybelsus',
-      sub: 'Semaglutide · daily tablet',
+      mark: '®',
+      sub: 'Daily tablet',
+      group: MedGroup.semaglutide,
+      strengths: [1.5, 3, 4, 7, 9, 14],
+      form: 'tablet',
+      everyDays: 1,
       color: Color(0xFFFFFFFF),
       dark: Color(0xFFB9B7D6),
-      strengths: [3, 7, 14],
-      isTablet: true,
+    ),
+    // Kept as 'generic' so profiles saved before this list still load.
+    Medicine(
+      id: 'generic',
+      name: 'Semaglutide',
+      pickTitle: 'Generic semaglutide',
+      sub: 'Other brands of semaglutide',
+      group: MedGroup.semaglutide,
+      strengths: _semaWeekly,
+      color: Color(0xFFC9E86A),
+      dark: Color(0xFF7FA11C),
+    ),
+    Medicine(
+      id: 'csema',
+      name: 'Semaglutide',
+      pickTitle: 'Compounded semaglutide',
+      sub: 'Weekly · vial and syringe',
+      group: MedGroup.semaglutide,
+      strengths: _semaWeekly,
+      form: 'vial',
+    ),
+    Medicine(
+      id: 'foundayo',
+      name: 'Foundayo',
+      mark: '®',
+      sub: 'Orforglipron · daily tablet',
+      group: MedGroup.other,
+      strengths: [0.8, 2.5, 5.5, 9, 14.5, 17.2],
+      form: 'tablet',
+      everyDays: 1,
+    ),
+    Medicine(
+      id: 'saxenda',
+      name: 'Saxenda',
+      mark: '®',
+      sub: 'Liraglutide · daily pen',
+      group: MedGroup.other,
+      strengths: [0.6, 1.2, 1.8, 2.4, 3],
+      everyDays: 1,
+    ),
+    Medicine(
+      id: 'trulicity',
+      name: 'Trulicity',
+      mark: '®',
+      sub: 'Dulaglutide · weekly pen',
+      group: MedGroup.other,
+      strengths: [0.75, 1.5, 3, 4.5],
+    ),
+    // The user types the name; see UserProfile.customMedicine.
+    Medicine(
+      id: other,
+      name: 'GLP-1',
+      pickTitle: 'Something else',
+      sub: 'Type its name',
+      group: MedGroup.notListed,
+      strengths: [],
+    ),
+    Medicine(
+      id: undecided,
+      name: 'GLP-1',
+      pickTitle: "I haven't decided yet",
+      sub: 'You can add it later',
+      group: MedGroup.notListed,
+      strengths: [],
     ),
   ];
 
+  static const String other = 'other';
+  static const String undecided = 'undecided';
+
   static Medicine medicine(String id) =>
       medicines.firstWhere((m) => m.id == id, orElse: () => medicines.first);
+
+  /// Name to show in the app. For "Something else" this is what the user
+  /// typed, falling back to "GLP-1".
+  static String medicineName(String id, [String? custom]) {
+    final typed = custom?.trim() ?? '';
+    if (id == other && typed.isNotEmpty) return typed;
+    return medicine(id).name;
+  }
 
   /// Formats 2.5 → "2.5", 5.0 → "5", 0.25 → "0.25".
   static String mg(double v) {
@@ -125,6 +265,18 @@ class Catalog {
     final s = v.toStringAsFixed(2);
     return s.endsWith('0') ? s.substring(0, s.length - 1) : s;
   }
+
+  /// "2.5 mg", or "dose not set" when the user chose "I don't know yet"
+  /// (stored as 0).
+  static String mgLabel(double v) => v > 0 ? '${mg(v)} mg' : 'dose not set';
+
+  /// Forms to offer on the dose question when the medicine comes in more
+  /// than one. Empty means the medicine's own form is used.
+  static List<String> formsFor(String medicineId) => switch (medicineId) {
+        'zepbound' => const ['pen', 'vial'],
+        Catalog.other || Catalog.undecided => const ['pen', 'vial', 'tablet'],
+        _ => const [],
+      };
 
   static const List<String> forms = ['pen', 'auto', 'vial', 'tablet'];
 

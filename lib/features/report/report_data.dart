@@ -126,13 +126,17 @@ class ReportData {
     final p = profile;
     if (p == null) return '';
     final m = Catalog.medicine(p.medicineId);
+    final name = Catalog.medicineName(p.medicineId, p.customMedicine);
+    final molecule = m.molecule;
+    final withMolecule =
+        molecule == null || name.toLowerCase() == molecule ? name : '$name ($molecule)';
     final every = switch (p.everyDays) {
       1 => 'daily',
       7 => 'weekly',
       14 => 'every 2 weeks',
       _ => 'every ${p.everyDays} days',
     };
-    return '${m.name} (${m.sub.split(' · ').first}) ${Catalog.mg(p.strengthMg)} mg, $every, ${Catalog.formLabel(p.form).toLowerCase()}';
+    return '$withMolecule ${Catalog.mgLabel(p.strengthMg)}, $every, ${Catalog.formLabel(p.form).toLowerCase()}';
   }
 
   String? get weightChange {
@@ -146,6 +150,6 @@ class ReportData {
   String doseLine(DoseLog d) {
     final site = d.site.isEmpty ? '' : ' · ${Catalog.siteName(d.site)}';
     final pain = d.site.isEmpty ? '' : ' · pain ${d.pain}/10';
-    return '${Dates.shortWithDay(d.takenAt)}, ${Dates.time(d.takenAt)} · ${Catalog.mg(d.strengthMg)} mg$site$pain';
+    return '${Dates.shortWithDay(d.takenAt)}, ${Dates.time(d.takenAt)} · ${Catalog.mgLabel(d.strengthMg)}$site$pain';
   }
 }

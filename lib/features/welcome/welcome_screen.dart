@@ -11,6 +11,7 @@ import '../../resources/date_utils.dart';
 import '../../resources/images.dart';
 import '../../services/responsiveness/device_manager.dart';
 import '../../services/theme/theme.dart';
+import '../../widgets/buttons.dart';
 import '../../widgets/drop_mark.dart';
 import '../../widgets/k_widgets.dart';
 import '../../widgets/painters.dart';
@@ -72,7 +73,7 @@ class WelcomeScreen extends GetView<WelcomeController> {
                         ).enter(motion, delay: 420 + i * 80, dy: 0.4),
                     ],
                     SizedBox(height: compact ? 16.sp : 10.sp),
-                    _PrimaryCta(onTap: controller.getStarted, dark: dark).enter(motion, delay: 640),
+                    PillButton(label: 'Get started', onPressed: controller.getStarted).enter(motion, delay: 640),
                     PressScale(
                       onTap: controller.signIn,
                       semanticLabel: 'I already have an account',
@@ -243,52 +244,6 @@ class _Benefit extends StatelessWidget {
   }
 }
 
-class _PrimaryCta extends StatelessWidget {
-  const _PrimaryCta({required this.onTap, required this.dark});
-
-  final VoidCallback onTap;
-  final bool dark;
-
-  @override
-  Widget build(BuildContext context) {
-    final bg = dark ? AppColors.lime : AppColors.ink;
-    final fg = dark ? AppColors.ink : AppColors.white;
-    final circle = dark ? AppColors.ink : AppColors.lime;
-    final arrow = dark ? AppColors.lime : AppColors.ink;
-    return PressScale(
-      onTap: onTap,
-      semanticLabel: 'Get started',
-      child: ExcludeSemantics(
-        child: Container(
-          height: 60.sp,
-          padding: EdgeInsets.fromLTRB(24.sp, 8.sp, 8.sp, 8.sp),
-          decoration: BoxDecoration(
-            color: bg,
-            borderRadius: BorderRadius.circular(30.sp),
-            boxShadow: [
-              BoxShadow(color: AppColors.ink.withValues(alpha: 0.18), blurRadius: 18.sp, offset: Offset(0, 8.sp)),
-            ],
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text('Get started', style: AppText.button.copyWith(fontSize: 17.sp, color: fg)),
-              ),
-              Container(
-                width: 44.sp,
-                height: 44.sp,
-                decoration: BoxDecoration(color: circle, shape: BoxShape.circle),
-                alignment: Alignment.center,
-                child: PhosphorIcon(PhosphorIconsBold.arrowRight, size: 20.sp, color: arrow),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _LegalLine extends StatelessWidget {
   const _LegalLine({required this.onTap});
 
@@ -424,9 +379,9 @@ class _Phone extends StatelessWidget {
         color: AppColors.ink,
         borderRadius: BorderRadius.circular(40.sp),
         border: dark ? Border.all(color: Colors.white.withValues(alpha: 0.12), width: 1.5) : null,
-        boxShadow: [
-          BoxShadow(color: AppColors.ink.withValues(alpha: 0.22), blurRadius: 50.sp, offset: Offset(0, 24.sp)),
-        ],
+        // boxShadow: [
+        //   BoxShadow(color: AppColors.ink.withValues(alpha: 0.22), blurRadius: 50.sp, offset: Offset(0, 24.sp)),
+        // ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(32.sp),

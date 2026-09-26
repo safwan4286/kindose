@@ -5,12 +5,16 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 import '../../../resources/colors.dart';
 import '../../../resources/images.dart';
+import '../../../services/responsiveness/device_manager.dart';
 import '../../../services/theme/theme.dart';
 import '../../../widgets/buttons.dart';
+import '../../../widgets/entrance.dart';
 import '../../../widgets/k_widgets.dart';
 import '../../legal/legal_sheet.dart';
 import '../onboarding_controller.dart';
 import '../onboarding_screen.dart';
+import '../widgets/choice_tile.dart';
+import '../widgets/step_footer.dart';
 
 /// First screen: dark hero with a floating preview of the Today card.
 class WelcomePage extends GetView<OnboardingController> {
@@ -239,135 +243,82 @@ class _MiniBar extends StatelessWidget {
   }
 }
 
-/// Step 1: already taking it, or starting soon.
+/// Question 1: where the user is on their treatment. Tapping an option
+/// selects it and moves on (no Continue button for single choices).
 class StagePage extends GetView<OnboardingController> {
   const StagePage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final k = context.k;
+    final dark = k.card == KColors.dark.card;
+    final motion = !MediaQuery.disableAnimationsOf(context);
+    final options = [
+      _StageOption(
+        id: 'taking',
+        title: "I'm already taking it",
+        sub: 'Track doses from today',
+        icon: Img3d.syringe,
+        tint: k.cardAlt,
+      ),
+      _StageOption(
+        id: 'starting',
+        title: "I'm starting soon",
+        sub: 'Get ready for your first dose',
+        icon: Img3d.calendar,
+        tint: dark ? AppColors.lime.withValues(alpha: 0.12) : const Color(0xFFF1F7D6),
+      ),
+      _StageOption(
+        id: 'restart',
+        title: 'Restarting after a break',
+        sub: 'Pick up where you left off',
+        icon: Img3d.seedling,
+        tint: dark ? AppColors.aqua.withValues(alpha: 0.16) : AppColors.aquaSoft,
+      ),
+    ];
+
     return StepScaffold(
       title: 'Where are you on your GLP-1 journey?',
-      subtitle: 'This shapes your plan. Nothing is locked in.',
-      cta: KCard(
-        radius: 20,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
-          children: [
-            const PhosphorIcon(PhosphorIconsDuotone.lockSimple, size: 22, color: AppColors.violet),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                'Everything you enter stays on this phone. No sign-up, ever.',
-                style: AppText.bodyText.copyWith(color: context.k.textSoft),
-              ),
-            ),
-          ],
-        ),
+      subtitle: 'This shapes your plan. You can change it anytime.',
+      cta: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const PrivacyNote('Everything you enter stays on this phone unless you choose to back it up.')
+              .enter(motion, delay: 420, dy: 0.1),
+          SizedBox(height: 10.sp),
+          const TapHint('Tap an option to continue').enter(motion, delay: 480, dy: 0),
+        ],
       ),
       children: [
-        _StageCard(
-          id: 'taking',
-          title: "I'm already taking it",
-          sub: 'Track doses from today',
-          icon: Img3d.syringe,
-          blob: context.k.tint,
-          arrow: AppColors.violet,
-        ),
-        const SizedBox(height: 14),
-        _StageCard(
-          id: 'starting',
-          title: "I'm starting soon",
-          sub: 'Get ready for your first dose',
-          icon: Img3d.calendar,
-          blob: AppColors.limeSoft.withValues(alpha: context.k.fab == AppColors.lime ? 0.15 : 1),
-          arrow: AppColors.ink,
-        ),
+        for (var i = 0; i < options.length; i++) ...[
+          if (i > 0) SizedBox(height: 12.sp),
+          Obx(
+            () => ChoiceTile(
+              title: options[i].title,
+              sub: options[i].sub,
+              leading: ChoiceIcon(options[i].icon, tint: options[i].tint),
+              selected: controller.stage.value == options[i].id,
+              onTap: () => controller.pickStage(options[i].id),
+            ),
+          ).enter(motion, delay: 140 + i * 70),
+        ],
       ],
     );
   }
 }
 
-class _StageCard extends GetView<OnboardingController> {
-  const _StageCard({
+class _StageOption {
+  const _StageOption({
     required this.id,
     required this.title,
     required this.sub,
     required this.icon,
-    required this.blob,
-    required this.arrow,
+    required this.tint,
   });
 
   final String id;
   final String title;
   final String sub;
   final String icon;
-  final Color blob;
-  final Color arrow;
-
-  @override
-  Widget build(BuildContext context) {
-    final k = context.k;
-    return Obx(() {
-      final selected = controller.stage.value == id;
-      return Semantics(
-        button: true,
-        selected: selected,
-        label: '$title. $sub',
-        excludeSemantics: true,
-        child: GestureDetector(
-          onTap: () {
-            controller.stage.value = id;
-            controller.next();
-          },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            height: 200,
-            decoration: BoxDecoration(
-              color: k.card,
-              borderRadius: BorderRadius.circular(30),
-              border: Border.all(color: selected ? AppColors.violet : k.card, width: 2),
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: Stack(
-              children: [
-                Positioned(
-                  right: -40,
-                  top: -40,
-                  child: Container(width: 200, height: 200, decoration: BoxDecoration(color: blob, shape: BoxShape.circle)),
-                ),
-                Positioned(right: 18, top: 8, child: Floaty(child: ThreeD(icon, size: 120))),
-                Positioned(
-                  left: 22,
-                  right: 22,
-                  bottom: 20,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(title, style: AppText.h2.copyWith(fontSize: 26)),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(sub, style: AppText.bodyStrong.copyWith(fontSize: 15, color: k.muted, fontWeight: FontWeight.w600)),
-                          ),
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(color: arrow, shape: BoxShape.circle),
-                            child: const Center(
-                              child: PhosphorIcon(PhosphorIconsBold.arrowRight, size: 18, color: AppColors.white),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    });
-  }
+  final Color tint;
 }

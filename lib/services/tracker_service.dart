@@ -138,8 +138,12 @@ class TrackerService extends GetxService {
     final today = Dates.dateOnly(now);
     final last = lastDose;
     DateTime day;
+    final planned = p.plannedFirstDose;
 
-    if (p.isDaily) {
+    if (last == null && planned != null && !Dates.dateOnly(planned).isBefore(today)) {
+      // Starting or restarting: the first dose is on the day they chose.
+      day = Dates.dateOnly(planned);
+    } else if (p.isDaily) {
       day = (last != null && Dates.sameDay(last.takenAt, now))
           ? today.add(const Duration(days: 1))
           : today;

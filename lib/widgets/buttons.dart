@@ -2,11 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 import '../resources/colors.dart';
+import '../services/haptics/haptics.dart';
+import '../services/responsiveness/device_manager.dart';
 import '../services/theme/theme.dart';
+import 'press_scale.dart';
 
-/// Main call to action: ink pill with a lime circle on the right.
-/// Pass `onPressed: null` to disable. [busy] blocks double taps while
-/// something is saving.
+/// The app's main call to action: ink pill with a lime arrow circle
+/// (lime pill with an ink circle in dark mode, or when [lime] is set for
+/// dark screens). Use it for every primary "Continue / Save / Get started".
+///
+/// Pass `onPressed: null` to disable. [busy] shows a spinner and blocks
+/// double taps while something is saving. Haptics stay with the caller,
+/// because the right strength depends on what the tap does.
 class PillButton extends StatelessWidget {
   const PillButton({
     super.key,
@@ -28,14 +35,12 @@ class PillButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final enabled = onPressed != null && !busy;
-    final bg = lime
-        ? AppColors.lime
-        : context.k.fab == AppColors.lime
-        ? AppColors.lime
-        : AppColors.ink;
-    final fg = bg == AppColors.lime ? AppColors.ink : AppColors.white;
-    final circle = bg == AppColors.lime ? AppColors.ink : AppColors.lime;
-    final circleIcon = bg == AppColors.lime ? AppColors.lime : AppColors.ink;
+    // Ink in light mode, lime in dark mode (selectedBorder is lime there).
+    final bg = lime || context.k.selectedBorder == AppColors.lime ? AppColors.lime : AppColors.ink;
+    final onLime = bg == AppColors.lime;
+    final fg = onLime ? AppColors.ink : AppColors.white;
+    final circle = onLime ? AppColors.ink : AppColors.lime;
+    final circleIcon = onLime ? AppColors.lime : AppColors.ink;
 
     return Semantics(
       button: true,
@@ -45,49 +50,43 @@ class PillButton extends StatelessWidget {
       child: AnimatedOpacity(
         duration: const Duration(milliseconds: 150),
         opacity: enabled ? 1 : 0.45,
-        child: Material(
-          color: bg,
-          borderRadius: BorderRadius.circular(30),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(30),
-            onTap: enabled ? onPressed : null,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: 60),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 8, 8, 8),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        label,
-                        style: AppText.button.copyWith(color: fg),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: circle,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: busy
-                            ? SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.5,
-                                  color: circleIcon,
-                                ),
-                              )
-                            : PhosphorIcon(icon, size: 20, color: circleIcon),
-                      ),
-                    ),
-                  ],
+        child: PressScale(
+          onTap: enabled ? onPressed : null,
+          child: Container(
+            constraints: BoxConstraints(minHeight: 60.sp),
+            padding: EdgeInsets.fromLTRB(24.sp, 8.sp, 8.sp, 8.sp),
+            decoration: BoxDecoration(
+              color: bg,
+              borderRadius: BorderRadius.circular(30.sp),
+              boxShadow: enabled
+                  ? [BoxShadow(color: AppColors.ink.withValues(alpha: 0.18), blurRadius: 18.sp, offset: Offset(0, 8.sp))]
+                  : null,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    label,
+                    style: AppText.button.copyWith(fontSize: 17.sp, color: fg),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-              ),
+                SizedBox(width: 8.sp),
+                Container(
+                  width: 44.sp,
+                  height: 44.sp,
+                  decoration: BoxDecoration(color: circle, shape: BoxShape.circle),
+                  alignment: Alignment.center,
+                  child: busy
+                      ? SizedBox(
+                          width: 18.sp,
+                          height: 18.sp,
+                          child: CircularProgressIndicator(strokeWidth: 2.5, color: circleIcon),
+                        )
+                      : PhosphorIcon(icon, size: 20.sp, color: circleIcon),
+                ),
+              ],
             ),
           ),
         ),
@@ -229,7 +228,9 @@ class KChip extends StatelessWidget {
   }
 }
 
-/// Segmented control, e.g. 1M / 3M / All or Mild / Moderate / Severe.
+/// Segmented switch (kg | lb, Pen | Vial, cm | ft · in). The selected
+/// segment slides in as a raised card (or ink with [darkSelected]); every
+/// change gives a selection tick.
 class KSegmented<T> extends StatelessWidget {
   const KSegmented({
     super.key,
@@ -254,10 +255,10 @@ class KSegmented<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     final k = context.k;
     return Container(
-      padding: const EdgeInsets.all(3),
+      padding: EdgeInsets.all(4.sp),
       decoration: BoxDecoration(
         color: darkSelected ? k.card : k.cardAlt,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18.sp),
       ),
       child: Row(
         children: [
@@ -266,26 +267,33 @@ class KSegmented<T> extends StatelessWidget {
               child: Semantics(
                 button: true,
                 selected: o == selected,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => onChanged(o),
+                inMutuallyExclusiveGroup: true,
+                label: labelOf(o),
+                excludeSemantics: true,
+                child: PressScale(
+                  pressedScale: 0.95,
+                  onTap: () {
+                    if (o == selected) return;
+                    Haptics.instance.selectionClick();
+                    onChanged(o);
+                  },
                   child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 160),
-                    height: dense ? 32 : 36,
+                    duration: const Duration(milliseconds: 180),
+                    curve: Curves.easeOut,
+                    height: (dense ? 34 : 42).sp,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: o == selected
-                          ? (darkSelected ? k.text : k.card)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(13),
+                      color: o == selected ? (darkSelected ? k.text : k.card) : Colors.transparent,
+                      borderRadius: BorderRadius.circular(14.sp),
+                      boxShadow: o == selected && !darkSelected
+                          ? [BoxShadow(color: AppColors.ink.withValues(alpha: 0.08), blurRadius: 6.sp, offset: Offset(0, 2.sp))]
+                          : null,
                     ),
                     child: Text(
                       labelOf(o),
-                      style: AppText.small.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: o == selected
-                            ? (darkSelected ? k.bg : k.text)
-                            : k.muted,
+                      style: AppText.title.copyWith(
+                        fontSize: (dense ? 13.5 : 15).sp,
+                        color: o == selected ? (darkSelected ? k.bg : k.text) : k.muted,
                       ),
                     ),
                   ),

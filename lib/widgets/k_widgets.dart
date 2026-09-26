@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 import '../resources/colors.dart';
+import '../services/responsiveness/device_manager.dart';
 import '../services/theme/theme.dart';
 
 /// Rounded surface used for almost every block in the app.
@@ -221,7 +222,9 @@ class CircleIconButton extends StatelessWidget {
   });
 
   final IconData icon;
-  final VoidCallback onTap;
+
+  /// Null shows the button dimmed and disabled.
+  final VoidCallback? onTap;
   final String label;
   final double size;
   final Color? background;
@@ -231,8 +234,12 @@ class CircleIconButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
+      enabled: onTap != null,
       label: label,
-      child: Material(
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 150),
+        opacity: onTap == null ? 0.35 : 1,
+        child: Material(
         color: background ?? context.k.card,
         shape: const CircleBorder(),
         child: InkWell(
@@ -247,15 +254,17 @@ class CircleIconButton extends StatelessWidget {
           ),
         ),
       ),
+      ),
     );
   }
 }
 
 class BackCircle extends StatelessWidget {
-  const BackCircle({super.key, required this.onTap, this.dark = false});
+  const BackCircle({super.key, required this.onTap, this.dark = false, this.size = 44});
 
   final VoidCallback onTap;
   final bool dark;
+  final double size;
 
   @override
   Widget build(BuildContext context) {
@@ -263,6 +272,7 @@ class BackCircle extends StatelessWidget {
       icon: PhosphorIconsBold.caretLeft,
       label: 'Back',
       onTap: onTap,
+      size: size,
       background: dark ? const Color(0xFF22213F) : null,
       foreground: dark ? AppColors.white : null,
     );
@@ -282,7 +292,7 @@ class SectionLabel extends StatelessWidget {
       header: true,
       child: Text(
         text.toUpperCase(),
-        style: AppText.caps.copyWith(color: color ?? context.k.muted),
+        style: AppText.caps.copyWith(fontSize: 12.sp, color: color ?? context.k.muted),
       ),
     );
   }

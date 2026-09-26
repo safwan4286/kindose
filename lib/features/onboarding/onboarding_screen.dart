@@ -3,13 +3,23 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../resources/colors.dart';
+import '../../services/responsiveness/device_manager.dart';
 import '../../services/theme/theme.dart';
+import '../../widgets/entrance.dart';
 import '../../widgets/k_widgets.dart';
 import 'onboarding_controller.dart';
+import 'pages/birth_page.dart';
 import 'pages/body_pages.dart';
+import 'pages/dose_page.dart';
+import 'pages/frequency_page.dart';
+import 'pages/height_page.dart';
 import 'pages/intro_pages.dart';
-import 'pages/medicine_pages.dart';
+import 'pages/medication_page.dart';
 import 'pages/plan_page.dart';
+import 'pages/sex_page.dart';
+import 'pages/treatment_start_page.dart';
+import 'pages/weight_page.dart';
+import 'pages/when_page.dart';
 
 class OnboardingScreen extends GetView<OnboardingController> {
   const OnboardingScreen({super.key});
@@ -21,9 +31,23 @@ class OnboardingScreen extends GetView<OnboardingController> {
       case OnboardingStep.stage:
         return const StagePage();
       case OnboardingStep.medicine:
-        return const MedicinePage();
+        return const MedicationPage();
       case OnboardingStep.dose:
         return const DosePage();
+      case OnboardingStep.frequency:
+        return const FrequencyPage();
+      case OnboardingStep.schedule:
+        return const WhenPage();
+      case OnboardingStep.treatmentStart:
+        return const TreatmentStartPage();
+      case OnboardingStep.sex:
+        return const SexPage();
+      case OnboardingStep.birth:
+        return const BirthPage();
+      case OnboardingStep.height:
+        return const HeightPage();
+      case OnboardingStep.weight:
+        return const WeightPage();
       case OnboardingStep.baseline:
         return const BaselinePage();
       case OnboardingStep.protein:
@@ -75,51 +99,69 @@ class _StepHeader extends GetView<OnboardingController> {
 
   @override
   Widget build(BuildContext context) {
-    final k = context.k;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(18, 8, 18, 6),
-      child: Obx(() {
-        final n = controller.stepNumber;
-        final total = controller.stepCount;
-        return Row(
-          children: [
-            BackCircle(onTap: controller.back),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Semantics(
-                label: 'Step $n of $total',
-                child: Row(
-                  children: [
-                    for (var i = 0; i < total; i++) ...[
-                      if (i > 0) const SizedBox(width: 5),
-                      Expanded(
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 250),
-                          height: 6,
-                          decoration: BoxDecoration(
-                            color: i < n ? AppColors.violet : k.border,
-                            borderRadius: BorderRadius.circular(3),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
+      padding: EdgeInsets.fromLTRB(16.sp, 8.sp, 22.sp, 6.sp),
+      child: Row(
+        children: [
+          BackCircle(onTap: controller.back, size: 44.sp),
+          SizedBox(width: 14.sp),
+          Expanded(
+            child: Obx(
+              () => _ProgressBar(
+                value: controller.progress,
+                label: 'Step ${controller.stepNumber} of ${controller.stepCount}',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One continuous bar that eases to the new value on every step. Works for
+/// any number of steps, including steps that are skipped by earlier answers.
+class _ProgressBar extends StatelessWidget {
+  const _ProgressBar({required this.value, required this.label});
+
+  final double value;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    final height = 6.sp;
+    return Semantics(
+      label: label,
+      excludeSemantics: true,
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(end: value.clamp(0.0, 1.0)),
+        duration: const Duration(milliseconds: 420),
+        curve: Curves.easeOutCubic,
+        builder: (context, v, _) {
+          return Container(
+            height: height,
+            decoration: BoxDecoration(color: k.border, borderRadius: BorderRadius.circular(height)),
+            alignment: Alignment.centerLeft,
+            child: FractionallySizedBox(
+              widthFactor: v,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: k.selectedBorder,
+                  borderRadius: BorderRadius.circular(height),
                 ),
               ),
             ),
-            const SizedBox(width: 12),
-            ExcludeSemantics(
-              child: Text('$n/$total', style: AppText.small.copyWith(color: k.muted, fontWeight: FontWeight.w800)),
-            ),
-          ],
-        );
-      }),
+          );
+        },
+      ),
     );
   }
 }
 
 /// Shared layout for a question step: scrollable content and a CTA pinned
 /// to the bottom, so long text and large font sizes never overflow.
+/// The title and subtitle slide in each time the step is first shown.
 class StepScaffold extends StatelessWidget {
   const StepScaffold({
     super.key,
@@ -136,27 +178,31 @@ class StepScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final motion = !MediaQuery.disableAnimationsOf(context);
     return Column(
       children: [
         Expanded(
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(18, 12, 18, 16),
+            padding: EdgeInsets.fromLTRB(20.sp, 20.sp, 20.sp, 16.sp),
             children: [
               Semantics(
                 header: true,
-                child: Text(title, style: AppText.h1.copyWith(fontSize: 32)),
-              ),
+                child: Text(title, style: AppText.h1.copyWith(fontSize: 32.sp, color: context.k.text)),
+              ).enter(motion, dy: 0.12),
               if (subtitle != null) ...[
-                const SizedBox(height: 8),
-                Text(subtitle!, style: AppText.bodyText.copyWith(fontSize: 16, color: context.k.muted)),
+                SizedBox(height: 10.sp),
+                Text(
+                  subtitle!,
+                  style: AppText.bodyText.copyWith(fontSize: 16.sp, height: 1.45, color: context.k.muted),
+                ).enter(motion, delay: 60, dy: 0.12),
               ],
-              const SizedBox(height: 18),
+              SizedBox(height: 26.sp),
               ...children,
             ],
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(18, 4, 18, 12),
+          padding: EdgeInsets.fromLTRB(20.sp, 4.sp, 20.sp, 12.sp),
           child: cta,
         ),
       ],

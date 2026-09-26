@@ -22,7 +22,7 @@ class LogDoseController extends GetxController {
   String get medicineTitle {
     final p = tracker.profile.value;
     if (p == null) return 'Dose';
-    return '${Catalog.medicine(p.medicineId).name} · ${Catalog.mg(p.strengthMg)} mg';
+    return '${Catalog.medicineName(p.medicineId, p.customMedicine)} · ${Catalog.mgLabel(p.strengthMg)}';
   }
 
   Medicine? get medicine {

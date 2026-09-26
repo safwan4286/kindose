@@ -26,7 +26,6 @@ class PlanPage extends GetView<OnboardingController> {
   Widget build(BuildContext context) {
     return Obx(() {
       final p = controller.draft;
-      final med = Catalog.medicine(p.medicineId);
       final now = DateTime.now();
       final first = _firstDoseDay(now, p.everyDays, p.shotWeekday);
       final inDays = Dates.daysBetween(now, first);
@@ -85,7 +84,7 @@ class PlanPage extends GetView<OnboardingController> {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
-                                '${med.name} · ${Catalog.mg(p.strengthMg)} mg',
+                                '${Catalog.medicineName(p.medicineId, p.customMedicine)} · ${Catalog.mgLabel(p.strengthMg)}',
                                 style: AppText.tiny.copyWith(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.hero),
                                 overflow: TextOverflow.ellipsis,
                               ),

@@ -59,7 +59,8 @@ class TodayController extends GetxController {
   String get medicineLabel {
     final p = profile;
     if (p == null) return '';
-    return '${Catalog.medicine(p.medicineId).name} ${Catalog.mg(p.strengthMg)} mg';
+    final name = Catalog.medicineName(p.medicineId, p.customMedicine);
+    return p.strengthMg > 0 ? '$name ${Catalog.mg(p.strengthMg)} mg' : name;
   }
 
   bool get isTablet => profile?.form == 'tablet';
