@@ -11,6 +11,7 @@ import '../../widgets/k_widgets.dart';
 import '../../widgets/mood_row.dart';
 import 'check_in_controller.dart';
 import '../../widgets/toast.dart';
+import '../../widgets/safe_bottom.dart';
 
 class CheckInScreen extends GetView<CheckInController> {
   const CheckInScreen({super.key});
@@ -20,7 +21,7 @@ class CheckInScreen extends GetView<CheckInController> {
     final k = context.k;
     final label = controller.dayLabel;
     return Scaffold(
-      body: SafeArea(
+      body: KSafeArea(
         child: Column(
           children: [
             Padding(

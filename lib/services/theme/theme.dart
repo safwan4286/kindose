@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../resources/colors.dart';
+import 'system_ui.dart';
 
 /// Type scale. Colours come from the theme (DefaultTextStyle) unless a
 /// widget sets one on purpose.
@@ -130,9 +131,7 @@ class AppTheme {
         foregroundColor: k.text,
         elevation: 0,
         scrolledUnderElevation: 0,
-        systemOverlayStyle: brightness == Brightness.dark
-            ? SystemUiOverlayStyle.light
-            : SystemUiOverlayStyle.dark,
+        systemOverlayStyle: KSystemUi.style(darkBackground: brightness == Brightness.dark),
       ),
       bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: k.bg,

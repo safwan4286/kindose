@@ -5,6 +5,7 @@ import '../../../resources/colors.dart';
 import '../../../services/responsiveness/device_manager.dart';
 import '../../../services/theme/theme.dart';
 import '../../../widgets/buttons.dart';
+import '../../../widgets/safe_bottom.dart';
 
 /// Bottom area of a single-choice question. Shows "Tap one to continue"
 /// and, when an answer needs more input ("Custom dose", "Something else"),
@@ -46,7 +47,11 @@ class TapHint extends StatelessWidget {
         child: Text(
           text,
           textAlign: TextAlign.center,
-          style: AppText.small.copyWith(fontSize: 12.sp, fontWeight: FontWeight.w600, color: context.k.faint),
+          style: AppText.small.copyWith(
+            fontSize: 12.sp,
+            fontWeight: FontWeight.w600,
+            color: context.k.faint,
+          ),
         ),
       ),
     );
@@ -80,12 +85,18 @@ class StepInputPanel extends StatelessWidget {
             padding: EdgeInsets.only(left: 4.sp, bottom: 8.sp),
             child: Text(
               label!,
-              style: AppText.small.copyWith(fontSize: 13.sp, fontWeight: FontWeight.w800, color: context.k.textSoft),
+              style: AppText.small.copyWith(
+                fontSize: 13.sp,
+                fontWeight: FontWeight.w800,
+                color: context.k.textSoft,
+              ),
             ),
           ),
         child,
         SizedBox(height: 12.sp),
-        PillButton(label: continueLabel, onPressed: onContinue),
+        KBottomPadding(
+          child: PillButton(label: continueLabel, onPressed: onContinue),
+        ),
       ],
     );
   }
@@ -103,13 +114,26 @@ class PrivacyNote extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: 16.sp, vertical: 14.sp),
-      decoration: BoxDecoration(color: k.cardAlt, borderRadius: BorderRadius.circular(18.sp)),
+      decoration: BoxDecoration(
+        color: k.cardAlt,
+        borderRadius: BorderRadius.circular(18.sp),
+      ),
       child: Row(
         children: [
-          PhosphorIcon(PhosphorIconsBold.lockSimple, size: 16.sp, color: k.textSoft),
+          PhosphorIcon(
+            PhosphorIconsBold.lockSimple,
+            size: 16.sp,
+            color: k.textSoft,
+          ),
           SizedBox(width: 10.sp),
           Expanded(
-            child: Text(text, style: AppText.bodyText.copyWith(fontSize: 13.5.sp, color: k.textSoft)),
+            child: Text(
+              text,
+              style: AppText.bodyText.copyWith(
+                fontSize: 13.5.sp,
+                color: k.textSoft,
+              ),
+            ),
           ),
         ],
       ),

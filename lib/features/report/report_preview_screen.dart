@@ -6,6 +6,7 @@ import '../../services/theme/theme.dart';
 import '../../widgets/k_widgets.dart';
 import 'report_data.dart';
 import '../../widgets/toast.dart';
+import '../../widgets/safe_bottom.dart';
 
 /// On-screen version of the report so the user can check it before sharing.
 /// Receives a [ReportData] as the route argument.
@@ -17,7 +18,7 @@ class ReportPreviewScreen extends StatelessWidget {
     final args = Get.arguments;
     final k = context.k;
     return Scaffold(
-      body: SafeArea(
+      body: KSafeArea(
         child: Column(
           children: [
             Padding(

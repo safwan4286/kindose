@@ -10,6 +10,7 @@ import '../../widgets/buttons.dart';
 import '../../widgets/k_widgets.dart';
 import '../../widgets/mood_row.dart';
 import '../../widgets/toast.dart';
+import '../../widgets/safe_bottom.dart';
 
 const double kLbPerKg = 2.20462;
 
@@ -72,8 +73,7 @@ class _WeightSheetState extends State<WeightSheet> {
   @override
   Widget build(BuildContext context) {
     final k = context.k;
-    return SafeArea(
-      top: false,
+    return KSafeArea(
       child: Padding(
         padding: EdgeInsets.fromLTRB(18, 12, 18, 18 + MediaQuery.viewInsetsOf(context).bottom),
         child: Column(

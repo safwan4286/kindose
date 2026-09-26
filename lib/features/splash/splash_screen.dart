@@ -7,6 +7,7 @@ import '../../services/responsiveness/device_manager.dart';
 import '../../services/theme/theme.dart';
 import '../../widgets/drop_mark.dart';
 import 'splash_controller.dart';
+import '../../services/theme/system_ui.dart';
 
 /// 1.3 s brand moment. Starts exactly where the native splash leaves off
 /// (lime drop centred on ink, no smile), so the hand-off has no jump:
@@ -101,7 +102,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.light,
+      value: KSystemUi.style(darkBackground: true),
       child: Scaffold(
         backgroundColor: AppColors.hero,
         body: Semantics(

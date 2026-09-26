@@ -1,4 +1,3 @@
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -29,6 +28,8 @@ import 'pages/sex_page.dart';
 import 'pages/treatment_start_page.dart';
 import 'pages/weight_page.dart';
 import 'pages/when_page.dart';
+import '../../widgets/safe_bottom.dart';
+import '../../services/theme/system_ui.dart';
 
 class OnboardingScreen extends GetView<OnboardingController> {
   const OnboardingScreen({super.key});
@@ -91,11 +92,10 @@ class OnboardingScreen extends GetView<OnboardingController> {
           if (!didPop) controller.back();
         },
         child: AnnotatedRegion<SystemUiOverlayStyle>(
-          value: dark || context.k.bg == KColors.dark.bg ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+          value: KSystemUi.style(darkBackground: dark || context.k.bg == KColors.dark.bg),
           child: Scaffold(
           backgroundColor: dark ? AppColors.hero : context.k.bg,
-          body: SafeArea(
-            // bottom: Platform.isIOS ? false : true,
+          body: KSafeArea(
             child: Column(
               children: [
                 if (!dark) const _StepHeader(),

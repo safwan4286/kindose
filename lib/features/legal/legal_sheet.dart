@@ -6,6 +6,7 @@ import '../../services/theme/theme.dart';
 import '../../widgets/buttons.dart';
 import '../../widgets/k_widgets.dart';
 import '../../widgets/toast.dart';
+import '../../widgets/safe_bottom.dart';
 
 /// Terms, privacy, medical disclaimer and credits in one sheet.
 /// The wording here is a plain-English draft. Have a lawyer review it
@@ -23,8 +24,7 @@ class LegalSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final k = context.k;
-    return SafeArea(
-      top: false,
+    return KSafeArea(
       child: ConstrainedBox(
       constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.85),
       child: Column(

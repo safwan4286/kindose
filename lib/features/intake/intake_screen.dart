@@ -10,6 +10,7 @@ import '../../widgets/buttons.dart';
 import '../../widgets/k_widgets.dart';
 import 'intake_controller.dart';
 import '../../widgets/toast.dart';
+import '../../widgets/safe_bottom.dart';
 
 class IntakeScreen extends GetView<IntakeController> {
   const IntakeScreen({super.key});
@@ -18,7 +19,7 @@ class IntakeScreen extends GetView<IntakeController> {
   Widget build(BuildContext context) {
     final k = context.k;
     return Scaffold(
-      body: SafeArea(
+      body: KSafeArea(
         child: Obx(() {
           final isP = controller.isProtein;
           final strong = isP ? AppColors.tangerine : AppColors.aqua;

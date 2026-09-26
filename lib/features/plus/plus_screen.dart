@@ -6,6 +6,7 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 import '../../resources/colors.dart';
 import '../../services/responsiveness/device_manager.dart';
+import '../../services/theme/system_ui.dart';
 import '../../services/theme/theme.dart';
 import '../../widgets/buttons.dart';
 import '../../widgets/drop_mark.dart';
@@ -31,7 +32,7 @@ class PlusScreen extends GetView<PlusController> {
         if (!didPop) controller.close();
       },
       child: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: SystemUiOverlayStyle.light,
+        value: KSystemUi.style(darkBackground: true),
         child: Scaffold(
           backgroundColor: k.bg,
           body: Column(
@@ -58,7 +59,8 @@ class PlusScreen extends GetView<PlusController> {
                               ),
                               SizedBox(height: 12.sp),
                             ],
-                            _Perks(controller: controller).enter(motion, delay: 220, dy: 0.12),
+                            _Perks(controller: controller)
+                                .enter(motion, delay: 220, dy: 0.12),
                             AnimatedSize(
                               duration: const Duration(milliseconds: 280),
                               curve: Curves.easeOutCubic,
@@ -74,8 +76,16 @@ class PlusScreen extends GetView<PlusController> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                LinkButton(label: 'Restore', onTap: controller.restore, color: k.muted),
-                                LinkButton(label: 'Terms & privacy', onTap: showLegalSheet, color: k.muted),
+                                LinkButton(
+                                  label: 'Restore',
+                                  onTap: controller.restore,
+                                  color: k.muted,
+                                ),
+                                LinkButton(
+                                  label: 'Terms & privacy',
+                                  onTap: showLegalSheet,
+                                  color: k.muted,
+                                ),
                               ],
                             ),
                           ],
@@ -88,7 +98,13 @@ class PlusScreen extends GetView<PlusController> {
               DecoratedBox(
                 decoration: BoxDecoration(
                   color: k.bg,
-                  boxShadow: [BoxShadow(color: k.bg, blurRadius: 24.sp, offset: Offset(0, -10.sp))],
+                  boxShadow: [
+                    BoxShadow(
+                      color: k.bg,
+                      blurRadius: 24.sp,
+                      offset: Offset(0, -10.sp),
+                    ),
+                  ],
                 ),
                 child: SafeArea(
                   top: false,
@@ -98,7 +114,10 @@ class PlusScreen extends GetView<PlusController> {
                       () => Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          PillButton(label: controller.cta, onPressed: controller.subscribe),
+                          PillButton(
+                            label: controller.cta,
+                            onPressed: controller.subscribe,
+                          ),
                           SizedBox(height: 8.sp),
                           AnimatedSwitcher(
                             duration: const Duration(milliseconds: 200),
@@ -106,10 +125,18 @@ class PlusScreen extends GetView<PlusController> {
                               controller.fine,
                               key: ValueKey(controller.fine),
                               textAlign: TextAlign.center,
-                              style: AppText.small.copyWith(fontSize: 12.sp, height: 1.4, color: k.muted),
+                              style: AppText.small.copyWith(
+                                fontSize: 12.sp,
+                                height: 1.4,
+                                color: k.muted,
+                              ),
                             ),
                           ),
-                          LinkButton(label: 'Continue with free', onTap: controller.close, color: k.text),
+                          LinkButton(
+                            label: 'Continue with free',
+                            onTap: controller.close,
+                            color: k.text,
+                          ),
                         ],
                       ),
                     ),
@@ -140,16 +167,34 @@ class _Hero extends StatelessWidget {
     if (motion) {
       drop = drop
           .animate(onPlay: (c) => c.repeat(reverse: true))
-          .moveY(begin: 0, end: -6.sp, duration: 2000.ms, curve: Curves.easeInOut);
+          .moveY(
+            begin: 0,
+            end: -6.sp,
+            duration: 2000.ms,
+            curve: Curves.easeInOut,
+          );
     }
 
     Widget sparkle(double size, Color color, int delay) {
-      Widget s = CustomPaint(size: Size.square(size), painter: _SparklePainter(color));
+      Widget s = CustomPaint(
+        size: Size.square(size),
+        painter: _SparklePainter(color),
+      );
       if (motion) {
         s = s
             .animate(delay: delay.ms, onPlay: (c) => c.repeat(reverse: true))
-            .fade(begin: 0.2, end: 1, duration: 1200.ms, curve: Curves.easeInOut)
-            .scaleXY(begin: 0.7, end: 1, duration: 1200.ms, curve: Curves.easeInOut);
+            .fade(
+              begin: 0.2,
+              end: 1,
+              duration: 1200.ms,
+              curve: Curves.easeInOut,
+            )
+            .scaleXY(
+              begin: 0.7,
+              end: 1,
+              duration: 1200.ms,
+              curve: Curves.easeInOut,
+            );
       }
       return s;
     }
@@ -173,8 +218,16 @@ class _Hero extends StatelessWidget {
                     clipBehavior: Clip.none,
                     children: [
                       drop,
-                      Positioned(right: 2.sp, top: 6.sp, child: sparkle(18.sp, AppColors.lime, 0)),
-                      Positioned(left: 4.sp, top: 22.sp, child: sparkle(11.sp, AppColors.white, 800)),
+                      Positioned(
+                        right: 2.sp,
+                        top: 6.sp,
+                        child: sparkle(18.sp, AppColors.lime, 0),
+                      ),
+                      Positioned(
+                        left: 4.sp,
+                        top: 22.sp,
+                        child: sparkle(11.sp, AppColors.white, 800),
+                      ),
                     ],
                   ),
                 ),
@@ -193,10 +246,17 @@ class _Hero extends StatelessWidget {
           SizedBox(height: 8.sp),
           Container(
             padding: EdgeInsets.symmetric(horizontal: 10.sp, vertical: 4.sp),
-            decoration: BoxDecoration(color: AppColors.lime, borderRadius: BorderRadius.circular(9.sp)),
+            decoration: BoxDecoration(
+              color: AppColors.lime,
+              borderRadius: BorderRadius.circular(9.sp),
+            ),
             child: Text(
               'KINDOSE PLUS',
-              style: AppText.caps.copyWith(fontSize: 12.sp, letterSpacing: 1, color: AppColors.ink),
+              style: AppText.caps.copyWith(
+                fontSize: 12.sp,
+                letterSpacing: 1,
+                color: AppColors.ink,
+              ),
             ),
           ).enter(motion, delay: 60, dy: 0.12),
           SizedBox(height: 12.sp),
@@ -204,13 +264,21 @@ class _Hero extends StatelessWidget {
             header: true,
             child: Text(
               'Get more from\nevery dose',
-              style: AppText.h1.copyWith(fontSize: 30.sp, height: 1.08, color: AppColors.white),
+              style: AppText.h1.copyWith(
+                fontSize: 30.sp,
+                height: 1.08,
+                color: AppColors.white,
+              ),
             ),
           ).enter(motion, delay: 100, dy: 0.12),
           SizedBox(height: 10.sp),
           Text(
             'Your plan, doses, reminders and daily goals stay free. Plus adds the extras.',
-            style: AppText.bodyText.copyWith(fontSize: 15.sp, height: 1.45, color: AppColors.heroMuted),
+            style: AppText.bodyText.copyWith(
+              fontSize: 15.sp,
+              height: 1.45,
+              color: AppColors.heroMuted,
+            ),
           ).enter(motion, delay: 150, dy: 0.12),
         ],
       ),
@@ -269,7 +337,9 @@ class _Perks extends StatelessWidget {
             Container(
               padding: EdgeInsets.symmetric(vertical: 12.sp),
               decoration: BoxDecoration(
-                border: i == perks.length - 1 ? null : Border(bottom: BorderSide(color: k.border)),
+                border: i == perks.length - 1
+                    ? null
+                    : Border(bottom: BorderSide(color: k.border)),
               ),
               child: Row(
                 children: [
@@ -281,21 +351,41 @@ class _Perks extends StatelessWidget {
                       children: [
                         Text(
                           perks[i].title,
-                          style: AppText.bodyStrong.copyWith(fontSize: 15.sp, fontWeight: FontWeight.w800, color: k.text),
+                          style: AppText.bodyStrong.copyWith(
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.w800,
+                            color: k.text,
+                          ),
                         ),
                         SizedBox(height: 1.sp),
-                        Text(perks[i].sub, style: AppText.small.copyWith(fontSize: 12.5.sp, color: k.muted)),
+                        Text(
+                          perks[i].sub,
+                          style: AppText.small.copyWith(
+                            fontSize: 12.5.sp,
+                            color: k.muted,
+                          ),
+                        ),
                       ],
                     ),
                   ),
                   if (controller.isForYou(perks[i])) ...[
                     SizedBox(width: 8.sp),
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8.sp, vertical: 3.sp),
-                      decoration: BoxDecoration(color: k.tint, borderRadius: BorderRadius.circular(8.sp)),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 8.sp,
+                        vertical: 3.sp,
+                      ),
+                      decoration: BoxDecoration(
+                        color: k.tint,
+                        borderRadius: BorderRadius.circular(8.sp),
+                      ),
                       child: Text(
                         'FOR YOU',
-                        style: AppText.caps.copyWith(fontSize: 10.5.sp, letterSpacing: 0.4, color: k.tintText),
+                        style: AppText.caps.copyWith(
+                          fontSize: 10.5.sp,
+                          letterSpacing: 0.4,
+                          color: k.tintText,
+                        ),
                       ),
                     ),
                   ],
@@ -319,36 +409,49 @@ class _TrialTimeline extends StatelessWidget {
     final dark = k.selectedBorder == AppColors.lime;
 
     Widget step(Widget dot, String title, String body) => Padding(
-          padding: EdgeInsets.symmetric(vertical: 6.sp),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              dot,
-              SizedBox(width: 14.sp),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: AppText.bodyStrong.copyWith(fontSize: 14.5.sp, fontWeight: FontWeight.w800, color: k.text)),
-                    SizedBox(height: 1.sp),
-                    Text(body, style: AppText.small.copyWith(fontSize: 13.sp, color: k.muted)),
-                  ],
+      padding: EdgeInsets.symmetric(vertical: 6.sp),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          dot,
+          SizedBox(width: 14.sp),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: AppText.bodyStrong.copyWith(
+                    fontSize: 14.5.sp,
+                    fontWeight: FontWeight.w800,
+                    color: k.text,
+                  ),
                 ),
-              ),
-            ],
+                SizedBox(height: 1.sp),
+                Text(
+                  body,
+                  style: AppText.small.copyWith(
+                    fontSize: 13.sp,
+                    color: k.muted,
+                  ),
+                ),
+              ],
+            ),
           ),
-        );
+        ],
+      ),
+    );
 
     Widget dot(IconData icon, Color bg, Color fg, {Color? border}) => Container(
-          width: 30.sp,
-          height: 30.sp,
-          decoration: BoxDecoration(
-            color: bg,
-            shape: BoxShape.circle,
-            border: border == null ? null : Border.all(color: border, width: 2),
-          ),
-          child: Icon(icon, size: 15.sp, color: fg),
-        );
+      width: 30.sp,
+      height: 30.sp,
+      decoration: BoxDecoration(
+        color: bg,
+        shape: BoxShape.circle,
+        border: border == null ? null : Border.all(color: border, width: 2),
+      ),
+      child: Icon(icon, size: 15.sp, color: fg),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -372,7 +475,11 @@ class _TrialTimeline extends StatelessWidget {
             Column(
               children: [
                 step(
-                  dot(PhosphorIconsBold.lightning, dark ? AppColors.lime : AppColors.ink, dark ? AppColors.ink : AppColors.lime),
+                  dot(
+                    PhosphorIconsBold.lightning,
+                    dark ? AppColors.lime : AppColors.ink,
+                    dark ? AppColors.ink : AppColors.lime,
+                  ),
                   'Today',
                   'Everything in Plus unlocks',
                 ),
@@ -382,7 +489,12 @@ class _TrialTimeline extends StatelessWidget {
                   'We’ll remind you before the trial ends',
                 ),
                 step(
-                  dot(PhosphorIconsBold.calendarDots, k.card, k.muted, border: k.border),
+                  dot(
+                    PhosphorIconsBold.calendarDots,
+                    k.card,
+                    k.muted,
+                    border: k.border,
+                  ),
                   'Day 7',
                   'Trial ends, \$39.99 for the year. Cancel before and pay nothing.',
                 ),
@@ -398,7 +510,11 @@ class _TrialTimeline extends StatelessWidget {
 // ---------------------------------------------------------------- plan tile
 
 class _PlanTile extends StatelessWidget {
-  const _PlanTile({required this.plan, required this.selected, required this.onTap});
+  const _PlanTile({
+    required this.plan,
+    required this.selected,
+    required this.onTap,
+  });
 
   final PlusPlan plan;
   final bool selected;
@@ -435,7 +551,10 @@ class _PlanTile extends StatelessWidget {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: k.card,
-                      border: Border.all(color: selected ? accent : k.border, width: selected ? 7.sp : 2),
+                      border: Border.all(
+                        color: selected ? accent : k.border,
+                        width: selected ? 7.sp : 2,
+                      ),
                     ),
                   ),
                   SizedBox(width: 12.sp),
@@ -443,9 +562,23 @@ class _PlanTile extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(plan.name, style: AppText.bodyStrong.copyWith(fontSize: 16.sp, fontWeight: FontWeight.w800, color: k.text)),
+                        Text(
+                          plan.name,
+                          style: AppText.bodyStrong.copyWith(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w800,
+                            color: k.text,
+                          ),
+                        ),
                         SizedBox(height: 2.sp),
-                        Text(plan.sub, style: AppText.small.copyWith(fontSize: 13.sp, fontWeight: FontWeight.w600, color: k.muted)),
+                        Text(
+                          plan.sub,
+                          style: AppText.small.copyWith(
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.w600,
+                            color: k.muted,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -453,8 +586,21 @@ class _PlanTile extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text(plan.price, style: AppText.h3.copyWith(fontSize: 20.sp, color: k.text)),
-                      Text(plan.per, style: AppText.small.copyWith(fontSize: 11.5.sp, fontWeight: FontWeight.w700, color: k.faint)),
+                      Text(
+                        plan.price,
+                        style: AppText.h3.copyWith(
+                          fontSize: 20.sp,
+                          color: k.text,
+                        ),
+                      ),
+                      Text(
+                        plan.per,
+                        style: AppText.small.copyWith(
+                          fontSize: 11.5.sp,
+                          fontWeight: FontWeight.w700,
+                          color: k.faint,
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -465,11 +611,21 @@ class _PlanTile extends StatelessWidget {
                 left: 16.sp,
                 top: -11.sp,
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 9.sp, vertical: 3.sp),
-                  decoration: BoxDecoration(color: AppColors.lime, borderRadius: BorderRadius.circular(10.sp)),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 9.sp,
+                    vertical: 3.sp,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.lime,
+                    borderRadius: BorderRadius.circular(10.sp),
+                  ),
                   child: Text(
                     plan.badge!,
-                    style: AppText.caps.copyWith(fontSize: 11.sp, letterSpacing: 0.5, color: AppColors.ink),
+                    style: AppText.caps.copyWith(
+                      fontSize: 11.sp,
+                      letterSpacing: 0.5,
+                      color: AppColors.ink,
+                    ),
                   ),
                 ),
               ),

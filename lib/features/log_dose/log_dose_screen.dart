@@ -12,6 +12,7 @@ import '../../widgets/k_widgets.dart';
 import '../../widgets/painters.dart';
 import 'log_dose_controller.dart';
 import '../../widgets/toast.dart';
+import '../../widgets/safe_bottom.dart';
 
 class LogDoseScreen extends GetView<LogDoseController> {
   const LogDoseScreen({super.key});
@@ -28,7 +29,7 @@ class LogDoseScreen extends GetView<LogDoseController> {
   Widget build(BuildContext context) {
     final k = context.k;
     return Scaffold(
-      body: SafeArea(
+      body: KSafeArea(
         child: Column(
           children: [
             Padding(

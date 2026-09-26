@@ -24,11 +24,13 @@ import 'package:kindose/services/theme/theme.dart';
 
 import 'resources/routes.dart';
 import 'services/tracker_service.dart';
+import 'services/theme/system_ui.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   _registerAssetLicences();
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  await KSystemUi.enableEdgeToEdge();
 
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.dumpErrorToConsole(details);
@@ -123,9 +125,7 @@ class KindoseApp extends StatelessWidget {
           // Allow large text but cap it so fixed-size tiles stay usable.
           final mq = MediaQuery.of(context);
           return AnnotatedRegion<SystemUiOverlayStyle>(
-            value: dark
-                ? SystemUiOverlayStyle.light
-                : SystemUiOverlayStyle.dark,
+            value: KSystemUi.style(darkBackground: dark),
             child: MediaQuery(
               data: mq.copyWith(
                 textScaler: mq.textScaler.clamp(maxScaleFactor: 1.35),

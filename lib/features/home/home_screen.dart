@@ -8,6 +8,7 @@ import '../progress/progress_screen.dart';
 import '../report/report_screen.dart';
 import '../today/today_screen.dart';
 import 'home_controller.dart';
+import '../../widgets/safe_bottom.dart';
 
 /// Tab shell with the floating pill navigation from the design.
 class HomeScreen extends GetView<HomeController> {
@@ -43,9 +44,7 @@ class _FloatingNav extends GetView<HomeController> {
   @override
   Widget build(BuildContext context) {
     final k = context.k;
-    return SafeArea(
-      top: false,
-      minimum: const EdgeInsets.only(bottom: 16),
+    return KSafeArea(
       child: Container(
         height: 68,
         decoration: BoxDecoration(

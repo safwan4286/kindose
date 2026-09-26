@@ -10,6 +10,7 @@ import '../../services/tracker_service.dart';
 import '../../widgets/k_widgets.dart';
 import '../../widgets/toast.dart';
 import 'weight_sheet.dart';
+import '../../widgets/safe_bottom.dart';
 
 /// "What are you logging?" sheet opened from the + button.
 Future<void> showLogSheet() {
@@ -39,8 +40,7 @@ class LogSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final k = context.k;
-    return SafeArea(
-      top: false,
+    return KSafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(18, 12, 18, 18),
         child: Column(

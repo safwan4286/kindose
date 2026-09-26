@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -17,6 +16,8 @@ import '../../widgets/drop_mark.dart';
 import '../../widgets/k_widgets.dart';
 import '../../widgets/painters.dart';
 import 'welcome_controller.dart';
+import '../../widgets/safe_bottom.dart';
+import '../../services/theme/system_ui.dart';
 
 /// Screen 1 · Welcome (design option B: phone preview).
 ///
@@ -40,11 +41,10 @@ class WelcomeScreen extends GetView<WelcomeController> {
     final dark = Theme.of(context).brightness == Brightness.dark;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+      value: KSystemUi.style(darkBackground: dark),
       child: Scaffold(
         backgroundColor: k.bg,
-        body: SafeArea(
-          bottom: Platform.isIOS ? false : true,
+        body: KSafeArea(
           child: LayoutBuilder(
             builder: (context, box) {
               // On short phones (or big accessibility text) drop the benefit
@@ -90,9 +90,10 @@ class WelcomeScreen extends GetView<WelcomeController> {
                         color: k.text,
                       ).enter(motion, delay: 720),
                     ),
-                    _LegalLine(onTap: controller.openLegal)
-                        .enter(motion, delay: 780),
-                    SizedBox(height: 10.sp),
+                    KBottomPadding(
+                      child: _LegalLine(onTap: controller.openLegal)
+                          .enter(motion, delay: 780),
+                    ),
                   ],
                 ),
               );
