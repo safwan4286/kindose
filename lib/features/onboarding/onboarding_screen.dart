@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -93,6 +95,7 @@ class OnboardingScreen extends GetView<OnboardingController> {
           child: Scaffold(
           backgroundColor: dark ? AppColors.hero : context.k.bg,
           body: SafeArea(
+            // bottom: Platform.isIOS ? false : true,
             child: Column(
               children: [
                 if (!dark) const _StepHeader(),
@@ -207,20 +210,20 @@ class StepScaffold extends StatelessWidget {
       children: [
         Expanded(
           child: ListView(
-            padding: EdgeInsets.fromLTRB(20.sp, 20.sp, 20.sp, 16.sp),
+            padding: EdgeInsets.fromLTRB(20.sp, 10.sp, 20.sp, 15.sp),
             children: [
               Semantics(
                 header: true,
-                child: Text(title, style: AppText.h1.copyWith(fontSize: 32.sp, color: context.k.text)),
+                child: Text(title, style: AppText.h1.copyWith(fontSize: 30.sp, color: context.k.text)),
               ).enter(motion, dy: 0.12),
               if (subtitle != null) ...[
                 SizedBox(height: 10.sp),
                 Text(
                   subtitle!,
-                  style: AppText.bodyText.copyWith(fontSize: 16.sp, height: 1.45, color: context.k.muted),
+                  style: AppText.bodyText.copyWith(fontSize: 15.sp, height: 1.45, color: context.k.muted),
                 ).enter(motion, delay: 60, dy: 0.12),
               ],
-              SizedBox(height: 26.sp),
+              SizedBox(height: 20.sp),
               ...children,
             ],
           ),

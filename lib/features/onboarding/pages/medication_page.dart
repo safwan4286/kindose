@@ -36,7 +36,14 @@ class MedicationPage extends GetView<OnboardingController> {
     for (final group in MedGroup.values) {
       final meds = Catalog.medicines.where((m) => m.group == group).toList();
       if (meds.isEmpty) continue;
-      rows.add(_GroupLabel(_groupLabels[group]!).enter(motion, delay: 100 + index.clamp(0, 8) * 40, dy: 0.1));
+      rows.add(
+        _GroupLabel(
+          _groupLabels[group]!,
+          padding: _groupLabels[group] == "TIRZEPATIDE"
+              ? EdgeInsets.fromLTRB(4.sp, 0, 4.sp, 0)
+              : null,
+        ).enter(motion, delay: 100 + index.clamp(0, 8) * 40, dy: 0.1),
+      );
       for (final m in meds) {
         final i = index++;
         rows
@@ -56,8 +63,12 @@ class MedicationPage extends GetView<OnboardingController> {
     }
 
     return StepScaffold(
-      title: starting ? 'Which medication will you use?' : 'Which medication are you on?',
-      subtitle: starting ? 'Pick the one your doctor prescribed.' : 'Pick the one on your prescription.',
+      title: starting
+          ? 'Which medication will you use?'
+          : 'Which medication are you on?',
+      subtitle: starting
+          ? 'Pick the one your doctor prescribed.'
+          : 'Pick the one on your prescription.',
       cta: Obx(
         () => StepFooter(
           expanded: controller.medicineId.value == Catalog.other,
@@ -69,7 +80,12 @@ class MedicationPage extends GetView<OnboardingController> {
         SizedBox(height: 18.sp),
         Text(
           "Brand names are trademarks of their owners. Kindose isn't affiliated with them and doesn't recommend any medicine.",
-          style: AppText.small.copyWith(fontSize: 11.5.sp, height: 1.45, fontWeight: FontWeight.w500, color: k.faint),
+          style: AppText.small.copyWith(
+            fontSize: 11.5.sp,
+            height: 1.45,
+            fontWeight: FontWeight.w500,
+            color: k.faint,
+          ),
         ),
       ],
     );
@@ -77,14 +93,15 @@ class MedicationPage extends GetView<OnboardingController> {
 }
 
 class _GroupLabel extends StatelessWidget {
-  const _GroupLabel(this.text);
+  const _GroupLabel(this.text, {this.padding});
 
   final String text;
+  final EdgeInsetsGeometry? padding;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(4.sp, 14.sp, 4.sp, 0),
+      padding: padding ?? EdgeInsets.fromLTRB(4.sp, 15.sp, 4.sp, 0),
       child: SectionLabel(text, color: context.k.faint),
     );
   }
@@ -99,7 +116,9 @@ class _CustomNamePanel extends GetView<OnboardingController> {
     return Obx(
       () => StepInputPanel(
         label: "What's it called?",
-        onContinue: controller.customMedicineValid ? controller.confirmCustomMedicine : null,
+        onContinue: controller.customMedicineValid
+            ? controller.confirmCustomMedicine
+            : null,
         child: KTextField(
           controller: controller.customMedicineField,
           autofocus: true,

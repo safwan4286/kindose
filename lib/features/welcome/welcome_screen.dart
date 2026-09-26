@@ -55,7 +55,7 @@ class WelcomeScreen extends GetView<WelcomeController> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(height: 12.sp),
+                    SizedBox(height: 10.sp),
                     const _Brand().enter(motion, dy: 0),
                     Expanded(child: _PhonePreview(motion: motion)),
                     SizedBox(height: 8.sp),
@@ -64,29 +64,32 @@ class WelcomeScreen extends GetView<WelcomeController> {
                     Text(
                       'Doses, protein, water and how you feel, in one calm app built around your shot day.',
                       style: AppText.bodyText.copyWith(
-                        fontSize: 16.sp,
+                        fontSize: 15.sp,
                         height: 1.5,
                         color: k.muted,
                       ),
                     ).enter(motion, delay: 330),
                     if (!compact) ...[
-                      SizedBox(height: 16.sp),
+                      SizedBox(height: 15.sp),
                       for (var i = 0; i < _benefits.length; i++)
                         Padding(
                           padding: EdgeInsets.only(bottom: 10.sp),
                           child: _Benefit(_benefits[i], dark: dark),
                         ).enter(motion, delay: 420 + i * 80, dy: 0.4),
                     ],
-                    SizedBox(height: compact ? 16.sp : 10.sp),
+                    SizedBox(height: compact ? 15.sp : 10.sp),
                     PillButton(
                       label: 'Get started',
                       onPressed: controller.getStarted,
                     ).enter(motion, delay: 640),
-                    LinkButton(
-                      label: 'I already have an account',
-                      onTap: controller.signIn,
-                      color: k.text,
-                    ).enter(motion, delay: 720),
+                    SizedBox(
+                      width: Get.width,
+                      child: LinkButton(
+                        label: 'I already have an account',
+                        onTap: controller.signIn,
+                        color: k.text,
+                      ).enter(motion, delay: 720),
+                    ),
                     _LegalLine(onTap: controller.openLegal)
                         .enter(motion, delay: 780),
                     SizedBox(height: 10.sp),
@@ -159,7 +162,7 @@ class _Headline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final size = (compact ? 32 : 38).sp;
+    final size = (compact ? 32 : 34).sp;
     final style = AppText.h1.copyWith(
       fontSize: size,
       height: 1.04,
@@ -168,13 +171,13 @@ class _Headline extends StatelessWidget {
     );
     return Semantics(
       header: true,
-      label: 'Your GLP-1 journey, handled.',
+      label: 'Your GLP-1\njourney, handled.',
       excludeSemantics: true,
       child: Text.rich(
         TextSpan(
           style: style,
           children: [
-            const TextSpan(text: 'Your GLP-1 journey, '),
+            const TextSpan(text: 'Your GLP-1\njourney, '),
             WidgetSpan(
               alignment: PlaceholderAlignment.baseline,
               baseline: TextBaseline.alphabetic,
