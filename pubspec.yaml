@@ -48,6 +48,7 @@ dependencies:
   device_info_plus: ^13.2.0
   url_launcher: ^6.3.2
   lottie: ^3.6.1
+  flutter_local_notifications: ^22.3.1
   encrypt: ^5.0.3
   pointycastle: ^3.9.1
   android_intent_plus: ^6.1.0
@@ -91,6 +92,7 @@ flutter:
     - assets/fonts/
     - assets/3d/
     - assets/licenses/
+    - assets/social/
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 

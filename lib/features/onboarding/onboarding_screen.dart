@@ -8,14 +8,21 @@ import '../../services/theme/theme.dart';
 import '../../widgets/entrance.dart';
 import '../../widgets/k_widgets.dart';
 import 'onboarding_controller.dart';
+import 'pages/activity_page.dart';
 import 'pages/birth_page.dart';
+import 'pages/building_page.dart';
 import 'pages/body_pages.dart';
+import 'pages/diet_page.dart';
 import 'pages/dose_page.dart';
+import 'pages/focus_page.dart';
 import 'pages/frequency_page.dart';
+import 'pages/goal_page.dart';
 import 'pages/height_page.dart';
 import 'pages/intro_pages.dart';
 import 'pages/medication_page.dart';
 import 'pages/plan_page.dart';
+import 'pages/reminders_page.dart';
+import 'pages/save_page.dart';
 import 'pages/sex_page.dart';
 import 'pages/treatment_start_page.dart';
 import 'pages/weight_page.dart';
@@ -48,14 +55,26 @@ class OnboardingScreen extends GetView<OnboardingController> {
         return const HeightPage();
       case OnboardingStep.weight:
         return const WeightPage();
+      case OnboardingStep.goal:
+        return const GoalPage();
+      case OnboardingStep.activity:
+        return const ActivityPage();
+      case OnboardingStep.diet:
+        return const DietPage();
       case OnboardingStep.baseline:
         return const BaselinePage();
       case OnboardingStep.protein:
         return const ProteinPage();
       case OnboardingStep.focus:
         return const FocusPage();
+      case OnboardingStep.reminders:
+        return const RemindersPage();
+      case OnboardingStep.building:
+        return const BuildingPage();
       case OnboardingStep.plan:
         return const PlanPage();
+      case OnboardingStep.save:
+        return const SavePage();
     }
   }
 
@@ -63,7 +82,7 @@ class OnboardingScreen extends GetView<OnboardingController> {
   Widget build(BuildContext context) {
     return Obx(() {
       final step = controller.current;
-      final dark = step == OnboardingStep.welcome || step == OnboardingStep.plan;
+      final dark = step == OnboardingStep.welcome;
       return PopScope(
         canPop: controller.page.value == 0,
         onPopInvokedWithResult: (didPop, _) {
@@ -107,9 +126,14 @@ class _StepHeader extends GetView<OnboardingController> {
           SizedBox(width: 14.sp),
           Expanded(
             child: Obx(
-              () => _ProgressBar(
-                value: controller.progress,
-                label: 'Step ${controller.stepNumber} of ${controller.stepCount}',
+              () => AnimatedOpacity(
+                duration: const Duration(milliseconds: 200),
+                // Wrap-up screens keep the back button but drop the bar.
+                opacity: controller.isWrapUp ? 0 : 1,
+                child: _ProgressBar(
+                  value: controller.progress,
+                  label: 'Step ${controller.stepNumber} of ${controller.stepCount}',
+                ),
               ),
             ),
           ),

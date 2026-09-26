@@ -339,12 +339,13 @@ class Catalog {
   ];
 
   static const List<FocusItem> focusItems = [
-    FocusItem('muscle', 'Keeping my muscle', 'Protein & strength', Img3d.biceps),
-    FocusItem('nausea', 'Nausea & stomach', 'Spot your patterns', Img3d.nauseated),
-    FocusItem('noise', 'Food noise', 'Cravings & appetite', Img3d.brain),
-    FocusItem('remember', 'Never missing a dose', 'Reminders & sites', Img3d.alarm),
+    FocusItem('muscle', 'Keeping my muscle', 'Protein and strength', Img3d.biceps),
+    FocusItem('nausea', 'Nausea and stomach', 'Spot your patterns', Img3d.nauseated),
+    FocusItem('noise', 'Food noise', 'Cravings and appetite', Img3d.brain),
+    FocusItem('remember', 'Never missing a dose', 'Reminders and injection sites', Img3d.alarm),
     FocusItem('nerves', 'Injection nerves', 'Calm, guided steps', Img3d.anxious),
-    FocusItem('cost', 'Cost of treatment', 'Spend & refills', Img3d.moneyBag),
+    FocusItem('progress', 'Seeing my progress', 'Weight trend and weekly check-ins', Img3d.chartDown),
+    FocusItem('cost', 'Cost of treatment', 'Spend and refills', Img3d.moneyBag),
   ];
 
   static const Map<String, String> symptoms = {

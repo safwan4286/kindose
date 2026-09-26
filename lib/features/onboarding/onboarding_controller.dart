@@ -6,10 +6,12 @@ import '../../resources/catalog.dart';
 import '../../resources/date_utils.dart';
 import '../../resources/routes.dart';
 import '../../services/haptics/haptics.dart';
+import '../../services/notifications/notification_service.dart';
 import '../../services/tracker_service.dart';
+import '../../widgets/social_button.dart';
 import '../../widgets/toast.dart';
 
-enum OnboardingStep { welcome, stage, medicine, dose, frequency, schedule, treatmentStart, sex, birth, height, weight, baseline, protein, focus, plan }
+enum OnboardingStep { welcome, stage, medicine, dose, frequency, schedule, treatmentStart, sex, birth, height, weight, goal, activity, diet, baseline, protein, focus, reminders, building, plan, save }
 
 /// Holds the answers while the user moves through onboarding, then saves
 /// them as one [UserProfile]. In edit mode only the medicine, dose, frequency and schedule steps
@@ -35,6 +37,8 @@ class OnboardingController extends GetxController {
         if (s != OnboardingStep.welcome &&
             // Replaced by the height / weight / goal questions.
             s != OnboardingStep.baseline &&
+            // The protein goal is now worked out and shown on the plan.
+            s != OnboardingStep.protein &&
             !(starting && s == OnboardingStep.treatmentStart))
           s,
     ];
@@ -97,22 +101,57 @@ class OnboardingController extends GetxController {
   /// sex answer.
   final RxBool weightTouched = false.obs;
   final RxnDouble goalKg = RxnDouble();
+
+  /// Ruler value on the goal question. Starts at about 90% of today's
+  /// weight; saved to [goalKg] only on Continue (Skip leaves it null).
+  final RxDouble goalDraftKg = 65.0.obs;
+  final RxBool goalTouched = false.obs;
+
+  /// 'sed', 'light', 'mod', 'active', 'athlete', or '' until answered.
+  final RxString activity = ''.obs;
   final RxnDouble heightCm = RxnDouble();
   final RxBool heightInCm = true.obs;
 
   final RxInt proteinGoal = 100.obs;
   final RxBool proteinTouched = false.obs;
+
+  /// Daily water in ml once the user edits it on the plan; until then the
+  /// suggestion from weight and activity is used.
+  final RxInt waterGoal = 2500.obs;
+  final RxBool waterTouched = false.obs;
+
+  /// Set when "Edit" on the plan sends the user back to the dose questions,
+  /// so the schedule screen returns straight to the plan.
+  bool _returnToPlan = false;
   final RxBool veg = false.obs;
+
+  /// 'veg', 'egg', 'nonveg', 'vegan', 'jain', or '' until answered.
+  final RxString diet = ''.obs;
+
+  /// Set on the reminders screen: true only when the system said yes.
+  final RxBool remindersOn = false.obs;
+  final RxBool askingReminders = false.obs;
   final RxSet<String> plateOff = <String>{}.obs;
 
-  final RxSet<String> focus = <String>{'muscle', 'nausea'}.obs;
+  /// What the user wants help with. Empty until they pick (Continue needs one).
+  final RxSet<String> focus = <String>{}.obs;
 
   OnboardingStep get current => steps[page.value];
   Medicine get medicine => Catalog.medicine(medicineId.value);
 
   /// Question steps shown in the header (the plan reveal has no header).
   int get stepCount =>
-      editMode ? steps.length : steps.where((s) => s != OnboardingStep.plan).length;
+      editMode ? steps.length : steps.where((s) => !_wrapUp.contains(s)).length;
+
+  /// Screens after the questions: no progress bar, just the back button.
+  static const Set<OnboardingStep> _wrapUp = {
+    OnboardingStep.reminders,
+    OnboardingStep.building,
+    OnboardingStep.plan,
+    OnboardingStep.save,
+  };
+
+  bool get isWrapUp => _wrapUp.contains(current);
 
   int get stepNumber => (page.value + 1).clamp(1, stepCount);
 
@@ -195,17 +234,30 @@ class OnboardingController extends GetxController {
     weightKg.value = p.startWeightKg;
     weightTouched.value = true;
     goalKg.value = p.goalWeightKg;
+    if (p.goalWeightKg != null) {
+      goalDraftKg.value = p.goalWeightKg!;
+      goalTouched.value = true;
+    }
     heightCm.value = p.heightCm;
     heightInCm.value = p.heightInCm;
+    activity.value = p.activity ?? '';
     proteinGoal.value = p.proteinGoalG;
     proteinTouched.value = true;
+    waterGoal.value = p.waterGoalMl;
+    waterTouched.value = true;
     veg.value = p.vegDiet;
+    diet.value = p.diet ?? '';
     focus.assignAll(p.focus);
   }
 
   // ------------------------------------------------------------ navigation
 
   void next() {
+    if (_returnToPlan && current == OnboardingStep.schedule) {
+      _returnToPlan = false;
+      _go(steps.indexOf(OnboardingStep.plan));
+      return;
+    }
     if (page.value >= steps.length - 1) {
       finish();
       return;
@@ -222,12 +274,21 @@ class OnboardingController extends GetxController {
       popRoute();
       return;
     }
-    _go(page.value - 1);
+    var to = page.value - 1;
+    // The "building" moment plays once; going back from the plan skips it.
+    if (to > 0 && steps[to] == OnboardingStep.building) to--;
+    _go(to);
   }
 
   void _go(int index) {
+    final from = page.value;
     page.value = index;
     if (!pageController.hasClients) return;
+    // Long jumps (plan ⇄ dose edit) skip the pages in between, then slide
+    // the last step so it still feels like normal navigation.
+    if ((index - from).abs() > 1) {
+      pageController.jumpToPage(index > from ? index - 1 : index + 1);
+    }
     pageController.animateToPage(
       index,
       duration: const Duration(milliseconds: 320),
@@ -496,6 +557,50 @@ class OnboardingController extends GetxController {
     next();
   }
 
+  // -------------------------------------------------------------- activity
+
+  void pickActivity(String id) => _pickThenNext(OnboardingStep.activity, () => activity.value = id);
+
+  // ------------------------------------------------------------------ diet
+
+  /// Diets with no meat, fish or eggs use the vegetarian food lists.
+  static const Set<String> _meatFree = {'veg', 'vegan', 'jain'};
+
+  void pickDiet(String id) => _pickThenNext(OnboardingStep.diet, () {
+        diet.value = id;
+        veg.value = _meatFree.contains(id);
+        plateOff.clear();
+      });
+
+  // ------------------------------------------------------------- reminders
+
+  /// Shows the system prompt. Either answer moves on; a "no" just keeps
+  /// reminders off and says where to turn them on later.
+  Future<void> enableReminders() async {
+    if (askingReminders.value || current != OnboardingStep.reminders) return;
+    askingReminders.value = true;
+    Haptics.instance.mediumImpact();
+    try {
+      final granted = await NotificationService.instance.requestPermission();
+      remindersOn.value = granted;
+      if (granted) {
+        Haptics.instance.lightImpact();
+      } else {
+        showToast('No problem. You can turn reminders on later in Me.');
+      }
+      if (!isClosed && current == OnboardingStep.reminders) next();
+    } finally {
+      askingReminders.value = false;
+    }
+  }
+
+  void skipReminders() {
+    if (askingReminders.value || current != OnboardingStep.reminders) return;
+    remindersOn.value = false;
+    Haptics.instance.selectionClick();
+    next();
+  }
+
   // ------------------------------------------------------------------ dose
 
   void pickDose(double mg) => _pickThenNext(OnboardingStep.dose, () {
@@ -555,15 +660,116 @@ class OnboardingController extends GetxController {
   void confirmWeight() {
     if (current != OnboardingStep.weight) return;
     weightTouched.value = true;
+    if (!goalTouched.value) {
+      goalDraftKg.value = ((weightKg.value * 0.9) * 2).round() / 2;
+    }
     Haptics.instance.lightImpact();
+    next();
+  }
+
+  // ------------------------------------------------------------ goal weight
+
+  void setGoalDraft(double kg) {
+    goalTouched.value = true;
+    goalDraftKg.value = (kg.clamp(minWeightKg, maxWeightKg) * 100).round() / 100;
+  }
+
+  /// kg still to go: positive to lose, negative to gain.
+  double get goalDiffKg => weightKg.value - goalDraftKg.value;
+
+  double? get goalBmi => heightCm.value == null
+      ? null
+      : goalDraftKg.value / ((heightCm.value! / 100) * (heightCm.value! / 100));
+
+  void confirmGoal() {
+    if (current != OnboardingStep.goal) return;
+    goalKg.value = (goalDraftKg.value * 10).round() / 10;
+    Haptics.instance.lightImpact();
+    next();
+  }
+
+  void skipGoal() {
+    if (current != OnboardingStep.goal) return;
+    goalKg.value = null;
+    Haptics.instance.selectionClick();
     next();
   }
 
   /// 1.2 g per kg rounded to 5 g, a common general guideline shown as a
   /// starting point the user can change.
   int get suggestedProtein {
-    final g = (weightKg.value * 1.2 / 5).round() * 5;
+    // A little more for people who train hard. General guidance only.
+    final perKg = activity.value == 'active' || activity.value == 'athlete' ? 1.4 : 1.2;
+    final g = (weightKg.value * perKg / 5).round() * 5;
     return g.clamp(60, 180);
+  }
+
+  /// About 35 ml per kg, plus some for activity, rounded to 250 ml and kept
+  /// between 2 and 4 litres. General guidance only.
+  int get suggestedWaterMl {
+    final extra = switch (activity.value) {
+      'mod' => 250,
+      'active' => 500,
+      'athlete' => 750,
+      _ => 0,
+    };
+    final ml = weightKg.value * 35 + extra;
+    return ((ml / 250).round() * 250).clamp(2000, 4000);
+  }
+
+  /// "every Thursday", "daily", "every other Monday", "every 3 days".
+  String get rhythmLabel {
+    final day = Dates.weekdayName(shotWeekday.value);
+    return switch (everyDays) {
+      1 => 'daily',
+      7 => 'every $day',
+      14 => 'every other $day',
+      final n => 'every $n days',
+    };
+  }
+
+  int get proteinShown => proteinTouched.value ? proteinGoal.value : suggestedProtein;
+  int get waterShownMl => waterTouched.value ? waterGoal.value : suggestedWaterMl;
+
+  void setWaterGoal(double litres) {
+    waterTouched.value = true;
+    waterGoal.value = ((litres * 1000 / 250).round() * 250).clamp(1000, 5000);
+  }
+
+  // ------------------------------------------------------------------ plan
+
+  /// "Edit" on the plan's dose card: redo medicine → schedule, then come back.
+  void editDoseFromPlan() {
+    if (current != OnboardingStep.plan) return;
+    Haptics.instance.selectionClick();
+    _returnToPlan = true;
+    _go(steps.indexOf(OnboardingStep.medicine));
+  }
+
+  void confirmPlan() {
+    if (current != OnboardingStep.plan || saving.value) return;
+    Haptics.instance.mediumImpact();
+    next();
+  }
+
+  // ------------------------------------------------------ save progress
+
+  /// Which sign-in is running, for the button spinner. Null when idle.
+  final Rxn<SocialProvider> signingIn = Rxn<SocialProvider>();
+
+  /// Firebase Auth isn't set up yet, so sign-in just explains that for now.
+  /// TODO(auth): call AuthService.signInWithApple/Google, then finish().
+  void signInWith(SocialProvider provider) {
+    if (signingIn.value != null || current != OnboardingStep.save) return;
+    Haptics.instance.lightImpact();
+    showToast('Sign-in is coming soon. Your data is safe on this phone.');
+  }
+
+  /// "Not now": keep everything on the phone and carry on to Plus.
+  void skipSave() {
+    if (signingIn.value != null || current != OnboardingStep.save) return;
+    Haptics.instance.selectionClick();
+    finish();
   }
 
   void setProteinGoal(double v) {
@@ -591,11 +797,18 @@ class OnboardingController extends GetxController {
       .fold<int>(0, (sum, f) => sum + f.grams);
 
   void toggleFocus(String id) {
+    Haptics.instance.selectionClick();
     if (focus.contains(id)) {
       focus.remove(id);
     } else {
       focus.add(id);
     }
+  }
+
+  void confirmFocus() {
+    if (focus.isEmpty || current != OnboardingStep.focus) return;
+    Haptics.instance.lightImpact();
+    next();
   }
 
   double? get bmi {
@@ -639,13 +852,15 @@ class OnboardingController extends GetxController {
       sex: sex.value.isEmpty ? null : sex.value,
       birthDate: birthDate,
       heightInCm: heightInCm.value,
+      activity: activity.value.isEmpty ? null : activity.value,
       useKg: useKg.value,
       startWeightKg: weightKg.value,
       goalWeightKg: goalKg.value,
       heightCm: heightCm.value,
-      proteinGoalG: proteinGoal.value,
-      waterGoalMl: 2500,
+      proteinGoalG: proteinShown,
+      waterGoalMl: waterShownMl,
       vegDiet: veg.value,
+      diet: diet.value.isEmpty ? null : diet.value,
       focus: focus.toList(),
       remindersOn: remindersOn,
       startedAt: DateTime.now(),
@@ -666,11 +881,13 @@ class OnboardingController extends GetxController {
     );
   }
 
-  Future<void> finish({bool remindersOn = false}) async {
+  /// [remindersOn] overrides the answer from the reminders screen (the old
+  /// plan page still passes it).
+  Future<void> finish({bool? remindersOn}) async {
     if (saving.value) return;
     saving.value = true;
     try {
-      final profile = _build(remindersOn: remindersOn);
+      final profile = _build(remindersOn: remindersOn ?? this.remindersOn.value);
       await _tracker.saveProfile(profile);
       if (!editMode) {
         await _tracker.addWeight(profile.startWeightKg);

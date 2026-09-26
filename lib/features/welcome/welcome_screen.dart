@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -15,7 +16,6 @@ import '../../widgets/buttons.dart';
 import '../../widgets/drop_mark.dart';
 import '../../widgets/k_widgets.dart';
 import '../../widgets/painters.dart';
-import '../../widgets/press_scale.dart';
 import 'welcome_controller.dart';
 
 /// Screen 1 · Welcome (design option B: phone preview).
@@ -44,6 +44,7 @@ class WelcomeScreen extends GetView<WelcomeController> {
       child: Scaffold(
         backgroundColor: k.bg,
         body: SafeArea(
+          bottom: Platform.isIOS ? false : true,
           child: LayoutBuilder(
             builder: (context, box) {
               // On short phones (or big accessibility text) drop the benefit
@@ -62,7 +63,11 @@ class WelcomeScreen extends GetView<WelcomeController> {
                     SizedBox(height: 10.sp),
                     Text(
                       'Doses, protein, water and how you feel, in one calm app built around your shot day.',
-                      style: AppText.bodyText.copyWith(fontSize: 16.sp, height: 1.5, color: k.muted),
+                      style: AppText.bodyText.copyWith(
+                        fontSize: 16.sp,
+                        height: 1.5,
+                        color: k.muted,
+                      ),
                     ).enter(motion, delay: 330),
                     if (!compact) ...[
                       SizedBox(height: 16.sp),
@@ -73,22 +78,17 @@ class WelcomeScreen extends GetView<WelcomeController> {
                         ).enter(motion, delay: 420 + i * 80, dy: 0.4),
                     ],
                     SizedBox(height: compact ? 16.sp : 10.sp),
-                    PillButton(label: 'Get started', onPressed: controller.getStarted).enter(motion, delay: 640),
-                    PressScale(
+                    PillButton(
+                      label: 'Get started',
+                      onPressed: controller.getStarted,
+                    ).enter(motion, delay: 640),
+                    LinkButton(
+                      label: 'I already have an account',
                       onTap: controller.signIn,
-                      semanticLabel: 'I already have an account',
-                      child: SizedBox(
-                        height: 48.sp,
-                        width: double.infinity,
-                        child: Center(
-                          child: Text(
-                            'I already have an account',
-                            style: AppText.title.copyWith(fontSize: 15.sp, color: k.text),
-                          ),
-                        ),
-                      ),
+                      color: k.text,
                     ).enter(motion, delay: 720),
-                    _LegalLine(onTap: controller.openLegal).enter(motion, delay: 780),
+                    _LegalLine(onTap: controller.openLegal)
+                        .enter(motion, delay: 780),
                     SizedBox(height: 10.sp),
                   ],
                 ),
@@ -107,7 +107,12 @@ extension _Enter on Widget {
     if (!motion) return this;
     return animate(delay: delay.ms)
         .fadeIn(duration: 420.ms, curve: Curves.easeOut)
-        .slideY(begin: dy, end: 0, duration: 520.ms, curve: Curves.easeOutCubic);
+        .slideY(
+          begin: dy,
+          end: 0,
+          duration: 520.ms,
+          curve: Curves.easeOutCubic,
+        );
   }
 }
 
@@ -125,14 +130,21 @@ class _Brand extends StatelessWidget {
           Container(
             width: 30.sp,
             height: 30.sp,
-            decoration: BoxDecoration(color: AppColors.ink, borderRadius: BorderRadius.circular(9.sp)),
+            decoration: BoxDecoration(
+              color: AppColors.ink,
+              borderRadius: BorderRadius.circular(9.sp),
+            ),
             alignment: Alignment.center,
             child: DropMark(size: 30.sp, shine: 1, smile: 1),
           ),
           SizedBox(width: 9.sp),
           Text(
             'kindose',
-            style: AppText.h2.copyWith(fontSize: 21.sp, letterSpacing: -0.5.sp, color: context.k.text),
+            style: AppText.h2.copyWith(
+              fontSize: 21.sp,
+              letterSpacing: -0.5.sp,
+              color: context.k.text,
+            ),
           ),
         ],
       ),
@@ -236,7 +248,10 @@ class _Benefit extends StatelessWidget {
         Expanded(
           child: Text(
             text,
-            style: AppText.bodyStrong.copyWith(fontSize: 14.sp, color: context.k.textSoft),
+            style: AppText.bodyStrong.copyWith(
+              fontSize: 14.sp,
+              color: context.k.textSoft,
+            ),
           ),
         ),
       ],
@@ -252,19 +267,24 @@ class _LegalLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final k = context.k;
-    final base = AppText.tiny.copyWith(fontSize: 11.5.sp, height: 1.45, fontWeight: FontWeight.w500, color: k.faint);
+    final base = AppText.tiny.copyWith(
+      fontSize: 11.5.sp,
+      height: 1.45,
+      fontWeight: FontWeight.w500,
+      color: k.faint,
+    );
     Widget link(String t) => GestureDetector(
-          onTap: onTap,
-          child: Text(
-            t,
-            style: base.copyWith(
-              color: k.text,
-              fontWeight: FontWeight.w700,
-              decoration: TextDecoration.underline,
-              decorationColor: k.text,
-            ),
-          ),
-        );
+      onTap: onTap,
+      child: Text(
+        t,
+        style: base.copyWith(
+          color: k.text,
+          fontWeight: FontWeight.w700,
+          decoration: TextDecoration.underline,
+          decorationColor: k.text,
+        ),
+      ),
+    );
     return Semantics(
       button: true,
       label: 'Terms and Privacy Policy',
@@ -274,10 +294,20 @@ class _LegalLine extends StatelessWidget {
           TextSpan(
             style: base,
             children: [
-              const TextSpan(text: "By continuing you confirm you're 18+ and agree to the "),
-              WidgetSpan(alignment: PlaceholderAlignment.baseline, baseline: TextBaseline.alphabetic, child: link('Terms')),
+              const TextSpan(
+                text: "By continuing you confirm you're 18+ and agree to the ",
+              ),
+              WidgetSpan(
+                alignment: PlaceholderAlignment.baseline,
+                baseline: TextBaseline.alphabetic,
+                child: link('Terms'),
+              ),
               const TextSpan(text: ' and '),
-              WidgetSpan(alignment: PlaceholderAlignment.baseline, baseline: TextBaseline.alphabetic, child: link('Privacy Policy')),
+              WidgetSpan(
+                alignment: PlaceholderAlignment.baseline,
+                baseline: TextBaseline.alphabetic,
+                child: link('Privacy Policy'),
+              ),
               const TextSpan(text: ". Kindose doesn't give medical advice."),
             ],
           ),
@@ -310,12 +340,27 @@ class _PhonePreview extends StatelessWidget {
           if (motion) {
             phone = phone
                 .animate(onPlay: (c) => c.repeat(reverse: true))
-                .moveY(begin: 0, end: -6.sp, duration: 2800.ms, curve: Curves.easeInOut);
+                .moveY(
+                  begin: 0,
+                  end: -6.sp,
+                  duration: 2800.ms,
+                  curve: Curves.easeInOut,
+                );
             phone = phone
                 .animate(delay: 100.ms)
                 .fadeIn(duration: 500.ms)
-                .slideY(begin: 0.12, end: 0, duration: 650.ms, curve: Curves.easeOutCubic)
-                .scaleXY(begin: 0.96, end: 1, duration: 650.ms, curve: Curves.easeOutCubic);
+                .slideY(
+                  begin: 0.12,
+                  end: 0,
+                  duration: 650.ms,
+                  curve: Curves.easeOutCubic,
+                )
+                .scaleXY(
+                  begin: 0.96,
+                  end: 1,
+                  duration: 650.ms,
+                  curve: Curves.easeOutCubic,
+                );
           }
           return ClipRect(
             child: Stack(
@@ -357,7 +402,11 @@ class _PhonePreview extends StatelessWidget {
 }
 
 class _Phone extends StatelessWidget {
-  const _Phone({required this.width, required this.height, required this.motion});
+  const _Phone({
+    required this.width,
+    required this.height,
+    required this.motion,
+  });
 
   final double width;
   final double height;
@@ -378,7 +427,12 @@ class _Phone extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.ink,
         borderRadius: BorderRadius.circular(40.sp),
-        border: dark ? Border.all(color: Colors.white.withValues(alpha: 0.12), width: 1.5) : null,
+        border: dark
+            ? Border.all(
+                color: Colors.white.withValues(alpha: 0.12),
+                width: 1.5,
+              )
+            : null,
         // boxShadow: [
         //   BoxShadow(color: AppColors.ink.withValues(alpha: 0.22), blurRadius: 50.sp, offset: Offset(0, 24.sp)),
         // ],
@@ -396,7 +450,10 @@ class _Phone extends StatelessWidget {
                   child: Container(
                     width: 70.sp,
                     height: 18.sp,
-                    decoration: BoxDecoration(color: AppColors.ink, borderRadius: BorderRadius.circular(10.sp)),
+                    decoration: BoxDecoration(
+                      color: AppColors.ink,
+                      borderRadius: BorderRadius.circular(10.sp),
+                    ),
                   ),
                 ),
                 SizedBox(height: 10.sp),
@@ -409,11 +466,18 @@ class _Phone extends StatelessWidget {
                         children: [
                           Text(
                             '${Dates.weekdayName(now.weekday)}, ${now.day} ${Dates.monthShort(now.month)}',
-                            style: AppText.tiny.copyWith(fontSize: 8.sp, color: _muted),
+                            style: AppText.tiny.copyWith(
+                              fontSize: 8.sp,
+                              color: _muted,
+                            ),
                           ),
                           Text(
                             Dates.greeting(now),
-                            style: AppText.h3.copyWith(fontSize: 16.sp, letterSpacing: -0.4.sp, color: AppColors.ink),
+                            style: AppText.h3.copyWith(
+                              fontSize: 16.sp,
+                              letterSpacing: -0.4.sp,
+                              color: AppColors.ink,
+                            ),
                           ),
                         ],
                       ),
@@ -421,7 +485,10 @@ class _Phone extends StatelessWidget {
                     Container(
                       width: 20.sp,
                       height: 20.sp,
-                      decoration: BoxDecoration(color: AppColors.ink, borderRadius: BorderRadius.circular(6.sp)),
+                      decoration: BoxDecoration(
+                        color: AppColors.ink,
+                        borderRadius: BorderRadius.circular(6.sp),
+                      ),
                       alignment: Alignment.center,
                       child: DropMark(size: 20.sp),
                     ),
@@ -430,21 +497,39 @@ class _Phone extends StatelessWidget {
                 SizedBox(height: 9.sp),
                 Container(
                   width: double.infinity,
-                  padding: EdgeInsets.symmetric(horizontal: 12.sp, vertical: 11.sp),
-                  decoration: BoxDecoration(color: AppColors.hero, borderRadius: BorderRadius.circular(16.sp)),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 12.sp,
+                    vertical: 11.sp,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.hero,
+                    borderRadius: BorderRadius.circular(16.sp),
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'NEXT DOSE · MOUNJARO 2.5 MG',
-                        style: AppText.caps.copyWith(fontSize: 7.sp, letterSpacing: 0.8.sp, color: AppColors.heroMuted),
+                        style: AppText.caps.copyWith(
+                          fontSize: 7.sp,
+                          letterSpacing: 0.8.sp,
+                          color: AppColors.heroMuted,
+                        ),
                       ),
                       SizedBox(height: 4.sp),
-                      Text('2d 14h', style: AppText.number(28.sp).copyWith(color: AppColors.lime, letterSpacing: -1.sp)),
+                      Text(
+                        '2d 14h',
+                        style: AppText.number(
+                          28.sp,
+                        ).copyWith(color: AppColors.lime, letterSpacing: -1.sp),
+                      ),
                       SizedBox(height: 5.sp),
                       Text(
                         'Sunday · 9:00 AM · left belly',
-                        style: AppText.tiny.copyWith(fontSize: 8.sp, color: const Color(0xFFE8E7F5)),
+                        style: AppText.tiny.copyWith(
+                          fontSize: 8.sp,
+                          color: const Color(0xFFE8E7F5),
+                        ),
                       ),
                     ],
                   ),
@@ -472,12 +557,22 @@ class _MiniProtein extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.all(9.sp),
-      decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(14.sp)),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(14.sp),
+      ),
       child: Column(
         children: [
           Align(
             alignment: Alignment.centerLeft,
-            child: Text('Protein', style: AppText.tiny.copyWith(fontSize: 8.sp, color: AppColors.ink, fontWeight: FontWeight.w800)),
+            child: Text(
+              'Protein',
+              style: AppText.tiny.copyWith(
+                fontSize: 8.sp,
+                color: AppColors.ink,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
           ),
           SizedBox(height: 4.sp),
           ProgressRing(
@@ -489,7 +584,14 @@ class _MiniProtein extends StatelessWidget {
             child: ThreeD(Img3d.egg, size: 20.sp),
           ),
           SizedBox(height: 4.sp),
-          Text('86 / 110 g', style: AppText.tiny.copyWith(fontSize: 8.sp, color: AppColors.ink, fontWeight: FontWeight.w800)),
+          Text(
+            '86 / 110 g',
+            style: AppText.tiny.copyWith(
+              fontSize: 8.sp,
+              color: AppColors.ink,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
         ],
       ),
     );
@@ -505,17 +607,36 @@ class _MiniWater extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.all(9.sp),
-      decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(14.sp)),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(14.sp),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Water', style: AppText.tiny.copyWith(fontSize: 8.sp, color: AppColors.ink, fontWeight: FontWeight.w800)),
+          Text(
+            'Water',
+            style: AppText.tiny.copyWith(
+              fontSize: 8.sp,
+              color: AppColors.ink,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
           SizedBox(height: 6.sp),
           Text.rich(
             TextSpan(
               children: [
-                TextSpan(text: '1.8 ', style: AppText.number(15.sp).copyWith(color: AppColors.ink)),
-                TextSpan(text: '/ 2.5 L', style: AppText.tiny.copyWith(fontSize: 8.sp, color: const Color(0xFF6B6A76))),
+                TextSpan(
+                  text: '1.8 ',
+                  style: AppText.number(15.sp).copyWith(color: AppColors.ink),
+                ),
+                TextSpan(
+                  text: '/ 2.5 L',
+                  style: AppText.tiny.copyWith(
+                    fontSize: 8.sp,
+                    color: const Color(0xFF6B6A76),
+                  ),
+                ),
               ],
             ),
           ),
@@ -526,7 +647,9 @@ class _MiniWater extends StatelessWidget {
               children: [
                 for (var i = row * 5; i < row * 5 + 5; i++) ...[
                   if (i > row * 5) SizedBox(width: 3.sp),
-                  Expanded(child: _Glass(filled: i < 7, index: i, motion: motion)),
+                  Expanded(
+                    child: _Glass(filled: i < 7, index: i, motion: motion),
+                  ),
                 ],
               ],
             ),
@@ -538,7 +661,11 @@ class _MiniWater extends StatelessWidget {
 }
 
 class _Glass extends StatelessWidget {
-  const _Glass({required this.filled, required this.index, required this.motion});
+  const _Glass({
+    required this.filled,
+    required this.index,
+    required this.motion,
+  });
 
   final bool filled;
   final int index;
@@ -550,8 +677,14 @@ class _Glass extends StatelessWidget {
       height: 18.sp,
       decoration: BoxDecoration(
         color: filled ? AppColors.aqua : AppColors.white,
-        border: Border.all(color: filled ? AppColors.aqua : const Color(0xFFCFE6F3), width: 1.5),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(4.sp), bottom: Radius.circular(6.sp)),
+        border: Border.all(
+          color: filled ? AppColors.aqua : const Color(0xFFCFE6F3),
+          width: 1.5,
+        ),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(4.sp),
+          bottom: Radius.circular(6.sp),
+        ),
       ),
     );
     if (!motion || !filled) return glass;
@@ -559,6 +692,12 @@ class _Glass extends StatelessWidget {
     return glass
         .animate(delay: (700 + index * 70).ms)
         .fadeIn(duration: 220.ms)
-        .scaleY(begin: 0.3, end: 1, alignment: Alignment.bottomCenter, duration: 260.ms, curve: Curves.easeOutBack);
+        .scaleY(
+          begin: 0.3,
+          end: 1,
+          alignment: Alignment.bottomCenter,
+          duration: 260.ms,
+          curve: Curves.easeOutBack,
+        );
   }
 }

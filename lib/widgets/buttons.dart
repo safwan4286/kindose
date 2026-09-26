@@ -95,6 +95,44 @@ class PillButton extends StatelessWidget {
   }
 }
 
+/// Quiet text button under a main CTA ("Skip for now", "I already have an
+/// account"). 44pt tall for an easy tap.
+class LinkButton extends StatelessWidget {
+  const LinkButton({super.key, required this.label, required this.onTap, this.color});
+
+  final String label;
+  final VoidCallback? onTap;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: label,
+      excludeSemantics: true,
+      child: PressScale(
+        onTap: onTap,
+        // Sizes to its text (never infinite width), so it works in a Row
+        // too. Min 44pt tall and padded sideways for an easy tap.
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: 44.sp, minWidth: 44.sp),
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.sp),
+            child: Center(
+              widthFactor: 1,
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                style: AppText.title.copyWith(fontSize: 15.sp, color: color ?? context.k.muted),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Plain rounded button: filled or outlined.
 class SoftButton extends StatelessWidget {
   const SoftButton({

@@ -18,6 +18,8 @@ class UserProfile {
     this.sex,
     this.birthDate,
     this.heightInCm = true,
+    this.activity,
+    this.diet,
     required this.useKg,
     required this.startWeightKg,
     required this.goalWeightKg,
@@ -71,6 +73,13 @@ class UserProfile {
   /// Show height in cm (true) or feet and inches (false). Separate from
   /// [useKg] because many people mix them, e.g. kg with feet and inches.
   final bool heightInCm;
+
+  /// 'sed', 'light', 'mod', 'active' or 'athlete'. Tunes protein and water.
+  final String? activity;
+
+  /// 'veg', 'egg', 'nonveg', 'vegan' or 'jain'. [vegDiet] is kept in step
+  /// for older screens.
+  final String? diet;
   final bool useKg;
   final double startWeightKg;
   final double? goalWeightKg;
@@ -98,6 +107,8 @@ class UserProfile {
     String? sex,
     DateTime? birthDate,
     bool? heightInCm,
+    String? activity,
+    String? diet,
     bool? useKg,
     int? proteinGoalG,
     int? waterGoalMl,
@@ -118,6 +129,8 @@ class UserProfile {
       sex: sex ?? this.sex,
       birthDate: birthDate ?? this.birthDate,
       heightInCm: heightInCm ?? this.heightInCm,
+      activity: activity ?? this.activity,
+      diet: diet ?? this.diet,
       useKg: useKg ?? this.useKg,
       startWeightKg: startWeightKg,
       goalWeightKg: goalWeightKg,
@@ -146,6 +159,8 @@ class UserProfile {
         'sex': sex,
         'birthDate': birthDate?.millisecondsSinceEpoch,
         'heightInCm': heightInCm,
+        'activity': activity,
+        'diet': diet,
         'useKg': useKg,
         'startWeightKg': startWeightKg,
         'goalWeightKg': goalWeightKg,
@@ -175,6 +190,8 @@ class UserProfile {
       sex: m.str('sex').isEmpty ? null : m.str('sex'),
       birthDate: m.date('birthDate'),
       heightInCm: m.boolean('heightInCm', true),
+      activity: m.str('activity').isEmpty ? null : m.str('activity'),
+      diet: m.str('diet').isEmpty ? null : m.str('diet'),
       useKg: m.boolean('useKg', true),
       startWeightKg: m.dbl('startWeightKg', 80),
       goalWeightKg: m.dblOrNull('goalWeightKg'),
