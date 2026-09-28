@@ -3,10 +3,10 @@ import 'package:get/get.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 import '../../resources/colors.dart';
-import '../../resources/images.dart';
 import '../../services/responsiveness/device_manager.dart';
 import '../../services/theme/theme.dart';
 import '../../widgets/buttons.dart';
+import '../../widgets/drop_mark.dart';
 import '../../widgets/entrance.dart';
 import '../../widgets/k_widgets.dart';
 import '../../widgets/press_scale.dart';
@@ -202,66 +202,105 @@ class _PlanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final k = context.k;
     final c = controller;
-    final next = c.nextDoseLine;
-    return Container(
-      padding: EdgeInsets.all(18.sp),
-      decoration: BoxDecoration(
-        color: AppColors.lime,
-        borderRadius: BorderRadius.circular(24.sp),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            c.planCaption,
-            style: AppText.caps.copyWith(
-              fontSize: 12.sp,
-              letterSpacing: 1.1,
-              color: AppColors.limeText,
+
+    Widget fact(String label, String value, String sub) => Expanded(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 6.sp),
+        child: Column(
+          children: [
+            Text(label, style: AppText.caps.copyWith(fontSize: 10.5.sp, letterSpacing: 0.8, color: k.faint)),
+            SizedBox(height: 4.sp),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                value,
+                maxLines: 1,
+                style: AppText.bodyStrong.copyWith(fontSize: 15.sp, fontWeight: FontWeight.w800, color: k.text),
+              ),
             ),
-          ),
-          SizedBox(height: 6.sp),
-          Text(
-            c.planTitle,
-            style: AppText.h2.copyWith(
-              fontSize: 24.sp,
-              letterSpacing: -0.5,
-              color: AppColors.ink,
-            ),
-          ),
-          SizedBox(height: 2.sp),
-          Text(
-            c.planSub,
-            style: AppText.small.copyWith(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w700,
-              color: AppColors.ink.withValues(alpha: 0.8),
-            ),
-          ),
-          SizedBox(height: 14.sp),
-          Row(
-            children: [
-              Expanded(
+            if (sub.isNotEmpty)
+              FittedBox(
+                fit: BoxFit.scaleDown,
                 child: Text(
-                  next,
-                  style: AppText.small.copyWith(
-                    fontSize: 12.5.sp,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.limeText,
-                  ),
+                  sub,
+                  maxLines: 1,
+                  style: AppText.small.copyWith(fontSize: 12.sp, fontWeight: FontWeight.w700, color: k.muted),
                 ),
               ),
-              SizedBox(width: 10.sp),
-              SoftButton(
-                label: c.hasMedicine ? 'Edit plan' : 'Add medicine',
-                background: AppColors.ink,
-                foreground: AppColors.white,
-                height: 42,
-                onPressed: c.editPlan,
+          ],
+        ),
+      ),
+    );
+    Widget divider() => Container(width: 1, height: 44.sp, color: k.border);
+
+    return Container(
+      padding: EdgeInsets.all(18.sp),
+      decoration: BoxDecoration(color: k.card, borderRadius: BorderRadius.circular(24.sp)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 50.sp,
+                height: 50.sp,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(color: AppColors.lime, borderRadius: BorderRadius.circular(16.sp)),
+                child: Icon(
+                  c.isTablet ? PhosphorIconsBold.pill : PhosphorIconsBold.syringe,
+                  size: 24.sp,
+                  color: AppColors.ink,
+                ),
               ),
+              SizedBox(width: 12.sp),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(c.planCaption, style: AppText.caps.copyWith(fontSize: 11.5.sp, letterSpacing: 1, color: k.faint)),
+                    SizedBox(height: 2.sp),
+                    Text(
+                      c.planTitle,
+                      maxLines: 2,
+                      style: AppText.h2.copyWith(fontSize: 21.sp, letterSpacing: -0.4, color: k.text),
+                    ),
+                  ],
+                ),
+              ),
+              if (c.hasMedicine) ...[
+                SizedBox(width: 8.sp),
+                CircleIconButton(
+                  icon: PhosphorIconsBold.pencilSimple,
+                  label: 'Edit plan',
+                  size: 40.sp,
+                  background: k.cardAlt,
+                  onTap: c.editPlan,
+                ),
+              ],
             ],
           ),
+          SizedBox(height: 16.sp),
+          if (c.hasMedicine)
+            Container(
+              padding: EdgeInsets.symmetric(vertical: 14.sp, horizontal: 6.sp),
+              decoration: BoxDecoration(color: k.bg, borderRadius: BorderRadius.circular(16.sp)),
+              child: Row(
+                children: [
+                  fact('FORM', c.formLabel, c.formSub),
+                  divider(),
+                  fact('SCHEDULE', c.scheduleDay, c.scheduleTime),
+                  divider(),
+                  fact('NEXT DOSE', c.nextShort, c.nextSub),
+                ],
+              ),
+            )
+          else ...[
+            Text(c.planSub, style: AppText.small.copyWith(fontSize: 13.5.sp, color: k.muted)),
+            SizedBox(height: 12.sp),
+            PillButton(label: 'Add my medicine', onPressed: c.editPlan),
+          ],
         ],
       ),
     );
@@ -294,7 +333,7 @@ class _PlusCard extends StatelessWidget {
           ),
           child: Row(
             children: [
-              ThreeD(Img3d.sparkles, size: 40.sp),
+              DropMark(size: 40.sp),
               SizedBox(width: 12.sp),
               Expanded(
                 child: Column(

@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 import '../../../resources/colors.dart';
+import '../../../widgets/k_widgets.dart';
 import '../../../services/haptics/haptics.dart';
 import '../../../services/responsiveness/device_manager.dart';
 import '../../../services/theme/theme.dart';
@@ -123,22 +124,26 @@ class _EditTodaySheetState extends State<_EditTodaySheet> {
                                 ),
                               ),
                             ),
-                            Switch.adaptive(
-                              value: !_hidden.contains(_order[i]),
-                              activeTrackColor: k.selectedBorder,
-                              thumbColor: WidgetStatePropertyAll(
-                                k.selectedBorder == AppColors.lime
-                                    ? AppColors.ink
-                                    : AppColors.white,
+                            Semantics(
+                              toggled: !_hidden.contains(_order[i]),
+                              label: 'Show ${_label(_order[i])}',
+                              excludeSemantics: true,
+                              child: GestureDetector(
+                                behavior: HitTestBehavior.opaque,
+                                onTap: () {
+                                  Haptics.instance.selectionClick();
+                                  final id = _order[i];
+                                  setState(
+                                    () => _hidden.contains(id)
+                                        ? _hidden.remove(id)
+                                        : _hidden.add(id),
+                                  );
+                                },
+                                child: Padding(
+                                  padding: EdgeInsets.all(6.sp),
+                                  child: KSwitch(value: !_hidden.contains(_order[i])),
+                                ),
                               ),
-                              onChanged: (on) {
-                                Haptics.instance.selectionClick();
-                                setState(
-                                  () => on
-                                      ? _hidden.remove(_order[i])
-                                      : _hidden.add(_order[i]),
-                                );
-                              },
                             ),
                           ],
                         ),
@@ -148,13 +153,15 @@ class _EditTodaySheetState extends State<_EditTodaySheet> {
               ),
             ),
             SizedBox(height: 8.sp),
-            PillButton(
-              label: 'Save',
-              icon: PhosphorIconsBold.check,
-              onPressed: () async {
-                await _c.saveLayout(_order, _hidden);
-                popRoute();
-              },
+            KBottomPadding(
+              child: PillButton(
+                label: 'Save',
+                icon: PhosphorIconsBold.check,
+                onPressed: () async {
+                  await _c.saveLayout(_order, _hidden);
+                  popRoute();
+                },
+              ),
             ),
           ],
         ),

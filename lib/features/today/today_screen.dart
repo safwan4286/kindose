@@ -40,6 +40,7 @@ class TodayScreen extends GetView<TodayController> {
         final cards = controller.visibleCards;
         var delay = 120;
         return ListView(
+          physics: BouncingScrollPhysics(),
           padding: EdgeInsets.fromLTRB(20.sp, 12.sp, 20.sp, kNavClearance),
           children: [
             const TodayHeader().enter(motion, dy: 0.1),

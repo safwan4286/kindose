@@ -30,7 +30,7 @@ class IntakeScreen extends GetView<IntakeController> {
         child: Column(
           children: [
             Padding(
-              padding: EdgeInsets.fromLTRB(20.sp, 8.sp, 20.sp, 0),
+              padding: EdgeInsets.fromLTRB(20.sp, 8.sp, 20.sp, 10.sp),
               child: Row(
                 children: [
                   BackCircle(onTap: popRoute),
@@ -130,6 +130,21 @@ class _Card extends StatelessWidget {
       ),
     );
   }
+}
+
+/// "Today" heading; the swipe hint shows only when there is something
+/// to swipe.
+class _TodayLabel extends GetView<IntakeController> {
+  const _TodayLabel({required this.kind});
+
+  final String kind;
+
+  @override
+  Widget build(BuildContext context) => Obx(() {
+    controller.watch();
+    final has = controller.entriesFor(kind).isNotEmpty;
+    return _Label('Today', trailing: has ? 'Swipe left to remove' : null);
+  });
 }
 
 class _EntryList extends GetView<IntakeController> {
@@ -266,8 +281,9 @@ class _ProteinTab extends GetView<IntakeController> {
       final browse = controller.browseFoods;
       final diet = controller.dietName;
       return ListView(
+        physics: BouncingScrollPhysics(),
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        padding: EdgeInsets.fromLTRB(20.sp, 18.sp, 20.sp, 32.sp),
+        padding: EdgeInsets.fromLTRB(20.sp, 8.sp, 20.sp, 40.sp),
         children: [
           const _ProteinHero().enter(motion),
           SizedBox(height: 14.sp),
@@ -324,7 +340,7 @@ class _ProteinTab extends GetView<IntakeController> {
             _Card(children: [for (final f in browse) _FoodRow(food: f)]),
           SizedBox(height: 12.sp),
           const _CustomProtein(),
-          _Label('Today', trailing: 'Swipe left to remove'),
+          const _TodayLabel(kind: 'protein'),
           const _EntryList(kind: 'protein'),
           SizedBox(height: 12.sp),
           Text(
@@ -849,7 +865,7 @@ class _WaterTab extends GetView<IntakeController> {
       final dark = k.selectedBorder == AppColors.lime;
       final tileBg = dark ? k.card : AppColors.aquaSoft;
       return ListView(
-        padding: EdgeInsets.fromLTRB(20.sp, 18.sp, 20.sp, 32.sp),
+        padding: EdgeInsets.fromLTRB(20.sp, 8.sp, 20.sp, 32.sp),
         children: [
           Semantics(
             label:
@@ -943,49 +959,49 @@ class _WaterTab extends GetView<IntakeController> {
               ),
             ],
           ).enter(motion, delay: 80),
-          const _Label('Other drinks count too'),
-          Wrap(
-            spacing: 8.sp,
-            runSpacing: 8.sp,
-            children: [
-              for (final d in controller.otherDrinks)
-                PressScale(
-                  semanticLabel:
-                      'Add ${d.label.toLowerCase()}, ${d.ml} millilitres',
-                  onTap: () => controller.addDrink(d),
-                  child: Container(
-                    height: 40.sp,
-                    padding: EdgeInsets.symmetric(horizontal: 14.sp),
-                    decoration: BoxDecoration(
-                      color: k.card,
-                      borderRadius: BorderRadius.circular(20.sp),
-                      border: Border.all(color: k.border, width: 1.5),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          d.label,
-                          style: AppText.small.copyWith(
-                            fontSize: 13.5.sp,
-                            fontWeight: FontWeight.w800,
-                            color: k.text,
-                          ),
-                        ),
-                        Text(
-                          ' · ${d.ml} ml',
-                          style: AppText.small.copyWith(
-                            fontSize: 13.5.sp,
-                            fontWeight: FontWeight.w600,
-                            color: k.faint,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-            ],
-          ).enter(motion, delay: 120),
+          // const _Label('Other drinks count too'),
+          // Wrap(
+          //   spacing: 8.sp,
+          //   runSpacing: 8.sp,
+          //   children: [
+          //     for (final d in controller.otherDrinks)
+          //       PressScale(
+          //         semanticLabel:
+          //             'Add ${d.label.toLowerCase()}, ${d.ml} millilitres',
+          //         onTap: () => controller.addDrink(d),
+          //         child: Container(
+          //           height: 40.sp,
+          //           padding: EdgeInsets.symmetric(horizontal: 14.sp),
+          //           decoration: BoxDecoration(
+          //             color: k.card,
+          //             borderRadius: BorderRadius.circular(20.sp),
+          //             border: Border.all(color: k.border, width: 1.5),
+          //           ),
+          //           child: Row(
+          //             mainAxisSize: MainAxisSize.min,
+          //             children: [
+          //               Text(
+          //                 d.label,
+          //                 style: AppText.small.copyWith(
+          //                   fontSize: 13.5.sp,
+          //                   fontWeight: FontWeight.w800,
+          //                   color: k.text,
+          //                 ),
+          //               ),
+          //               Text(
+          //                 ' · ${d.ml} ml',
+          //                 style: AppText.small.copyWith(
+          //                   fontSize: 13.5.sp,
+          //                   fontWeight: FontWeight.w600,
+          //                   color: k.faint,
+          //                 ),
+          //               ),
+          //             ],
+          //           ),
+          //         ),
+          //       ),
+          //   ],
+          // ).enter(motion, delay: 120),
           SizedBox(height: 16.sp),
           Container(
             padding: EdgeInsets.fromLTRB(16.sp, 14.sp, 16.sp, 14.sp),
@@ -1026,7 +1042,7 @@ class _WaterTab extends GetView<IntakeController> {
               ],
             ),
           ),
-          const _Label('Today', trailing: 'Swipe left to remove'),
+          const _TodayLabel(kind: 'water'),
           const _EntryList(kind: 'water'),
           if (controller.entriesFor('water').isNotEmpty)
             Align(

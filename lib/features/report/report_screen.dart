@@ -309,10 +309,7 @@ class _PreviewCard extends StatelessWidget {
                     opacity: controller.weight.value ? 1 : 0.08,
                     child: Padding(
                       padding: EdgeInsets.only(top: 5.sp),
-                      child: CustomPaint(
-                        size: Size(78.sp, 22.sp),
-                        painter: const _MiniLine(),
-                      ),
+                      child: CustomPaint(size: Size(78.sp, 26.sp), painter: const _MiniLine()),
                     ),
                   ),
                   AnimatedOpacity(
@@ -380,29 +377,59 @@ class _PreviewCard extends StatelessWidget {
   }
 }
 
+/// Tiny weight chart on the mini page: soft panel, faint dashed goal,
+/// a thin smooth line with a light lime fill and an end dot.
 class _MiniLine extends CustomPainter {
   const _MiniLine();
 
+  static const List<double> _pts = [0.22, 0.28, 0.34, 0.42, 0.5, 0.56, 0.62, 0.66];
+
   @override
   void paint(Canvas canvas, Size size) {
-    final pts = [0.1, 0.25, 0.4, 0.55, 0.7, 0.8, 0.9];
-    final path = Path();
-    for (var i = 0; i < pts.length; i++) {
-      final x = size.width * i / (pts.length - 1);
-      final y = size.height * pts[i];
-      if (i == 0) {
-        path.moveTo(x, y);
-      } else {
-        path.lineTo(x, y);
-      }
+    final w = size.width;
+    final h = size.height;
+    final panel = RRect.fromRectAndRadius(Offset.zero & size, const Radius.circular(3));
+    canvas.drawRRect(panel, Paint()..color = const Color(0xFFF6F5F1));
+
+    const padX = 4.0;
+    const padY = 4.0;
+    Offset at(int i) => Offset(
+          padX + (w - padX * 2) * i / (_pts.length - 1),
+          padY + (h - padY * 2) * _pts[i],
+        );
+
+    // Dashed goal line near the bottom.
+    final goalY = padY + (h - padY * 2) * 0.86;
+    final dash = Paint()
+      ..color = const Color(0xFFB9B7C2)
+      ..strokeWidth = 0.6;
+    for (var x = padX; x < w - padX; x += 4) {
+      canvas.drawLine(Offset(x, goalY), Offset(x + 2, goalY), dash);
     }
+
+    // Smooth line through the points.
+    final line = Path()..moveTo(at(0).dx, at(0).dy);
+    for (var i = 1; i < _pts.length; i++) {
+      final p0 = at(i - 1);
+      final p1 = at(i);
+      final mx = (p0.dx + p1.dx) / 2;
+      line.cubicTo(mx, p0.dy, mx, p1.dy, p1.dx, p1.dy);
+    }
+    final fill = Path.from(line)
+      ..lineTo(at(_pts.length - 1).dx, h - padY)
+      ..lineTo(at(0).dx, h - padY)
+      ..close();
+    canvas.drawPath(fill, Paint()..color = AppColors.lime.withValues(alpha: 0.35));
     canvas.drawPath(
-      path,
+      line,
       Paint()
         ..color = AppColors.ink
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.6,
+        ..strokeWidth = 1.1
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round,
     );
+    canvas.drawCircle(at(_pts.length - 1), 1.8, Paint()..color = AppColors.ink);
   }
 
   @override

@@ -51,7 +51,7 @@ class HomeScreen extends GetView<HomeController> {
 const double _navHeight = 68;
 
 /// Bottom padding every tab adds so its content can scroll above the nav.
-double get kNavClearance => _navHeight + math.max(12.0, DeviceManager.instance.bottomBarHeight) + 16;
+double get kNavClearance => _navHeight + math.max(12.0, DeviceManager.instance.bottomBarHeight) + 40;
 
 /// Quick fade + lift when the tab changes. Keeps the [IndexedStack]
 /// (and each tab's scroll position) alive.

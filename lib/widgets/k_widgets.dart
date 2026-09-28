@@ -130,6 +130,8 @@ class _FloatyState extends State<Floaty> with SingleTickerProviderStateMixin {
 }
 
 /// Small on/off switch that matches the design.
+/// Brand switch: ink track with a lime knob when on (lime track with an
+/// ink knob in dark mode), soft grey with a white knob when off.
 class KSwitch extends StatelessWidget {
   const KSwitch({super.key, required this.value, this.width = 44});
 
@@ -138,26 +140,36 @@ class KSwitch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final k = context.k;
+    final dark = k.selectedBorder == AppColors.lime;
     final w = width.sp;
     final h = w * 0.6;
+    final pad = 3.sp;
+    const duration = Duration(milliseconds: 200);
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 180),
+      duration: duration,
+      curve: Curves.easeOutCubic,
       width: w,
       height: h,
-      padding: const EdgeInsets.all(3),
+      padding: EdgeInsets.all(pad),
       decoration: BoxDecoration(
-        color: value ? AppColors.violet : context.k.border,
+        color: value ? (dark ? AppColors.lime : AppColors.ink) : k.border,
         borderRadius: BorderRadius.circular(h / 2),
       ),
       child: AnimatedAlign(
-        duration: const Duration(milliseconds: 180),
+        duration: duration,
+        curve: Curves.easeOutBack,
         alignment: value ? Alignment.centerRight : Alignment.centerLeft,
-        child: Container(
-          width: h - 6,
-          height: h - 6,
-          decoration: const BoxDecoration(
-            color: AppColors.white,
+        child: AnimatedContainer(
+          duration: duration,
+          width: h - pad * 2,
+          height: h - pad * 2,
+          decoration: BoxDecoration(
+            color: value ? (dark ? AppColors.ink : AppColors.lime) : AppColors.white,
             shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(color: AppColors.ink.withValues(alpha: 0.18), blurRadius: 3, offset: const Offset(0, 1)),
+            ],
           ),
         ),
       ),

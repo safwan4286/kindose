@@ -35,33 +35,9 @@ class LogSheet extends StatelessWidget {
     Get.toNamed<void>(route, arguments: args);
   }
 
-  Future<void> _quickProtein(String name, int grams) async {
-    Haptics.instance.lightImpact();
-    popRoute();
-    await _t.addProtein(grams, null, name);
-    showToast('Added $name · $grams g');
-  }
-
-  Future<void> _quickWater() async {
-    Haptics.instance.lightImpact();
-    popRoute();
-    await _t.addWater(250);
-    showToast('Added a glass of water');
-  }
-
   static String _litres(int ml) {
     final l = ml / 1000;
     return l == l.roundToDouble() ? l.toStringAsFixed(0) : l.toStringAsFixed(1);
-  }
-
-  /// Most-used foods first, topped up from the diet list.
-  List<(String, int)> _favourites() {
-    final list = [..._t.favouriteFoods(2)];
-    for (final f in Catalog.quickFoods(_t.profile.value?.diet)) {
-      if (list.length >= 2) break;
-      if (list.every((e) => e.$1 != f.name)) list.add((f.name, f.grams));
-    }
-    return list;
   }
 
   @override
@@ -74,7 +50,7 @@ class LogSheet extends StatelessWidget {
           color: k.bg,
           borderRadius: BorderRadius.vertical(top: Radius.circular(28.sp)),
         ),
-        padding: EdgeInsets.fromLTRB(20.sp, 10.sp, 20.sp, 12.sp),
+        padding: EdgeInsets.fromLTRB(20.sp, 10.sp, 20.sp, 40.sp),
         child: Obx(() {
           final p = _t.profile.value;
           final day = _t.today;
@@ -184,34 +160,6 @@ class LogSheet extends StatelessWidget {
                   ),
                 ],
               ).enter(motion, delay: 170, dy: 0.3),
-              SizedBox(height: 18.sp),
-              const SectionLabel('One tap'),
-              SizedBox(height: 8.sp),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                clipBehavior: Clip.none,
-                child: Row(
-                  children: [
-                    _QuickChip(label: '+ Glass of water', onTap: _quickWater),
-                    for (final (name, grams) in _favourites()) ...[
-                      SizedBox(width: 8.sp),
-                      _QuickChip(
-                        label: '$name · $grams g',
-                        onTap: () => _quickProtein(name, grams),
-                      ),
-                    ],
-                  ],
-                ),
-              ).enter(motion, delay: 220, dy: 0.3),
-              SizedBox(height: 8.sp),
-              Text(
-                'Your most-used items, learned from what you log.',
-                style: AppText.small.copyWith(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w600,
-                  color: k.faint,
-                ),
-              ),
             ],
           );
         }),
@@ -396,44 +344,6 @@ class _Tile extends StatelessWidget {
                 ),
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _QuickChip extends StatelessWidget {
-  const _QuickChip({required this.label, required this.onTap});
-
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final k = context.k;
-    return PressScale(
-      semanticLabel: label.startsWith('+')
-          ? 'Add a glass of water'
-          : 'Add $label',
-      onTap: onTap,
-      child: ExcludeSemantics(
-        child: Container(
-          height: 40.sp,
-          padding: EdgeInsets.symmetric(horizontal: 14.sp),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: k.card,
-            borderRadius: BorderRadius.circular(20.sp),
-            border: Border.all(color: k.border, width: 1.5),
-          ),
-          child: Text(
-            label,
-            style: AppText.small.copyWith(
-              fontSize: 13.5.sp,
-              fontWeight: FontWeight.w800,
-              color: k.text,
-            ),
           ),
         ),
       ),

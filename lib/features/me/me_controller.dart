@@ -102,6 +102,54 @@ class MeController extends GetxController {
     return '${Catalog.formLabel(p.form)} · $when';
   }
 
+  String get formLabel {
+    final p = tracker.profile.value;
+    return p == null ? '' : Catalog.formLabel(p.form);
+  }
+
+  /// "Injection" or "By mouth", under the form.
+  String get formSub => isTablet ? 'By mouth' : 'Injection';
+
+  /// "Tuesdays", "Daily", "Every 2nd Tue", "Every 10 days".
+  String get scheduleDay {
+    final p = tracker.profile.value;
+    if (p == null) return '—';
+    return switch (p.everyDays) {
+      1 => 'Daily',
+      7 => '${Dates.weekdayShort(p.shotWeekday)}s',
+      14 => 'Every 2nd ${Dates.weekdayShort(p.shotWeekday)}',
+      _ => 'Every ${p.everyDays} days',
+    };
+  }
+
+  String get scheduleTime => Dates.timeOfDay(tracker.profile.value?.shotMinutes ?? 480);
+
+  DateTime? get _next => hasMedicine ? tracker.nextDoseAt(DateTime.now()) : null;
+
+  /// "Tue, 6 Oct", or "Overdue".
+  String get nextShort {
+    final next = _next;
+    if (next == null) return '—';
+    final today = Dates.dateOnly(DateTime.now());
+    if (Dates.dateOnly(next).isBefore(today)) return 'Overdue';
+    return Dates.shortWithDay(next);
+  }
+
+  /// "today", "tomorrow", "in 6 days", or "log it when taken".
+  String get nextSub {
+    final next = _next;
+    if (next == null) return '';
+    final days = Dates.daysBetween(Dates.dateOnly(DateTime.now()), Dates.dateOnly(next));
+    if (days < 0) return 'Log it when taken';
+    return switch (days) {
+      0 => 'Today',
+      1 => 'Tomorrow',
+      _ => 'In $days days',
+    };
+  }
+
+  bool get isTablet => tracker.profile.value?.form == 'tablet';
+
   String get nextDoseLine {
     if (!hasMedicine) return '';
     final now = DateTime.now();
