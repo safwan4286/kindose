@@ -22,6 +22,7 @@ class PillButton extends StatelessWidget {
     this.icon = PhosphorIconsBold.arrowRight,
     this.busy = false,
     this.lime = false,
+    this.ink = false,
   });
 
   final String label;
@@ -32,11 +33,18 @@ class PillButton extends StatelessWidget {
   /// Lime pill for dark screens.
   final bool lime;
 
+  /// Always ink, even in dark mode (for use on a lime card).
+  final bool ink;
+
   @override
   Widget build(BuildContext context) {
     final enabled = onPressed != null && !busy;
     // Ink in light mode, lime in dark mode (selectedBorder is lime there).
-    final bg = lime || context.k.selectedBorder == AppColors.lime ? AppColors.lime : AppColors.ink;
+    final bg = ink
+        ? AppColors.ink
+        : lime || context.k.selectedBorder == AppColors.lime
+            ? AppColors.lime
+            : AppColors.ink;
     final onLime = bg == AppColors.lime;
     final fg = onLime ? AppColors.ink : AppColors.white;
     final circle = onLime ? AppColors.ink : AppColors.lime;

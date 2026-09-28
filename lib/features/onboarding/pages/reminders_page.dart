@@ -31,7 +31,7 @@ class RemindersPage extends GetView<OnboardingController> {
     final time = Dates.timeOfDay(controller.shotMinutes.value);
     final tablet = controller.form.value == 'tablet';
     final goal = controller.suggestedProtein;
-    final site = Catalog.siteName(Catalog.nextSite(null));
+    final site = Catalog.siteName(Catalog.nextSite(const []));
 
     final previews = [
       _Preview(

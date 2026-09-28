@@ -64,13 +64,38 @@ class Medicine {
   String get title => pickTitle ?? name;
 }
 
+/// Where a food's protein comes from, used to filter by diet.
+enum FoodSrc { plant, dairy, egg, meat }
+
 class Food {
-  const Food(this.id, this.name, this.grams, this.icon);
+  const Food(this.id, this.name, this.grams, this.icon, {this.portion = '', this.cat = '', this.src = FoodSrc.plant});
 
   final String id;
   final String name;
+
+  /// Protein in grams for one [portion].
   final int grams;
   final String icon;
+
+  /// "100 g", "1 bowl". Empty when the name already says it.
+  final String portion;
+
+  /// Browse category id (see [Catalog.foodCats]).
+  final String cat;
+  final FoodSrc src;
+
+  /// Saved on log entries: "Paneer, 100 g".
+  String get label => portion.isEmpty ? name : '$name, $portion';
+}
+
+/// A drink for the water screen. Every millilitre counts toward water.
+class Drink {
+  const Drink(this.id, this.label, this.ml, {this.dairy = false});
+
+  final String id;
+  final String label;
+  final int ml;
+  final bool dairy;
 }
 
 class InjectionSite {
@@ -79,7 +104,8 @@ class InjectionSite {
   final String id;
   final String name;
 
-  /// Position on the 160 × 250 body map.
+  /// Centre of the spot on the 200 × 300 body map (body facing you, so the
+  /// user's right side is on the left of the drawing).
   final double x;
   final double y;
 }
@@ -293,24 +319,40 @@ class Catalog {
     }
   }
 
+  /// Rotation order: belly, thighs, arms, alternating sides. Old logs
+  /// used 'lbelly' / 'rbelly', which are now the lower belly spots.
   static const List<InjectionSite> sites = [
-    InjectionSite('lbelly', 'Left belly', 80, 110),
-    InjectionSite('rbelly', 'Right belly', 50, 110),
-    InjectionSite('lthigh', 'Left thigh', 81, 182),
-    InjectionSite('rthigh', 'Right thigh', 49, 182),
-    InjectionSite('larm', 'Left arm', 114, 86),
-    InjectionSite('rarm', 'Right arm', 16, 86),
+    InjectionSite('lbelly', 'Lower left belly', 121, 162),
+    InjectionSite('rbelly', 'Lower right belly', 79, 162),
+    InjectionSite('lthigh', 'Left thigh', 120, 215),
+    InjectionSite('rthigh', 'Right thigh', 80, 215),
+    InjectionSite('lbellyU', 'Upper left belly', 121, 128),
+    InjectionSite('rbellyU', 'Upper right belly', 79, 128),
+    InjectionSite('larm', 'Left arm', 151, 112),
+    InjectionSite('rarm', 'Right arm', 49, 112),
   ];
 
   static String siteName(String id) =>
       sites.firstWhere((s) => s.id == id, orElse: () => sites.first).name;
 
-  /// The site after [lastId] in the rotation.
-  static String nextSite(String? lastId) {
-    if (lastId == null) return sites.first.id;
-    final i = sites.indexWhere((s) => s.id == lastId);
-    return sites[(i + 1) % sites.length].id;
+  /// The spot used longest ago. [history] is site ids, newest first.
+  /// Spots never used win, in rotation order.
+  static String nextSite(List<String> history) {
+    var best = sites.first.id;
+    var bestAge = -1;
+    for (final s in sites) {
+      final i = history.indexOf(s.id);
+      final age = i == -1 ? 1 << 30 : i;
+      if (age > bestAge) {
+        best = s.id;
+        bestAge = age;
+      }
+    }
+    return best;
   }
+
+  /// "How did it feel?" answers, index = stored value.
+  static const List<String> painLabels = ['None', 'A little', 'Sore', 'Painful'];
 
   static const List<Mood> moods = [
     Mood('Great', Img3d.great),
@@ -338,6 +380,170 @@ class Catalog {
     Food('rajma', 'Rajma rice', 12, Img3d.curryRice),
   ];
 
+  /// Browse chips on the protein screen.
+  static const List<(String, String)> foodCats = [
+    ('all', 'All'),
+    ('dairy', 'Dairy'),
+    ('dal', 'Dal & beans'),
+    ('soy', 'Soy & tofu'),
+    ('egg', 'Eggs'),
+    ('meat', 'Meat & fish'),
+    ('shake', 'Shakes & bars'),
+    ('meal', 'Everyday'),
+    ('snack', 'Snacks'),
+  ];
+
+  /// Protein food library. Typical amounts for the portion shown; labels
+  /// and recipes vary, which the screen says.
+  static const List<Food> foods = [
+    Food('paneer', 'Paneer', 19, Img3d.paneer, portion: '100 g', cat: 'dairy', src: FoodSrc.dairy),
+    Food('curd', 'Greek yogurt', 17, Img3d.milk, portion: '1 cup, 170 g', cat: 'dairy', src: FoodSrc.dairy),
+    Food('dahi', 'Curd (dahi)', 5, Img3d.milk, portion: '1 bowl, 150 g', cat: 'dairy', src: FoodSrc.dairy),
+    Food('milk', 'Milk', 8, Img3d.milk, portion: '1 glass, 250 ml', cat: 'dairy', src: FoodSrc.dairy),
+    Food('cheese', 'Cheese slice', 4, Img3d.paneer, portion: '1 slice', cat: 'dairy', src: FoodSrc.dairy),
+    Food('dal', 'Dal', 8, Img3d.dal, portion: '1 bowl', cat: 'dal'),
+    Food('rajma', 'Rajma or chole', 9, Img3d.curryRice, portion: '1 bowl', cat: 'dal'),
+    Food('sprouts', 'Moong sprouts', 7, Img3d.seedling, portion: '1 bowl', cat: 'dal'),
+    Food('chilla', 'Besan chilla', 10, Img3d.pot, portion: '2 pieces', cat: 'dal'),
+    Food('chana', 'Roasted chana', 6, Img3d.dal, portion: '30 g', cat: 'snack'),
+    Food('soya', 'Soya chunks', 26, Img3d.pot, portion: '50 g dry', cat: 'soy'),
+    Food('tofu', 'Tofu', 12, Img3d.pot, portion: '100 g', cat: 'soy'),
+    Food('soymilk', 'Soy milk', 7, Img3d.milk, portion: '1 glass, 250 ml', cat: 'soy'),
+    Food('egg', 'Eggs', 12, Img3d.egg, portion: '2 whole', cat: 'egg', src: FoodSrc.egg),
+    Food('eggwhite', 'Egg whites', 11, Img3d.egg, portion: '3 whites', cat: 'egg', src: FoodSrc.egg),
+    Food('chicken', 'Chicken breast', 31, Img3d.chicken, portion: '100 g cooked', cat: 'meat', src: FoodSrc.meat),
+    Food('chickencurry', 'Chicken curry', 20, Img3d.chicken, portion: '1 bowl', cat: 'meat', src: FoodSrc.meat),
+    Food('fish', 'Fish', 22, Img3d.pot, portion: '100 g cooked', cat: 'meat', src: FoodSrc.meat),
+    Food('mutton', 'Mutton', 25, Img3d.chicken, portion: '100 g cooked', cat: 'meat', src: FoodSrc.meat),
+    Food('prawns', 'Prawns', 24, Img3d.pot, portion: '100 g cooked', cat: 'meat', src: FoodSrc.meat),
+    Food('whey', 'Whey shake', 24, Img3d.whey, portion: '1 scoop', cat: 'shake', src: FoodSrc.dairy),
+    Food('plant', 'Plant protein shake', 20, Img3d.whey, portion: '1 scoop', cat: 'shake'),
+    Food('bar', 'Protein bar', 20, Img3d.whey, portion: '1 bar', cat: 'shake', src: FoodSrc.dairy),
+    Food('roti', 'Roti', 3, Img3d.curryRice, portion: '1 medium', cat: 'meal'),
+    Food('rice', 'Rice', 4, Img3d.curryRice, portion: '1 cup cooked', cat: 'meal'),
+    Food('idli', 'Idli', 4, Img3d.curryRice, portion: '2 pieces', cat: 'meal'),
+    Food('poha', 'Poha', 5, Img3d.curryRice, portion: '1 plate', cat: 'meal'),
+    Food('peanuts', 'Peanuts', 7, Img3d.seedling, portion: '30 g', cat: 'snack'),
+    Food('pb', 'Peanut butter', 7, Img3d.seedling, portion: '2 tbsp', cat: 'snack'),
+    Food('almonds', 'Almonds', 6, Img3d.seedling, portion: '30 g', cat: 'snack'),
+  ];
+
+  /// [foods] allowed for a diet ('veg', 'jain', 'egg', 'vegan', 'nonveg').
+  static List<Food> foodsFor(String? diet) => foods.where((f) {
+        switch (diet) {
+          case 'veg' || 'jain':
+            return f.src == FoodSrc.plant || f.src == FoodSrc.dairy;
+          case 'egg':
+            return f.src != FoodSrc.meat;
+          case 'vegan':
+            return f.src == FoodSrc.plant;
+          default:
+            return true;
+        }
+      }).toList();
+
+  /// Browse chips that have at least one food for this diet.
+  static List<(String, String)> foodCatsFor(String? diet) {
+    final list = foodsFor(diet);
+    return foodCats.where((c) => c.$1 == 'all' || list.any((f) => f.cat == c.$1)).toList();
+  }
+
+  /// The library food a saved label came from ("Paneer, 100 g" or the
+  /// Today chip name "Greek yogurt"), or null.
+  static Food? foodByLabel(String label) {
+    for (final f in foods) {
+      if (f.label == label || f.name == label || label.startsWith('${f.name},')) return f;
+    }
+    return null;
+  }
+
+  static const List<Drink> waterSizes = [
+    Drink('glass', 'Glass', 250),
+    Drink('bottle', 'Bottle', 500),
+    Drink('litre', '1 litre', 1000),
+  ];
+
+  static const List<Drink> otherDrinks = [
+    Drink('tea', 'Tea', 150, dairy: true),
+    Drink('coffee', 'Coffee', 150),
+    Drink('milk', 'Milk', 200, dairy: true),
+    Drink('chaas', 'Buttermilk', 200, dairy: true),
+    Drink('coconut', 'Coconut water', 250),
+    Drink('nimbu', 'Nimbu pani', 250),
+  ];
+
+  /// One-tap protein foods for Today, matched to how the user eats
+  /// ('veg', 'egg', 'nonveg', 'vegan', 'jain'; empty = everyday list).
+  static List<Food> quickFoods(String? diet) => switch (diet) {
+        'veg' || 'jain' => const [
+            Food('paneer', 'Paneer, 100 g', 19, Img3d.paneer),
+            Food('curd', 'Greek yogurt', 17, Img3d.milk),
+            Food('dal', 'Dal, 1 bowl', 8, Img3d.dal),
+            Food('soya', 'Soya chunks, 50 g', 26, Img3d.pot),
+            Food('whey', 'Whey shake', 24, Img3d.whey),
+          ],
+        'egg' => const [
+            Food('egg', '2 eggs', 12, Img3d.egg),
+            Food('paneer', 'Paneer, 100 g', 19, Img3d.paneer),
+            Food('curd', 'Greek yogurt', 17, Img3d.milk),
+            Food('dal', 'Dal, 1 bowl', 8, Img3d.dal),
+            Food('whey', 'Whey shake', 24, Img3d.whey),
+          ],
+        'vegan' => const [
+            Food('tofu', 'Tofu, 100 g', 12, Img3d.pot),
+            Food('soya', 'Soya chunks, 50 g', 26, Img3d.pot),
+            Food('dal', 'Dal, 1 bowl', 8, Img3d.dal),
+            Food('plant', 'Plant protein shake', 20, Img3d.whey),
+            Food('peanut', 'Peanut butter, 2 tbsp', 7, Img3d.seedling),
+          ],
+        _ => const [
+            Food('egg', '2 eggs', 12, Img3d.egg),
+            Food('chicken', 'Chicken, 100 g', 31, Img3d.chicken),
+            Food('curd', 'Greek yogurt', 17, Img3d.milk),
+            Food('paneer', 'Paneer, 100 g', 19, Img3d.paneer),
+            Food('whey', 'Whey shake', 24, Img3d.whey),
+          ],
+      };
+
+  /// Short, general tips for Today, grouped by what the user asked help
+  /// with. Friendly habits only, never medical instructions.
+  static const Map<String, List<String>> tips = {
+    'muscle': [
+      'Start each meal with the protein. Smaller appetite means the first bites count most.',
+      'Spread protein over the day. 25–30 g per meal is easier than one big serving.',
+      'A short strength workout 2–3 times a week helps you keep muscle while you lose weight.',
+    ],
+    'nausea': [
+      'Eat slowly and stop at "just full". Big meals are the usual trigger.',
+      'Greasy and very sweet foods are harder on the stomach this week.',
+      'Sip water through the day instead of large amounts at once.',
+    ],
+    'noise': [
+      'Notice when food thoughts get loud. Logging it helps you see the pattern.',
+      'Keep an easy protein snack ready for the moments cravings show up.',
+    ],
+    'remember': [
+      'Keep your pen or tablets somewhere you see on dose day.',
+      'Logging right after you take it keeps your schedule exact.',
+    ],
+    'nerves': [
+      'Take a slow breath out as you inject. Many people find it helps.',
+      'Same calm spot, same time each week. Routine makes it easier.',
+    ],
+    'progress': [
+      'Weigh in at the same time of day, like after waking up, for a fair trend.',
+      'Weekly averages tell the story better than any single day.',
+    ],
+    'cost': [
+      'Note when you open a new pen so refills never catch you off guard.',
+    ],
+  };
+
+  static const List<String> doseDayTips = [
+    'Smaller meals and plenty of water today can make the next two days feel easier.',
+    'Protein first, go light on fried food today.',
+  ];
+
   static const List<FocusItem> focusItems = [
     FocusItem('muscle', 'Keeping my muscle', 'Protein and strength', Img3d.biceps),
     FocusItem('nausea', 'Nausea and stomach', 'Spot your patterns', Img3d.nauseated),
@@ -357,5 +563,15 @@ class Catalog {
     'headache': 'Headache',
     'burping': 'Burping',
     'dizzy': 'Dizziness',
+    'bloat': 'Bloating',
+    'vomit': 'Vomiting',
   };
+
+  /// Side-effect chips on the check-in, in order (nausea has its own row).
+  static const List<String> checkInEffects = [
+    'tired', 'constip', 'heartburn', 'bloat', 'burping', 'diarrhoea', 'vomit', 'headache', 'dizzy',
+  ];
+
+  /// Words for a side-effect level (index 1–3).
+  static const List<String> levelWords = ['', 'mild', 'moderate', 'severe'];
 }

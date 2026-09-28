@@ -2,6 +2,8 @@ import 'package:get/get.dart';
 
 import '../features/check_in/check_in_binding.dart';
 import '../features/check_in/check_in_screen.dart';
+import '../features/dose_done/dose_done_binding.dart';
+import '../features/dose_done/dose_done_screen.dart';
 import '../features/home/home_binding.dart';
 import '../features/home/home_screen.dart';
 import '../features/intake/intake_binding.dart';
@@ -28,6 +30,9 @@ class Routes {
   static const String plus = '/plus';
   static const String home = '/home';
   static const String logDose = '/log-dose';
+
+  /// Pass a DoseDoneArgs.
+  static const String doseDone = '/dose-done';
 
   /// Pass 'protein' or 'water' as the argument.
   static const String addIntake = '/add-intake';
@@ -78,6 +83,12 @@ class AppPages {
       name: Routes.logDose,
       page: () => const LogDoseScreen(),
       binding: LogDoseBinding(),
+    ),
+    GetPage<dynamic>(
+      name: Routes.doseDone,
+      page: () => const DoseDoneScreen(),
+      binding: DoseDoneBinding(),
+      transition: Transition.fadeIn,
     ),
     GetPage<dynamic>(
       name: Routes.addIntake,

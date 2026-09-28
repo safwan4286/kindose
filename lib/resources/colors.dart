@@ -31,6 +31,14 @@ class AppColors {
   static const Color dangerSoft = Color(0xFFFDE8E8);
   static const Color dangerText = Color(0xFF6B1414);
 
+  // Gentle warnings ("used last time", "already logged").
+  static const Color amberSoft = Color(0xFFFDEFD9);
+  static const Color amberWash = Color(0xFFFDF6EA);
+  static const Color amberText = Color(0xFF8A4B00);
+
+  /// Top level on the "How did it feel?" dots.
+  static const Color pain = Color(0xFFE0603A);
+
   static const Color white = Color(0xFFFFFFFF);
 
 

@@ -1,32 +1,82 @@
 import 'dart:async';
 
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../models/logs.dart';
 import '../../models/user_profile.dart';
 import '../../resources/catalog.dart';
 import '../../resources/date_utils.dart';
-import '../../resources/images.dart';
 import '../../resources/routes.dart';
+import '../../services/haptics/haptics.dart';
+import '../../services/notifications/notification_service.dart';
 import '../../services/tracker_service.dart';
+import '../../widgets/k_ruler.dart';
 import '../../widgets/toast.dart';
 import '../home/weight_sheet.dart';
 
-class ChecklistItem {
-  const ChecklistItem(this.label, this.icon, this.done, this.onTap);
+/// What the top card shows.
+enum DoseCardState {
+  /// No medicine chosen yet ("Not decided" in onboarding).
+  noMedicine,
 
-  final String label;
-  final String icon;
-  final bool done;
-  final void Function()? onTap;
+  /// Starting soon: first dose is ahead.
+  firstDose,
+
+  /// Weekly / every-N-days, next dose in the future.
+  upcoming,
+
+  /// Due today, not logged yet.
+  doseDay,
+
+  /// Was due on an earlier day, not logged.
+  overdue,
+
+  /// Logged today.
+  takenToday,
+
+  /// Daily tablet (taken or not shown on the card itself).
+  daily,
 }
 
-class TodayTip {
-  const TodayTip(this.title, this.text, this.icon);
+/// Cards the user can reorder or hide with "Edit Today".
+class TodayCard {
+  const TodayCard(this.id, this.label);
 
+  final String id;
+  final String label;
+
+  static const List<TodayCard> all = [
+    TodayCard('protein', 'Protein'),
+    TodayCard('water', 'Water'),
+    TodayCard('weight', 'Weight'),
+    TodayCard('feel', 'How are you feeling'),
+    TodayCard('tip', 'Tip for you'),
+    TodayCard('log', "Today's log"),
+  ];
+}
+
+class SetupItem {
+  const SetupItem(this.label, this.done, this.onTap);
+
+  final String label;
+  final bool done;
+  final VoidCallback? onTap;
+}
+
+/// One row in "Today's log".
+class TodayLogRow {
+  const TodayLogRow({required this.at, required this.title, required this.value, required this.kind, this.entryId});
+
+  final DateTime? at;
   final String title;
-  final String text;
-  final String icon;
+  final String value;
+
+  /// 'protein', 'water', 'dose', 'weight' (for the colour dot).
+  final String kind;
+
+  /// Set for protein / water rows, which can be swiped away.
+  final String? entryId;
 }
 
 /// Everything on the Today tab. Values are getters over [TrackerService],
@@ -53,63 +103,143 @@ class TodayController extends GetxController {
     super.onClose();
   }
 
-  UserProfile? get profile => tracker.profile.value;
-  DayLog get day => tracker.dayLog(now.value);
-
-  String get medicineLabel {
-    final p = profile;
-    if (p == null) return '';
-    final name = Catalog.medicineName(p.medicineId, p.customMedicine);
-    return p.strengthMg > 0 ? '$name ${Catalog.mg(p.strengthMg)} mg' : name;
+  /// Touch every reactive source the screen depends on (call inside Obx).
+  void watch() {
+    now.value;
+    tracker.profile.value;
+    tracker.doses.length;
+    tracker.days.length;
+    tracker.weights.length;
+    tracker.setupDismissed.value;
+    tracker.todayOrder.length;
+    tracker.todayHidden.length;
+    tracker.nextDoseOverride.value;
   }
 
-  bool get isTablet => profile?.form == 'tablet';
+  UserProfile? get profile => tracker.profile.value;
+  DayLog get day => tracker.dayLog(now.value);
+  String get greeting => Dates.greeting(now.value);
+  String get dateLine =>
+      '${Dates.weekdayName(now.value.weekday)}, ${now.value.day} ${Dates.monthShort(now.value.month)}'.toUpperCase();
+  int get streak => tracker.logStreak;
 
   // ------------------------------------------------------------------ dose
 
+  bool get isTablet => profile?.form == 'tablet';
   DateTime? get nextDoseAt => tracker.nextDoseAt(now.value);
-  bool get isDoseDay => tracker.isDoseDay(now.value);
   DoseLog? get doseToday => tracker.doseOn(now.value);
-  bool get isOverdue {
-    final next = nextDoseAt;
-    return next != null && Dates.dateOnly(next).isBefore(Dates.dateOnly(now.value));
+
+  String get medicineName {
+    final p = profile;
+    if (p == null) return '';
+    return Catalog.medicineName(p.medicineId, p.customMedicine);
   }
 
-  String get countdown {
-    final next = nextDoseAt;
-    if (next == null) return '—';
-    return Dates.countdown(next.difference(now.value));
+  String? get medicineMark => profile == null ? null : Catalog.medicine(profile!.medicineId).mark;
+
+  String get doseLabel {
+    final p = profile;
+    if (p == null || p.strengthMg <= 0) return '';
+    return Catalog.mgLabel(p.strengthMg);
   }
 
-  String get nextDoseLine {
+  /// "Week 16" since treatment start (or first dose).
+  int? get treatmentWeek {
+    final start = profile?.treatmentStartedAt ??
+        (tracker.doses.isEmpty ? null : tracker.doses.last.takenAt);
+    if (start == null || start.isAfter(now.value)) return null;
+    return Dates.daysBetween(start, now.value) ~/ 7 + 1;
+  }
+
+  /// Number of this dose in the log (the one about to be taken).
+  int get doseNumber => tracker.doses.length + 1;
+
+  DoseCardState get doseState {
+    final p = profile;
+    if (p == null || p.medicineId == Catalog.undecided) return DoseCardState.noMedicine;
+    if (p.isDaily) return DoseCardState.daily;
+    if (doseToday != null) return DoseCardState.takenToday;
+    final next = nextDoseAt;
+    if (next == null) return DoseCardState.noMedicine;
+    final today = Dates.dateOnly(now.value);
+    final nextDay = Dates.dateOnly(next);
+    if (nextDay.isBefore(today)) return DoseCardState.overdue;
+    if (nextDay == today) return DoseCardState.doseDay;
+    if (tracker.doses.isEmpty) return DoseCardState.firstDose;
+    return DoseCardState.upcoming;
+  }
+
+  int get daysUntilNext {
+    final next = nextDoseAt;
+    return next == null ? 0 : Dates.daysBetween(now.value, next);
+  }
+
+  String get countdownLabel {
+    final d = daysUntilNext;
+    if (d <= 0) return 'today';
+    if (d == 1) return 'tomorrow';
+    return 'in $d days';
+  }
+
+  String get nextDoseWhen {
     final next = nextDoseAt;
     final p = profile;
     if (next == null || p == null) return '';
-    final day = Dates.relativeDay(next, now.value);
-    final site = isTablet ? 'tablet' : Catalog.siteName(tracker.nextSiteId).toLowerCase();
-    return '$day · ${Dates.timeOfDay(p.shotMinutes)} · $site';
+    return '${Dates.weekdayName(next.weekday)} · ${Dates.timeOfDay(p.shotMinutes)}';
   }
+
+  String get doseTime => Dates.timeOfDay(profile?.shotMinutes ?? 480);
 
   String get nextSiteName => Catalog.siteName(tracker.nextSiteId);
+  String siteName(String id) => Catalog.siteName(id);
+  String timeOf(DateTime t) => Dates.time(t);
+  String? get lastSiteName => tracker.lastSiteId == null ? null : Catalog.siteName(tracker.lastSiteId!);
 
-  String siteNameOf(String id) => Catalog.siteName(id);
-
-  String get streakLabel {
-    final n = tracker.onTimeStreak;
-    final p = profile;
-    if (n == 0 || p == null) return '';
-    final unit = p.everyDays == 7 ? 'week' : p.everyDays == 1 ? 'day' : 'dose';
-    return '$n ${n == 1 ? unit : '${unit}s'} on time';
+  /// 7 cells ending on the next dose day: 'done', 'today', 'dose', ''.
+  List<(String letter, String state)> get weekStrip {
+    final next = nextDoseAt;
+    final today = Dates.dateOnly(now.value);
+    final end = next == null ? today.add(const Duration(days: 6)) : Dates.dateOnly(next);
+    final start = end.subtract(const Duration(days: 6));
+    return [
+      for (var i = 0; i < 7; i++)
+        () {
+          final d = start.add(Duration(days: i));
+          final letter = Dates.weekdayName(d.weekday).substring(0, 1);
+          if (tracker.doseOn(d) != null) return (letter, 'done');
+          if (d == end) return (letter, 'dose');
+          if (d == today) return (letter, 'today');
+          return (letter, '');
+        }(),
+    ];
   }
 
-  Future<void> markDoseDone() async {
+  /// Last 7 days for a daily tablet: 'done', 'today', 'missed'.
+  List<(String letter, String state)> get dailyStrip {
+    final today = Dates.dateOnly(now.value);
+    return [
+      for (var i = 6; i >= 0; i--)
+        () {
+          final d = today.subtract(Duration(days: i));
+          final letter = Dates.weekdayName(d.weekday).substring(0, 1);
+          if (tracker.doseOn(d) != null) return (letter, 'done');
+          return (letter, i == 0 ? 'today' : 'missed');
+        }(),
+    ];
+  }
+
+  Future<void> logDose() async {
+    Haptics.instance.lightImpact();
+    await Get.toNamed<void>(Routes.logDose);
+  }
+
+  /// Daily tablet: one tap.
+  Future<void> markTaken() async {
     if (busy.value) return;
     busy.value = true;
     try {
-      await tracker.addDose(
-        takenAt: DateTime.now(),
-        site: isTablet ? '' : tracker.nextSiteId,
-      );
+      await tracker.addDose(takenAt: DateTime.now(), site: '');
+      Haptics.instance.mediumImpact();
     } finally {
       busy.value = false;
     }
@@ -118,82 +248,250 @@ class TodayController extends GetxController {
   Future<void> undoDoseToday() async {
     final d = doseToday;
     if (d == null) return;
+    Haptics.instance.selectionClick();
     await tracker.removeDose(d.id);
     showToast('Dose removed');
   }
 
-  String get nextAfterToday {
-    final next = tracker.nextDoseAt(now.value);
-    if (next == null) return '';
-    return Dates.shortWithDay(next);
+  Future<void> moveDate(BuildContext context) async {
+    Haptics.instance.selectionClick();
+    final today = Dates.dateOnly(now.value);
+    final current = nextDoseAt;
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: current == null || current.isBefore(today) ? today : Dates.dateOnly(current),
+      firstDate: today,
+      lastDate: today.add(const Duration(days: 21)),
+      helpText: 'Move this dose to',
+    );
+    if (picked == null) return;
+    await tracker.moveNextDose(picked);
+    showToast('Next dose moved to ${Dates.shortWithDay(picked)}');
   }
 
-  // --------------------------------------------------------- protein/water
+  void chooseMedicine() => Get.toNamed<void>(Routes.editPlan);
+
+  // --------------------------------------------------------------- protein
 
   int get proteinGoal => profile?.proteinGoalG ?? 100;
+  int get proteinLeft => (proteinGoal - day.proteinG).clamp(0, 999);
+  double get proteinProgress => proteinGoal == 0 ? 0 : (day.proteinG / proteinGoal).clamp(0.0, 1.0);
+  List<Food> get quickFoods => Catalog.quickFoods(profile?.diet);
+
+  Future<void> addProtein(int grams, [String? label]) async {
+    Haptics.instance.lightImpact();
+    await tracker.addProtein(grams, null, label);
+    showToast(label == null ? 'Added $grams g protein' : 'Added $label · $grams g');
+  }
+
+  void openProtein() => Get.toNamed<void>(Routes.addIntake, arguments: 'protein');
+
+  // ----------------------------------------------------------------- water
+
   int get waterGoal => profile?.waterGoalMl ?? 2500;
-  int get glassCount => (waterGoal / glassMl).round().clamp(4, 12);
+  int get glassCount => (waterGoal / glassMl).ceil().clamp(4, 21);
   int get glassesFull => (day.waterMl / glassMl).floor();
 
-  String get litres {
-    final l = day.waterMl / 1000;
-    return l == l.roundToDouble() ? l.toStringAsFixed(0) : l.toStringAsFixed(2).replaceAll(RegExp(r'0$'), '');
+  String get litres => _litres(day.waterMl);
+  String get waterGoalLitres => _litres(waterGoal);
+
+  static String _litres(int ml) {
+    final l = ml / 1000;
+    if (l == l.roundToDouble()) return l.toStringAsFixed(0);
+    final s = l.toStringAsFixed(2);
+    return s.endsWith('0') ? s.substring(0, s.length - 1) : s;
   }
 
-  String get waterGoalLabel {
-    final l = waterGoal / 1000;
-    return '${l == l.roundToDouble() ? l.toStringAsFixed(0) : l.toStringAsFixed(1)} L';
-  }
-
+  /// Tap an empty glass to fill up to it; tap the last full one to empty it.
   void tapGlass(int i) {
     final full = glassesFull;
-    final ml = (i < full && i == full - 1) ? i * glassMl : (i + 1) * glassMl;
+    final ml = (i == full - 1) ? i * glassMl : (i + 1) * glassMl;
+    if (ml > day.waterMl) {
+      Haptics.instance.lightImpact();
+    } else {
+      Haptics.instance.selectionClick();
+    }
     tracker.setWater(ml);
   }
 
-  void setMood(int m) => tracker.setMood(m);
+  // ---------------------------------------------------------------- weight
 
-  // ------------------------------------------------------------- checklist
+  bool get useKg => profile?.useKg ?? true;
+  String get unit => useKg ? 'kg' : 'lb';
+  String fmtWeight(double kg) => useKg ? kg.toStringAsFixed(1) : (kg * Imperial.lbPerKg).toStringAsFixed(0);
 
-  List<ChecklistItem> get checklist => [
-        const ChecklistItem('Set up your plan', Img3d.calendar, true, null),
-        ChecklistItem(
-          isTablet ? 'Log your first tablet' : 'Log your first dose',
-          isTablet ? Img3d.pill : Img3d.syringe,
-          tracker.doses.isNotEmpty,
-          () => Get.toNamed<void>(Routes.logDose),
-        ),
-        ChecklistItem(
-          'Add your first protein',
-          Img3d.egg,
-          tracker.days.values.any((d) => d.proteinG > 0),
-          () => Get.toNamed<void>(Routes.addIntake, arguments: 'protein'),
-        ),
-        ChecklistItem(
-          'Log a weigh-in',
-          Img3d.chartDown,
-          tracker.weights.length > 1,
-          showWeightSheet,
-        ),
-      ];
+  double? get latestKg => tracker.latestWeightKg;
+  double get startKg => tracker.startWeightKg;
+  double? get goalKg => profile?.goalWeightKg;
 
-  bool get showChecklist => checklist.any((c) => !c.done);
+  /// 0–1 of the way from start to goal (0 without a goal).
+  double get goalProgress {
+    final g = goalKg;
+    final now = latestKg;
+    if (g == null || now == null || (startKg - g).abs() < 0.1) return 0;
+    return ((startKg - now) / (startKg - g)).clamp(0.0, 1.0);
+  }
+
+  String get changeSinceStart {
+    final now = latestKg;
+    if (now == null) return '';
+    final diff = now - startKg;
+    if (diff.abs() < 0.05) return 'Same as your start';
+    final amount = useKg ? diff.abs().toStringAsFixed(1) : (diff.abs() * Imperial.lbPerKg).toStringAsFixed(1);
+    return '${diff < 0 ? '−' : '+'}$amount $unit since start';
+  }
+
+  String get lastWeighIn {
+    if (tracker.weights.isEmpty) return 'No weigh-in yet';
+    final days = Dates.daysBetween(tracker.weights.last.date, now.value);
+    if (days <= 0) return 'Weighed today';
+    if (days == 1) return 'Weighed yesterday';
+    return 'Weighed $days days ago';
+  }
+
+  void logWeight() {
+    Haptics.instance.selectionClick();
+    showWeightSheet();
+  }
+
+  // ------------------------------------------------------------------ feel
+
+  /// Faces left to right: Rough … Great. Catalog.moods is Great … Rough.
+  static const List<String> faceLabels = ['Rough', 'Low', 'Okay', 'Good', 'Great'];
+  int? get selectedFace => day.mood == null ? null : 4 - day.mood!;
+
+  String get feelNote {
+    final last = tracker.lastDose;
+    if (last == null || isTablet || (profile?.isDaily ?? false)) return '';
+    final d = Dates.daysBetween(last.takenAt, now.value);
+    if (d == 0) return 'Dose day';
+    return 'Day $d after dose';
+  }
+
+  Future<void> pickFace(int face) async {
+    Haptics.instance.selectionClick();
+    await tracker.setMood(4 - face);
+  }
+
+  void openCheckIn() => Get.toNamed<void>(Routes.checkIn);
 
   // ------------------------------------------------------------------- tip
 
-  TodayTip get tip {
-    if (isDoseDay || doseToday != null) {
-      return const TodayTip(
-        'Dose-day tip',
-        'Smaller, protein-first meals are often easier today. Go light on fried food.',
-        Img3d.seedling,
-      );
+  (String title, String text) get tip {
+    final dayIndex = now.value.difference(DateTime(now.value.year)).inDays;
+    final state = doseState;
+    if (state == DoseCardState.doseDay || state == DoseCardState.takenToday) {
+      return ('DOSE DAY TIP', Catalog.doseDayTips[dayIndex % Catalog.doseDayTips.length]);
     }
-    final left = proteinGoal - day.proteinG;
-    if (left <= 0) {
-      return const TodayTip('Muscle tip', 'Protein goal hit. Nice work protecting your muscle.', Img3d.biceps);
+    final focus = (profile?.focus ?? const <String>[]).where(Catalog.tips.containsKey).toList();
+    final key = focus.isEmpty ? 'muscle' : focus[dayIndex % focus.length];
+    final list = Catalog.tips[key]!;
+    final title = switch (key) {
+      'muscle' => 'FOR YOUR MUSCLE',
+      'nausea' => 'EASIER ON YOUR STOMACH',
+      'noise' => 'QUIETER FOOD NOISE',
+      'remember' => 'NEVER MISS A DOSE',
+      'nerves' => 'CALMER DOSE DAYS',
+      'progress' => 'SEEING PROGRESS',
+      _ => 'GOOD TO KNOW',
+    };
+    return (title, list[dayIndex % list.length]);
+  }
+
+  /// Icon for the tip card (focus → 3D image), chosen in the widget.
+  String get tipFocus {
+    final state = doseState;
+    if (state == DoseCardState.doseDay || state == DoseCardState.takenToday) return 'nausea';
+    final focus = (profile?.focus ?? const <String>[]).where(Catalog.tips.containsKey).toList();
+    if (focus.isEmpty) return 'muscle';
+    return focus[now.value.difference(DateTime(now.value.year)).inDays % focus.length];
+  }
+
+  // ------------------------------------------------------------- today log
+
+  List<TodayLogRow> get logRows {
+    final rows = <TodayLogRow>[
+      for (final e in day.entries)
+        TodayLogRow(
+          at: e.at,
+          title: e.isProtein ? 'Protein${e.label == null ? '' : ' · ${e.label}'}' : 'Water',
+          value: e.isProtein ? '+${e.amount} g' : '+${e.amount} ml',
+          kind: e.kind,
+          entryId: e.id,
+        ),
+    ];
+    final dose = doseToday;
+    if (dose != null) {
+      final site = dose.site.isEmpty ? '' : ' · ${Catalog.siteName(dose.site)}';
+      rows.add(TodayLogRow(at: dose.takenAt, title: 'Dose$site', value: doseLabel.isEmpty ? '✓' : doseLabel, kind: 'dose'));
     }
-    final food = left >= 20 ? 'A whey shake gets you 24 g' : 'A cup of Greek yogurt gets you 17 g';
-    return TodayTip('Muscle tip', '$left g to go. $food closer.', Img3d.biceps);
+    final weighIn = tracker.weights.where((w) => Dates.sameDay(w.date, now.value));
+    if (weighIn.isNotEmpty) {
+      rows.add(TodayLogRow(at: null, title: 'Weigh-in', value: '${fmtWeight(weighIn.last.kg)} $unit', kind: 'weight'));
+    }
+    rows.sort((a, b) => (a.at ?? DateTime(0)).compareTo(b.at ?? DateTime(0)));
+    return rows;
+  }
+
+  Future<void> removeRow(TodayLogRow row) async {
+    final id = row.entryId;
+    if (id == null) return;
+    Haptics.instance.mediumImpact();
+    await tracker.removeEntry(day.key, id);
+    showToast('${row.title} removed');
+  }
+
+  // ----------------------------------------------------------- set-up card
+
+  List<SetupItem> get setupItems => [
+        SetupItem('Log your starting weight', tracker.weights.isNotEmpty, logWeight),
+        SetupItem(
+          isTablet ? 'Log your first tablet' : 'Log your first dose',
+          tracker.doses.isNotEmpty,
+          () => Get.toNamed<void>(Routes.logDose),
+        ),
+        SetupItem(
+          'Add your first protein',
+          tracker.days.values.any((d) => d.proteinG > 0),
+          openProtein,
+        ),
+        SetupItem('Turn on reminders', profile?.remindersOn ?? false, turnOnReminders),
+      ];
+
+  bool get showSetup => !tracker.setupDismissed.value && setupItems.any((i) => !i.done);
+  int get setupDone => setupItems.where((i) => i.done).length;
+
+  Future<void> dismissSetup() async {
+    Haptics.instance.selectionClick();
+    await tracker.dismissSetup();
+  }
+
+  Future<void> turnOnReminders() async {
+    final p = profile;
+    if (p == null) return;
+    final granted = await NotificationService.instance.requestPermission();
+    if (!granted) {
+      showToast('Allow notifications for Kindose in your phone settings.');
+      return;
+    }
+    Haptics.instance.mediumImpact();
+    await tracker.saveProfile(p.copyWith(remindersOn: true));
+    showToast('Reminders are on');
+  }
+
+  // ------------------------------------------------------------ edit today
+
+  /// Card ids in display order, without the hidden ones.
+  List<String> get cardOrder {
+    final saved = tracker.todayOrder.where((id) => TodayCard.all.any((c) => c.id == id)).toList();
+    final missing = TodayCard.all.map((c) => c.id).where((id) => !saved.contains(id));
+    return [...saved, ...missing];
+  }
+
+  List<String> get visibleCards => cardOrder.where((id) => !tracker.todayHidden.contains(id)).toList();
+
+  Future<void> saveLayout(List<String> order, Set<String> hidden) async {
+    Haptics.instance.lightImpact();
+    await tracker.saveTodayLayout(order, hidden);
   }
 }

@@ -89,7 +89,7 @@ class MeController extends GetxController {
       return s.contains(RegExp(r'[",\n]')) ? '"${s.replaceAll('"', '""')}"' : s;
     }
 
-    final doses = StringBuffer('date,time,medicine,strength_mg,site,pain_0_10,note\n');
+    final doses = StringBuffer('date,time,medicine,strength_mg,site,how_it_felt,note\n');
     for (final d in tracker.doses.reversed) {
       doses.writeln([
         Dates.key(d.takenAt),
@@ -97,7 +97,7 @@ class MeController extends GetxController {
         Catalog.medicineName(d.medicineId, tracker.profile.value?.customMedicine),
         d.strengthMg,
         d.site.isEmpty ? '' : Catalog.siteName(d.site),
-        d.site.isEmpty ? '' : d.pain,
+        d.pain == null ? '' : Catalog.painLabels[d.pain!],
         d.note,
       ].map(esc).join(','));
     }
@@ -110,7 +110,9 @@ class MeController extends GetxController {
         d.proteinG,
         d.waterMl,
         d.mood == null ? '' : Catalog.moods[d.mood!.clamp(0, 4)].label,
-        d.symptoms.map((s) => Catalog.symptoms[s] ?? s).join('; '),
+        d.symptoms
+            .map((s) => s == 'nausea' ? 'Nausea' : '${Catalog.symptoms[s] ?? s} (${Catalog.levelWords[d.levelOf(s)]})')
+            .join('; '),
         _level(d.nausea, const ['mild', 'moderate', 'severe']),
         _level(d.foodNoise, const ['quiet', 'some', 'loud']),
         _level(d.appetite, const ['low', 'normal', 'high']),

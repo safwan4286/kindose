@@ -2,21 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
-import '../../resources/colors.dart' show KColorsX;
+import '../../models/logs.dart';
+import '../../resources/colors.dart';
+import '../../resources/date_utils.dart';
 import '../../resources/images.dart';
+import '../../services/haptics/haptics.dart';
+import '../../services/responsiveness/device_manager.dart';
 import '../../services/theme/theme.dart';
 import '../../services/tracker_service.dart';
 import '../../widgets/buttons.dart';
+import '../../widgets/k_ruler.dart';
 import '../../widgets/k_widgets.dart';
-import '../../widgets/mood_row.dart';
-import '../../widgets/toast.dart';
+import '../../widgets/press_scale.dart';
 import '../../widgets/safe_bottom.dart';
+import '../../widgets/toast.dart';
+import '../../widgets/trend_line.dart';
+import '../../widgets/weight_input.dart';
 
-const double kLbPerKg = 2.20462;
-
-/// Quick weigh-in. Starts from the last weight so most people tap once
-/// or twice and save.
+/// Weigh-in sheet: date, ruler, change since last and since start, a small
+/// trend with the goal line, and a calm tip. Starts from the last weight
+/// so most people nudge it once or twice and save.
 Future<void> showWeightSheet() {
+  Haptics.instance.lightImpact();
   return Get.bottomSheet<void>(const WeightSheet(), isScrollControlled: true);
 }
 
@@ -30,41 +37,71 @@ class WeightSheet extends StatefulWidget {
 /// Local UI state only (the number being edited). Saving goes through
 /// [TrackerService], like everywhere else.
 class _WeightSheetState extends State<WeightSheet> {
-  final TrackerService _tracker = Get.find<TrackerService>();
-  late bool _useKg = _tracker.profile.value?.useKg ?? true;
-  late double _kg = _tracker.latestWeightKg ?? 80;
+  final TrackerService _t = Get.find<TrackerService>();
+  late bool _useKg = _t.profile.value?.useKg ?? true;
+  late double _kg = _t.latestWeightKg ?? 80;
+  DateTime _day = Dates.dateOnly(DateTime.now());
   bool _saving = false;
 
-  double get _shown => _useKg ? _kg : _kg * kLbPerKg;
   String get _unit => _useKg ? 'kg' : 'lb';
+  double _conv(double kg) => _useKg ? kg : kg * Imperial.lbPerKg;
+  String _fmt(double kg) => _conv(kg).toStringAsFixed(1);
 
-  void _step(double shownDelta) {
-    setState(() {
-      final kgDelta = _useKg ? shownDelta : shownDelta / kLbPerKg;
-      _kg = ((_kg + kgDelta).clamp(30.0, 300.0) * 100).round() / 100;
-    });
+  /// "−0.6 kg" / "+0.4 kg" / "±0.0 kg".
+  String _signed(double kgDiff) {
+    final v = double.parse(_conv(kgDiff).toStringAsFixed(1));
+    final sign = v < 0 ? '−' : (v > 0 ? '+' : '±');
+    return '$sign${v.abs().toStringAsFixed(1)} $_unit';
   }
 
-  Future<void> _type() async {
-    final v = await askNumber(
-      context,
-      title: 'Weight today',
-      unit: _unit,
-      initial: _shown,
-      min: _useKg ? 30 : 66,
-      max: _useKg ? 300 : 660,
+  /// Weigh-ins before the chosen day, oldest first.
+  List<WeightEntry> get _before => _t.weights.where((w) => w.date.isBefore(_day)).toList();
+
+  WeightEntry? get _sameDay {
+    for (final w in _t.weights) {
+      if (Dates.sameDay(w.date, _day)) return w;
+    }
+    return null;
+  }
+
+  String get _dayLabel {
+    final today = Dates.dateOnly(DateTime.now());
+    final diff = Dates.daysBetween(_day, today);
+    if (diff == 0) return 'Today';
+    if (diff == 1) return 'Yesterday';
+    return Dates.shortWithDay(_day);
+  }
+
+  Future<void> _pickDay() async {
+    Haptics.instance.selectionClick();
+    final now = DateTime.now();
+    final d = await showDatePicker(
+      context: context,
+      initialDate: _day,
+      firstDate: now.subtract(const Duration(days: 365)),
+      lastDate: now,
+      helpText: 'Day of this weigh-in',
     );
-    if (v == null || v.isNaN) return;
-    setState(() => _kg = ((_useKg ? v : v / kLbPerKg) * 100).round() / 100);
+    if (d == null || !mounted) return;
+    setState(() {
+      _day = Dates.dateOnly(d);
+      final existing = _sameDay;
+      if (existing != null) _kg = existing.kg;
+    });
   }
 
   Future<void> _save() async {
     if (_saving) return;
     setState(() => _saving = true);
     try {
-      await _tracker.addWeight(_kg);
+      await _t.addWeight(_kg, _day);
+      final p = _t.profile.value;
+      if (p != null && p.useKg != _useKg) await _t.saveProfile(p.copyWith(useKg: _useKg));
+      Haptics.instance.mediumImpact();
       popRoute();
-      showToast('Weight saved: ${_shown.toStringAsFixed(1)} $_unit');
+      showToast('Weight saved: ${_fmt(_kg)} $_unit');
+    } catch (_) {
+      showToast("Couldn't save. Please try again.");
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -73,92 +110,203 @@ class _WeightSheetState extends State<WeightSheet> {
   @override
   Widget build(BuildContext context) {
     final k = context.k;
+    final before = _before;
+    final last = before.isEmpty ? null : before.last;
+    final start = _t.startWeightKg;
+    final goal = _t.profile.value?.goalWeightKg;
+    final trend = [...before.skip(before.length > 6 ? before.length - 6 : 0).map((w) => _conv(w.kg)), _conv(_kg)];
+    final replaces = _sameDay;
+
     return KSafeArea(
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(18, 12, 18, 18 + MediaQuery.viewInsetsOf(context).bottom),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(width: 44, height: 5, decoration: BoxDecoration(color: k.border, borderRadius: BorderRadius.circular(3))),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                const ThreeD(Img3d.chartDown, size: 40),
-                const SizedBox(width: 10),
-                Expanded(child: Text('Weigh-in', style: AppText.h2)),
-                SizedBox(
-                  width: 110,
-                  child: KSegmented<bool>(
-                    options: const [true, false],
-                    selected: _useKg,
-                    onChanged: (v) => setState(() => _useKg = v),
-                    labelOf: (v) => v ? 'kg' : 'lb',
-                    dense: true,
-                    darkSelected: true,
-                  ),
+      child: Container(
+        constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.92),
+        decoration: BoxDecoration(color: k.bg, borderRadius: BorderRadius.vertical(top: Radius.circular(28.sp))),
+        padding: EdgeInsets.fromLTRB(20.sp, 10.sp, 20.sp, 12.sp + MediaQuery.viewInsetsOf(context).bottom),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40.sp,
+                  height: 5.sp,
+                  decoration: BoxDecoration(color: k.border, borderRadius: BorderRadius.circular(3.sp)),
                 ),
-              ],
-            ),
-            const SizedBox(height: 18),
-            KCard(
-              child: Row(
+              ),
+              SizedBox(height: 14.sp),
+              Row(
                 children: [
-                  CircleIconButton(
-                    icon: PhosphorIconsBold.minus,
-                    label: 'Less',
-                    size: 52,
-                    background: k.cardAlt,
-                    onTap: () => _step(-0.1),
-                  ),
                   Expanded(
                     child: Semantics(
-                      button: true,
-                      label: 'Weight ${_shown.toStringAsFixed(1)} $_unit. Tap to type',
-                      excludeSemantics: true,
-                      child: GestureDetector(
-                        onTap: _type,
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.baseline,
-                            textBaseline: TextBaseline.alphabetic,
-                            children: [
-                              Text(_shown.toStringAsFixed(1), style: AppText.number(54)),
-                              const SizedBox(width: 4),
-                              Text(_unit, style: AppText.title.copyWith(fontSize: 20, color: k.muted)),
-                            ],
-                          ),
-                        ),
-                      ),
+                      header: true,
+                      child: Text('Log weight', style: AppText.h2.copyWith(fontSize: 24.sp, color: k.text)),
                     ),
                   ),
-                  CircleIconButton(
-                    icon: PhosphorIconsBold.plus,
-                    label: 'More',
-                    size: 52,
-                    background: k.cardAlt,
-                    onTap: () => _step(0.1),
+                  CircleIconButton(icon: PhosphorIconsBold.x, label: 'Close', size: 40.sp, onTap: popRoute),
+                ],
+              ),
+              SizedBox(height: 10.sp),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: PressScale(
+                  semanticLabel: 'Date: $_dayLabel. Tap to change',
+                  onTap: _pickDay,
+                  child: Container(
+                    height: 36.sp,
+                    padding: EdgeInsets.symmetric(horizontal: 12.sp),
+                    decoration: BoxDecoration(color: k.card, borderRadius: BorderRadius.circular(18.sp)),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ThreeD(Img3d.calendar, size: 18.sp),
+                        SizedBox(width: 6.sp),
+                        Text(_dayLabel, style: AppText.small.copyWith(fontSize: 13.sp, fontWeight: FontWeight.w800, color: k.text)),
+                        SizedBox(width: 4.sp),
+                        Icon(PhosphorIconsBold.caretDown, size: 12.sp, color: k.muted),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              if (replaces != null) ...[
+                SizedBox(height: 6.sp),
+                Text(
+                  'Replaces the ${_fmt(replaces.kg)} $_unit saved for this day.',
+                  style: AppText.small.copyWith(fontSize: 12.5.sp, fontWeight: FontWeight.w600, color: k.muted),
+                ),
+              ],
+              SizedBox(height: 16.sp),
+              WeightInput(
+                kg: _kg,
+                useKg: _useKg,
+                typeTitle: 'Weight',
+                onKg: (v) => setState(() => _kg = (v * 100).round() / 100),
+                onUnit: (v) => setState(() => _useKg = v),
+              ),
+              SizedBox(height: 16.sp),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: _StatBox(
+                      label: last == null ? 'SINCE LAST' : 'SINCE ${Dates.short(last.date).toUpperCase()}',
+                      value: last == null ? 'First one' : _signed(_kg - last.kg),
+                    ),
+                  ),
+                  SizedBox(width: 10.sp),
+                  Expanded(
+                    child: _StatBox(
+                      label: 'SINCE YOU STARTED',
+                      value: start <= 0 ? '—' : _signed(_kg - start),
+                      sub: start <= 0
+                          ? null
+                          : '${_kg - start < 0 ? '−' : '+'}${((_kg - start).abs() / start * 100).toStringAsFixed(1)}% of your start',
+                    ),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Weigh at the same time each week for a fair trend.',
-              style: AppText.small.copyWith(color: k.muted, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 18),
-            PillButton(
-              label: 'Save weight',
-              icon: PhosphorIconsBold.check,
-              busy: _saving,
-              onPressed: _save,
-            ),
-          ],
+              if (trend.length >= 2) ...[
+                SizedBox(height: 10.sp),
+                Semantics(
+                  label: 'Trend of your last ${trend.length} weigh-ins, from ${trend.first.toStringAsFixed(1)} '
+                      'to ${trend.last.toStringAsFixed(1)} $_unit',
+                  excludeSemantics: true,
+                  child: Container(
+                    padding: EdgeInsets.fromLTRB(16.sp, 14.sp, 16.sp, 10.sp),
+                    decoration: BoxDecoration(color: k.card, borderRadius: BorderRadius.circular(18.sp)),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'LAST ${trend.length} WEIGH-INS',
+                                style: AppText.caps.copyWith(fontSize: 11.5.sp, letterSpacing: 0.6, color: k.faint),
+                              ),
+                            ),
+                            if (goal != null)
+                              Text(
+                                '- - Goal ${_fmt(goal)} $_unit',
+                                style: AppText.small.copyWith(fontSize: 11.5.sp, color: k.faint),
+                              ),
+                          ],
+                        ),
+                        SizedBox(height: 6.sp),
+                        TrendLine(values: trend, goal: goal == null ? null : _conv(goal), height: 90.sp),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                Dates.short(before[before.length > 6 ? before.length - 6 : 0].date),
+                                style: AppText.small.copyWith(fontSize: 11.5.sp, color: k.faint),
+                              ),
+                            ),
+                            Text(_dayLabel, style: AppText.small.copyWith(fontSize: 11.5.sp, color: k.faint)),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+              SizedBox(height: 10.sp),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 14.sp, vertical: 12.sp),
+                decoration: BoxDecoration(color: k.cardAlt, borderRadius: BorderRadius.circular(16.sp)),
+                child: Text.rich(
+                  TextSpan(children: [
+                    TextSpan(text: 'Same time, same scale. ', style: TextStyle(fontWeight: FontWeight.w800, color: k.text)),
+                    const TextSpan(
+                      text: 'Weigh after waking; once a week is enough. A 1–2 kg swing from day to day is normal (water, salt).',
+                    ),
+                  ]),
+                  style: AppText.small.copyWith(fontSize: 12.5.sp, fontWeight: FontWeight.w600, height: 1.45, color: k.textSoft),
+                ),
+              ),
+              SizedBox(height: 14.sp),
+              PillButton(
+                label: 'Save ${_fmt(_kg)} $_unit',
+                icon: PhosphorIconsBold.check,
+                busy: _saving,
+                onPressed: _save,
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
+class _StatBox extends StatelessWidget {
+  const _StatBox({required this.label, required this.value, this.sub});
+
+  final String label;
+  final String value;
+  final String? sub;
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    return Semantics(
+      label: '${label.toLowerCase()}: $value${sub == null ? '' : ', $sub'}',
+      excludeSemantics: true,
+      child: Container(
+        padding: EdgeInsets.all(14.sp),
+        decoration: BoxDecoration(color: k.card, borderRadius: BorderRadius.circular(18.sp)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.caps.copyWith(fontSize: 11.5.sp, letterSpacing: 0.6, color: k.faint)),
+            SizedBox(height: 4.sp),
+            Text(value, style: AppText.h3.copyWith(fontSize: 21.sp, color: k.text)),
+            if (sub != null)
+              Text(sub!, style: AppText.small.copyWith(fontSize: 12.sp, color: k.muted)),
+          ],
+        ),
+      ),
+    );
+  }
+}

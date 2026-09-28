@@ -38,6 +38,23 @@ class TrackerService extends GetxService {
   final Rx<ThemeMode> themeMode = ThemeMode.system.obs;
   final Rxn<DateTime> nextAppointment = Rxn<DateTime>();
 
+  /// The appointment before [nextAppointment] ("since last visit" reports).
+  final Rxn<DateTime> lastAppointment = Rxn<DateTime>();
+
+  /// Questions the user wants printed on the doctor report.
+  final RxList<String> reportQuestions = <String>[].obs;
+
+  /// "Get set up" card closed by the user.
+  final RxBool setupDismissed = false.obs;
+
+  /// Today card ids in the user's order, and the ones they hid.
+  final RxList<String> todayOrder = <String>[].obs;
+  final RxSet<String> todayHidden = <String>{}.obs;
+
+  /// Next dose moved to another day with "Move date". Cleared when a dose
+  /// is logged.
+  final Rxn<DateTime> nextDoseOverride = Rxn<DateTime>();
+
   Future<TrackerService> init() async {
     await Hive.initFlutter();
     _profile = await Hive.openBox<dynamic>(_profileBox);
@@ -78,6 +95,40 @@ class TrackerService extends GetxService {
     final appt = _settings.get('nextAppointment');
     nextAppointment.value =
         appt is int ? DateTime.fromMillisecondsSinceEpoch(appt) : null;
+    final lastAppt = _settings.get('lastAppointment');
+    lastAppointment.value = lastAppt is int ? DateTime.fromMillisecondsSinceEpoch(lastAppt) : null;
+    final qs = _settings.get('reportQuestions');
+    reportQuestions.assignAll(qs is List ? qs.whereType<String>() : const <String>[]);
+    setupDismissed.value = _settings.get('setupDismissed') == true;
+    final order = _settings.get('todayOrder');
+    todayOrder.assignAll(order is List ? order.whereType<String>() : const <String>[]);
+    final hidden = _settings.get('todayHidden');
+    todayHidden.assignAll(hidden is List ? hidden.whereType<String>() : const <String>[]);
+    final moved = _settings.get('nextDoseOverride');
+    nextDoseOverride.value = moved is int ? DateTime.fromMillisecondsSinceEpoch(moved) : null;
+  }
+
+  Future<void> dismissSetup() async {
+    setupDismissed.value = true;
+    await _settings.put('setupDismissed', true);
+  }
+
+  Future<void> saveTodayLayout(List<String> order, Set<String> hidden) async {
+    todayOrder.assignAll(order);
+    todayHidden.assignAll(hidden);
+    await _settings.put('todayOrder', order);
+    await _settings.put('todayHidden', hidden.toList());
+  }
+
+  /// "Move date": the next dose happens on [day] (at the usual time).
+  Future<void> moveNextDose(DateTime? day) async {
+    final d = day == null ? null : Dates.dateOnly(day);
+    nextDoseOverride.value = d;
+    if (d == null) {
+      await _settings.delete('nextDoseOverride');
+    } else {
+      await _settings.put('nextDoseOverride', d.millisecondsSinceEpoch);
+    }
   }
 
   bool get hasProfile => profile.value != null;
@@ -91,27 +142,47 @@ class TrackerService extends GetxService {
 
   // ----------------------------------------------------------------- doses
 
+  /// Saves a dose. [medicineId] and [strengthMg] default to the profile,
+  /// so pass them only when this dose was different ("Change").
   Future<DoseLog> addDose({
     required DateTime takenAt,
     required String site,
-    int pain = 0,
+    int? pain,
     String? note,
+    String? medicineId,
+    double? strengthMg,
   }) async {
     final p = profile.value;
     final log = DoseLog(
       id: DateTime.now().microsecondsSinceEpoch.toString(),
       takenAt: takenAt,
-      medicineId: p?.medicineId ?? '',
-      strengthMg: p?.strengthMg ?? 0,
+      medicineId: medicineId ?? p?.medicineId ?? '',
+      strengthMg: strengthMg ?? p?.strengthMg ?? 0,
       site: site,
       pain: pain,
-      note: (note == null || note.trim().isEmpty) ? null : note.trim(),
+      note: _cleanNote(note),
     );
     await _doses.put(log.id, log.toMap());
+    if (nextDoseOverride.value != null) await moveNextDose(null);
     doses.add(log);
     doses.sort((a, b) => b.takenAt.compareTo(a.takenAt));
     return log;
   }
+
+  /// Replaces a saved dose (same id), e.g. "Edit Monday's dose".
+  Future<void> updateDose(DoseLog log) async {
+    final fixed = log.copyWith(note: () => _cleanNote(log.note));
+    await _doses.put(fixed.id, fixed.toMap());
+    final i = doses.indexWhere((d) => d.id == fixed.id);
+    if (i == -1) {
+      doses.add(fixed);
+    } else {
+      doses[i] = fixed;
+    }
+    doses.sort((a, b) => b.takenAt.compareTo(a.takenAt));
+  }
+
+  String? _cleanNote(String? note) => (note == null || note.trim().isEmpty) ? null : note.trim();
 
   Future<void> removeDose(String id) async {
     await _doses.delete(id);
@@ -123,10 +194,19 @@ class TrackerService extends GetxService {
   DoseLog? doseOn(DateTime day) =>
       _firstOrNull(doses, (d) => Dates.sameDay(d.takenAt, day));
 
-  String get nextSiteId => Catalog.nextSite(
-      _firstOrNull(doses, (d) => d.site.isNotEmpty)?.site);
+  /// Injection doses with a site, newest first.
+  Iterable<DoseLog> get siteDoses => doses.where((d) => d.site.isNotEmpty);
 
-  String? get lastSiteId => _firstOrNull(doses, (d) => d.site.isNotEmpty)?.site;
+  /// The spot used longest ago (never-used spots first).
+  String get nextSiteId => Catalog.nextSite(siteDoses.map((d) => d.site).toList());
+
+  String? get lastSiteId => _firstOrNull(siteDoses, (_) => true)?.site;
+
+  /// 1-based position of [id] in the log, oldest = 1.
+  int doseNumberOf(String id) {
+    final i = doses.indexWhere((d) => d.id == id);
+    return i == -1 ? doses.length : doses.length - i;
+  }
 
   /// When the next dose is due, including the planned time of day.
   /// If a planned dose was missed, this returns that past date so the app
@@ -139,6 +219,10 @@ class TrackerService extends GetxService {
     final last = lastDose;
     DateTime day;
     final planned = p.plannedFirstDose;
+    final moved = nextDoseOverride.value;
+    if (moved != null && (last == null || moved.isAfter(Dates.dateOnly(last.takenAt)))) {
+      return moved.add(Duration(minutes: p.shotMinutes));
+    }
 
     if (last == null && planned != null && !Dates.dateOnly(planned).isBefore(today)) {
       // Starting or restarting: the first dose is on the day they chose.
@@ -151,19 +235,36 @@ class TrackerService extends GetxService {
       final ahead = (p.shotWeekday - today.weekday + 7) % 7;
       day = today.add(Duration(days: ahead));
     } else {
-      day = Dates.dateOnly(last.takenAt).add(Duration(days: p.everyDays));
-      if (p.everyDays == 7 || p.everyDays == 14) {
-        // Snap to the chosen shot day if the user logged a day early or late.
-        final shift = (p.shotWeekday - day.weekday + 7) % 7;
-        if (shift != 0 && shift <= 3) {
-          day = day.add(Duration(days: shift));
-        } else if (shift != 0) {
-          day = day.subtract(Duration(days: 7 - shift));
-        }
-      }
+      day = _nextDay(last.takenAt, p.everyDays, p.shotWeekday);
     }
     return DateTime(day.year, day.month, day.day)
         .add(Duration(minutes: p.shotMinutes));
+  }
+
+  /// When the next dose would be if one is taken at [takenAt]. Pass
+  /// [weekday] to preview a different dose day ("Count from today").
+  DateTime? nextDoseAfter(DateTime takenAt, {int? weekday}) {
+    final p = profile.value;
+    if (p == null) return null;
+    final day = p.isDaily
+        ? Dates.dateOnly(takenAt).add(const Duration(days: 1))
+        : _nextDay(takenAt, p.everyDays, weekday ?? p.shotWeekday);
+    return day.add(Duration(minutes: p.shotMinutes));
+  }
+
+  /// [everyDays] after [from], snapped to [weekday] for weekly and
+  /// two-weekly plans when the dose was a day or three early or late.
+  DateTime _nextDay(DateTime from, int everyDays, int weekday) {
+    var day = Dates.dateOnly(from).add(Duration(days: everyDays));
+    if (everyDays == 7 || everyDays == 14) {
+      final shift = (weekday - day.weekday + 7) % 7;
+      if (shift != 0 && shift <= 3) {
+        day = day.add(Duration(days: shift));
+      } else if (shift != 0) {
+        day = day.subtract(Duration(days: 7 - shift));
+      }
+    }
+    return day;
   }
 
   /// True when a dose is due today (or overdue) and not yet logged today.
@@ -201,22 +302,111 @@ class TrackerService extends GetxService {
   DayLog get today => dayLog(DateTime.now());
 
   Future<void> saveDay(DayLog log) async {
-    await _days.put(log.key, log.toMap());
+    // Update memory first so the UI (e.g. a swiped row) changes this frame.
     days[log.key] = log;
+    await _days.put(log.key, log.toMap());
   }
 
-  Future<void> addProtein(int grams, [DateTime? day]) async {
-    final d = dayLog(day ?? DateTime.now());
-    await saveDay(d.copyWith(proteinG: math.max(0, d.proteinG + grams)));
+  /// Adds protein and remembers the entry (for Today's log and undo).
+  /// Returns the entry id.
+  Future<String> addProtein(int grams, [DateTime? day, String? label]) =>
+      _addEntry('protein', grams, day, label);
+
+  Future<String> addWater(int ml, [DateTime? day, String? label]) => _addEntry('water', ml, day, label);
+
+  Future<String> _addEntry(String kind, int amount, DateTime? day, String? label) async {
+    final at = day ?? DateTime.now();
+    final d = dayLog(at);
+    final entry = LogEntry(
+      id: DateTime.now().microsecondsSinceEpoch.toString(),
+      at: at,
+      kind: kind,
+      amount: amount,
+      label: label,
+    );
+    await saveDay(d.copyWith(
+      proteinG: kind == 'protein' ? math.max(0, d.proteinG + amount) : null,
+      waterMl: kind == 'water' ? math.max(0, d.waterMl + amount) : null,
+      entries: [...d.entries, entry],
+    ));
+    return entry.id;
   }
 
-  Future<void> addWater(int ml, [DateTime? day]) async {
-    final d = dayLog(day ?? DateTime.now());
-    await saveDay(d.copyWith(waterMl: math.max(0, d.waterMl + ml)));
+  /// Protein foods the user logs most often, as (name, grams), most used
+  /// first. Only entries that came from a named food count.
+  List<(String, int)> favouriteFoods([int limit = 2]) {
+    final counts = <String, int>{};
+    final grams = <String, int>{};
+    for (final d in days.values) {
+      for (final e in d.entries) {
+        final name = e.label;
+        if (e.kind != 'protein' || name == null || name.isEmpty) continue;
+        counts[name] = (counts[name] ?? 0) + 1;
+        grams[name] = e.amount;
+      }
+    }
+    final names = counts.keys.toList()..sort((a, b) => (counts[b] ?? 0).compareTo(counts[a] ?? 0));
+    return [for (final n in names.take(limit)) (n, grams[n] ?? 0)];
   }
 
+  /// Removes one protein / water entry and takes its amount off the total.
+  Future<void> removeEntry(String dayKey, String entryId) async {
+    final d = days[dayKey];
+    if (d == null) return;
+    final e = _firstOrNull(d.entries, (x) => x.id == entryId);
+    if (e == null) return;
+    await saveDay(d.copyWith(
+      proteinG: e.isProtein ? math.max(0, d.proteinG - e.amount) : null,
+      waterMl: e.isProtein ? null : math.max(0, d.waterMl - e.amount),
+      entries: d.entries.where((x) => x.id != entryId).toList(),
+    ));
+  }
+
+  /// Sets today's water total (glass taps). Going up adds an entry; going
+  /// down removes the newest water entries first.
   Future<void> setWater(int ml) async {
-    await saveDay(today.copyWith(waterMl: math.max(0, ml)));
+    final d = today;
+    final target = math.max(0, ml);
+    final diff = target - d.waterMl;
+    if (diff > 0) {
+      await addWater(diff);
+      return;
+    }
+    if (diff == 0) return;
+    var toRemove = -diff;
+    final entries = [...d.entries];
+    for (var i = entries.length - 1; i >= 0 && toRemove > 0; i--) {
+      final e = entries[i];
+      if (e.isProtein) continue;
+      if (e.amount <= toRemove) {
+        toRemove -= e.amount;
+        entries.removeAt(i);
+      } else {
+        entries[i] = LogEntry(id: e.id, at: e.at, kind: e.kind, amount: e.amount - toRemove, label: e.label);
+        toRemove = 0;
+      }
+    }
+    await saveDay(d.copyWith(waterMl: target, entries: entries));
+  }
+
+  /// Days in a row (ending today, or yesterday if today is still empty)
+  /// with anything logged: dose, protein, water, feeling or weight.
+  int get logStreak {
+    bool active(DateTime day) {
+      final d = days[Dates.key(day)];
+      if (d != null && (d.proteinG > 0 || d.waterMl > 0 || d.hasCheckIn)) return true;
+      if (doseOn(day) != null) return true;
+      return weights.any((w) => Dates.sameDay(w.date, day));
+    }
+
+    var day = Dates.dateOnly(DateTime.now());
+    if (!active(day)) day = day.subtract(const Duration(days: 1));
+    var n = 0;
+    while (n < 3650 && active(day)) {
+      n++;
+      day = day.subtract(const Duration(days: 1));
+    }
+    return n;
   }
 
   Future<void> setMood(int mood) async {
@@ -248,12 +438,30 @@ class TrackerService extends GetxService {
   }
 
   Future<void> setNextAppointment(DateTime? date) async {
+    await rollAppointment();
     nextAppointment.value = date;
     if (date == null) {
       await _settings.delete('nextAppointment');
     } else {
       await _settings.put('nextAppointment', date.millisecondsSinceEpoch);
     }
+  }
+
+  /// A "next" appointment that has passed becomes the last visit.
+  Future<void> rollAppointment() async {
+    final next = nextAppointment.value;
+    if (next == null || !Dates.dateOnly(next).isBefore(Dates.dateOnly(DateTime.now()))) return;
+    lastAppointment.value = next;
+    nextAppointment.value = null;
+    lastAppointment.value = null;
+    reportQuestions.clear();
+    await _settings.put('lastAppointment', next.millisecondsSinceEpoch);
+    await _settings.delete('nextAppointment');
+  }
+
+  Future<void> setReportQuestions(List<String> list) async {
+    reportQuestions.assignAll(list);
+    await _settings.put('reportQuestions', list);
   }
 
   ThemeMode _themeFromString(dynamic v) {
@@ -291,6 +499,12 @@ class TrackerService extends GetxService {
     days.clear();
     weights.clear();
     nextAppointment.value = null;
+    lastAppointment.value = null;
+    reportQuestions.clear();
+    setupDismissed.value = false;
+    todayOrder.clear();
+    todayHidden.clear();
+    nextDoseOverride.value = null;
     themeMode.value = ThemeMode.system;
     Get.changeThemeMode(ThemeMode.system);
   }

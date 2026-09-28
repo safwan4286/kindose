@@ -49,6 +49,7 @@ dependencies:
   url_launcher: ^6.3.2
   lottie: ^3.6.1
   flutter_local_notifications: ^22.3.1
+  timezone: ^0.11.1
   encrypt: ^5.0.3
   pointycastle: ^3.9.1
   android_intent_plus: ^6.1.0

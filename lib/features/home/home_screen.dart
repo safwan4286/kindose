@@ -44,7 +44,7 @@ class _FloatingNav extends GetView<HomeController> {
   @override
   Widget build(BuildContext context) {
     final k = context.k;
-    return KSafeArea(
+    return SafeArea(
       child: Container(
         height: 68,
         decoration: BoxDecoration(

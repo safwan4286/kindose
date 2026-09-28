@@ -40,10 +40,12 @@ class PlusController extends GetxController {
   ];
 
   static const List<PlusPerk> perks = [
-    PlusPerk(Img3d.curryRice, 'Snap a meal, see the protein', 'Photo in, grams out, in seconds', {'muscle'}),
-    PlusPerk(Img3d.chartUp, 'Side-effect patterns', 'See how you feel by dose day and food', {'nausea', 'noise'}),
+    // Only perks that work at launch (store rule). Backup is free with
+    // sign-in; "Snap a meal" comes back here in v1.1.
+    PlusPerk(Img3d.chartDown, 'Full history and all charts', 'Every weigh-in and dose since day one', {'progress', 'muscle'}),
+    PlusPerk(Img3d.nauseated, 'Side-effect patterns', 'See how you feel by days since dose and food', {'nausea', 'noise'}),
     PlusPerk(Img3d.clipboard, 'Doctor report with charts', 'Weight, doses and symptoms as a PDF', {'progress'}),
-    PlusPerk(Img3d.locked, 'Backup across devices', 'Encrypted, restored on any phone', {}),
+    PlusPerk(Img3d.moneyBag, 'Pen and cost tracker', 'Doses left, refill nudge, monthly spend', {'cost', 'remember'}),
   ];
 
   final RxString selected = 'year'.obs;

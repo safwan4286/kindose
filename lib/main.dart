@@ -23,6 +23,7 @@ import 'package:kindose/services/responsiveness/device_manager.dart';
 import 'package:kindose/services/theme/theme.dart';
 
 import 'resources/routes.dart';
+import 'services/notifications/reminder_service.dart';
 import 'services/tracker_service.dart';
 import 'services/theme/system_ui.dart';
 
@@ -74,6 +75,8 @@ Future<void> main() async {
     () => TrackerService().init(),
     permanent: true,
   );
+  // Plans dose reminders from the schedule and re-plans on every change.
+  Get.put<ReminderService>(ReminderService(), permanent: true);
 
   runApp(
     KindoseApp(initialRoute: Routes.splash, themeMode: tracker.themeMode.value),

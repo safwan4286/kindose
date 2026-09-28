@@ -18,9 +18,13 @@ class FillingDrop extends StatelessWidget {
     this.smile = 0,
     this.shine = 0,
     this.squash = 0,
+    this.color = AppColors.lime,
   });
 
   final double size;
+
+  /// Liquid colour (lime for the brand, aqua for water).
+  final Color color;
 
   /// 0 = empty, 1 = full.
   final double fill;
@@ -49,6 +53,7 @@ class FillingDrop extends StatelessWidget {
           shine: shine,
           inside: k.card,
           outline: k.text,
+          color: color,
         ),
       ),
     );
@@ -63,6 +68,7 @@ class _FillingDropPainter extends CustomPainter {
     required this.shine,
     required this.inside,
     required this.outline,
+    required this.color,
   });
 
   final double fill;
@@ -71,6 +77,7 @@ class _FillingDropPainter extends CustomPainter {
   final double shine;
   final Color inside;
   final Color outline;
+  final Color color;
 
   // The drop spans y = 14 (tip) to y = 83 (bottom) in the 100 box.
   static const double _top = 12;
@@ -97,7 +104,7 @@ class _FillingDropPainter extends CustomPainter {
     liquid
       ..lineTo(100, 100)
       ..close();
-    canvas.drawPath(liquid, Paint()..color = AppColors.lime);
+    canvas.drawPath(liquid, Paint()..color = color);
     canvas.restore();
 
     canvas.drawPath(
@@ -135,5 +142,5 @@ class _FillingDropPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_FillingDropPainter old) =>
-      old.fill != fill || old.wave != wave || old.smile != smile || old.shine != shine || old.outline != outline;
+      old.fill != fill || old.wave != wave || old.smile != smile || old.shine != shine || old.outline != outline || old.color != color;
 }

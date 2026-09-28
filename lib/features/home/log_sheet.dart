@@ -2,140 +2,336 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
+import '../../resources/catalog.dart';
 import '../../resources/colors.dart';
+import '../../resources/date_utils.dart';
 import '../../resources/images.dart';
 import '../../resources/routes.dart';
+import '../../services/haptics/haptics.dart';
+import '../../services/responsiveness/device_manager.dart';
 import '../../services/theme/theme.dart';
 import '../../services/tracker_service.dart';
+import '../../widgets/entrance.dart';
 import '../../widgets/k_widgets.dart';
+import '../../widgets/press_scale.dart';
+import '../../widgets/safe_bottom.dart';
 import '../../widgets/toast.dart';
 import 'weight_sheet.dart';
-import '../../widgets/safe_bottom.dart';
 
-/// "What are you logging?" sheet opened from the + button.
+/// "Log something" sheet opened from the + button.
 Future<void> showLogSheet() {
+  Haptics.instance.lightImpact();
   return Get.bottomSheet<void>(const LogSheet(), isScrollControlled: true);
 }
 
 class LogSheet extends StatelessWidget {
   const LogSheet({super.key});
 
+  TrackerService get _t => Get.find<TrackerService>();
+
   void _goTo(String route, [Object? args]) {
+    Haptics.instance.selectionClick();
     popRoute();
     Get.toNamed<void>(route, arguments: args);
   }
 
-  Future<void> _quickProtein(int g, String label) async {
+  Future<void> _quickProtein(String name, int grams) async {
+    Haptics.instance.lightImpact();
     popRoute();
-    await Get.find<TrackerService>().addProtein(g);
-    showToast('Added $label');
+    await _t.addProtein(grams, null, name);
+    showToast('Added $name · $grams g');
   }
 
   Future<void> _quickWater() async {
+    Haptics.instance.lightImpact();
     popRoute();
-    await Get.find<TrackerService>().addWater(250);
+    await _t.addWater(250);
     showToast('Added a glass of water');
+  }
+
+  static String _litres(int ml) {
+    final l = ml / 1000;
+    return l == l.roundToDouble() ? l.toStringAsFixed(0) : l.toStringAsFixed(1);
+  }
+
+  /// Most-used foods first, topped up from the diet list.
+  List<(String, int)> _favourites() {
+    final list = [..._t.favouriteFoods(2)];
+    for (final f in Catalog.quickFoods(_t.profile.value?.diet)) {
+      if (list.length >= 2) break;
+      if (list.every((e) => e.$1 != f.name)) list.add((f.name, f.grams));
+    }
+    return list;
   }
 
   @override
   Widget build(BuildContext context) {
     final k = context.k;
+    final motion = !MediaQuery.disableAnimationsOf(context);
     return KSafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(18, 12, 18, 18),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 44,
-                height: 5,
-                decoration: BoxDecoration(color: k.border, borderRadius: BorderRadius.circular(3)),
+      child: Container(
+        decoration: BoxDecoration(color: k.bg, borderRadius: BorderRadius.vertical(top: Radius.circular(28.sp))),
+        padding: EdgeInsets.fromLTRB(20.sp, 10.sp, 20.sp, 12.sp),
+        child: Obx(() {
+          final p = _t.profile.value;
+          final day = _t.today;
+          final proteinGoal = p?.proteinGoalG ?? 100;
+          final proteinLeft = (proteinGoal - day.proteinG).clamp(0, 999);
+          final waterGoal = p?.waterGoalMl ?? 2500;
+          final lastKg = _t.latestWeightKg;
+          final useKg = p?.useKg ?? true;
+          final lastWeight = lastKg == null
+              ? 'Not logged yet'
+              : 'Last: ${(useKg ? lastKg : lastKg * 2.20462).toStringAsFixed(1)} ${useKg ? 'kg' : 'lb'}';
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40.sp,
+                  height: 5.sp,
+                  decoration: BoxDecoration(color: k.border, borderRadius: BorderRadius.circular(3.sp)),
+                ),
               ),
-            ),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                Expanded(child: Text('What are you logging?', style: AppText.h2.copyWith(fontSize: 26))),
-                CircleIconButton(icon: PhosphorIconsBold.x, label: 'Close', size: 40, onTap: () => popRoute()),
-              ],
-            ),
-            const SizedBox(height: 16),
-            GridView.count(
-              crossAxisCount: 3,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-              childAspectRatio: 0.98,
-              children: [
-                _Tile('Dose', Img3d.syringe, AppColors.hero, AppColors.white, () => _goTo(Routes.logDose)),
-                _Tile('Protein', Img3d.egg, AppColors.tangerineSoft, AppColors.ink, () => _goTo(Routes.addIntake, 'protein')),
-                _Tile('Water', Img3d.droplet, AppColors.aquaSoft, AppColors.ink, () => _goTo(Routes.addIntake, 'water')),
-                _Tile('Weight', Img3d.chartDown, k.card, k.text, () {
-                  popRoute();
-                  showWeightSheet();
-                }),
-                _Tile('How I feel', Img3d.nauseated, AppColors.limeSoft, AppColors.ink, () => _goTo(Routes.checkIn)),
-                _Tile('Note', Img3d.clipboard, AppColors.violetSoft, AppColors.ink, () => _goTo(Routes.checkIn, 'note')),
-              ],
-            ),
-            const SizedBox(height: 16),
-            const SectionLabel('One-tap favourites'),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _Favourite(Img3d.whey, 'Whey · 24 g', () => _quickProtein(24, '24 g protein')),
-                _Favourite(Img3d.egg, '2 eggs · 12 g', () => _quickProtein(12, '12 g protein')),
-                _Favourite(Img3d.droplet, 'Glass of water', _quickWater),
-              ],
-            ),
-          ],
-        ),
+              SizedBox(height: 14.sp),
+              Row(
+                children: [
+                  Expanded(
+                    child: Semantics(
+                      header: true,
+                      child: Text('Log something', style: AppText.h2.copyWith(fontSize: 24.sp, color: k.text)),
+                    ),
+                  ),
+                  CircleIconButton(icon: PhosphorIconsBold.x, label: 'Close', size: 40, onTap: popRoute),
+                ],
+              ),
+              SizedBox(height: 14.sp),
+              const _DoseRow().enter(motion, delay: 80, dy: 0.3),
+              SizedBox(height: 10.sp),
+              Row(
+                children: [
+                  Expanded(
+                    child: _Tile(
+                      icon: Img3d.biceps,
+                      title: 'Protein',
+                      sub: proteinLeft == 0 ? 'Goal reached' : '$proteinLeft g to go',
+                      bg: AppColors.tangerineSoft,
+                      subColor: AppColors.tangerineText,
+                      onTap: () => _goTo(Routes.addIntake, 'protein'),
+                    ),
+                  ),
+                  SizedBox(width: 10.sp),
+                  Expanded(
+                    child: _Tile(
+                      icon: Img3d.droplet,
+                      title: 'Water',
+                      sub: '${_litres(day.waterMl)} of ${_litres(waterGoal)} L',
+                      bg: AppColors.aquaSoft,
+                      subColor: AppColors.aquaText,
+                      onTap: () => _goTo(Routes.addIntake, 'water'),
+                    ),
+                  ),
+                ],
+              ).enter(motion, delay: 130, dy: 0.3),
+              SizedBox(height: 10.sp),
+              Row(
+                children: [
+                  Expanded(
+                    child: _Tile(
+                      icon: Img3d.chartDown,
+                      title: 'Weight',
+                      sub: lastWeight,
+                      bg: k.card,
+                      subColor: k.muted,
+                      titleColor: k.text,
+                      onTap: () {
+                        Haptics.instance.selectionClick();
+                        popRoute();
+                        showWeightSheet();
+                      },
+                    ),
+                  ),
+                  SizedBox(width: 10.sp),
+                  Expanded(
+                    child: _Tile(
+                      icon: Img3d.nauseated,
+                      title: 'How I feel',
+                      sub: 'Side effects, notes',
+                      bg: AppColors.limeSoft,
+                      subColor: AppColors.limeText,
+                      onTap: () => _goTo(Routes.checkIn),
+                    ),
+                  ),
+                ],
+              ).enter(motion, delay: 170, dy: 0.3),
+              SizedBox(height: 18.sp),
+              const SectionLabel('One tap'),
+              SizedBox(height: 8.sp),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                clipBehavior: Clip.none,
+                child: Row(
+                  children: [
+                    _QuickChip(label: '+ Glass of water', onTap: _quickWater),
+                    for (final (name, grams) in _favourites()) ...[
+                      SizedBox(width: 8.sp),
+                      _QuickChip(label: '$name · $grams g', onTap: () => _quickProtein(name, grams)),
+                    ],
+                  ],
+                ),
+              ).enter(motion, delay: 220, dy: 0.3),
+              SizedBox(height: 8.sp),
+              Text(
+                'Your most-used items, learned from what you log.',
+                style: AppText.small.copyWith(fontSize: 12.sp, fontWeight: FontWeight.w600, color: k.faint),
+              ),
+            ],
+          );
+        }),
       ),
     );
+  }
+}
+
+/// Dose row at the top. Ink + "DUE TODAY" on dose day, quiet otherwise.
+class _DoseRow extends StatelessWidget {
+  const _DoseRow();
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Get.find<TrackerService>();
+    final k = context.k;
+    return Obx(() {
+      final p = t.profile.value;
+      var noMedicine = true;
+      var tablet = false;
+      var due = false;
+      var sub = 'Add your medicine to get reminders';
+      if (p != null && p.medicineId != Catalog.undecided) {
+        noMedicine = false;
+        tablet = p.form == 'tablet';
+        due = t.isDoseDay();
+        final name = Catalog.medicineName(p.medicineId, p.customMedicine);
+        final mark = Catalog.medicine(p.medicineId).mark ?? '';
+        final dose = p.strengthMg <= 0 ? '' : ' ${Catalog.mgLabel(p.strengthMg)}';
+        final next = t.nextDoseAt();
+        if (due) {
+          sub = tablet ? '$name$mark$dose' : '$name$mark$dose · ${Catalog.siteName(t.nextSiteId).toLowerCase()} next';
+        } else if (t.doseOn(DateTime.now()) != null) {
+          sub = 'Logged today · add another or fix a time';
+        } else {
+          sub = next == null ? '$name$mark$dose' : 'Next: ${Dates.relativeDay(next, DateTime.now())}';
+        }
+      }
+
+      final bg = due ? AppColors.hero : k.card;
+      final fg = due ? AppColors.white : k.text;
+      final subColor = due ? AppColors.heroMuted : k.muted;
+      final dark = k.selectedBorder == AppColors.lime;
+
+      return PressScale(
+        semanticLabel: noMedicine ? 'Add your medicine' : 'Log dose. $sub${due ? '. Due today' : ''}',
+        onTap: () {
+          Haptics.instance.selectionClick();
+          popRoute();
+          Get.toNamed<void>(noMedicine ? Routes.editPlan : Routes.logDose);
+        },
+        child: ExcludeSemantics(
+          child: Container(
+            padding: EdgeInsets.all(16.sp),
+            decoration: BoxDecoration(
+              color: bg,
+              borderRadius: BorderRadius.circular(22.sp),
+              border: due && dark ? Border.all(color: k.border) : null,
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 52.sp,
+                  height: 52.sp,
+                  decoration: BoxDecoration(
+                    color: due ? AppColors.lime : AppColors.limeSoft,
+                    borderRadius: BorderRadius.circular(16.sp),
+                  ),
+                  alignment: Alignment.center,
+                  child: PhosphorIcon(
+                    tablet ? PhosphorIconsBold.pill : PhosphorIconsBold.syringe,
+                    size: 26.sp,
+                    color: AppColors.ink,
+                  ),
+                ),
+                SizedBox(width: 14.sp),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(tablet ? 'Tablet' : 'Dose', style: AppText.title.copyWith(fontSize: 17.sp, color: fg)),
+                      SizedBox(height: 2.sp),
+                      Text(
+                        sub,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppText.small.copyWith(fontSize: 13.sp, fontWeight: FontWeight.w600, color: subColor),
+                      ),
+                    ],
+                  ),
+                ),
+                if (due) ...[
+                  SizedBox(width: 8.sp),
+                  const KTag('Due today', bg: AppColors.lime, fg: AppColors.ink),
+                ] else
+                  PhosphorIcon(PhosphorIconsBold.caretRight, size: 18.sp, color: k.muted),
+              ],
+            ),
+          ),
+        ),
+      );
+    });
   }
 }
 
 class _Tile extends StatelessWidget {
-  const _Tile(this.label, this.icon, this.bg, this.fg, this.onTap);
+  const _Tile({
+    required this.icon,
+    required this.title,
+    required this.sub,
+    required this.bg,
+    required this.subColor,
+    required this.onTap,
+    this.titleColor = AppColors.ink,
+  });
 
-  final String label;
   final String icon;
+  final String title;
+  final String sub;
   final Color bg;
-  final Color fg;
+  final Color subColor;
+  final Color titleColor;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: 'Log $label',
-      excludeSemantics: true,
-      child: Material(
-        color: bg,
-        borderRadius: BorderRadius.circular(24),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(24),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ThreeD(icon, size: 46),
-                const Spacer(),
-                Text(
-                  label,
-                  style: AppText.title.copyWith(color: fg),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
+    return PressScale(
+      semanticLabel: 'Log $title. $sub',
+      onTap: onTap,
+      child: ExcludeSemantics(
+        child: Container(
+          padding: EdgeInsets.all(14.sp),
+          decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(22.sp)),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ThreeD(icon, size: 36.sp),
+              SizedBox(height: 10.sp),
+              Text(title, style: AppText.title.copyWith(fontSize: 16.sp, color: titleColor)),
+              Text(
+                sub,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppText.small.copyWith(fontSize: 12.5.sp, color: subColor),
+              ),
+            ],
           ),
         ),
       ),
@@ -143,32 +339,29 @@ class _Tile extends StatelessWidget {
   }
 }
 
-class _Favourite extends StatelessWidget {
-  const _Favourite(this.icon, this.label, this.onTap);
+class _QuickChip extends StatelessWidget {
+  const _QuickChip({required this.label, required this.onTap});
 
-  final String icon;
   final String label;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: context.k.card,
-      borderRadius: BorderRadius.circular(21),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(21),
-        onTap: onTap,
+    final k = context.k;
+    return PressScale(
+      semanticLabel: label.startsWith('+') ? 'Add a glass of water' : 'Add $label',
+      onTap: onTap,
+      child: ExcludeSemantics(
         child: Container(
-          height: 42,
-          padding: const EdgeInsets.fromLTRB(8, 0, 14, 0),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ThreeD(icon, size: 26),
-              const SizedBox(width: 6),
-              Text(label, style: AppText.bodyStrong.copyWith(fontWeight: FontWeight.w800)),
-            ],
+          height: 40.sp,
+          padding: EdgeInsets.symmetric(horizontal: 14.sp),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: k.card,
+            borderRadius: BorderRadius.circular(20.sp),
+            border: Border.all(color: k.border, width: 1.5),
           ),
+          child: Text(label, style: AppText.small.copyWith(fontSize: 13.5.sp, fontWeight: FontWeight.w800, color: k.text)),
         ),
       ),
     );
