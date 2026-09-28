@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:kindose/widgets/safe_bottom.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 import '../../../services/haptics/haptics.dart';
@@ -66,7 +67,12 @@ class HeightPage extends GetView<OnboardingController> {
     return StepScaffold(
       title: 'How tall are you?',
       subtitle: 'Used for your BMI and goals.',
-      cta: PillButton(label: 'Continue', onPressed: controller.confirmHeight),
+      cta: KBottomPadding(
+        child: PillButton(
+          label: 'Continue',
+          onPressed: controller.confirmHeight,
+        ),
+      ),
       children: [
         Center(
           child: SizedBox(

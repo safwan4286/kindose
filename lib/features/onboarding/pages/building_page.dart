@@ -66,7 +66,7 @@ class _BuildingPageState extends State<BuildingPage>
       // Reduce motion: show everything done, pause briefly, move on.
       _timeline.value = 1;
       _doneCount = _rows;
-      _advance = Timer(const Duration(milliseconds: 1200), _goNext);
+      _advance = Timer(const Duration(milliseconds: 2200), _goNext);
     } else {
       _wave.repeat();
       _timeline.forward();
@@ -157,12 +157,13 @@ class _BuildingPageState extends State<BuildingPage>
       children: [
         Expanded(
           child: ListView(
-            padding: EdgeInsets.fromLTRB(24.sp, 12.sp, 24.sp, 16.sp),
+            physics: BouncingScrollPhysics(),
+            padding: EdgeInsets.fromLTRB(24.sp, 0, 24.sp, 16.sp),
             children: [
               Center(
-                child: _Hero(timeline: _timeline, wave: _wave, size: 150.sp),
+                child: _Hero(timeline: _timeline, wave: _wave, size: 120.sp),
               ),
-              SizedBox(height: 18.sp),
+              SizedBox(height: 10.sp),
               Semantics(
                 header: true,
                 liveRegion: true,
@@ -172,17 +173,17 @@ class _BuildingPageState extends State<BuildingPage>
                   style: AppText.h1.copyWith(fontSize: 30.sp, color: k.text),
                 ),
               ).enter(motion, delay: 80, dy: 0.12),
-              SizedBox(height: 8.sp),
+              SizedBox(height: 5.sp),
               Text(
                 'Using your answers, just a moment.',
                 textAlign: TextAlign.center,
                 style: AppText.bodyText.copyWith(
-                  fontSize: 15.5.sp,
+                  fontSize: 14.5.sp,
                   height: 1.45,
                   color: k.muted,
                 ),
               ).enter(motion, delay: 140, dy: 0.12),
-              SizedBox(height: 22.sp),
+              SizedBox(height: 20.sp),
               AnimatedBuilder(
                 animation: _timeline,
                 builder: (context, _) {

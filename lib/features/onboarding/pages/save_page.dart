@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
+import 'package:kindose/widgets/safe_bottom.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 import '../../../resources/colors.dart';
@@ -29,6 +30,7 @@ class SavePage extends GetView<OnboardingController> {
       children: [
         Expanded(
           child: ListView(
+            physics: BouncingScrollPhysics(),
             padding: EdgeInsets.fromLTRB(24.sp, 10.sp, 24.sp, 16.sp),
             children: [
               Center(
@@ -48,12 +50,12 @@ class SavePage extends GetView<OnboardingController> {
                 'Keep your doses, weight and reports safe if you change or lose your phone.',
                 textAlign: TextAlign.center,
                 style: AppText.bodyText.copyWith(
-                  fontSize: 15.5.sp,
+                  fontSize: 14.5.sp,
                   height: 1.45,
                   color: k.muted,
                 ),
               ).enter(motion, delay: 170, dy: 0.12),
-              SizedBox(height: 22.sp),
+              SizedBox(height: 20.sp),
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 6.sp),
                 child: const Column(
@@ -97,13 +99,15 @@ class SavePage extends GetView<OnboardingController> {
                   label: 'Not now',
                   onTap: busy != null || saving ? null : controller.skipSave,
                 ),
-                Text(
-                  'Signing in only shares your name and email with Kindose.\nYou can do this later in Me.',
-                  textAlign: TextAlign.center,
-                  style: AppText.small.copyWith(
-                    fontSize: 12.sp,
-                    height: 1.45,
-                    color: k.faint,
+                KBottomPadding(
+                  child: Text(
+                    'Signing in only shares your name and email with Kindose.\nYou can do this later in Me.',
+                    textAlign: TextAlign.center,
+                    style: AppText.small.copyWith(
+                      fontSize: 12.sp,
+                      height: 1.45,
+                      color: k.faint,
+                    ),
                   ),
                 ),
               ],

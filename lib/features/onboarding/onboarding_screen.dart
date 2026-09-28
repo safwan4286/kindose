@@ -215,7 +215,8 @@ class StepScaffold extends StatelessWidget {
       children: [
         Expanded(
           child: ListView(
-            padding: EdgeInsets.fromLTRB(20.sp, 10.sp, 20.sp, 15.sp),
+            physics: BouncingScrollPhysics(),
+            padding: EdgeInsets.fromLTRB(20.sp, 10.sp, 20.sp, 30.sp),
             children: [
               Semantics(
                 header: true,

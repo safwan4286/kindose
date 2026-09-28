@@ -59,10 +59,11 @@ class RemindersPage extends GetView<OnboardingController> {
       children: [
         Expanded(
           child: ListView(
-            padding: EdgeInsets.fromLTRB(20.sp, 4.sp, 20.sp, 16.sp),
+            physics: BouncingScrollPhysics(),
+            padding: EdgeInsets.fromLTRB(20.sp, 0, 20.sp, 16.sp),
             children: [
               const Center(child: _RingingBell()).enter(motion, dy: 0.1),
-              SizedBox(height: 18.sp),
+              SizedBox(height: 15.sp),
               Semantics(
                 header: true,
                 child: Text(
@@ -76,12 +77,12 @@ class RemindersPage extends GetView<OnboardingController> {
                 'A nudge on dose day, plus gentle protein and water check-ins. You choose which ones, anytime.',
                 textAlign: TextAlign.center,
                 style: AppText.bodyText.copyWith(
-                  fontSize: 15.5.sp,
+                  fontSize: 14.5.sp,
                   height: 1.45,
                   color: k.muted,
                 ),
               ).enter(motion, delay: 140, dy: 0.12),
-              SizedBox(height: 22.sp),
+              SizedBox(height: 20.sp),
               ExcludeSemantics(
                 child: Column(
                   children: [
@@ -262,8 +263,8 @@ class _RingingBellState extends State<_RingingBell>
     final k = context.k;
     final dark = k.selectedBorder == AppColors.lime;
     return Container(
-      width: 104.sp,
-      height: 104.sp,
+      width: 100.sp,
+      height: 100.sp,
       decoration: BoxDecoration(
         color: dark
             ? AppColors.lime.withValues(alpha: 0.14)
@@ -278,7 +279,7 @@ class _RingingBellState extends State<_RingingBell>
           alignment: const Alignment(0, -0.8),
           child: child,
         ),
-        child: ThreeD(Img3d.bell, size: 64.sp),
+        child: ThreeD(Img3d.bell, size: 60.sp),
       ),
     );
   }

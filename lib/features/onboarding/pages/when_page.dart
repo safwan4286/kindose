@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:kindose/widgets/safe_bottom.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 import '../../../resources/colors.dart';
@@ -75,11 +76,13 @@ class WhenPage extends GetView<OnboardingController> {
       title: title,
       subtitle: subtitle,
       cta: Obx(
-        () => PillButton(
-          label: controller.editMode ? 'Save changes' : 'Continue',
-          onPressed: controller.scheduleReady
-              ? controller.confirmSchedule
-              : null,
+        () => KBottomPadding(
+          child: PillButton(
+            label: controller.editMode ? 'Save changes' : 'Continue',
+            onPressed: controller.scheduleReady
+                ? controller.confirmSchedule
+                : null,
+          ),
         ),
       ),
       children: [

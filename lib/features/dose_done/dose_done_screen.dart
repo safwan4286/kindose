@@ -67,7 +67,7 @@ class DoseDoneScreen extends GetView<DoseDoneController> {
                             controller.summary,
                             textAlign: TextAlign.center,
                             style: AppText.bodyStrong.copyWith(
-                              fontSize: 15.5.sp,
+                              fontSize: 14.5.sp,
                               color: AppColors.heroMuted,
                             ),
                           ).enter(motion, delay: 360),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:kindose/widgets/safe_bottom.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 import '../../../resources/colors.dart';
@@ -28,9 +29,11 @@ class BirthPage extends GetView<OnboardingController> {
       title: 'When were you born?',
       subtitle: 'Age helps set your goals. Kindose is for adults 18 and over.',
       cta: Obx(
-        () => PillButton(
-          label: 'Continue',
-          onPressed: controller.isAdult ? controller.confirmBirth : null,
+        () => KBottomPadding(
+          child: PillButton(
+            label: 'Continue',
+            onPressed: controller.isAdult ? controller.confirmBirth : null,
+          ),
         ),
       ),
       children: [

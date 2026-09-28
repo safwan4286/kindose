@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:kindose/widgets/safe_bottom.dart';
 
 import '../../../resources/catalog.dart';
 import '../../../resources/colors.dart';
@@ -54,9 +55,11 @@ class FocusPage extends GetView<OnboardingController> {
               ),
             ),
             SizedBox(height: 8.sp),
-            PillButton(
-              label: 'Continue',
-              onPressed: n == 0 ? null : controller.confirmFocus,
+            KBottomPadding(
+              child: PillButton(
+                label: 'Continue',
+                onPressed: n == 0 ? null : controller.confirmFocus,
+              ),
             ),
           ],
         );

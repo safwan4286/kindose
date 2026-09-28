@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:kindose/widgets/safe_bottom.dart';
 
 import '../../../resources/bmi.dart';
 import '../../../services/responsiveness/device_manager.dart';
@@ -20,7 +21,7 @@ class WeightPage extends GetView<OnboardingController> {
     return StepScaffold(
       title: "What's your current weight?",
       subtitle: 'Your starting point. Only you see it.',
-      cta: PillButton(label: 'Continue', onPressed: controller.confirmWeight),
+      cta: KBottomPadding(child: PillButton(label: 'Continue', onPressed: controller.confirmWeight)),
       children: [
         Obx(
           () => WeightInput(

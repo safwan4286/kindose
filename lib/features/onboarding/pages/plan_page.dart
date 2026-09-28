@@ -34,6 +34,7 @@ class PlanPage extends GetView<OnboardingController> {
       children: [
         Expanded(
           child: ListView(
+            physics: BouncingScrollPhysics(),
             padding: EdgeInsets.fromLTRB(20.sp, 4.sp, 20.sp, 16.sp),
             children: [
               Semantics(
@@ -47,7 +48,7 @@ class PlanPage extends GetView<OnboardingController> {
               Text(
                 'Made from your answers. You can change any of it later in Me.',
                 style: AppText.bodyText.copyWith(
-                  fontSize: 15.5.sp,
+                  fontSize: 14.5.sp,
                   height: 1.45,
                   color: k.muted,
                 ),
@@ -84,7 +85,7 @@ class PlanPage extends GetView<OnboardingController> {
           ),
         ),
         Padding(
-          padding: EdgeInsets.fromLTRB(20.sp, 4.sp, 20.sp, 8.sp),
+          padding: EdgeInsets.fromLTRB(20.sp, 4.sp, 20.sp, 14.sp),
           child: Obx(
             () => PillButton(
               label: 'Looks good',
