@@ -28,8 +28,11 @@ class DeviceManager {
   static double? _bottomBarHeight;
   static double? _textScaleFactor;
 
-  void init(BuildContext context) {
-    final mediaQuery = MediaQuery.of(context);
+  void init(BuildContext context) => initWith(MediaQuery.of(context));
+
+  /// Same as [init] but from explicit data (the app builder passes the
+  /// width-limited MediaQuery used on tablets).
+  void initWith(MediaQueryData mediaQuery) {
     // _mediaQueryData = mediaQuery;
     _screenWidth = mediaQuery.size.width;
     _screenHeight = mediaQuery.size.height;
@@ -46,8 +49,13 @@ class DeviceManager {
     final actualDiagonal = sqrt(
       _screenWidth! * _screenWidth! + _screenHeight! * _screenHeight!,
     );
-    return actualDiagonal / referenceDiagonal;
+    // Clamped: phones scale a little either way; tablets keep phone sizes
+    // (the app is shown in a centred phone-width column there).
+    return (actualDiagonal / referenceDiagonal).clamp(minScale, maxScale);
   }
+
+  static const double minScale = 0.85;
+  static const double maxScale = 1.15;
 
   double setWidth(double width) =>
       _screenWidth != null ? width * (_screenWidth! / this.width) : width;

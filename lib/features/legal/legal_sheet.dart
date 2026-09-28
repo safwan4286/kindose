@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../resources/colors.dart';
+import '../../services/responsiveness/device_manager.dart';
 import '../../services/theme/theme.dart';
 import '../../widgets/buttons.dart';
 import '../../widgets/k_widgets.dart';
@@ -29,22 +30,22 @@ class LegalSheet extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(height: 10),
+            SizedBox(height: 10.sp),
             Container(
-              width: 40,
-              height: 5,
+              width: 40.sp,
+              height: 5.sp,
               decoration: BoxDecoration(
                 color: k.border,
-                borderRadius: BorderRadius.circular(3),
+                borderRadius: BorderRadius.circular(3.sp),
               ),
             ),
             Flexible(
               child: ListView(
                 shrinkWrap: true,
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+                padding: EdgeInsets.fromLTRB(20.sp, 16.sp, 20.sp, 12.sp),
                 children: [
-                  Text('Terms & privacy', style: AppText.h2),
-                  const SizedBox(height: 14),
+                  Text('Terms & privacy', style: AppText.h2.copyWith(fontSize: 24.sp)),
+                  SizedBox(height: 14.sp),
                   const _Block(
                     title: 'Not medical advice',
                     body:
@@ -73,7 +74,7 @@ class LegalSheet extends StatelessWidget {
                         '3D illustrations: Microsoft Fluent Emoji (MIT). Icons: Phosphor Icons (MIT). '
                         'Fonts: Figtree and Bricolage Grotesque (SIL Open Font License).',
                   ),
-                  const SizedBox(height: 6),
+                  SizedBox(height: 6.sp),
                   SoftButton(
                     label: 'View all licences',
                     background: k.card,
@@ -84,7 +85,7 @@ class LegalSheet extends StatelessWidget {
                           'A personal GLP-1 log. Not medical advice.',
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  SizedBox(height: 10.sp),
                   SoftButton(
                     label: 'Close',
                     background: AppColors.ink,
@@ -110,17 +111,17 @@ class _Block extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: EdgeInsets.only(bottom: 10.sp),
       child: KCard(
         radius: 20,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: AppText.title),
-            const SizedBox(height: 4),
+            Text(title, style: AppText.title.copyWith(fontSize: 15.sp)),
+            SizedBox(height: 4.sp),
             Text(
               body,
-              style: AppText.bodyText.copyWith(color: context.k.muted),
+              style: AppText.bodyText.copyWith(fontSize: 14.sp, color: context.k.muted),
             ),
           ],
         ),

@@ -138,10 +138,11 @@ class KSwitch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final h = width * 0.6;
+    final w = width.sp;
+    final h = w * 0.6;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 180),
-      width: width,
+      width: w,
       height: h,
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
@@ -189,27 +190,27 @@ class SwitchRow extends StatelessWidget {
       child: Semantics(
         toggled: value,
         child: InkWell(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(14.sp),
           onTap: () => onChanged(!value),
           child: Padding(
             padding: padding,
             child: Row(
               children: [
-                if (leading != null) ...[leading!, const SizedBox(width: 12)],
+                if (leading != null) ...[leading!, SizedBox(width: 12.sp)],
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(label, style: AppText.title),
+                      Text(label, style: AppText.title.copyWith(fontSize: 15.sp)),
                       if (sub != null)
                         Text(
                           sub!,
-                          style: AppText.small.copyWith(color: context.k.muted),
+                          style: AppText.small.copyWith(fontSize: 13.sp, color: context.k.muted),
                         ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 10),
+                SizedBox(width: 10.sp),
                 KSwitch(value: value),
               ],
             ),
@@ -332,14 +333,15 @@ class KTag extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: EdgeInsets.symmetric(horizontal: 8.sp, vertical: 3.sp),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(9),
+        borderRadius: BorderRadius.circular(9.sp),
       ),
       child: Text(
         text.toUpperCase(),
         style: AppText.tiny.copyWith(
+          fontSize: 11.sp,
           color: fg,
           fontWeight: FontWeight.w800,
           letterSpacing: 0.5,

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -15,6 +17,9 @@ import 'resources/routes.dart';
 import 'services/notifications/reminder_service.dart';
 import 'services/tracker_service.dart';
 import 'services/theme/system_ui.dart';
+
+/// Widest the app gets. Tablets show a centred phone-width column.
+const double kMaxAppWidth = 520;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -114,16 +119,26 @@ class KindoseApp extends StatelessWidget {
         defaultTransition: Transition.cupertino,
         builder: (context, child) {
           final dark = Theme.of(context).brightness == Brightness.dark;
-          // Allow large text but cap it so fixed-size tiles stay usable.
           final mq = MediaQuery.of(context);
+          // Tablets and wide windows keep the phone layout in a centred
+          // column instead of stretching every card.
+          final width = math.min(mq.size.width, kMaxAppWidth);
+          final data = mq.copyWith(
+            size: Size(width, mq.size.height),
+            // Allow large text but cap it so fixed-size tiles stay usable.
+            textScaler: mq.textScaler.clamp(maxScaleFactor: 1.35),
+          );
+          DeviceManager.instance.initWith(data);
+          Widget app = MediaQuery(data: data, child: child ?? const SizedBox.shrink());
+          if (width < mq.size.width) {
+            app = ColoredBox(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              child: Center(child: SizedBox(width: width, child: ClipRect(child: app))),
+            );
+          }
           return AnnotatedRegion<SystemUiOverlayStyle>(
             value: KSystemUi.style(darkBackground: dark),
-            child: MediaQuery(
-              data: mq.copyWith(
-                textScaler: mq.textScaler.clamp(maxScaleFactor: 1.35),
-              ),
-              child: child ?? const SizedBox.shrink(),
-            ),
+            child: app,
           );
         },
       ),

@@ -7,9 +7,9 @@ import '../services/responsiveness/device_manager.dart';
 import '../services/theme/theme.dart';
 import 'press_scale.dart';
 
-/// The app's main call to action: ink pill with a lime arrow circle
-/// (lime pill with an ink circle in dark mode, or when [lime] is set for
-/// dark screens). Use it for every primary "Continue / Save / Get started".
+/// The app's main call to action: a plain ink pill with a centred label
+/// (lime pill with ink text in dark mode, or when [lime] is set for dark
+/// screens). An [icon] is shown only when passed. Use it for every primary "Continue / Save / Get started".
 ///
 /// Pass `onPressed: null` to disable. [busy] shows a spinner and blocks
 /// double taps while something is saving. Haptics stay with the caller,
@@ -19,7 +19,7 @@ class PillButton extends StatelessWidget {
     super.key,
     required this.label,
     required this.onPressed,
-    this.icon = PhosphorIconsBold.arrowRight,
+    this.icon,
     this.busy = false,
     this.lime = false,
     this.ink = false,
@@ -27,7 +27,10 @@ class PillButton extends StatelessWidget {
 
   final String label;
   final VoidCallback? onPressed;
-  final IconData icon;
+
+  /// Optional icon after the label. Only pass one when it adds meaning
+  /// (share, check, plus); plain labels are the default.
+  final IconData? icon;
   final bool busy;
 
   /// Lime pill for dark screens.
@@ -47,8 +50,8 @@ class PillButton extends StatelessWidget {
         : AppColors.ink;
     final onLime = bg == AppColors.lime;
     final fg = onLime ? AppColors.ink : AppColors.white;
-    final circle = onLime ? AppColors.ink : AppColors.lime;
-    final circleIcon = onLime ? AppColors.lime : AppColors.ink;
+    // Icon / spinner accent: lime on ink, ink on lime.
+    final accent = onLime ? AppColors.ink : AppColors.lime;
 
     return Semantics(
       button: true,
@@ -61,51 +64,51 @@ class PillButton extends StatelessWidget {
         child: PressScale(
           onTap: enabled ? onPressed : null,
           child: Container(
-            constraints: BoxConstraints(minHeight: 60.sp),
-            padding: EdgeInsets.fromLTRB(24.sp, 8.sp, 8.sp, 8.sp),
+            constraints: BoxConstraints(minHeight: 56.sp),
+            padding: EdgeInsets.symmetric(horizontal: 24.sp, vertical: 12.sp),
             decoration: BoxDecoration(
               color: bg,
-              borderRadius: BorderRadius.circular(30.sp),
+              borderRadius: BorderRadius.circular(28.sp),
               boxShadow: enabled
                   ? [
                       BoxShadow(
-                        color: AppColors.ink.withValues(alpha: 0.18),
-                        blurRadius: 18.sp,
-                        offset: Offset(0, 8.sp),
+                        color: AppColors.ink.withValues(alpha: 0.14),
+                        blurRadius: 16.sp,
+                        offset: Offset(0, 6.sp),
                       ),
                     ]
                   : null,
             ),
+            // Centred label, like a normal button (the old circle on the
+            // right looked like a swipe control).
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Expanded(
+                Flexible(
                   child: Text(
                     label,
+                    textAlign: TextAlign.center,
                     style: AppText.button.copyWith(fontSize: 17.sp, color: fg),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                SizedBox(width: 8.sp),
-                Container(
-                  width: 44.sp,
-                  height: 44.sp,
-                  decoration: BoxDecoration(
-                    color: circle,
-                    shape: BoxShape.circle,
+                if (busy || icon != null) ...[
+                  SizedBox(width: 10.sp),
+                  SizedBox(
+                    width: 20.sp,
+                    height: 20.sp,
+                    child: Center(
+                      child: busy
+                          ? SizedBox(
+                              width: 16.sp,
+                              height: 16.sp,
+                              child: CircularProgressIndicator(strokeWidth: 2.2, color: accent),
+                            )
+                          : PhosphorIcon(icon!, size: 19.sp, color: accent),
+                    ),
                   ),
-                  alignment: Alignment.center,
-                  child: busy
-                      ? SizedBox(
-                          width: 18.sp,
-                          height: 18.sp,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            color: circleIcon,
-                          ),
-                        )
-                      : PhosphorIcon(icon, size: 20.sp, color: circleIcon),
-                ),
+                ],
               ],
             ),
           ),
@@ -185,7 +188,8 @@ class SoftButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fg = foreground ?? context.k.text;
-    final radius = BorderRadius.circular(height / 2);
+    final h = height.sp;
+    final radius = BorderRadius.circular(h / 2);
     return Opacity(
       opacity: onPressed == null ? 0.45 : 1,
       child: Material(
@@ -198,17 +202,17 @@ class SoftButton extends StatelessWidget {
           borderRadius: radius,
           onTap: onPressed,
           child: SizedBox(
-            height: height,
+            height: h,
             child: LayoutBuilder(
               builder: (context, box) {
                 final text = Text(
                   label,
-                  style: AppText.button.copyWith(fontSize: 16, color: fg),
+                  style: AppText.button.copyWith(fontSize: 16.sp, color: fg),
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
                 );
                 return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: EdgeInsets.symmetric(horizontal: 16.sp),
                   child: Row(
                     mainAxisSize: box.hasBoundedWidth
                         ? MainAxisSize.max
@@ -218,10 +222,10 @@ class SoftButton extends StatelessWidget {
                       if (icon != null) ...[
                         PhosphorIcon(
                           icon ?? Icons.no_accounts,
-                          size: 18,
+                          size: 18.sp,
                           color: fg,
                         ),
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8.sp),
                       ],
                       if (box.hasBoundedWidth) Flexible(child: text) else text,
                     ],
