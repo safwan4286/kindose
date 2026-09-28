@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 
 import '../../resources/images.dart';
@@ -90,6 +91,35 @@ class PlusController extends GetxController {
 
   final RxString selected = 'year'.obs;
 
+  /// Scroll of the paywall list. It lives here, not in the screen, because
+  /// PlusScreen is a GetView (stateless, no initState/dispose). GetX calls
+  /// onClose when the page is removed, so it is always disposed.
+  final ScrollController scrollController = ScrollController();
+
+  /// True once the list has scrolled a little. Only flips when the value
+  /// changes, so the screen doesn't rebuild on every pixel.
+  final RxBool scrolled = false.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    // If scrolled above top, snap back to 0
+    if (scrollController.offset < 0) {
+      scrollController.jumpTo(0);
+    }
+  }
+
+  @override
+  void onClose() {
+    scrollController.removeListener(_onScroll);
+    scrollController.dispose();
+    super.onClose();
+  }
+
   /// True when opened at the end of onboarding: closing goes to Home.
   late final bool fromOnboarding = Get.arguments == true;
 
@@ -105,8 +135,8 @@ class PlusController extends GetxController {
       isYearly ? 'Start my free week' : 'Subscribe for \$6.99 a month';
 
   String get fine => isYearly
-      ? 'Free for 7 days, then \$39.99 a year. Cancel anytime in your store settings.'
-      : 'Billed monthly. Cancel anytime in your store settings.';
+      ? '7 days free, then \$39.99/year. Cancel anytime.'
+      : 'Billed monthly. Cancel anytime.';
 
   void pick(String id) {
     if (selected.value == id) return;

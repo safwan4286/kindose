@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
+import 'package:kindose/widgets/safe_bottom.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 import '../../resources/colors.dart';
@@ -39,6 +40,7 @@ class PlusScreen extends GetView<PlusController> {
             children: [
               Expanded(
                 child: ListView(
+                  controller: controller.scrollController,
                   padding: EdgeInsets.zero,
                   children: [
                     _Hero(onClose: controller.close, motion: motion),
@@ -50,7 +52,7 @@ class PlusScreen extends GetView<PlusController> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             const SectionLabel('CHOOSE YOUR PLAN'),
-                            SizedBox(height: 10.sp),
+                            SizedBox(height: 15.sp),
                             for (final p in PlusController.plans) ...[
                               _PlanTile(
                                 plan: p,
@@ -59,36 +61,22 @@ class PlusScreen extends GetView<PlusController> {
                               ),
                               SizedBox(height: 12.sp),
                             ],
-                            _Perks(
-                              controller: controller,
-                            ).enter(motion, delay: 220, dy: 0.12),
                             AnimatedSize(
                               duration: const Duration(milliseconds: 280),
                               curve: Curves.easeOutCubic,
                               alignment: Alignment.topCenter,
                               child: yearly
                                   ? Padding(
-                                      padding: EdgeInsets.only(top: 20.sp),
-                                      child: const _TrialTimeline(),
-                                    )
+                                padding: EdgeInsets.only(top: 10.sp),
+                                child: const _TrialTimeline(),
+                              )
                                   : const SizedBox(width: double.infinity),
                             ),
-                            SizedBox(height: 20.sp),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                LinkButton(
-                                  label: 'Restore',
-                                  onTap: controller.restore,
-                                  color: k.muted,
-                                ),
-                                LinkButton(
-                                  label: 'Terms & privacy',
-                                  onTap: showLegalSheet,
-                                  color: k.muted,
-                                ),
-                              ],
-                            ),
+                            SizedBox(height: 10.sp),
+                            _Perks(
+                              controller: controller,
+                            ).enter(motion, delay: 220, dy: 0.12),
+
                           ],
                         );
                       }),
@@ -107,8 +95,8 @@ class PlusScreen extends GetView<PlusController> {
                     ),
                   ],
                 ),
-                child: SafeArea(
-                  top: false,
+                child: KSafeArea(
+                  topSafeArea: false,
                   child: Padding(
                     padding: EdgeInsets.fromLTRB(20.sp, 10.sp, 20.sp, 6.sp),
                     child: Obx(
@@ -133,10 +121,11 @@ class PlusScreen extends GetView<PlusController> {
                               ),
                             ),
                           ),
-                          LinkButton(
-                            label: 'Continue with free',
-                            onTap: controller.close,
-                            color: k.text,
+                          SizedBox(height: 2.sp),
+                          _FooterLinks(
+                            onTerms: showLegalSheet,
+                            onPrivacy: showLegalSheet,
+                            onRestore: controller.restore,
                           ),
                         ],
                       ),
@@ -408,101 +397,115 @@ class _TrialTimeline extends StatelessWidget {
   Widget build(BuildContext context) {
     final k = context.k;
     final dark = k.selectedBorder == AppColors.lime;
-
-    Widget step(Widget dot, String title, String body) => Padding(
-      padding: EdgeInsets.symmetric(vertical: 6.sp),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          dot,
-          SizedBox(width: 14.sp),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: AppText.bodyStrong.copyWith(
-                    fontSize: 14.5.sp,
-                    fontWeight: FontWeight.w800,
-                    color: k.text,
-                  ),
-                ),
-                SizedBox(height: 1.sp),
-                Text(
-                  body,
-                  style: AppText.small.copyWith(
-                    fontSize: 13.sp,
-                    color: k.muted,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-
-    Widget dot(IconData icon, Color bg, Color fg, {Color? border}) => Container(
-      width: 30.sp,
-      height: 30.sp,
-      decoration: BoxDecoration(
-        color: bg,
-        shape: BoxShape.circle,
-        border: border == null ? null : Border.all(color: border, width: 2),
-      ),
-      child: Icon(icon, size: 15.sp, color: fg),
-    );
+    final steps = [
+      ('1', 'Today', 'Everything in Plus unlocks', AppColors.lime, AppColors.ink),
+      ('5', 'Day 5', 'We remind you the trial is ending', dark ? k.text : AppColors.ink, dark ? k.bg : AppColors.lime),
+      ('7', 'Day 7', '\$39.99 for the year. Cancel before and pay nothing', k.cardAlt, k.text),
+    ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SectionLabel('HOW THE FREE TRIAL WORKS'),
+        const SectionLabel('HOW THE FREE WEEK WORKS'),
         SizedBox(height: 10.sp),
-        Stack(
-          children: [
-            // Rail behind the dots: lime for the free part, grey after.
-            Positioned(
-              left: 13.5.sp,
-              top: 20.sp,
-              bottom: 20.sp,
-              child: Column(
-                children: [
-                  Expanded(child: Container(width: 3, color: AppColors.lime)),
-                  Expanded(child: Container(width: 3, color: k.border)),
-                ],
-              ),
-            ),
-            Column(
-              children: [
-                step(
-                  dot(
-                    PhosphorIconsBold.lightning,
-                    dark ? AppColors.lime : AppColors.ink,
-                    dark ? AppColors.ink : AppColors.lime,
+        Container(
+          padding: EdgeInsets.fromLTRB(16.sp, 16.sp, 16.sp, 2.sp),
+          decoration: BoxDecoration(color: k.card, borderRadius: BorderRadius.circular(22.sp)),
+          child: Column(
+            children: [
+              for (var i = 0; i < steps.length; i++)
+                IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Column(
+                        children: [
+                          Container(
+                            width: 30.sp,
+                            height: 30.sp,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(color: steps[i].$4, shape: BoxShape.circle),
+                            child: Text(
+                              steps[i].$1,
+                              style: AppText.small.copyWith(fontSize: 13.sp, fontWeight: FontWeight.w800, color: steps[i].$5),
+                            ),
+                          ),
+                          // Line down to the next step.
+                          if (i < steps.length - 1)
+                            Expanded(child: Container(width: 2, color: k.border)),
+                        ],
+                      ),
+                      SizedBox(width: 12.sp),
+                      Expanded(
+                        child: Padding(
+                          padding: EdgeInsets.only(top: 3.sp, bottom: 14.sp),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                steps[i].$2,
+                                style: AppText.bodyStrong.copyWith(
+                                  fontSize: 15.sp,
+                                  fontWeight: FontWeight.w800,
+                                  color: k.text,
+                                ),
+                              ),
+                              SizedBox(height: 1.sp),
+                              Text(
+                                steps[i].$3,
+                                style: AppText.small.copyWith(fontSize: 13.sp, color: k.muted),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  'Today',
-                  'Everything in Plus unlocks',
                 ),
-                step(
-                  dot(PhosphorIconsBold.bell, AppColors.lime, AppColors.ink),
-                  'Day 5',
-                  'We’ll remind you before the trial ends',
-                ),
-                step(
-                  dot(
-                    PhosphorIconsBold.calendarDots,
-                    k.card,
-                    k.muted,
-                    border: k.border,
-                  ),
-                  'Day 7',
-                  'Trial ends, \$39.99 for the year. Cancel before and pay nothing.',
-                ),
-              ],
-            ),
-          ],
+            ],
+          ),
         ),
+      ],
+    );
+  }
+}
+
+// ------------------------------------------------------------ footer links
+
+/// "Terms · Privacy · Restore" under the button, as the stores expect.
+class _FooterLinks extends StatelessWidget {
+  const _FooterLinks({required this.onTerms, required this.onPrivacy, required this.onRestore});
+
+  final VoidCallback onTerms;
+  final VoidCallback onPrivacy;
+  final VoidCallback onRestore;
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    final style = AppText.small.copyWith(fontSize: 12.sp, fontWeight: FontWeight.w700, color: k.faint);
+    Widget link(String label, VoidCallback onTap) => Semantics(
+          button: true,
+          label: label,
+          excludeSemantics: true,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(8.sp),
+            onTap: onTap,
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 6.sp, vertical: 8.sp),
+              child: Text(label, style: style),
+            ),
+          ),
+        );
+    Widget dot() => ExcludeSemantics(child: Text('·', style: style));
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        link('Terms', onTerms),
+        dot(),
+        link('Privacy', onPrivacy),
+        dot(),
+        link('Restore', onRestore),
       ],
     );
   }

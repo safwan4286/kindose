@@ -7,13 +7,19 @@ import '../services/responsiveness/device_manager.dart';
 class KSafeArea extends StatelessWidget {
   final Widget child;
   final double iosBottomPadding;
+  final bool topSafeArea;
 
-  const KSafeArea({super.key, required this.child, this.iosBottomPadding = 0})
-    : assert(iosBottomPadding >= 0);
+  const KSafeArea({
+    super.key,
+    required this.child,
+    this.iosBottomPadding = 0,
+    this.topSafeArea = true,
+  }) : assert(iosBottomPadding >= 0);
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
+      top: topSafeArea,
       bottom: !Platform.isIOS,
       child: Padding(
         padding: EdgeInsets.only(
