@@ -21,7 +21,8 @@ class FocusPage extends GetView<OnboardingController> {
     final k = context.k;
     final dark = k.selectedBorder == AppColors.lime;
     final motion = !MediaQuery.disableAnimationsOf(context);
-    Color tint(Color light, Color accent) => dark ? accent.withValues(alpha: 0.16) : light;
+    Color tint(Color light, Color accent) =>
+        dark ? accent.withValues(alpha: 0.16) : light;
 
     final tints = <String, Color>{
       'muscle': tint(AppColors.tangerineSoft, AppColors.tangerine),
@@ -46,11 +47,17 @@ class FocusPage extends GetView<OnboardingController> {
               liveRegion: true,
               child: Text(
                 n == 0 ? 'Pick at least one' : '$n selected',
-                style: AppText.small.copyWith(fontSize: 12.5.sp, color: k.faint),
+                style: AppText.small.copyWith(
+                  fontSize: 12.5.sp,
+                  color: k.faint,
+                ),
               ),
             ),
             SizedBox(height: 8.sp),
-            PillButton(label: 'Continue', onPressed: n == 0 ? null : controller.confirmFocus),
+            PillButton(
+              label: 'Continue',
+              onPressed: n == 0 ? null : controller.confirmFocus,
+            ),
           ],
         );
       }),

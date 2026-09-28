@@ -44,6 +44,9 @@ class TrackerService extends GetxService {
   /// Questions the user wants printed on the doctor report.
   final RxList<String> reportQuestions = <String>[].obs;
 
+  /// Reminder 3 days before [nextAppointment]. On unless turned off in Me.
+  final RxBool visitReminderOn = true.obs;
+
   /// "Get set up" card closed by the user.
   final RxBool setupDismissed = false.obs;
 
@@ -70,12 +73,14 @@ class TrackerService extends GetxService {
     final raw = _profile.get(_meKey);
     profile.value = raw is Map ? UserProfile.fromMap(raw) : null;
 
-    doses.assignAll(_doses.values
-        .whereType<Map<dynamic, dynamic>>()
-        .map(DoseLog.fromMap)
-        .whereType<DoseLog>()
-        .toList()
-      ..sort((a, b) => b.takenAt.compareTo(a.takenAt)));
+    doses.assignAll(
+      _doses.values
+          .whereType<Map<dynamic, dynamic>>()
+          .map(DoseLog.fromMap)
+          .whereType<DoseLog>()
+          .toList()
+        ..sort((a, b) => b.takenAt.compareTo(a.takenAt)),
+    );
 
     final dayMap = <String, DayLog>{};
     for (final v in _days.values.whereType<Map<dynamic, dynamic>>()) {
@@ -84,28 +89,42 @@ class TrackerService extends GetxService {
     }
     days.assignAll(dayMap);
 
-    weights.assignAll(_weights.values
-        .whereType<Map<dynamic, dynamic>>()
-        .map(WeightEntry.fromMap)
-        .whereType<WeightEntry>()
-        .toList()
-      ..sort((a, b) => a.date.compareTo(b.date)));
+    weights.assignAll(
+      _weights.values
+          .whereType<Map<dynamic, dynamic>>()
+          .map(WeightEntry.fromMap)
+          .whereType<WeightEntry>()
+          .toList()
+        ..sort((a, b) => a.date.compareTo(b.date)),
+    );
 
     themeMode.value = _themeFromString(_settings.get('themeMode'));
     final appt = _settings.get('nextAppointment');
-    nextAppointment.value =
-        appt is int ? DateTime.fromMillisecondsSinceEpoch(appt) : null;
+    nextAppointment.value = appt is int
+        ? DateTime.fromMillisecondsSinceEpoch(appt)
+        : null;
     final lastAppt = _settings.get('lastAppointment');
-    lastAppointment.value = lastAppt is int ? DateTime.fromMillisecondsSinceEpoch(lastAppt) : null;
+    lastAppointment.value = lastAppt is int
+        ? DateTime.fromMillisecondsSinceEpoch(lastAppt)
+        : null;
     final qs = _settings.get('reportQuestions');
-    reportQuestions.assignAll(qs is List ? qs.whereType<String>() : const <String>[]);
+    reportQuestions.assignAll(
+      qs is List ? qs.whereType<String>() : const <String>[],
+    );
     setupDismissed.value = _settings.get('setupDismissed') == true;
+    visitReminderOn.value = _settings.get('visitReminderOn') != false;
     final order = _settings.get('todayOrder');
-    todayOrder.assignAll(order is List ? order.whereType<String>() : const <String>[]);
+    todayOrder.assignAll(
+      order is List ? order.whereType<String>() : const <String>[],
+    );
     final hidden = _settings.get('todayHidden');
-    todayHidden.assignAll(hidden is List ? hidden.whereType<String>() : const <String>[]);
+    todayHidden.assignAll(
+      hidden is List ? hidden.whereType<String>() : const <String>[],
+    );
     final moved = _settings.get('nextDoseOverride');
-    nextDoseOverride.value = moved is int ? DateTime.fromMillisecondsSinceEpoch(moved) : null;
+    nextDoseOverride.value = moved is int
+        ? DateTime.fromMillisecondsSinceEpoch(moved)
+        : null;
   }
 
   Future<void> dismissSetup() async {
@@ -182,7 +201,8 @@ class TrackerService extends GetxService {
     doses.sort((a, b) => b.takenAt.compareTo(a.takenAt));
   }
 
-  String? _cleanNote(String? note) => (note == null || note.trim().isEmpty) ? null : note.trim();
+  String? _cleanNote(String? note) =>
+      (note == null || note.trim().isEmpty) ? null : note.trim();
 
   Future<void> removeDose(String id) async {
     await _doses.delete(id);
@@ -198,7 +218,8 @@ class TrackerService extends GetxService {
   Iterable<DoseLog> get siteDoses => doses.where((d) => d.site.isNotEmpty);
 
   /// The spot used longest ago (never-used spots first).
-  String get nextSiteId => Catalog.nextSite(siteDoses.map((d) => d.site).toList());
+  String get nextSiteId =>
+      Catalog.nextSite(siteDoses.map((d) => d.site).toList());
 
   String? get lastSiteId => _firstOrNull(siteDoses, (_) => true)?.site;
 
@@ -220,11 +241,14 @@ class TrackerService extends GetxService {
     DateTime day;
     final planned = p.plannedFirstDose;
     final moved = nextDoseOverride.value;
-    if (moved != null && (last == null || moved.isAfter(Dates.dateOnly(last.takenAt)))) {
+    if (moved != null &&
+        (last == null || moved.isAfter(Dates.dateOnly(last.takenAt)))) {
       return moved.add(Duration(minutes: p.shotMinutes));
     }
 
-    if (last == null && planned != null && !Dates.dateOnly(planned).isBefore(today)) {
+    if (last == null &&
+        planned != null &&
+        !Dates.dateOnly(planned).isBefore(today)) {
       // Starting or restarting: the first dose is on the day they chose.
       day = Dates.dateOnly(planned);
     } else if (p.isDaily) {
@@ -237,8 +261,11 @@ class TrackerService extends GetxService {
     } else {
       day = _nextDay(last.takenAt, p.everyDays, p.shotWeekday);
     }
-    return DateTime(day.year, day.month, day.day)
-        .add(Duration(minutes: p.shotMinutes));
+    return DateTime(
+      day.year,
+      day.month,
+      day.day,
+    ).add(Duration(minutes: p.shotMinutes));
   }
 
   /// When the next dose would be if one is taken at [takenAt]. Pass
@@ -312,9 +339,15 @@ class TrackerService extends GetxService {
   Future<String> addProtein(int grams, [DateTime? day, String? label]) =>
       _addEntry('protein', grams, day, label);
 
-  Future<String> addWater(int ml, [DateTime? day, String? label]) => _addEntry('water', ml, day, label);
+  Future<String> addWater(int ml, [DateTime? day, String? label]) =>
+      _addEntry('water', ml, day, label);
 
-  Future<String> _addEntry(String kind, int amount, DateTime? day, String? label) async {
+  Future<String> _addEntry(
+    String kind,
+    int amount,
+    DateTime? day,
+    String? label,
+  ) async {
     final at = day ?? DateTime.now();
     final d = dayLog(at);
     final entry = LogEntry(
@@ -324,11 +357,13 @@ class TrackerService extends GetxService {
       amount: amount,
       label: label,
     );
-    await saveDay(d.copyWith(
-      proteinG: kind == 'protein' ? math.max(0, d.proteinG + amount) : null,
-      waterMl: kind == 'water' ? math.max(0, d.waterMl + amount) : null,
-      entries: [...d.entries, entry],
-    ));
+    await saveDay(
+      d.copyWith(
+        proteinG: kind == 'protein' ? math.max(0, d.proteinG + amount) : null,
+        waterMl: kind == 'water' ? math.max(0, d.waterMl + amount) : null,
+        entries: [...d.entries, entry],
+      ),
+    );
     return entry.id;
   }
 
@@ -345,7 +380,8 @@ class TrackerService extends GetxService {
         grams[name] = e.amount;
       }
     }
-    final names = counts.keys.toList()..sort((a, b) => (counts[b] ?? 0).compareTo(counts[a] ?? 0));
+    final names = counts.keys.toList()
+      ..sort((a, b) => (counts[b] ?? 0).compareTo(counts[a] ?? 0));
     return [for (final n in names.take(limit)) (n, grams[n] ?? 0)];
   }
 
@@ -355,11 +391,13 @@ class TrackerService extends GetxService {
     if (d == null) return;
     final e = _firstOrNull(d.entries, (x) => x.id == entryId);
     if (e == null) return;
-    await saveDay(d.copyWith(
-      proteinG: e.isProtein ? math.max(0, d.proteinG - e.amount) : null,
-      waterMl: e.isProtein ? null : math.max(0, d.waterMl - e.amount),
-      entries: d.entries.where((x) => x.id != entryId).toList(),
-    ));
+    await saveDay(
+      d.copyWith(
+        proteinG: e.isProtein ? math.max(0, d.proteinG - e.amount) : null,
+        waterMl: e.isProtein ? null : math.max(0, d.waterMl - e.amount),
+        entries: d.entries.where((x) => x.id != entryId).toList(),
+      ),
+    );
   }
 
   /// Sets today's water total (glass taps). Going up adds an entry; going
@@ -382,7 +420,13 @@ class TrackerService extends GetxService {
         toRemove -= e.amount;
         entries.removeAt(i);
       } else {
-        entries[i] = LogEntry(id: e.id, at: e.at, kind: e.kind, amount: e.amount - toRemove, label: e.label);
+        entries[i] = LogEntry(
+          id: e.id,
+          at: e.at,
+          kind: e.kind,
+          amount: e.amount - toRemove,
+          label: e.label,
+        );
         toRemove = 0;
       }
     }
@@ -394,7 +438,8 @@ class TrackerService extends GetxService {
   int get logStreak {
     bool active(DateTime day) {
       final d = days[Dates.key(day)];
-      if (d != null && (d.proteinG > 0 || d.waterMl > 0 || d.hasCheckIn)) return true;
+      if (d != null && (d.proteinG > 0 || d.waterMl > 0 || d.hasCheckIn))
+        return true;
       if (doseOn(day) != null) return true;
       return weights.any((w) => Dates.sameDay(w.date, day));
     }
@@ -416,15 +461,19 @@ class TrackerService extends GetxService {
   // --------------------------------------------------------------- weights
 
   Future<void> addWeight(double kg, [DateTime? day]) async {
-    final entry = WeightEntry(date: Dates.dateOnly(day ?? DateTime.now()), kg: kg);
+    final entry = WeightEntry(
+      date: Dates.dateOnly(day ?? DateTime.now()),
+      kg: kg,
+    );
     await _weights.put(entry.key, entry.toMap());
     weights.removeWhere((w) => w.key == entry.key);
     weights.add(entry);
     weights.sort((a, b) => a.date.compareTo(b.date));
   }
 
-  double get startWeightKg =>
-      weights.isNotEmpty ? weights.first.kg : (profile.value?.startWeightKg ?? 0);
+  double get startWeightKg => weights.isNotEmpty
+      ? weights.first.kg
+      : (profile.value?.startWeightKg ?? 0);
 
   double? get latestWeightKg =>
       weights.isNotEmpty ? weights.last.kg : profile.value?.startWeightKg;
@@ -450,13 +499,19 @@ class TrackerService extends GetxService {
   /// A "next" appointment that has passed becomes the last visit.
   Future<void> rollAppointment() async {
     final next = nextAppointment.value;
-    if (next == null || !Dates.dateOnly(next).isBefore(Dates.dateOnly(DateTime.now()))) return;
+    if (next == null ||
+        !Dates.dateOnly(next).isBefore(Dates.dateOnly(DateTime.now())))
+      return;
     lastAppointment.value = next;
     nextAppointment.value = null;
-    lastAppointment.value = null;
     reportQuestions.clear();
     await _settings.put('lastAppointment', next.millisecondsSinceEpoch);
     await _settings.delete('nextAppointment');
+  }
+
+  Future<void> setVisitReminderOn(bool on) async {
+    visitReminderOn.value = on;
+    await _settings.put('visitReminderOn', on);
   }
 
   Future<void> setReportQuestions(List<String> list) async {
@@ -477,13 +532,13 @@ class TrackerService extends GetxService {
 
   /// Everything as plain data, for the user's own export.
   Map<String, dynamic> exportAll() => {
-        'app': 'Kindose',
-        'exportedAt': DateTime.now().toIso8601String(),
-        'profile': profile.value?.toMap(),
-        'doses': doses.map((d) => d.toMap()).toList(),
-        'days': days.values.map((d) => d.toMap()).toList(),
-        'weights': weights.map((w) => w.toMap()).toList(),
-      };
+    'app': 'Kindose',
+    'exportedAt': DateTime.now().toIso8601String(),
+    'profile': profile.value?.toMap(),
+    'doses': doses.map((d) => d.toMap()).toList(),
+    'days': days.values.map((d) => d.toMap()).toList(),
+    'weights': weights.map((w) => w.toMap()).toList(),
+  };
 
   /// Permanently removes every record on this phone.
   Future<void> deleteAll() async {
@@ -502,6 +557,7 @@ class TrackerService extends GetxService {
     lastAppointment.value = null;
     reportQuestions.clear();
     setupDismissed.value = false;
+    visitReminderOn.value = true;
     todayOrder.clear();
     todayHidden.clear();
     nextDoseOverride.value = null;

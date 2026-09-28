@@ -19,14 +19,14 @@ class TodayScreen extends GetView<TodayController> {
   const TodayScreen({super.key});
 
   static Widget _card(String id) => switch (id) {
-        'protein' => const ProteinCard(),
-        'water' => const WaterCard(),
-        'weight' => const WeightCard(),
-        'feel' => const FeelCard(),
-        'tip' => const TipCard(),
-        'log' => const TodayLogCard(),
-        _ => const SizedBox.shrink(),
-      };
+    'protein' => const ProteinCard(),
+    'water' => const WaterCard(),
+    'weight' => const WeightCard(),
+    'feel' => const FeelCard(),
+    'tip' => const TipCard(),
+    'log' => const TodayLogCard(),
+    _ => const SizedBox.shrink(),
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +51,10 @@ class TodayScreen extends GetView<TodayController> {
             const DoseCard().enter(motion, delay: 80, dy: 0.1),
             for (final id in cards) ...[
               SizedBox(height: id == 'log' ? 20.sp : 12.sp),
-              KeyedSubtree(key: ValueKey(id), child: _card(id)).enter(motion, delay: delay += 60, dy: 0.1),
+              KeyedSubtree(
+                key: ValueKey(id),
+                child: _card(id),
+              ).enter(motion, delay: delay += 60, dy: 0.1),
             ],
             SizedBox(height: 16.sp),
             Center(
@@ -71,9 +74,20 @@ class TodayScreen extends GetView<TodayController> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(PhosphorIconsBold.arrowsDownUp, size: 18.sp, color: k.text),
+                        Icon(
+                          PhosphorIconsBold.arrowsDownUp,
+                          size: 18.sp,
+                          color: k.text,
+                        ),
                         SizedBox(width: 8.sp),
-                        Text('Edit Today', style: AppText.bodyStrong.copyWith(fontSize: 14.sp, fontWeight: FontWeight.w800, color: k.text)),
+                        Text(
+                          'Edit Today',
+                          style: AppText.bodyStrong.copyWith(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w800,
+                            color: k.text,
+                          ),
+                        ),
                       ],
                     ),
                   ),

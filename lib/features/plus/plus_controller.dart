@@ -7,7 +7,14 @@ import '../../services/tracker_service.dart';
 import '../../widgets/toast.dart';
 
 class PlusPlan {
-  const PlusPlan(this.id, this.name, this.sub, this.price, this.per, {this.badge});
+  const PlusPlan(
+    this.id,
+    this.name,
+    this.sub,
+    this.price,
+    this.per, {
+    this.badge,
+  });
 
   final String id;
   final String name;
@@ -35,17 +42,50 @@ class PlusPerk {
 /// go through RevenueCat later, with store prices instead of these labels.
 class PlusController extends GetxController {
   static const List<PlusPlan> plans = [
-    PlusPlan('year', 'Yearly', '7 days free · \$3.33 a month', '\$39.99', 'a year', badge: 'SAVE 52%'),
-    PlusPlan('month', 'Monthly', 'No trial · cancel anytime', '\$6.99', 'a month'),
+    PlusPlan(
+      'year',
+      'Yearly',
+      '7 days free · \$3.33 a month',
+      '\$39.99',
+      'a year',
+      badge: 'SAVE 52%',
+    ),
+    PlusPlan(
+      'month',
+      'Monthly',
+      'No trial · cancel anytime',
+      '\$6.99',
+      'a month',
+    ),
   ];
 
   static const List<PlusPerk> perks = [
     // Only perks that work at launch (store rule). Backup is free with
     // sign-in; "Snap a meal" comes back here in v1.1.
-    PlusPerk(Img3d.chartDown, 'Full history and all charts', 'Every weigh-in and dose since day one', {'progress', 'muscle'}),
-    PlusPerk(Img3d.nauseated, 'Side-effect patterns', 'See how you feel by days since dose and food', {'nausea', 'noise'}),
-    PlusPerk(Img3d.clipboard, 'Doctor report with charts', 'Weight, doses and symptoms as a PDF', {'progress'}),
-    PlusPerk(Img3d.moneyBag, 'Pen and cost tracker', 'Doses left, refill nudge, monthly spend', {'cost', 'remember'}),
+    PlusPerk(
+      Img3d.chartDown,
+      'Full history and all charts',
+      'Every weigh-in and dose since day one',
+      {'progress', 'muscle'},
+    ),
+    PlusPerk(
+      Img3d.nauseated,
+      'Side-effect patterns',
+      'See how you feel by days since dose and food',
+      {'nausea', 'noise'},
+    ),
+    PlusPerk(
+      Img3d.clipboard,
+      'Doctor report with charts',
+      'Weight, doses and symptoms as a PDF',
+      {'progress'},
+    ),
+    PlusPerk(
+      Img3d.moneyBag,
+      'Pen and cost tracker',
+      'Doses left, refill nudge, monthly spend',
+      {'cost', 'remember'},
+    ),
   ];
 
   final RxString selected = 'year'.obs;
@@ -53,13 +93,16 @@ class PlusController extends GetxController {
   /// True when opened at the end of onboarding: closing goes to Home.
   late final bool fromOnboarding = Get.arguments == true;
 
-  late final Set<String> _focus = {...?Get.find<TrackerService>().profile.value?.focus};
+  late final Set<String> _focus = {
+    ...?Get.find<TrackerService>().profile.value?.focus,
+  };
 
   bool isForYou(PlusPerk perk) => perk.focus.any(_focus.contains);
 
   bool get isYearly => selected.value == 'year';
 
-  String get cta => isYearly ? 'Start my free week' : 'Subscribe for \$6.99 a month';
+  String get cta =>
+      isYearly ? 'Start my free week' : 'Subscribe for \$6.99 a month';
 
   String get fine => isYearly
       ? 'Free for 7 days, then \$39.99 a year. Cancel anytime in your store settings.'
@@ -75,7 +118,9 @@ class PlusController extends GetxController {
   /// "trial ends soon" reminder promised on the trial timeline.
   void subscribe() {
     Haptics.instance.lightImpact();
-    showToast('Subscriptions are not connected yet. Everything free works fully.');
+    showToast(
+      'Subscriptions are not connected yet. Everything free works fully.',
+    );
   }
 
   void restore() {

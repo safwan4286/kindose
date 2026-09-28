@@ -46,7 +46,14 @@ class WeightInput extends StatelessWidget {
   Future<void> _type(BuildContext context) async {
     // The answer is in the unit shown when the sheet opened.
     final metric = useKg;
-    final v = await askNumber(context, title: typeTitle, unit: _unit, initial: _shownValue, min: _min, max: _max);
+    final v = await askNumber(
+      context,
+      title: typeTitle,
+      unit: _unit,
+      initial: _shownValue,
+      min: _min,
+      max: _max,
+    );
     if (v != null && !v.isNaN) onKg(metric ? v : v / Imperial.lbPerKg);
   }
 
@@ -100,9 +107,19 @@ class WeightInput extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircleIconButton(icon: PhosphorIconsBold.minus, label: 'Less', size: 44.sp, onTap: () => _step(-1)),
+            CircleIconButton(
+              icon: PhosphorIconsBold.minus,
+              label: 'Less',
+              size: 44.sp,
+              onTap: () => _step(-1),
+            ),
             SizedBox(width: 12.sp),
-            CircleIconButton(icon: PhosphorIconsBold.plus, label: 'More', size: 44.sp, onTap: () => _step(1)),
+            CircleIconButton(
+              icon: PhosphorIconsBold.plus,
+              label: 'More',
+              size: 44.sp,
+              onTap: () => _step(1),
+            ),
           ],
         ).enter(motion, delay: 260),
       ],

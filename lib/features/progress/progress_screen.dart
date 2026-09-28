@@ -34,11 +34,17 @@ class ProgressScreen extends GetView<ProgressController> {
           padding: EdgeInsets.fromLTRB(20.sp, 12.sp, 20.sp, kNavClearance),
           children: [
             if (week != null)
-              Text('WEEK $week OF TREATMENT', style: _caps(context)).enter(motion),
+              Text(
+                'WEEK $week OF TREATMENT',
+                style: _caps(context),
+              ).enter(motion),
             SizedBox(height: 4.sp),
             Semantics(
               header: true,
-              child: Text('Progress', style: AppText.h1.copyWith(fontSize: 30.sp, color: k.text)),
+              child: Text(
+                'Progress',
+                style: AppText.h1.copyWith(fontSize: 30.sp, color: k.text),
+              ),
             ).enter(motion),
             SizedBox(height: 16.sp),
             _RangeSwitch(controller: controller).enter(motion, delay: 40),
@@ -52,7 +58,10 @@ class ProgressScreen extends GetView<ProgressController> {
             _BarsCard(
               title: 'Protein · last 7 days',
               goalLabel: 'Goal ${controller.profile?.proteinGoalG ?? 100} g',
-              headline: controller.barsHeadline(controller.proteinBars, water: false),
+              headline: controller.barsHeadline(
+                controller.proteinBars,
+                water: false,
+              ),
               bars: controller.proteinBars,
               color: AppColors.tangerine,
               valueLabel: (v) => '${v.round()} g',
@@ -60,8 +69,12 @@ class ProgressScreen extends GetView<ProgressController> {
             SizedBox(height: 12.sp),
             _BarsCard(
               title: 'Water · last 7 days',
-              goalLabel: 'Goal ${((controller.profile?.waterGoalMl ?? 2500) / 1000).toStringAsFixed(1)} L',
-              headline: controller.barsHeadline(controller.waterBars, water: true),
+              goalLabel:
+                  'Goal ${((controller.profile?.waterGoalMl ?? 2500) / 1000).toStringAsFixed(1)} L',
+              headline: controller.barsHeadline(
+                controller.waterBars,
+                water: true,
+              ),
               bars: controller.waterBars,
               color: AppColors.aqua,
               valueLabel: (v) => '${(v / 1000).toStringAsFixed(1)} L',
@@ -69,7 +82,9 @@ class ProgressScreen extends GetView<ProgressController> {
             SizedBox(height: 12.sp),
             _FeelCard(controller: controller).enter(motion, delay: 200),
             SizedBox(height: 12.sp),
-            _ReportNudge(onTap: controller.openReport).enter(motion, delay: 230),
+            _ReportNudge(
+              onTap: controller.openReport,
+            ).enter(motion, delay: 230),
           ],
         );
       }),
@@ -78,13 +93,19 @@ class ProgressScreen extends GetView<ProgressController> {
 
   int? _treatmentWeek() {
     final t = controller.tracker;
-    final start = controller.profile?.treatmentStartedAt ?? (t.doses.isEmpty ? null : t.doses.last.takenAt);
+    final start =
+        controller.profile?.treatmentStartedAt ??
+        (t.doses.isEmpty ? null : t.doses.last.takenAt);
     if (start == null || start.isAfter(DateTime.now())) return null;
     return Dates.daysBetween(start, DateTime.now()) ~/ 7 + 1;
   }
 }
 
-TextStyle _caps(BuildContext c) => AppText.caps.copyWith(fontSize: 12.sp, letterSpacing: 1.1, color: c.k.faint);
+TextStyle _caps(BuildContext c) => AppText.caps.copyWith(
+  fontSize: 12.sp,
+  letterSpacing: 1.1,
+  color: c.k.faint,
+);
 
 class _Card extends StatelessWidget {
   const _Card({required this.child, this.padding});
@@ -96,7 +117,10 @@ class _Card extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: padding ?? EdgeInsets.all(16.sp),
-      decoration: BoxDecoration(color: context.k.card, borderRadius: BorderRadius.circular(24.sp)),
+      decoration: BoxDecoration(
+        color: context.k.card,
+        borderRadius: BorderRadius.circular(24.sp),
+      ),
       child: child,
     );
   }
@@ -119,7 +143,10 @@ class _RangeSwitch extends StatelessWidget {
     final plus = controller.isPlus;
     return Container(
       padding: EdgeInsets.all(4.sp),
-      decoration: BoxDecoration(color: k.cardAlt, borderRadius: BorderRadius.circular(20.sp)),
+      decoration: BoxDecoration(
+        color: k.cardAlt,
+        borderRadius: BorderRadius.circular(20.sp),
+      ),
       child: Row(
         children: [
           for (final r in ProgressRange.values)
@@ -128,7 +155,8 @@ class _RangeSwitch extends StatelessWidget {
                 button: true,
                 selected: controller.range.value == r,
                 inMutuallyExclusiveGroup: true,
-                label: '${_labels[r]}${r != ProgressRange.month && !plus ? ', Plus' : ''}',
+                label:
+                    '${_labels[r]}${r != ProgressRange.month && !plus ? ', Plus' : ''}',
                 excludeSemantics: true,
                 child: PressScale(
                   pressedScale: 0.95,
@@ -137,10 +165,18 @@ class _RangeSwitch extends StatelessWidget {
                     duration: const Duration(milliseconds: 180),
                     height: 38.sp,
                     decoration: BoxDecoration(
-                      color: controller.range.value == r ? k.card : Colors.transparent,
+                      color: controller.range.value == r
+                          ? k.card
+                          : Colors.transparent,
                       borderRadius: BorderRadius.circular(16.sp),
                       boxShadow: controller.range.value == r
-                          ? [BoxShadow(color: AppColors.ink.withValues(alpha: 0.08), blurRadius: 6.sp, offset: Offset(0, 2.sp))]
+                          ? [
+                              BoxShadow(
+                                color: AppColors.ink.withValues(alpha: 0.08),
+                                blurRadius: 6.sp,
+                                offset: Offset(0, 2.sp),
+                              ),
+                            ]
                           : null,
                     ),
                     child: Row(
@@ -151,12 +187,18 @@ class _RangeSwitch extends StatelessWidget {
                           style: AppText.small.copyWith(
                             fontSize: 13.5.sp,
                             fontWeight: FontWeight.w800,
-                            color: controller.range.value == r ? k.text : k.muted,
+                            color: controller.range.value == r
+                                ? k.text
+                                : k.muted,
                           ),
                         ),
                         if (r != ProgressRange.month && !plus) ...[
                           SizedBox(width: 4.sp),
-                          Icon(PhosphorIconsFill.lockSimple, size: 12.sp, color: k.text),
+                          Icon(
+                            PhosphorIconsFill.lockSimple,
+                            size: 12.sp,
+                            color: k.text,
+                          ),
                         ],
                       ],
                     ),
@@ -179,7 +221,10 @@ class _WeightCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final k = context.k;
     final pts = controller.points;
-    final chips = [controller.bmiLabel, controller.toGoalLabel].whereType<String>().toList();
+    final chips = [
+      controller.bmiLabel,
+      controller.toGoalLabel,
+    ].whereType<String>().toList();
     return _Card(
       padding: EdgeInsets.fromLTRB(16.sp, 18.sp, 16.sp, 14.sp),
       child: Column(
@@ -203,14 +248,31 @@ class _WeightCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.baseline,
                         textBaseline: TextBaseline.alphabetic,
                         children: [
-                          Text(controller.changeNumber, style: AppText.number(40.sp).copyWith(color: k.text)),
+                          Text(
+                            controller.changeNumber,
+                            style: AppText.number(
+                              40.sp,
+                            ).copyWith(color: k.text),
+                          ),
                           SizedBox(width: 6.sp),
-                          Text(controller.unit, style: AppText.title.copyWith(fontSize: 16.sp, color: k.muted)),
+                          Text(
+                            controller.unit,
+                            style: AppText.title.copyWith(
+                              fontSize: 16.sp,
+                              color: k.muted,
+                            ),
+                          ),
                         ],
                       ),
                       if (controller.changeLine.isNotEmpty) ...[
                         SizedBox(height: 4.sp),
-                        Text(controller.changeLine, style: AppText.small.copyWith(fontSize: 13.sp, color: k.muted)),
+                        Text(
+                          controller.changeLine,
+                          style: AppText.small.copyWith(
+                            fontSize: 13.sp,
+                            color: k.muted,
+                          ),
+                        ),
                       ],
                     ],
                   ),
@@ -228,7 +290,14 @@ class _WeightCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(18.sp),
                     border: Border.all(color: k.border, width: 1.5),
                   ),
-                  child: Text('+ Log', style: AppText.small.copyWith(fontSize: 13.sp, fontWeight: FontWeight.w800, color: k.text)),
+                  child: Text(
+                    '+ Log',
+                    style: AppText.small.copyWith(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w800,
+                      color: k.text,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -244,7 +313,9 @@ class _WeightCard extends StatelessWidget {
                   selected: controller.selected.value,
                   onPick: controller.pickPoint,
                   goal: controller.showGoalLine ? controller.goalShown : null,
-                  markers: [for (final m in controller.doseMarkers) (m.date, m.label)],
+                  markers: [
+                    for (final m in controller.doseMarkers) (m.date, m.label),
+                  ],
                 )
               else
                 Container(
@@ -256,10 +327,17 @@ class _WeightCard extends StatelessWidget {
                         ? 'No weigh-ins in this range yet. Weigh in once a week to see your trend.'
                         : 'One more weigh-in and your trend line appears.',
                     textAlign: TextAlign.center,
-                    style: AppText.small.copyWith(fontSize: 13.sp, fontWeight: FontWeight.w600, color: k.muted),
+                    style: AppText.small.copyWith(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w600,
+                      color: k.muted,
+                    ),
                   ),
                 ),
-              if (controller.locked) Positioned.fill(child: _LockOverlay(onTap: controller.openPlus)),
+              if (controller.locked)
+                Positioned.fill(
+                  child: _LockOverlay(onTap: controller.openPlus),
+                ),
             ],
           ),
           if (chips.isNotEmpty) ...[
@@ -270,9 +348,22 @@ class _WeightCard extends StatelessWidget {
               children: [
                 for (final c in chips)
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 10.sp, vertical: 5.sp),
-                    decoration: BoxDecoration(color: k.bg, borderRadius: BorderRadius.circular(10.sp)),
-                    child: Text(c, style: AppText.small.copyWith(fontSize: 12.sp, fontWeight: FontWeight.w800, color: k.textSoft)),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 10.sp,
+                      vertical: 5.sp,
+                    ),
+                    decoration: BoxDecoration(
+                      color: k.bg,
+                      borderRadius: BorderRadius.circular(10.sp),
+                    ),
+                    child: Text(
+                      c,
+                      style: AppText.small.copyWith(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w800,
+                        color: k.textSoft,
+                      ),
+                    ),
                   ),
               ],
             ),
@@ -302,12 +393,19 @@ class _LockOverlay extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('See your whole journey', style: AppText.title.copyWith(fontSize: 15.sp, color: k.text)),
+              Text(
+                'See your whole journey',
+                style: AppText.title.copyWith(fontSize: 15.sp, color: k.text),
+              ),
               SizedBox(height: 4.sp),
               Text(
                 '3 months, all time and dose markers with Kindose Plus.',
                 textAlign: TextAlign.center,
-                style: AppText.small.copyWith(fontSize: 12.5.sp, fontWeight: FontWeight.w600, color: k.muted),
+                style: AppText.small.copyWith(
+                  fontSize: 12.5.sp,
+                  fontWeight: FontWeight.w600,
+                  color: k.muted,
+                ),
               ),
               SizedBox(height: 10.sp),
               PressScale(
@@ -317,8 +415,18 @@ class _LockOverlay extends StatelessWidget {
                   height: 38.sp,
                   padding: EdgeInsets.symmetric(horizontal: 16.sp),
                   alignment: Alignment.center,
-                  decoration: BoxDecoration(color: AppColors.ink, borderRadius: BorderRadius.circular(19.sp)),
-                  child: Text('Try Plus free', style: AppText.small.copyWith(fontSize: 13.5.sp, fontWeight: FontWeight.w800, color: AppColors.lime)),
+                  decoration: BoxDecoration(
+                    color: AppColors.ink,
+                    borderRadius: BorderRadius.circular(19.sp),
+                  ),
+                  child: Text(
+                    'Try Plus free',
+                    style: AppText.small.copyWith(
+                      fontSize: 13.5.sp,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.lime,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -341,30 +449,36 @@ class _DosesCard extends StatelessWidget {
     final areas = controller.siteAreas;
     final maxN = areas.fold<int>(1, (m, a) => a.$2 > m ? a.$2 : m);
     Widget stat(String value, String sub, {bool lime = false}) => Expanded(
-          child: Container(
-            padding: EdgeInsets.all(12.sp),
-            decoration: BoxDecoration(
-              color: lime && !dark ? AppColors.limeSoft : k.bg,
-              borderRadius: BorderRadius.circular(16.sp),
+      child: Container(
+        padding: EdgeInsets.all(12.sp),
+        decoration: BoxDecoration(
+          color: lime && !dark ? AppColors.limeSoft : k.bg,
+          borderRadius: BorderRadius.circular(16.sp),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                value,
+                style: AppText.h3.copyWith(fontSize: 22.sp, color: k.text),
+              ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(value, style: AppText.h3.copyWith(fontSize: 22.sp, color: k.text)),
-                ),
-                Text(
-                  sub,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppText.small.copyWith(fontSize: 12.sp, color: lime && !dark ? AppColors.limeText : k.muted),
-                ),
-              ],
+            Text(
+              sub,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppText.small.copyWith(
+                fontSize: 12.sp,
+                color: lime && !dark ? AppColors.limeText : k.muted,
+              ),
             ),
-          ),
-        );
+          ],
+        ),
+      ),
+    );
     return _Card(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -382,7 +496,14 @@ class _DosesCard extends StatelessWidget {
           ),
           if (controller.showSites) ...[
             SizedBox(height: 14.sp),
-            Text('Spots used · ${controller.rangeWord}', style: AppText.small.copyWith(fontSize: 12.5.sp, fontWeight: FontWeight.w800, color: k.textSoft)),
+            Text(
+              'Spots used · ${controller.rangeWord}',
+              style: AppText.small.copyWith(
+                fontSize: 12.5.sp,
+                fontWeight: FontWeight.w800,
+                color: k.textSoft,
+              ),
+            ),
             SizedBox(height: 8.sp),
             for (final (label, n) in areas)
               Padding(
@@ -392,7 +513,16 @@ class _DosesCard extends StatelessWidget {
                   excludeSemantics: true,
                   child: Row(
                     children: [
-                      SizedBox(width: 56.sp, child: Text(label, style: AppText.small.copyWith(fontSize: 12.5.sp, color: k.muted))),
+                      SizedBox(
+                        width: 56.sp,
+                        child: Text(
+                          label,
+                          style: AppText.small.copyWith(
+                            fontSize: 12.5.sp,
+                            color: k.muted,
+                          ),
+                        ),
+                      ),
                       Expanded(
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(5.sp),
@@ -405,7 +535,10 @@ class _DosesCard extends StatelessWidget {
                                   widthFactor: n / maxN,
                                   heightFactor: 1,
                                   child: DecoratedBox(
-                                    decoration: BoxDecoration(color: k.text, borderRadius: BorderRadius.circular(5.sp)),
+                                    decoration: BoxDecoration(
+                                      color: k.text,
+                                      borderRadius: BorderRadius.circular(5.sp),
+                                    ),
                                   ),
                                 ),
                               ],
@@ -416,14 +549,29 @@ class _DosesCard extends StatelessWidget {
                       SizedBox(width: 10.sp),
                       SizedBox(
                         width: 18.sp,
-                        child: Text('$n', textAlign: TextAlign.right, style: AppText.small.copyWith(fontSize: 12.5.sp, fontWeight: FontWeight.w800, color: k.text)),
+                        child: Text(
+                          '$n',
+                          textAlign: TextAlign.right,
+                          style: AppText.small.copyWith(
+                            fontSize: 12.5.sp,
+                            fontWeight: FontWeight.w800,
+                            color: k.text,
+                          ),
+                        ),
                       ),
                     ],
                   ),
                 ),
               ),
             SizedBox(height: 4.sp),
-            Text(controller.sitesNote, style: AppText.small.copyWith(fontSize: 12.5.sp, fontWeight: FontWeight.w600, color: k.muted)),
+            Text(
+              controller.sitesNote,
+              style: AppText.small.copyWith(
+                fontSize: 12.5.sp,
+                fontWeight: FontWeight.w600,
+                color: k.muted,
+              ),
+            ),
           ],
         ],
       ),
@@ -452,7 +600,10 @@ class _BarsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final k = context.k;
     final goal = bars.isEmpty ? 1.0 : bars.first.goal;
-    final maxV = [goal * 1.2, ...bars.map((b) => b.value)].reduce((a, b) => a > b ? a : b);
+    final maxV = [
+      goal * 1.2,
+      ...bars.map((b) => b.value),
+    ].reduce((a, b) => a > b ? a : b);
     final chartH = 96.sp;
     final today = Dates.dateOnly(DateTime.now());
     return _Card(
@@ -462,14 +613,23 @@ class _BarsCard extends StatelessWidget {
           Row(
             children: [
               Expanded(child: Text(title.toUpperCase(), style: _caps(context))),
-              Text(goalLabel, style: AppText.small.copyWith(fontSize: 12.sp, color: k.faint)),
+              Text(
+                goalLabel,
+                style: AppText.small.copyWith(fontSize: 12.sp, color: k.faint),
+              ),
             ],
           ),
           SizedBox(height: 6.sp),
-          Text(headline, style: AppText.title.copyWith(fontSize: 15.sp, color: k.text)),
+          Text(
+            headline,
+            style: AppText.title.copyWith(fontSize: 15.sp, color: k.text),
+          ),
           SizedBox(height: 12.sp),
           Semantics(
-            label: [for (final b in bars) '${Dates.weekdayName(b.date.weekday)} ${valueLabel(b.value)}'].join(', '),
+            label: [
+              for (final b in bars)
+                '${Dates.weekdayName(b.date.weekday)} ${valueLabel(b.value)}',
+            ].join(', '),
             excludeSemantics: true,
             child: SizedBox(
               height: chartH + 18.sp,
@@ -479,7 +639,10 @@ class _BarsCard extends StatelessWidget {
                     left: 0,
                     right: 0,
                     top: chartH - chartH * goal / maxV,
-                    child: CustomPaint(size: Size(double.infinity, 2), painter: _DashPainter(k.faint)),
+                    child: CustomPaint(
+                      size: Size(double.infinity, 2),
+                      painter: _DashPainter(k.faint),
+                    ),
                   ),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
@@ -488,30 +651,47 @@ class _BarsCard extends StatelessWidget {
                         if (i > 0) SizedBox(width: 6.sp),
                         Expanded(
                           child: Tooltip(
-                            message: '${Dates.weekdayShort(b.date.weekday)}: ${valueLabel(b.value)}',
+                            message:
+                                '${Dates.weekdayShort(b.date.weekday)}: ${valueLabel(b.value)}',
                             triggerMode: TooltipTriggerMode.tap,
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
                                 TweenAnimationBuilder<double>(
-                                  tween: Tween(begin: 0, end: (b.value / maxV).clamp(0.0, 1.0)),
-                                  duration: Duration(milliseconds: 450 + i * 40),
+                                  tween: Tween(
+                                    begin: 0,
+                                    end: (b.value / maxV).clamp(0.0, 1.0),
+                                  ),
+                                  duration: Duration(
+                                    milliseconds: 450 + i * 40,
+                                  ),
                                   curve: Curves.easeOutCubic,
                                   builder: (_, v, _) => Container(
                                     height: chartH * v,
                                     decoration: BoxDecoration(
-                                      color: b.hit ? color : color.withValues(alpha: 0.4),
-                                      borderRadius: BorderRadius.vertical(top: Radius.circular(6.sp), bottom: Radius.circular(3.sp)),
+                                      color: b.hit
+                                          ? color
+                                          : color.withValues(alpha: 0.4),
+                                      borderRadius: BorderRadius.vertical(
+                                        top: Radius.circular(6.sp),
+                                        bottom: Radius.circular(3.sp),
+                                      ),
                                     ),
                                   ),
                                 ),
                                 SizedBox(height: 4.sp),
                                 Text(
-                                  Dates.sameDay(b.date, today) ? 'Tdy' : Dates.weekdayShort(b.date.weekday).substring(0, 1),
+                                  Dates.sameDay(b.date, today)
+                                      ? 'Tdy'
+                                      : Dates.weekdayShort(
+                                          b.date.weekday,
+                                        ).substring(0, 1),
                                   style: AppText.tiny.copyWith(
                                     fontSize: 11.sp,
                                     fontWeight: FontWeight.w800,
-                                    color: Dates.sameDay(b.date, today) ? k.text : k.faint,
+                                    color: Dates.sameDay(b.date, today)
+                                        ? k.text
+                                        : k.faint,
                                   ),
                                 ),
                               ],
@@ -542,7 +722,11 @@ class _DashPainter extends CustomPainter {
       ..color = color
       ..strokeWidth = 2;
     for (var x = 0.0; x < size.width; x += 10) {
-      canvas.drawLine(Offset(x, 0), Offset(x + 5 > size.width ? size.width : x + 5, 0), p);
+      canvas.drawLine(
+        Offset(x, 0),
+        Offset(x + 5 > size.width ? size.width : x + 5, 0),
+        p,
+      );
     }
   }
 
@@ -556,7 +740,12 @@ class _FeelCard extends StatelessWidget {
   final ProgressController controller;
 
   /// Fine → severe, one warm hue light to dark.
-  static const List<Color> _heat = [Color(0xFFFFF4EC), Color(0xFFF7B895), Color(0xFFE3713D), Color(0xFF9A3F17)];
+  static const List<Color> _heat = [
+    Color(0xFFFFF4EC),
+    Color(0xFFF7B895),
+    Color(0xFFE3713D),
+    Color(0xFF9A3F17),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -570,14 +759,26 @@ class _FeelCard extends StatelessWidget {
         children: [
           Text('HOW YOU FELT · 4 WEEKS', style: _caps(context)),
           SizedBox(height: 6.sp),
-          Text(controller.feelHeadline, style: AppText.title.copyWith(fontSize: 15.sp, color: k.text)),
+          Text(
+            controller.feelHeadline,
+            style: AppText.title.copyWith(fontSize: 15.sp, color: k.text),
+          ),
           SizedBox(height: 12.sp),
           ExcludeSemantics(
             child: Row(
               children: [
                 for (final (i, n) in names.indexed) ...[
                   if (i > 0) SizedBox(width: 5.sp),
-                  Expanded(child: Text(n, textAlign: TextAlign.center, style: AppText.tiny.copyWith(fontSize: 11.sp, color: k.faint))),
+                  Expanded(
+                    child: Text(
+                      n,
+                      textAlign: TextAlign.center,
+                      style: AppText.tiny.copyWith(
+                        fontSize: 11.sp,
+                        color: k.faint,
+                      ),
+                    ),
+                  ),
                 ],
               ],
             ),
@@ -598,20 +799,29 @@ class _FeelCard extends StatelessWidget {
                   excludeSemantics: true,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: c.inFuture || c.level < 0 ? Colors.transparent : _heat[c.level],
+                      color: c.inFuture || c.level < 0
+                          ? Colors.transparent
+                          : _heat[c.level],
                       borderRadius: BorderRadius.circular(9.sp),
                       border: c.inFuture
                           ? null
                           : c.level < 0
-                              ? Border.all(color: k.border, width: 1.5)
-                              : (c.level == 0 ? Border.all(color: const Color(0xFFF3DCCD)) : null),
+                          ? Border.all(color: k.border, width: 1.5)
+                          : (c.level == 0
+                                ? Border.all(color: const Color(0xFFF3DCCD))
+                                : null),
                     ),
                     alignment: Alignment.center,
                     child: c.doseDay
                         ? Container(
                             width: 7.sp,
                             height: 7.sp,
-                            decoration: BoxDecoration(color: c.level >= 2 ? AppColors.white : AppColors.ink, shape: BoxShape.circle),
+                            decoration: BoxDecoration(
+                              color: c.level >= 2
+                                  ? AppColors.white
+                                  : AppColors.ink,
+                              shape: BoxShape.circle,
+                            ),
                           )
                         : null,
                   ),
@@ -626,13 +836,32 @@ class _FeelCard extends StatelessWidget {
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 _legend(context, 'No check-in', border: k.border),
-                for (final (i, l) in ['Fine', 'Mild', 'Moderate', 'Severe'].indexed) _legend(context, l, fill: _heat[i]),
+                for (final (i, l) in [
+                  'Fine',
+                  'Mild',
+                  'Moderate',
+                  'Severe',
+                ].indexed)
+                  _legend(context, l, fill: _heat[i]),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Container(width: 7.sp, height: 7.sp, decoration: BoxDecoration(color: k.text, shape: BoxShape.circle)),
+                    Container(
+                      width: 7.sp,
+                      height: 7.sp,
+                      decoration: BoxDecoration(
+                        color: k.text,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
                     SizedBox(width: 4.sp),
-                    Text('Dose', style: AppText.tiny.copyWith(fontSize: 11.5.sp, color: k.muted)),
+                    Text(
+                      'Dose',
+                      style: AppText.tiny.copyWith(
+                        fontSize: 11.5.sp,
+                        color: k.muted,
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -651,7 +880,9 @@ class _FeelCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: AppColors.hero,
                     borderRadius: BorderRadius.circular(18.sp),
-                    border: k.selectedBorder == AppColors.lime ? Border.all(color: k.border) : null,
+                    border: k.selectedBorder == AppColors.lime
+                        ? Border.all(color: k.border)
+                        : null,
                   ),
                   child: Row(
                     children: [
@@ -661,7 +892,14 @@ class _FeelCard extends StatelessWidget {
                           children: [
                             Row(
                               children: [
-                                Text('YOUR PATTERN', style: AppText.caps.copyWith(fontSize: 12.sp, letterSpacing: 1, color: AppColors.lime)),
+                                Text(
+                                  'YOUR PATTERN',
+                                  style: AppText.caps.copyWith(
+                                    fontSize: 12.sp,
+                                    letterSpacing: 1,
+                                    color: AppColors.lime,
+                                  ),
+                                ),
                                 SizedBox(width: 8.sp),
                                 const PlusTag(onDark: true),
                               ],
@@ -669,14 +907,23 @@ class _FeelCard extends StatelessWidget {
                             SizedBox(height: 4.sp),
                             Text(
                               controller.isPlus
-                                  ? (pattern ?? 'Check in on 3 dose weeks to see which day is hardest for you.')
+                                  ? (pattern ??
+                                        'Check in on 3 dose weeks to see which day is hardest for you.')
                                   : 'See which day after your dose is hardest for you.',
-                              style: AppText.small.copyWith(fontSize: 13.5.sp, color: AppColors.white),
+                              style: AppText.small.copyWith(
+                                fontSize: 13.5.sp,
+                                color: AppColors.white,
+                              ),
                             ),
                           ],
                         ),
                       ),
-                      if (!controller.isPlus) Icon(PhosphorIconsBold.caretRight, size: 18.sp, color: AppColors.lime),
+                      if (!controller.isPlus)
+                        Icon(
+                          PhosphorIconsBold.caretRight,
+                          size: 18.sp,
+                          color: AppColors.lime,
+                        ),
                     ],
                   ),
                 ),
@@ -688,7 +935,12 @@ class _FeelCard extends StatelessWidget {
     );
   }
 
-  Widget _legend(BuildContext context, String label, {Color? fill, Color? border}) {
+  Widget _legend(
+    BuildContext context,
+    String label, {
+    Color? fill,
+    Color? border,
+  }) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -698,11 +950,19 @@ class _FeelCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: fill ?? Colors.transparent,
             borderRadius: BorderRadius.circular(4.sp),
-            border: border == null ? null : Border.all(color: border, width: 1.5),
+            border: border == null
+                ? null
+                : Border.all(color: border, width: 1.5),
           ),
         ),
         SizedBox(width: 4.sp),
-        Text(label, style: AppText.tiny.copyWith(fontSize: 11.5.sp, color: context.k.muted)),
+        Text(
+          label,
+          style: AppText.tiny.copyWith(
+            fontSize: 11.5.sp,
+            color: context.k.muted,
+          ),
+        ),
       ],
     );
   }
@@ -723,7 +983,10 @@ class _ReportNudge extends StatelessWidget {
       child: ExcludeSemantics(
         child: Container(
           padding: EdgeInsets.all(16.sp),
-          decoration: BoxDecoration(color: dark ? k.card : AppColors.limeSoft, borderRadius: BorderRadius.circular(22.sp)),
+          decoration: BoxDecoration(
+            color: dark ? k.card : AppColors.limeSoft,
+            borderRadius: BorderRadius.circular(22.sp),
+          ),
           child: Row(
             children: [
               ThreeD(Img3d.clipboard, size: 40.sp),
@@ -732,10 +995,20 @@ class _ReportNudge extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Seeing your doctor soon?', style: AppText.title.copyWith(fontSize: 15.sp, color: k.text)),
+                    Text(
+                      'Seeing your doctor soon?',
+                      style: AppText.title.copyWith(
+                        fontSize: 15.sp,
+                        color: k.text,
+                      ),
+                    ),
                     Text(
                       'All of this fits on one page for them.',
-                      style: AppText.small.copyWith(fontSize: 12.5.sp, fontWeight: FontWeight.w600, color: dark ? k.muted : AppColors.limeText),
+                      style: AppText.small.copyWith(
+                        fontSize: 12.5.sp,
+                        fontWeight: FontWeight.w600,
+                        color: dark ? k.muted : AppColors.limeText,
+                      ),
                     ),
                   ],
                 ),

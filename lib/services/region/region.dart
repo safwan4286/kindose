@@ -10,6 +10,7 @@ class Region {
   static bool get isIndia {
     final locales = PlatformDispatcher.instance.locales;
     if (locales.any((l) => l.countryCode?.toUpperCase() == 'IN')) return true;
-    return DateTime.now().timeZoneOffset == const Duration(hours: 5, minutes: 30);
+    return DateTime.now().timeZoneOffset ==
+        const Duration(hours: 5, minutes: 30);
   }
 }

@@ -35,11 +35,11 @@ class ReminderService extends GetxService {
   static const String reportPayload = 'report';
 
   static List<int> get _allIds => [
-        _doseId,
-        _followUpId,
-        _visitId,
-        for (var i = 0; i < _dailyCount; i++) _dailyFirstId + i,
-      ];
+    _doseId,
+    _followUpId,
+    _visitId,
+    for (var i = 0; i < _dailyCount; i++) _dailyFirstId + i,
+  ];
 
   Timer? _debounce;
   Worker? _worker;
@@ -48,7 +48,13 @@ class ReminderService extends GetxService {
   void onInit() {
     super.onInit();
     _notes.onOpen = _open;
-    _worker = everAll([tracker.doses, tracker.profile, tracker.nextDoseOverride, tracker.nextAppointment], (_) => _queue());
+    _worker = everAll([
+      tracker.doses,
+      tracker.profile,
+      tracker.nextDoseOverride,
+      tracker.nextAppointment,
+      tracker.visitReminderOn,
+    ], (_) => _queue());
     unawaited(_notes.init().then((_) => sync()));
   }
 
@@ -74,7 +80,8 @@ class ReminderService extends GetxService {
 
   void _open(String payload) {
     if (payload == reportPayload) {
-      if (Get.isRegistered<HomeController>()) Get.find<HomeController>().select(HomeTab.report);
+      if (Get.isRegistered<HomeController>())
+        Get.find<HomeController>().select(HomeTab.report);
       return;
     }
     if (payload != logDosePayload || tracker.profile.value == null) return;
@@ -82,13 +89,14 @@ class ReminderService extends GetxService {
     Get.toNamed<void>(Routes.logDose);
   }
 
-  /// Cancels every dose reminder and schedules the current ones.
+  /// Cancels every reminder and schedules the current ones. Dose and visit
+  /// reminders are switched on and off separately in Me.
   Future<void> sync() async {
     await _notes.cancelIds(_allIds);
     final p = tracker.profile.value;
-    if (p == null || !p.remindersOn) return;
-    await _planVisit();
-    if (p.medicineId == Catalog.undecided) return;
+    if (p == null) return;
+    if (tracker.visitReminderOn.value) await _planVisit();
+    if (!p.remindersOn || p.medicineId == Catalog.undecided) return;
     if (p.isDaily) {
       await _planDaily(p);
     } else {
@@ -120,7 +128,8 @@ class ReminderService extends GetxService {
           id: _followUpId,
           when: evening,
           title: 'Still to log: your dose',
-          body: 'Took it already? Tap to log it. Taking it another day? You can move it in the app.',
+          body:
+              'Took it already? Tap to log it. Taking it another day? You can move it in the app.',
           payload: logDosePayload,
         );
       }
@@ -134,7 +143,8 @@ class ReminderService extends GetxService {
         id: _followUpId,
         when: evening,
         title: 'Still to log: your dose',
-        body: 'Took it already? Tap to log it. Taking it another day? You can move it in the app.',
+        body:
+            'Took it already? Tap to log it. Taking it another day? You can move it in the app.',
         payload: logDosePayload,
       );
       return;
@@ -144,12 +154,15 @@ class ReminderService extends GetxService {
     // it is at most 3 days late.
     final lateDays = Dates.daysBetween(next, now);
     if (lateDays > 3) return;
-    final tomorrow = Dates.dateOnly(now).add(Duration(days: 1, minutes: p.shotMinutes));
+    final tomorrow = Dates.dateOnly(
+      now,
+    ).add(Duration(days: 1, minutes: p.shotMinutes));
     await _notes.scheduleAt(
       id: _followUpId,
       when: tomorrow,
       title: 'Did you take your dose?',
-      body: 'It was due ${Dates.weekdayName(next.weekday)}. Log it if you took it. '
+      body:
+          'It was due ${Dates.weekdayName(next.weekday)}. Log it if you took it. '
           'If you missed it, check your medicine leaflet or ask your doctor.',
       payload: logDosePayload,
     );
@@ -160,12 +173,15 @@ class ReminderService extends GetxService {
     final appt = tracker.nextAppointment.value;
     if (appt == null) return;
     final day = Dates.dateOnly(appt);
-    final when = day.subtract(const Duration(days: 3)).add(const Duration(hours: 9));
+    final when = day
+        .subtract(const Duration(days: 3))
+        .add(const Duration(hours: 9));
     await _notes.scheduleAt(
       id: _visitId,
       when: when,
       title: 'Doctor visit on ${Dates.weekdayName(day.weekday)}',
-      body: 'Your one-page report is ready. Tap to check it and add any questions.',
+      body:
+          'Your one-page report is ready. Tap to check it and add any questions.',
       payload: reportPayload,
     );
   }

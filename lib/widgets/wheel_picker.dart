@@ -30,7 +30,8 @@ class WheelColumn extends StatefulWidget {
 }
 
 class _WheelColumnState extends State<WheelColumn> {
-  late final FixedExtentScrollController _controller = FixedExtentScrollController(initialItem: widget.selected);
+  late final FixedExtentScrollController _controller =
+      FixedExtentScrollController(initialItem: widget.selected);
 
   @override
   void didUpdateWidget(covariant WheelColumn old) {
@@ -38,8 +39,14 @@ class _WheelColumnState extends State<WheelColumn> {
     // Follow changes made from outside (clamped day, loaded profile).
     if (_controller.hasClients && _controller.selectedItem != widget.selected) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && _controller.hasClients && _controller.selectedItem != widget.selected) {
-          _controller.animateToItem(widget.selected, duration: const Duration(milliseconds: 200), curve: Curves.easeOut);
+        if (mounted &&
+            _controller.hasClients &&
+            _controller.selectedItem != widget.selected) {
+          _controller.animateToItem(
+            widget.selected,
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
+          );
         }
       });
     }
@@ -57,10 +64,18 @@ class _WheelColumnState extends State<WheelColumn> {
     return Semantics(
       label: widget.semanticLabel,
       value: widget.labelBuilder(widget.selected),
-      increasedValue: widget.selected + 1 < widget.count ? widget.labelBuilder(widget.selected + 1) : null,
-      decreasedValue: widget.selected > 0 ? widget.labelBuilder(widget.selected - 1) : null,
-      onIncrease: widget.selected + 1 < widget.count ? () => widget.onChanged(widget.selected + 1) : null,
-      onDecrease: widget.selected > 0 ? () => widget.onChanged(widget.selected - 1) : null,
+      increasedValue: widget.selected + 1 < widget.count
+          ? widget.labelBuilder(widget.selected + 1)
+          : null,
+      decreasedValue: widget.selected > 0
+          ? widget.labelBuilder(widget.selected - 1)
+          : null,
+      onIncrease: widget.selected + 1 < widget.count
+          ? () => widget.onChanged(widget.selected + 1)
+          : null,
+      onDecrease: widget.selected > 0
+          ? () => widget.onChanged(widget.selected - 1)
+          : null,
       child: ExcludeSemantics(
         child: ListWheelScrollView.useDelegate(
           controller: _controller,
@@ -95,7 +110,12 @@ class _WheelColumnState extends State<WheelColumn> {
 /// White card holding several [WheelColumn]s side by side, with the
 /// selection band and top/bottom fades. [flex] sets each column's width.
 class WheelPickerCard extends StatelessWidget {
-  const WheelPickerCard({super.key, required this.columns, this.flex, this.visibleItems = 5});
+  const WheelPickerCard({
+    super.key,
+    required this.columns,
+    this.flex,
+    this.visibleItems = 5,
+  });
 
   final List<Widget> columns;
   final List<int>? flex;
@@ -110,7 +130,13 @@ class WheelPickerCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: k.card,
         borderRadius: BorderRadius.circular(26.sp),
-        boxShadow: [BoxShadow(color: AppColors.ink.withValues(alpha: 0.05), blurRadius: 2.sp, offset: Offset(0, 1.sp))],
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.ink.withValues(alpha: 0.05),
+            blurRadius: 2.sp,
+            offset: Offset(0, 1.sp),
+          ),
+        ],
       ),
       clipBehavior: Clip.antiAlias,
       child: Stack(
@@ -119,12 +145,16 @@ class WheelPickerCard extends StatelessWidget {
             child: Container(
               height: extent,
               margin: EdgeInsets.symmetric(horizontal: 10.sp),
-              decoration: BoxDecoration(color: k.cardAlt, borderRadius: BorderRadius.circular(16.sp)),
+              decoration: BoxDecoration(
+                color: k.cardAlt,
+                borderRadius: BorderRadius.circular(16.sp),
+              ),
             ),
           ),
           Row(
             children: [
-              for (var i = 0; i < columns.length; i++) Expanded(flex: flex?[i] ?? 1, child: columns[i]),
+              for (var i = 0; i < columns.length; i++)
+                Expanded(flex: flex?[i] ?? 1, child: columns[i]),
             ],
           ),
           IgnorePointer(
@@ -133,7 +163,12 @@ class WheelPickerCard extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [k.card, k.card.withValues(alpha: 0), k.card.withValues(alpha: 0), k.card],
+                  colors: [
+                    k.card,
+                    k.card.withValues(alpha: 0),
+                    k.card.withValues(alpha: 0),
+                    k.card,
+                  ],
                   stops: const [0, 0.32, 0.68, 1],
                 ),
               ),

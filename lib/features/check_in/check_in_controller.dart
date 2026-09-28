@@ -127,19 +127,21 @@ class CheckInController extends GetxController {
       final d = tracker.today;
       final effects = Map<String, int>.from(levels);
       // Build a fresh record so cleared answers really become empty.
-      await tracker.saveDay(DayLog(
-        key: d.key,
-        proteinG: d.proteinG,
-        waterMl: d.waterMl,
-        entries: d.entries,
-        mood: mood.value,
-        symptoms: [if (nausea.value != null) 'nausea', ...effects.keys],
-        symptomLevels: effects,
-        nausea: nausea.value,
-        foodNoise: foodNoise.value,
-        appetite: appetite.value,
-        note: note.isEmpty ? null : note,
-      ));
+      await tracker.saveDay(
+        DayLog(
+          key: d.key,
+          proteinG: d.proteinG,
+          waterMl: d.waterMl,
+          entries: d.entries,
+          mood: mood.value,
+          symptoms: [if (nausea.value != null) 'nausea', ...effects.keys],
+          symptomLevels: effects,
+          nausea: nausea.value,
+          foodNoise: foodNoise.value,
+          appetite: appetite.value,
+          note: note.isEmpty ? null : note,
+        ),
+      );
       Haptics.instance.mediumImpact();
       popRoute();
       showToast('Check-in saved');

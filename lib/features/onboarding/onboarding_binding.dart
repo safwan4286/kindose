@@ -13,6 +13,8 @@ class OnboardingBinding extends Bindings {
 class EditPlanBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<OnboardingController>(() => OnboardingController(editMode: true));
+    Get.lazyPut<OnboardingController>(
+      () => OnboardingController(editMode: true),
+    );
   }
 }

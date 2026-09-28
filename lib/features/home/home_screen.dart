@@ -8,7 +8,6 @@ import '../progress/progress_screen.dart';
 import '../report/report_screen.dart';
 import '../today/today_screen.dart';
 import 'home_controller.dart';
-import '../../widgets/safe_bottom.dart';
 
 /// Tab shell with the floating pill navigation from the design.
 class HomeScreen extends GetView<HomeController> {
@@ -19,16 +18,23 @@ class HomeScreen extends GetView<HomeController> {
     return Scaffold(
       body: Stack(
         children: [
-          Obx(() => IndexedStack(
-                index: controller.tab.value.index,
-                children: const [
-                  TodayScreen(),
-                  ProgressScreen(),
-                  ReportScreen(),
-                  MeScreen(),
-                ],
-              )),
-          const Positioned(left: 16, right: 16, bottom: 0, child: _FloatingNav()),
+          Obx(
+            () => IndexedStack(
+              index: controller.tab.value.index,
+              children: const [
+                TodayScreen(),
+                ProgressScreen(),
+                ReportScreen(),
+                MeScreen(),
+              ],
+            ),
+          ),
+          const Positioned(
+            left: 16,
+            right: 16,
+            bottom: 0,
+            child: _FloatingNav(),
+          ),
         ],
       ),
     );
@@ -52,7 +58,9 @@ class _FloatingNav extends GetView<HomeController> {
           borderRadius: BorderRadius.circular(34),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: k.bg == KColors.dark.bg ? 0.5 : 0.14),
+              color: Colors.black.withValues(
+                alpha: k.bg == KColors.dark.bg ? 0.5 : 0.14,
+              ),
               blurRadius: 30,
               offset: const Offset(0, 12),
             ),
@@ -62,8 +70,18 @@ class _FloatingNav extends GetView<HomeController> {
           final t = controller.tab.value;
           return Row(
             children: [
-              _NavItem(icon: PhosphorIconsDuotone.house, label: 'Today', active: t == HomeTab.today, onTap: () => controller.select(HomeTab.today)),
-              _NavItem(icon: PhosphorIconsDuotone.chartLineUp, label: 'Progress', active: t == HomeTab.progress, onTap: () => controller.select(HomeTab.progress)),
+              _NavItem(
+                icon: PhosphorIconsDuotone.house,
+                label: 'Today',
+                active: t == HomeTab.today,
+                onTap: () => controller.select(HomeTab.today),
+              ),
+              _NavItem(
+                icon: PhosphorIconsDuotone.chartLineUp,
+                label: 'Progress',
+                active: t == HomeTab.progress,
+                onTap: () => controller.select(HomeTab.progress),
+              ),
               Expanded(
                 child: Center(
                   child: Transform.translate(
@@ -82,7 +100,13 @@ class _FloatingNav extends GetView<HomeController> {
                           child: SizedBox(
                             width: 58,
                             height: 58,
-                            child: Center(child: PhosphorIcon(PhosphorIconsBold.plus, size: 26, color: k.fabIcon)),
+                            child: Center(
+                              child: PhosphorIcon(
+                                PhosphorIconsBold.plus,
+                                size: 26,
+                                color: k.fabIcon,
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -90,8 +114,18 @@ class _FloatingNav extends GetView<HomeController> {
                   ),
                 ),
               ),
-              _NavItem(icon: PhosphorIconsDuotone.fileText, label: 'Doctor report', active: t == HomeTab.report, onTap: () => controller.select(HomeTab.report)),
-              _NavItem(icon: PhosphorIconsDuotone.userCircle, label: 'Me', active: t == HomeTab.me, onTap: () => controller.select(HomeTab.me)),
+              _NavItem(
+                icon: PhosphorIconsDuotone.fileText,
+                label: 'Doctor report',
+                active: t == HomeTab.report,
+                onTap: () => controller.select(HomeTab.report),
+              ),
+              _NavItem(
+                icon: PhosphorIconsDuotone.userCircle,
+                label: 'Me',
+                active: t == HomeTab.me,
+                onTap: () => controller.select(HomeTab.me),
+              ),
             ],
           );
         }),
@@ -101,7 +135,12 @@ class _FloatingNav extends GetView<HomeController> {
 }
 
 class _NavItem extends StatelessWidget {
-  const _NavItem({required this.icon, required this.label, required this.active, required this.onTap});
+  const _NavItem({
+    required this.icon,
+    required this.label,
+    required this.active,
+    required this.onTap,
+  });
 
   final PhosphorDuotoneIconData icon;
   final String label;
@@ -132,7 +171,11 @@ class _NavItem extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 child: Center(
-                  child: PhosphorIcon(icon, size: 24, color: active ? k.navActiveFg : k.faint),
+                  child: PhosphorIcon(
+                    icon,
+                    size: 24,
+                    color: active ? k.navActiveFg : k.faint,
+                  ),
                 ),
               ),
             ),

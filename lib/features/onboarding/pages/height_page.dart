@@ -18,8 +18,10 @@ import '../onboarding_screen.dart';
 class HeightPage extends GetView<OnboardingController> {
   const HeightPage({super.key});
 
-  static const double _minIn = OnboardingController.minHeightCm / Imperial.cmPerInch;
-  static const double _maxIn = OnboardingController.maxHeightCm / Imperial.cmPerInch;
+  static const double _minIn =
+      OnboardingController.minHeightCm / Imperial.cmPerInch;
+  static const double _maxIn =
+      OnboardingController.maxHeightCm / Imperial.cmPerInch;
 
   Future<void> _type(BuildContext context) async {
     final cm = controller.heightShownCm;
@@ -83,11 +85,14 @@ class HeightPage extends GetView<OnboardingController> {
         Obx(() {
           final cm = controller.heightShownCm;
           final metric = controller.heightInCm.value;
-          final big = metric ? '${cm.round()}' : Imperial.feetInches(cm / Imperial.cmPerInch);
+          final big = metric
+              ? '${cm.round()}'
+              : Imperial.feetInches(cm / Imperial.cmPerInch);
           return BigValue(
             value: big,
             unit: metric ? 'cm' : null,
-            semanticLabel: 'Height ${metric ? '${cm.round()} centimetres' : big}',
+            semanticLabel:
+                'Height ${metric ? '${cm.round()} centimetres' : big}',
             onTap: () => _type(context),
           );
         }).enter(motion, delay: 160),
@@ -117,16 +122,27 @@ class HeightPage extends GetView<OnboardingController> {
             midEvery: 6,
             labelOf: (v) => "${v.round() ~/ 12}′",
             semanticValueOf: Imperial.feetInches,
-            onChanged: (inches) => controller.setHeightCm(inches * Imperial.cmPerInch),
+            onChanged: (inches) =>
+                controller.setHeightCm(inches * Imperial.cmPerInch),
           );
         }).enter(motion, delay: 220),
         SizedBox(height: 8.sp),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircleIconButton(icon: PhosphorIconsBold.minus, label: 'Shorter', size: 44.sp, onTap: () => _step(-1)),
+            CircleIconButton(
+              icon: PhosphorIconsBold.minus,
+              label: 'Shorter',
+              size: 44.sp,
+              onTap: () => _step(-1),
+            ),
             SizedBox(width: 12.sp),
-            CircleIconButton(icon: PhosphorIconsBold.plus, label: 'Taller', size: 44.sp, onTap: () => _step(1)),
+            CircleIconButton(
+              icon: PhosphorIconsBold.plus,
+              label: 'Taller',
+              size: 44.sp,
+              onTap: () => _step(1),
+            ),
           ],
         ).enter(motion, delay: 260),
       ],

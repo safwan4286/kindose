@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-
-
 /// Brand colours that look the same in light and dark mode.
 class AppColors {
   AppColors._();
@@ -41,7 +39,6 @@ class AppColors {
 
   static const Color white = Color(0xFFFFFFFF);
 
-
   static const primary = Color(0xff0F67FE);
   static const black = Colors.black;
   static const red = Colors.red;
@@ -67,7 +64,7 @@ class AppColors {
   static const Color darkThemeScaffoldColor = Color(0xff111527);
   static const Color darkThemeSecondaryColor = Color(0xff292929);
   static const Color darkThemeTertairyColor = Color(0xff343434);
-  static const shadowColor = Color(0xff090e1d0d);
+  static const shadowColor = Color(0x0D090E1D);
   static const Color teal1A9E6E = Color(0xFF1A9E6E);
   static const black242E49 = Color(0xff242E49);
   static const common535862 = Color(0xFF535862);

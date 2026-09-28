@@ -45,9 +45,7 @@ class DeveloperModeControl {
 }
 
 class _DeveloperModeScreen extends StatelessWidget {
-  const _DeveloperModeScreen({
-    super.key,
-  });
+  const _DeveloperModeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -65,11 +63,7 @@ class _DeveloperModeScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Icon(
-                Icons.warning_rounded,
-                color: Colors.yellow,
-                size: 70.0.sp,
-              ),
+              Icon(Icons.warning_rounded, color: Colors.yellow, size: 70.0.sp),
               Padding(
                 padding: EdgeInsets.only(top: 10.0.sp),
                 child: Text(

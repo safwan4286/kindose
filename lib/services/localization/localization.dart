@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../main.dart';
 import '../get_it/get_it_setup.dart';
 import '../local_storage/local_storage.dart';
 
@@ -42,7 +41,7 @@ class Localization {
   }
 
   void changeLanguage(BuildContext context, String selectedLanguageCode) async {
-    Locale locale = await setLocale(selectedLanguageCode);
+    await setLocale(selectedLanguageCode);
     if (context.mounted) {
       // MyApp.setLocale(context, locale);
     }

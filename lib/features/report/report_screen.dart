@@ -35,12 +35,19 @@ class ReportScreen extends GetView<ReportController> {
             SizedBox(height: 4.sp),
             Semantics(
               header: true,
-              child: Text('One page for your doctor', style: AppText.h1.copyWith(fontSize: 30.sp, color: k.text)),
+              child: Text(
+                'One page for your doctor',
+                style: AppText.h1.copyWith(fontSize: 30.sp, color: k.text),
+              ),
             ).enter(motion),
             SizedBox(height: 6.sp),
             Text(
               'Only what you logged. Nothing is sent anywhere unless you share it.',
-              style: AppText.bodyStrong.copyWith(fontSize: 14.sp, fontWeight: FontWeight.w600, color: k.muted),
+              style: AppText.bodyStrong.copyWith(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w600,
+                color: k.muted,
+              ),
             ),
             SizedBox(height: 16.sp),
             _AppointmentCard(controller: controller).enter(motion, delay: 40),
@@ -63,7 +70,9 @@ class ReportScreen extends GetView<ReportController> {
             ),
             SizedBox(height: 8.sp),
             Text(
-              controller.isPlus ? 'Opens your share sheet: email, WhatsApp, print.' : 'Preview is free. Show it on your phone at the visit.',
+              controller.isPlus
+                  ? 'Opens your share sheet: email, WhatsApp, print.'
+                  : 'Preview is free. Show it on your phone at the visit.',
               textAlign: TextAlign.center,
               style: AppText.small.copyWith(fontSize: 12.5.sp, color: k.muted),
             ),
@@ -74,12 +83,19 @@ class ReportScreen extends GetView<ReportController> {
   }
 
   Widget _label(BuildContext context, String text) => Padding(
-        padding: EdgeInsets.only(top: 22.sp, bottom: 10.sp),
-        child: Semantics(header: true, child: Text(text.toUpperCase(), style: _caps(context))),
-      );
+    padding: EdgeInsets.only(top: 22.sp, bottom: 10.sp),
+    child: Semantics(
+      header: true,
+      child: Text(text.toUpperCase(), style: _caps(context)),
+    ),
+  );
 }
 
-TextStyle _caps(BuildContext c) => AppText.caps.copyWith(fontSize: 12.sp, letterSpacing: 1.1, color: c.k.faint);
+TextStyle _caps(BuildContext c) => AppText.caps.copyWith(
+  fontSize: 12.sp,
+  letterSpacing: 1.1,
+  color: c.k.faint,
+);
 
 class _AppointmentCard extends StatelessWidget {
   const _AppointmentCard({required this.controller});
@@ -101,7 +117,9 @@ class _AppointmentCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppColors.hero,
             borderRadius: BorderRadius.circular(22.sp),
-            border: k.selectedBorder == AppColors.lime ? Border.all(color: k.border) : null,
+            border: k.selectedBorder == AppColors.lime
+                ? Border.all(color: k.border)
+                : null,
           ),
           child: Row(
             children: [
@@ -111,10 +129,30 @@ class _AppointmentCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('NEXT APPOINTMENT', style: AppText.caps.copyWith(fontSize: 11.5.sp, letterSpacing: 0.8, color: AppColors.lime)),
+                    Text(
+                      'NEXT APPOINTMENT',
+                      style: AppText.caps.copyWith(
+                        fontSize: 11.5.sp,
+                        letterSpacing: 0.8,
+                        color: AppColors.lime,
+                      ),
+                    ),
                     SizedBox(height: 2.sp),
-                    Text(controller.appointmentTitle, style: AppText.title.copyWith(fontSize: 16.sp, color: AppColors.white)),
-                    Text(controller.appointmentSub, style: AppText.small.copyWith(fontSize: 12.5.sp, fontWeight: FontWeight.w600, color: AppColors.heroMuted)),
+                    Text(
+                      controller.appointmentTitle,
+                      style: AppText.title.copyWith(
+                        fontSize: 16.sp,
+                        color: AppColors.white,
+                      ),
+                    ),
+                    Text(
+                      controller.appointmentSub,
+                      style: AppText.small.copyWith(
+                        fontSize: 12.5.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.heroMuted,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -125,9 +163,19 @@ class _AppointmentCard extends StatelessWidget {
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(18.sp),
-                  border: Border.all(color: AppColors.white.withValues(alpha: 0.2), width: 1.5),
+                  border: Border.all(
+                    color: AppColors.white.withValues(alpha: 0.2),
+                    width: 1.5,
+                  ),
                 ),
-                child: Text(has ? 'Change' : 'Add', style: AppText.small.copyWith(fontSize: 13.sp, fontWeight: FontWeight.w800, color: AppColors.white)),
+                child: Text(
+                  has ? 'Change' : 'Add',
+                  style: AppText.small.copyWith(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.white,
+                  ),
+                ),
               ),
             ],
           ),
@@ -156,7 +204,8 @@ class _PeriodRow extends StatelessWidget {
               height: 52.sp,
               radius: 16,
               padding: EdgeInsets.symmetric(horizontal: 4.sp),
-              semanticLabel: '${controller.periodLabel(list[i])} ${controller.periodSub(list[i])}',
+              semanticLabel:
+                  '${controller.periodLabel(list[i])} ${controller.periodSub(list[i])}',
               onTap: () => controller.pickPeriod(list[i]),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -164,13 +213,20 @@ class _PeriodRow extends StatelessWidget {
                   Text(
                     controller.periodLabel(list[i]),
                     maxLines: 1,
-                    style: AppText.small.copyWith(fontSize: 13.sp, fontWeight: FontWeight.w800, color: k.text),
+                    style: AppText.small.copyWith(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w800,
+                      color: k.text,
+                    ),
                   ),
                   if (controller.periodSub(list[i]).isNotEmpty)
                     Text(
                       controller.periodSub(list[i]),
                       maxLines: 1,
-                      style: AppText.tiny.copyWith(fontSize: 11.sp, color: k.faint),
+                      style: AppText.tiny.copyWith(
+                        fontSize: 11.sp,
+                        color: k.faint,
+                      ),
                     ),
                 ],
               ),
@@ -191,14 +247,20 @@ class _PreviewCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final k = context.k;
     Widget bar(double w, Color c, {double h = 3}) => Container(
-          width: w,
-          height: h,
-          margin: EdgeInsets.only(top: 3.sp),
-          decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(2)),
-        );
+      width: w,
+      height: h,
+      margin: EdgeInsets.only(top: 3.sp),
+      decoration: BoxDecoration(
+        color: c,
+        borderRadius: BorderRadius.circular(2),
+      ),
+    );
     return Container(
       padding: EdgeInsets.all(14.sp),
-      decoration: BoxDecoration(color: k.card, borderRadius: BorderRadius.circular(22.sp)),
+      decoration: BoxDecoration(
+        color: k.card,
+        borderRadius: BorderRadius.circular(22.sp),
+      ),
       child: Row(
         children: [
           ExcludeSemantics(
@@ -209,7 +271,13 @@ class _PreviewCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.white,
                 borderRadius: BorderRadius.circular(6.sp),
-                boxShadow: [BoxShadow(color: AppColors.ink.withValues(alpha: 0.14), blurRadius: 10.sp, offset: Offset(0, 2.sp))],
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.ink.withValues(alpha: 0.14),
+                    blurRadius: 10.sp,
+                    offset: Offset(0, 2.sp),
+                  ),
+                ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -219,12 +287,19 @@ class _PreviewCard extends StatelessWidget {
                   SizedBox(height: 4.sp),
                   Row(
                     children: [
-                      for (final c in [AppColors.limeSoft, const Color(0xFFF6F5F1), const Color(0xFFF6F5F1)])
+                      for (final c in [
+                        AppColors.limeSoft,
+                        const Color(0xFFF6F5F1),
+                        const Color(0xFFF6F5F1),
+                      ])
                         Expanded(
                           child: Container(
                             height: 14.sp,
                             margin: EdgeInsets.only(right: 3.sp),
-                            decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(3)),
+                            decoration: BoxDecoration(
+                              color: c,
+                              borderRadius: BorderRadius.circular(3),
+                            ),
                           ),
                         ),
                     ],
@@ -234,20 +309,38 @@ class _PreviewCard extends StatelessWidget {
                     opacity: controller.weight.value ? 1 : 0.08,
                     child: Padding(
                       padding: EdgeInsets.only(top: 5.sp),
-                      child: CustomPaint(size: Size(78.sp, 22.sp), painter: const _MiniLine()),
+                      child: CustomPaint(
+                        size: Size(78.sp, 22.sp),
+                        painter: const _MiniLine(),
+                      ),
                     ),
                   ),
                   AnimatedOpacity(
                     duration: const Duration(milliseconds: 200),
                     opacity: controller.doses.value ? 1 : 0.08,
-                    child: Column(children: [bar(78.sp, const Color(0xFFDCDAD2)), bar(78.sp, const Color(0xFFDCDAD2)), bar(54.sp, const Color(0xFFDCDAD2))]),
+                    child: Column(
+                      children: [
+                        bar(78.sp, const Color(0xFFDCDAD2)),
+                        bar(78.sp, const Color(0xFFDCDAD2)),
+                        bar(54.sp, const Color(0xFFDCDAD2)),
+                      ],
+                    ),
                   ),
                   AnimatedOpacity(
                     duration: const Duration(milliseconds: 200),
                     opacity: controller.sideEffects.value ? 1 : 0.08,
-                    child: Row(children: [bar(30.sp, const Color(0xFFF7B895), h: 6), SizedBox(width: 2.sp), bar(18.sp, AppColors.tangerineSoft, h: 6)]),
+                    child: Row(
+                      children: [
+                        bar(30.sp, const Color(0xFFF7B895), h: 6),
+                        SizedBox(width: 2.sp),
+                        bar(18.sp, AppColors.tangerineSoft, h: 6),
+                      ],
+                    ),
                   ),
-                  if (controller.questions.isNotEmpty) ...[bar(40.sp, AppColors.ink), bar(70.sp, const Color(0xFFDCDAD2))],
+                  if (controller.questions.isNotEmpty) ...[
+                    bar(40.sp, AppColors.ink),
+                    bar(70.sp, const Color(0xFFDCDAD2)),
+                  ],
                 ],
               ),
             ),
@@ -257,11 +350,27 @@ class _PreviewCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(controller.periodTitle, style: AppText.title.copyWith(fontSize: 15.sp, color: k.text)),
+                Text(
+                  controller.periodTitle,
+                  style: AppText.title.copyWith(fontSize: 15.sp, color: k.text),
+                ),
                 SizedBox(height: 4.sp),
-                Text(controller.summary, style: AppText.small.copyWith(fontSize: 12.5.sp, fontWeight: FontWeight.w600, height: 1.5, color: k.muted)),
+                Text(
+                  controller.summary,
+                  style: AppText.small.copyWith(
+                    fontSize: 12.5.sp,
+                    fontWeight: FontWeight.w600,
+                    height: 1.5,
+                    color: k.muted,
+                  ),
+                ),
                 SizedBox(height: 10.sp),
-                SoftButton(label: 'Preview', height: 36, outlined: true, onPressed: controller.preview),
+                SoftButton(
+                  label: 'Preview',
+                  height: 36,
+                  outlined: true,
+                  onPressed: controller.preview,
+                ),
               ],
             ),
           ),
@@ -309,15 +418,26 @@ class _Toggles extends StatelessWidget {
   Widget build(BuildContext context) {
     final k = context.k;
     final rows = [
-      ('Doses and injection spots', 'Dates, dose, spot, how it felt', controller.doses),
+      (
+        'Doses and injection spots',
+        'Dates, dose, spot, how it felt',
+        controller.doses,
+      ),
       ('Weight chart', 'With dose changes marked', controller.weight),
       ('Side effects', 'How often and how strong', controller.sideEffects),
-      ('Protein and water', 'Daily averages and goal days', controller.nutrition),
+      (
+        'Protein and water',
+        'Daily averages and goal days',
+        controller.nutrition,
+      ),
       ('My notes', 'Off by default. They can be personal', controller.notes),
     ];
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16.sp, vertical: 4.sp),
-      decoration: BoxDecoration(color: k.card, borderRadius: BorderRadius.circular(22.sp)),
+      decoration: BoxDecoration(
+        color: k.card,
+        borderRadius: BorderRadius.circular(22.sp),
+      ),
       child: Column(
         children: [
           for (var i = 0; i < rows.length; i++) ...[
@@ -348,7 +468,10 @@ class _Questions extends StatelessWidget {
     final qs = controller.questions;
     return Container(
       padding: EdgeInsets.all(12.sp),
-      decoration: BoxDecoration(color: k.card, borderRadius: BorderRadius.circular(22.sp)),
+      decoration: BoxDecoration(
+        color: k.card,
+        borderRadius: BorderRadius.circular(22.sp),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -362,11 +485,29 @@ class _Questions extends StatelessWidget {
                     width: 22.sp,
                     height: 22.sp,
                     alignment: Alignment.center,
-                    decoration: BoxDecoration(color: dark ? k.cardAlt : AppColors.limeSoft, shape: BoxShape.circle),
-                    child: Text('${i + 1}', style: AppText.tiny.copyWith(fontSize: 12.sp, fontWeight: FontWeight.w800, color: dark ? k.text : AppColors.limeText)),
+                    decoration: BoxDecoration(
+                      color: dark ? k.cardAlt : AppColors.limeSoft,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(
+                      '${i + 1}',
+                      style: AppText.tiny.copyWith(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w800,
+                        color: dark ? k.text : AppColors.limeText,
+                      ),
+                    ),
                   ),
                   SizedBox(width: 10.sp),
-                  Expanded(child: Text(qs[i], style: AppText.bodyStrong.copyWith(fontSize: 14.sp, color: k.text))),
+                  Expanded(
+                    child: Text(
+                      qs[i],
+                      style: AppText.bodyStrong.copyWith(
+                        fontSize: 14.sp,
+                        color: k.text,
+                      ),
+                    ),
+                  ),
                   CircleIconButton(
                     icon: PhosphorIconsBold.x,
                     label: 'Remove question ${i + 1}',
@@ -388,7 +529,11 @@ class _Questions extends StatelessWidget {
             decoration: InputDecoration(
               hintText: 'Write your own question',
               counterText: '',
-              prefixIcon: Icon(PhosphorIconsBold.plus, size: 16.sp, color: k.muted),
+              prefixIcon: Icon(
+                PhosphorIconsBold.plus,
+                size: 16.sp,
+                color: k.muted,
+              ),
               suffixIcon: IconButton(
                 tooltip: 'Add question',
                 icon: Icon(PhosphorIconsBold.check, size: 18.sp, color: k.text),
@@ -398,7 +543,10 @@ class _Questions extends StatelessWidget {
           ),
           if (controller.ideas.isNotEmpty) ...[
             SizedBox(height: 10.sp),
-            Text('IDEAS', style: AppText.caps.copyWith(fontSize: 11.5.sp, color: k.faint)),
+            Text(
+              'IDEAS',
+              style: AppText.caps.copyWith(fontSize: 11.5.sp, color: k.faint),
+            ),
             SizedBox(height: 6.sp),
             Wrap(
               spacing: 6.sp,
@@ -409,12 +557,21 @@ class _Questions extends StatelessWidget {
                     semanticLabel: 'Add question: $idea',
                     onTap: () => controller.addQuestion(idea),
                     child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 12.sp, vertical: 8.sp),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12.sp,
+                        vertical: 8.sp,
+                      ),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(16.sp),
                         border: Border.all(color: k.border, width: 1.5),
                       ),
-                      child: Text('+ $idea', style: AppText.small.copyWith(fontSize: 13.sp, color: k.text)),
+                      child: Text(
+                        '+ $idea',
+                        style: AppText.small.copyWith(
+                          fontSize: 13.sp,
+                          color: k.text,
+                        ),
+                      ),
                     ),
                   ),
               ],
@@ -436,12 +593,16 @@ class _NameCard extends StatelessWidget {
     final k = context.k;
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16.sp, vertical: 6.sp),
-      decoration: BoxDecoration(color: k.card, borderRadius: BorderRadius.circular(22.sp)),
+      decoration: BoxDecoration(
+        color: k.card,
+        borderRadius: BorderRadius.circular(22.sp),
+      ),
       child: Column(
         children: [
           SwitchRow(
             label: 'Add my name and birth date',
-            sub: 'Only printed on the PDF so the clinic can file it. Never saved or uploaded.',
+            sub:
+                'Only printed on the PDF so the clinic can file it. Never saved or uploaded.',
             value: controller.includeName.value,
             onChanged: (_) => controller.flip(controller.includeName),
             padding: EdgeInsets.symmetric(vertical: 8.sp),
@@ -459,13 +620,17 @@ class _NameCard extends StatelessWidget {
                           controller: controller.nameCtrl,
                           textCapitalization: TextCapitalization.words,
                           autofillHints: const [AutofillHints.name],
-                          decoration: const InputDecoration(hintText: 'Full name'),
+                          decoration: const InputDecoration(
+                            hintText: 'Full name',
+                          ),
                         ),
                         SizedBox(height: 8.sp),
                         TextField(
                           controller: controller.dobCtrl,
                           keyboardType: TextInputType.datetime,
-                          decoration: const InputDecoration(hintText: 'Birth date, e.g. 12 Mar 1988'),
+                          decoration: const InputDecoration(
+                            hintText: 'Birth date, e.g. 12 Mar 1988',
+                          ),
                         ),
                       ],
                     ),

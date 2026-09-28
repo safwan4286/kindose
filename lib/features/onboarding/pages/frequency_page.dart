@@ -22,22 +22,57 @@ class FrequencyPage extends GetView<OnboardingController> {
     final k = context.k;
     final dark = k.selectedBorder == AppColors.lime;
     final motion = !MediaQuery.disableAnimationsOf(context);
-    Color tint(Color light, Color accent) => dark ? accent.withValues(alpha: 0.16) : light;
+    Color tint(Color light, Color accent) =>
+        dark ? accent.withValues(alpha: 0.16) : light;
 
     final options = [
-      _Option('daily', 'Daily', 'Same time every day', '1', tint(AppColors.aquaSoft, AppColors.aqua)),
-      _Option('weekly', 'Weekly', 'Same day each week', '7', tint(const Color(0xFFF1F7D6), AppColors.lime)),
-      _Option('2w', 'Every 2 weeks', 'Every other week, same day', '14', k.cardAlt),
-      _Option('custom', 'Another schedule', 'Every few days, you choose', 'N', tint(AppColors.tangerineSoft, AppColors.tangerine)),
-      _Option('unsure', "I don't know yet", "We'll ask again before reminders", '?', k.cardAlt),
+      _Option(
+        'daily',
+        'Daily',
+        'Same time every day',
+        '1',
+        tint(AppColors.aquaSoft, AppColors.aqua),
+      ),
+      _Option(
+        'weekly',
+        'Weekly',
+        'Same day each week',
+        '7',
+        tint(const Color(0xFFF1F7D6), AppColors.lime),
+      ),
+      _Option(
+        '2w',
+        'Every 2 weeks',
+        'Every other week, same day',
+        '14',
+        k.cardAlt,
+      ),
+      _Option(
+        'custom',
+        'Another schedule',
+        'Every few days, you choose',
+        'N',
+        tint(AppColors.tangerineSoft, AppColors.tangerine),
+      ),
+      _Option(
+        'unsure',
+        "I don't know yet",
+        "We'll ask again before reminders",
+        '?',
+        k.cardAlt,
+      ),
     ];
 
     return StepScaffold(
-      title: controller.stage.value == 'starting' ? 'How often will you take it?' : 'How often do you take it?',
+      title: controller.stage.value == 'starting'
+          ? 'How often will you take it?'
+          : 'How often do you take it?',
       subtitle: 'So reminders land on the right day.',
       cta: Obx(
         () => StepFooter(
-          expanded: controller.frequencyAnswered.value && controller.frequency.value == 'custom',
+          expanded:
+              controller.frequencyAnswered.value &&
+              controller.frequency.value == 'custom',
           panel: const _CustomDaysPanel(),
         ),
       ),
@@ -47,14 +82,20 @@ class FrequencyPage extends GetView<OnboardingController> {
           Obx(() {
             final o = options[i];
             final m = controller.medicine;
-            final usual = (o.id == 'daily' && m.everyDays == 1) || (o.id == 'weekly' && m.everyDays == 7);
+            final usual =
+                (o.id == 'daily' && m.everyDays == 1) ||
+                (o.id == 'weekly' && m.everyDays == 7);
             final showTag = usual && m.strengths.isNotEmpty;
             return ChoiceTile(
               title: o.title,
               sub: o.sub,
-              tag: showTag ? 'USUAL FOR ${m.name.toUpperCase()}${m.mark ?? ''}' : null,
+              tag: showTag
+                  ? 'USUAL FOR ${m.name.toUpperCase()}${m.mark ?? ''}'
+                  : null,
               leading: ChoiceGlyph(o.glyph, tint: o.tint),
-              selected: controller.frequencyAnswered.value && controller.frequency.value == o.id,
+              selected:
+                  controller.frequencyAnswered.value &&
+                  controller.frequency.value == o.id,
               onTap: () => controller.pickFrequency(o.id),
             );
           }).enter(motion, delay: 140 + i * 60),
@@ -85,7 +126,10 @@ class _CustomDaysPanel extends GetView<OnboardingController> {
       onContinue: controller.confirmCustomFrequency,
       child: Container(
         padding: EdgeInsets.fromLTRB(18.sp, 8.sp, 8.sp, 8.sp),
-        decoration: BoxDecoration(color: k.card, borderRadius: BorderRadius.circular(20.sp)),
+        decoration: BoxDecoration(
+          color: k.card,
+          borderRadius: BorderRadius.circular(20.sp),
+        ),
         child: Obx(() {
           final d = controller.customDays.value;
           return Row(
@@ -99,11 +143,20 @@ class _CustomDaysPanel extends GetView<OnboardingController> {
                     TextSpan(
                       text: 'Every ',
                       children: [
-                        TextSpan(text: '$d', style: AppText.h1.copyWith(fontSize: 24.sp, color: k.text)),
+                        TextSpan(
+                          text: '$d',
+                          style: AppText.h1.copyWith(
+                            fontSize: 24.sp,
+                            color: k.text,
+                          ),
+                        ),
                         const TextSpan(text: ' days'),
                       ],
                     ),
-                    style: AppText.title.copyWith(fontSize: 17.sp, color: k.text),
+                    style: AppText.title.copyWith(
+                      fontSize: 17.sp,
+                      color: k.text,
+                    ),
                   ),
                 ),
               ),
@@ -112,7 +165,9 @@ class _CustomDaysPanel extends GetView<OnboardingController> {
                 label: 'Fewer days',
                 size: 44.sp,
                 background: k.cardAlt,
-                onTap: d > OnboardingController.minCustomDays ? () => controller.stepCustomDays(-1) : null,
+                onTap: d > OnboardingController.minCustomDays
+                    ? () => controller.stepCustomDays(-1)
+                    : null,
               ),
               SizedBox(width: 8.sp),
               CircleIconButton(
@@ -120,7 +175,9 @@ class _CustomDaysPanel extends GetView<OnboardingController> {
                 label: 'More days',
                 size: 44.sp,
                 background: k.cardAlt,
-                onTap: d < OnboardingController.maxCustomDays ? () => controller.stepCustomDays(1) : null,
+                onTap: d < OnboardingController.maxCustomDays
+                    ? () => controller.stepCustomDays(1)
+                    : null,
               ),
             ],
           );

@@ -4,283 +4,346 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 import '../../resources/colors.dart';
 import '../../resources/images.dart';
+import '../../services/responsiveness/device_manager.dart';
 import '../../services/theme/theme.dart';
 import '../../widgets/buttons.dart';
+import '../../widgets/entrance.dart';
 import '../../widgets/k_widgets.dart';
+import '../../widgets/press_scale.dart';
 import '../home/home_screen.dart';
-import '../legal/legal_sheet.dart';
 import 'me_controller.dart';
 
+/// Me tab: plan, Plus, goals, reminders, units and theme, backup, your
+/// data and about.
 class MeScreen extends GetView<MeController> {
   const MeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final k = context.k;
+    final motion = !MediaQuery.disableAnimationsOf(context);
     return SafeArea(
       bottom: false,
       child: Obx(() {
-        controller.tracker.profile.value;
-        final dark = controller.isDark;
+        controller.watch();
+        final c = controller;
         return ListView(
-          padding: const EdgeInsets.fromLTRB(18, 12, 18, kNavClearance),
+          padding: EdgeInsets.fromLTRB(20.sp, 12.sp, 20.sp, kNavClearance),
           children: [
-            Row(
+            Semantics(
+              header: true,
+              child: Text(
+                'Me',
+                style: AppText.h1.copyWith(fontSize: 30.sp, color: k.text),
+              ),
+            ),
+            SizedBox(height: 16.sp),
+            _PlanCard(controller: c).enter(motion),
+            SizedBox(height: 12.sp),
+            _PlusCard(controller: c).enter(motion, delay: 60),
+            _label(context, 'Goals'),
+            _Group(
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Semantics(header: true, child: Text('Me', style: AppText.h1)),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          const ThreeD(Img3d.locked, size: 18),
-                          const SizedBox(width: 4),
-                          Flexible(
-                            child: Text(
-                              'Stored only on this phone · no account',
-                              style: AppText.small.copyWith(color: k.muted),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                _NavRow(
+                  label: 'Goal weight',
+                  value: c.goalWeightLabel,
+                  onTap: () => c.editGoalWeight(context),
+                ),
+                _NavRow(
+                  label: 'Protein',
+                  value: c.proteinLabel,
+                  onTap: () => c.editProteinGoal(context),
+                ),
+                _NavRow(
+                  label: 'Water',
+                  value: c.waterLabel,
+                  onTap: () => c.editWaterGoal(context),
+                ),
+                _NavRow(
+                  label: 'How I eat',
+                  value: c.dietLabel,
+                  onTap: c.editDiet,
+                ),
+              ],
+            ).enter(motion, delay: 100),
+            _label(context, 'Reminders'),
+            _Group(
+              padded: true,
+              children: [
+                SwitchRow(
+                  label: 'Dose reminders',
+                  sub: 'Dose day, and a follow-up if not logged',
+                  value: c.doseReminders,
+                  onChanged: c.setDoseReminders,
+                  padding: EdgeInsets.symmetric(vertical: 12.sp),
+                ),
+                SwitchRow(
+                  label: 'Doctor visit',
+                  sub: '3 days before, to get your report ready',
+                  value: c.visitReminders,
+                  onChanged: c.setVisitReminders,
+                  padding: EdgeInsets.symmetric(vertical: 12.sp),
+                ),
+                _PlusSwitchRow(
+                  label: 'Protein & water nudges',
+                  sub: 'Gentle nudges at lunch and afternoon',
+                  onTap: c.foodNudges,
+                ),
+              ],
+            ).enter(motion, delay: 140),
+            _label(context, 'App'),
+            _Group(
+              padded: true,
+              children: [
+                _SettingRow(
+                  label: 'Units',
+                  child: SizedBox(
+                    width: 120.sp,
+                    child: KSegmented<bool>(
+                      options: const [true, false],
+                      selected: c.useKg,
+                      onChanged: c.setUseKg,
+                      labelOf: (v) => v ? 'kg' : 'lb',
+                      dense: true,
+                    ),
                   ),
                 ),
-                Semantics(
-                  button: true,
-                  toggled: dark,
-                  label: 'Dark mode',
-                  excludeSemantics: true,
-                  child: Material(
-                    color: dark ? AppColors.lime : k.card,
-                    borderRadius: BorderRadius.circular(19),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(19),
-                      onTap: controller.toggleDark,
-                      child: Container(
-                        height: 38,
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            PhosphorIcon(
-                              dark ? PhosphorIconsFill.moon : PhosphorIconsDuotone.sun,
-                              size: 18,
-                              color: dark ? AppColors.ink : k.text,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              dark ? 'Dark' : 'Light',
-                              style: AppText.small.copyWith(fontWeight: FontWeight.w800, color: dark ? AppColors.ink : k.text),
-                            ),
-                          ],
-                        ),
-                      ),
+                _SettingRow(
+                  label: 'Theme',
+                  child: SizedBox(
+                    width: 210.sp,
+                    child: KSegmented<ThemeMode>(
+                      options: const [
+                        ThemeMode.system,
+                        ThemeMode.light,
+                        ThemeMode.dark,
+                      ],
+                      selected: c.themeMode,
+                      onChanged: c.setTheme,
+                      labelOf: (m) => switch (m) {
+                        ThemeMode.system => 'System',
+                        ThemeMode.light => 'Light',
+                        ThemeMode.dark => 'Dark',
+                      },
+                      dense: true,
                     ),
                   ),
                 ),
               ],
-            ),
-            const SizedBox(height: 14),
-            KCard(
-              color: AppColors.hero,
-              radius: 24,
-              onTap: controller.openPlus,
-              semanticLabel: 'Try Kindose Plus, 7 days free',
-              child: Row(
-                children: [
-                  const ThreeD(Img3d.sparkles, size: 40),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Try Kindose Plus', style: AppText.title.copyWith(fontSize: 16, color: AppColors.white)),
-                        Text(
-                          'Meal photos, trends, encrypted backup',
-                          style: AppText.small.copyWith(color: AppColors.heroMuted, fontWeight: FontWeight.w500),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const KTag('7 days free', bg: AppColors.lime, fg: AppColors.hero),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            const SectionLabel('Treatment'),
-            const SizedBox(height: 8),
-            _Group(children: [
-              _Row(
-                icon: Img3d.syringe,
-                tile: k.tint,
-                title: 'Medicine & dose',
-                sub: controller.medicineSub,
-                onTap: controller.editPlan,
-              ),
-              _Row(
-                icon: Img3d.alarm,
-                tile: k.proteinTrack,
-                title: 'Dose day & time',
-                sub: controller.scheduleSub,
-                onTap: controller.editPlan,
-              ),
-              _Row(
-                icon: Img3d.egg,
-                tile: k.cardAlt,
-                title: 'Protein goal',
-                sub: controller.goalsSub,
-                onTap: () => controller.editProteinGoal(context),
-              ),
-              _Row(
-                icon: Img3d.droplet,
-                tile: k.cardAlt,
-                title: 'Water goal',
-                sub: 'Tap to change',
-                onTap: () => controller.editWaterGoal(context),
-              ),
-              _Row(
-                icon: Img3d.seedling,
-                tile: k.cardAlt,
-                title: 'Maintenance mode',
-                sub: 'For tapering or after stopping',
-                trailing: const PlusTag(),
-                onTap: controller.openPlus,
-                last: true,
-              ),
-            ]),
-            const SizedBox(height: 16),
-            const SectionLabel('Preferences'),
-            const SizedBox(height: 8),
-            _Group(children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
-                child: Row(
-                  children: [
-                    Expanded(child: Text('Weight unit', style: AppText.title)),
-                    SizedBox(
-                      width: 110,
-                      child: KSegmented<bool>(
-                        options: const [true, false],
-                        selected: controller.useKg,
-                        onChanged: controller.setUseKg,
-                        labelOf: (v) => v ? 'kg' : 'lb',
-                        dense: true,
-                        darkSelected: true,
-                      ),
-                    ),
-                  ],
+            ).enter(motion, delay: 170),
+            _label(context, 'Backup'),
+            _BackupCard(controller: c).enter(motion, delay: 200),
+            _label(context, 'Your data'),
+            _Group(
+              children: [
+                _NavRow(
+                  label: c.exporting.value ? 'Preparing…' : 'Export everything',
+                  sub: 'Spreadsheet (CSV) or a full backup file',
+                  onTap: c.exporting.value ? null : c.export,
                 ),
-              ),
-            ]),
-            const SizedBox(height: 16),
-            const SectionLabel('Your data'),
-            const SizedBox(height: 8),
-            _Group(children: [
-              _DataRow(
-                title: controller.exporting.value ? 'Preparing…' : 'Export as CSV',
-                tag: const KTag('Free', bg: AppColors.limeSoft, fg: AppColors.limeText),
-                onTap: controller.exporting.value ? null : controller.exportCsv,
-              ),
-              _DataRow(
-                title: 'Export as JSON',
-                tag: const KTag('Free', bg: AppColors.limeSoft, fg: AppColors.limeText),
-                onTap: controller.exporting.value ? null : controller.exportJson,
-              ),
-              _DataRow(title: 'Encrypted backup', tag: const PlusTag(), onTap: controller.openPlus),
-              _DataRow(title: 'Terms, privacy & credits', onTap: showLegalSheet),
-              _DataRow(
-                title: 'Delete all my data',
-                danger: true,
-                onTap: () => controller.confirmDeleteAll(context),
-                last: true,
-              ),
-            ]),
-            const SizedBox(height: 16),
+                _NavRow(
+                  label: 'Delete all my data',
+                  danger: true,
+                  onTap: c.confirmDeleteAll,
+                ),
+              ],
+            ),
+            _label(context, 'About'),
+            _Group(
+              children: [
+                _NavRow(label: 'Privacy policy', onTap: c.openLegal),
+                _NavRow(label: 'Terms of use', onTap: c.openLegal),
+                if (c.canContact)
+                  _NavRow(label: 'Contact support', onTap: c.contactSupport),
+                if (c.canRate) _NavRow(label: 'Rate Kindose', onTap: c.rateApp),
+                _NavRow(
+                  label: 'Licences',
+                  onTap: () => c.openLicences(context),
+                ),
+              ],
+            ),
+            SizedBox(height: 18.sp),
             Text(
-              "Kindose is a personal log, not a medical device. It doesn't give dosing advice. "
-              'Talk to your doctor about your treatment.',
+              '${c.version.value.isEmpty ? 'Kindose' : 'Kindose ${c.version.value}'}\n'
+              "Kindose helps you keep track. It doesn't give medical advice.",
               textAlign: TextAlign.center,
-              style: AppText.tiny.copyWith(color: k.faint, fontWeight: FontWeight.w500),
+              style: AppText.small.copyWith(
+                fontSize: 12.sp,
+                height: 1.5,
+                color: k.faint,
+              ),
             ),
           ],
         );
       }),
     );
   }
+
+  Widget _label(BuildContext context, String text) => Padding(
+    padding: EdgeInsets.only(top: 22.sp, bottom: 10.sp),
+    child: Semantics(
+      header: true,
+      child: Text(
+        text.toUpperCase(),
+        style: AppText.caps.copyWith(
+          fontSize: 12.sp,
+          letterSpacing: 1.1,
+          color: context.k.faint,
+        ),
+      ),
+    ),
+  );
 }
 
-class _Group extends StatelessWidget {
-  const _Group({required this.children});
+class _PlanCard extends StatelessWidget {
+  const _PlanCard({required this.controller});
 
-  final List<Widget> children;
+  final MeController controller;
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: ColoredBox(
-        color: context.k.card,
-        child: Column(children: children),
+    final c = controller;
+    final next = c.nextDoseLine;
+    return Container(
+      padding: EdgeInsets.all(18.sp),
+      decoration: BoxDecoration(
+        color: AppColors.lime,
+        borderRadius: BorderRadius.circular(24.sp),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            c.planCaption,
+            style: AppText.caps.copyWith(
+              fontSize: 12.sp,
+              letterSpacing: 1.1,
+              color: AppColors.limeText,
+            ),
+          ),
+          SizedBox(height: 6.sp),
+          Text(
+            c.planTitle,
+            style: AppText.h2.copyWith(
+              fontSize: 24.sp,
+              letterSpacing: -0.5,
+              color: AppColors.ink,
+            ),
+          ),
+          SizedBox(height: 2.sp),
+          Text(
+            c.planSub,
+            style: AppText.small.copyWith(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w700,
+              color: AppColors.ink.withValues(alpha: 0.8),
+            ),
+          ),
+          SizedBox(height: 14.sp),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  next,
+                  style: AppText.small.copyWith(
+                    fontSize: 12.5.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.limeText,
+                  ),
+                ),
+              ),
+              SizedBox(width: 10.sp),
+              SoftButton(
+                label: c.hasMedicine ? 'Edit plan' : 'Add medicine',
+                background: AppColors.ink,
+                foreground: AppColors.white,
+                height: 42,
+                onPressed: c.editPlan,
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 }
 
-class _Row extends StatelessWidget {
-  const _Row({
-    required this.icon,
-    required this.tile,
-    required this.title,
-    required this.sub,
-    required this.onTap,
-    this.trailing,
-    this.last = false,
-  });
+class _PlusCard extends StatelessWidget {
+  const _PlusCard({required this.controller});
 
-  final String icon;
-  final Color tile;
-  final String title;
-  final String sub;
-  final VoidCallback onTap;
-  final Widget? trailing;
-  final bool last;
+  final MeController controller;
 
   @override
   Widget build(BuildContext context) {
     final k = context.k;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
+    final plus = controller.isPlus;
+    return PressScale(
+      semanticLabel: plus
+          ? 'Kindose Plus is on. Manage'
+          : 'Kindose Plus. Try it free',
+      onTap: controller.openPlus,
+      child: ExcludeSemantics(
         child: Container(
-          padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+          padding: EdgeInsets.all(16.sp),
           decoration: BoxDecoration(
-            border: last ? null : Border(bottom: BorderSide(color: k.border)),
+            color: AppColors.hero,
+            borderRadius: BorderRadius.circular(22.sp),
+            border: k.selectedBorder == AppColors.lime
+                ? Border.all(color: k.border)
+                : null,
           ),
           child: Row(
             children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(color: tile, borderRadius: BorderRadius.circular(12)),
-                child: Center(child: ThreeD(icon, size: 26)),
-              ),
-              const SizedBox(width: 12),
+              ThreeD(Img3d.sparkles, size: 40.sp),
+              SizedBox(width: 12.sp),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: AppText.title),
-                    if (sub.isNotEmpty)
-                      Text(sub, style: AppText.small.copyWith(color: k.muted, fontWeight: FontWeight.w600)),
+                    Text(
+                      plus ? 'Kindose Plus is on' : 'Kindose Plus',
+                      style: AppText.title.copyWith(
+                        fontSize: 16.sp,
+                        color: AppColors.white,
+                      ),
+                    ),
+                    Text(
+                      plus
+                          ? 'Thank you for supporting Kindose'
+                          : 'Full history, patterns, share your report',
+                      style: AppText.small.copyWith(
+                        fontSize: 12.5.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.heroMuted,
+                      ),
+                    ),
                   ],
                 ),
               ),
-              if (trailing != null) ...[trailing!, const SizedBox(width: 6)],
-              PhosphorIcon(PhosphorIconsBold.caretRight, size: 16, color: k.faint),
+              SizedBox(width: 8.sp),
+              Container(
+                height: 38.sp,
+                padding: EdgeInsets.symmetric(horizontal: 14.sp),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: plus ? Colors.transparent : AppColors.lime,
+                  borderRadius: BorderRadius.circular(19.sp),
+                  border: plus
+                      ? Border.all(
+                          color: AppColors.white.withValues(alpha: 0.2),
+                          width: 1.5,
+                        )
+                      : null,
+                ),
+                child: Text(
+                  plus ? 'Manage' : 'Try free',
+                  style: AppText.small.copyWith(
+                    fontSize: 13.5.sp,
+                    fontWeight: FontWeight.w800,
+                    color: plus ? AppColors.white : AppColors.ink,
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -289,36 +352,286 @@ class _Row extends StatelessWidget {
   }
 }
 
-class _DataRow extends StatelessWidget {
-  const _DataRow({required this.title, required this.onTap, this.tag, this.danger = false, this.last = false});
+class _BackupCard extends StatelessWidget {
+  const _BackupCard({required this.controller});
 
-  final String title;
-  final VoidCallback? onTap;
-  final Widget? tag;
-  final bool danger;
-  final bool last;
+  final MeController controller;
 
   @override
   Widget build(BuildContext context) {
     final k = context.k;
-    return Material(
-      color: Colors.transparent,
+    final dark = k.selectedBorder == AppColors.lime;
+    final accent = dark ? AppColors.amberSoft : AppColors.amberText;
+    return Container(
+      padding: EdgeInsets.all(16.sp),
+      decoration: BoxDecoration(
+        color: dark ? k.card : AppColors.amberWash,
+        borderRadius: BorderRadius.circular(22.sp),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.smartphone_rounded, size: 22.sp, color: accent),
+              SizedBox(width: 12.sp),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Only on this phone',
+                      style: AppText.title.copyWith(
+                        fontSize: 15.sp,
+                        color: k.text,
+                      ),
+                    ),
+                    SizedBox(height: 2.sp),
+                    Text(
+                      'If you lose or change your phone, your history goes with it. Back up free with Google or Apple.',
+                      style: AppText.small.copyWith(
+                        fontSize: 12.5.sp,
+                        height: 1.45,
+                        fontWeight: FontWeight.w600,
+                        color: accent,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12.sp),
+          SoftButton(
+            label: 'Back up my data',
+            background: dark ? AppColors.lime : AppColors.ink,
+            foreground: dark ? AppColors.ink : AppColors.white,
+            height: 46,
+            onPressed: controller.backup,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// White rounded group with hairline dividers between rows.
+class _Group extends StatelessWidget {
+  const _Group({required this.children, this.padded = false});
+
+  final List<Widget> children;
+
+  /// Adds side padding for rows that have none of their own (switches).
+  final bool padded;
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(22.sp),
+      child: ColoredBox(
+        color: k.card,
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: padded ? 16.sp : 0),
+          child: Column(
+            children: [
+              for (var i = 0; i < children.length; i++) ...[
+                if (i > 0)
+                  Divider(
+                    height: 1,
+                    thickness: 1,
+                    color: k.border,
+                    indent: padded ? 0 : 16.sp,
+                    endIndent: padded ? 0 : 16.sp,
+                  ),
+                children[i],
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NavRow extends StatelessWidget {
+  const _NavRow({
+    required this.label,
+    required this.onTap,
+    this.value,
+    this.sub,
+    this.danger = false,
+  });
+
+  final String label;
+  final String? value;
+  final String? sub;
+  final bool danger;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    final dark = k.selectedBorder == AppColors.lime;
+    final red = dark ? const Color(0xFFFF8A80) : AppColors.danger;
+    final color = danger ? red : k.text;
+    return Semantics(
+      button: true,
+      enabled: onTap != null,
+      label: [
+        label,
+        if (value != null) value!,
+        if (sub != null) sub!,
+      ].join(', '),
+      excludeSemantics: true,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          child: Container(
+            constraints: BoxConstraints(minHeight: 52.sp),
+            padding: EdgeInsets.symmetric(horizontal: 16.sp, vertical: 12.sp),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        label,
+                        style: AppText.title.copyWith(
+                          fontSize: 15.sp,
+                          color: color,
+                        ),
+                      ),
+                      if (sub != null)
+                        Text(
+                          sub!,
+                          style: AppText.small.copyWith(
+                            fontSize: 12.5.sp,
+                            fontWeight: FontWeight.w600,
+                            color: k.muted,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                if (value != null) ...[
+                  SizedBox(width: 8.sp),
+                  Flexible(
+                    child: Text(
+                      value!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.small.copyWith(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w700,
+                        color: k.muted,
+                      ),
+                    ),
+                  ),
+                ],
+                SizedBox(width: 6.sp),
+                PhosphorIcon(
+                  PhosphorIconsBold.caretRight,
+                  size: 16.sp,
+                  color: danger ? color : k.faint,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SettingRow extends StatelessWidget {
+  const _SettingRow({required this.label, required this.child});
+
+  final String label;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 10.sp),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: AppText.title.copyWith(
+                fontSize: 15.sp,
+                color: context.k.text,
+              ),
+            ),
+          ),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+/// A switch row for a Plus feature: shows the Plus tag and an off switch.
+/// Tapping opens the Plus screen for free users.
+class _PlusSwitchRow extends StatelessWidget {
+  const _PlusSwitchRow({
+    required this.label,
+    required this.sub,
+    required this.onTap,
+  });
+
+  final String label;
+  final String sub;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    return Semantics(
+      button: true,
+      label: '$label, Plus feature. $sub',
+      excludeSemantics: true,
       child: InkWell(
+        borderRadius: BorderRadius.circular(14.sp),
         onTap: onTap,
-        child: Container(
-          constraints: const BoxConstraints(minHeight: 50),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(border: last ? null : Border(bottom: BorderSide(color: k.border))),
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 12.sp),
           child: Row(
             children: [
               Expanded(
-                child: Text(
-                  title,
-                  style: AppText.title.copyWith(color: danger ? const Color(0xFFE5484D) : k.text),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Wrap(
+                      spacing: 8.sp,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Text(
+                          label,
+                          style: AppText.title.copyWith(
+                            fontSize: 15.sp,
+                            color: k.text,
+                          ),
+                        ),
+                        const PlusTag(),
+                      ],
+                    ),
+                    Text(
+                      sub,
+                      style: AppText.small.copyWith(
+                        fontSize: 12.5.sp,
+                        color: k.muted,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              if (tag != null) tag!,
-              if (tag == null && !danger) PhosphorIcon(PhosphorIconsBold.caretRight, size: 16, color: k.faint),
+              SizedBox(width: 12.sp),
+              const KSwitch(value: false),
             ],
           ),
         ),

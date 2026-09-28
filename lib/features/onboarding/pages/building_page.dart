@@ -24,7 +24,8 @@ class BuildingPage extends StatefulWidget {
   State<BuildingPage> createState() => _BuildingPageState();
 }
 
-class _BuildingPageState extends State<BuildingPage> with TickerProviderStateMixin {
+class _BuildingPageState extends State<BuildingPage>
+    with TickerProviderStateMixin {
   static const Duration _total = Duration(milliseconds: 4200);
 
   // Timeline (0–1 of [_total]).
@@ -34,8 +35,14 @@ class _BuildingPageState extends State<BuildingPage> with TickerProviderStateMix
   static const int _rows = 5;
 
   final OnboardingController _c = Get.find<OnboardingController>();
-  late final AnimationController _timeline = AnimationController(vsync: this, duration: _total);
-  late final AnimationController _wave = AnimationController(vsync: this, duration: const Duration(milliseconds: 1600));
+  late final AnimationController _timeline = AnimationController(
+    vsync: this,
+    duration: _total,
+  );
+  late final AnimationController _wave = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1600),
+  );
 
   late final List<_Row> _items = _buildRows();
   int _doneCount = 0;
@@ -112,15 +119,24 @@ class _BuildingPageState extends State<BuildingPage> with TickerProviderStateMix
     final undecided = m.id == Catalog.undecided;
     final name = Catalog.medicineName(m.id, _c.customMedicine.value);
     final mark = m.mark ?? '';
-    final dose = _c.doseMode.value == 'unsure' ? '' : ' ${Catalog.mgLabel(_c.strength.value)}';
+    final dose = _c.doseMode.value == 'unsure'
+        ? ''
+        : ' ${Catalog.mgLabel(_c.strength.value)}';
     final litres = _c.suggestedWaterMl / 1000;
-    final water = litres == litres.roundToDouble() ? litres.toStringAsFixed(0) : litres.toStringAsFixed(2).replaceAll(RegExp(r'0$'), '');
+    final water = litres == litres.roundToDouble()
+        ? litres.toStringAsFixed(0)
+        : litres.toStringAsFixed(2).replaceAll(RegExp(r'0$'), '');
     return [
       _Row(
         'Setting your dose schedule',
-        undecided ? 'You can add your medicine anytime' : '$name$mark$dose · ${_c.rhythmLabel}',
+        undecided
+            ? 'You can add your medicine anytime'
+            : '$name$mark$dose · ${_c.rhythmLabel}',
       ),
-      _Row('Working out your protein goal', 'About ${_c.suggestedProtein} g a day'),
+      _Row(
+        'Working out your protein goal',
+        'About ${_c.suggestedProtein} g a day',
+      ),
       _Row('Setting your water goal', 'About $water L a day'),
       _Row(
         'Planning your reminders',
@@ -143,7 +159,9 @@ class _BuildingPageState extends State<BuildingPage> with TickerProviderStateMix
           child: ListView(
             padding: EdgeInsets.fromLTRB(24.sp, 12.sp, 24.sp, 16.sp),
             children: [
-              Center(child: _Hero(timeline: _timeline, wave: _wave, size: 150.sp)),
+              Center(
+                child: _Hero(timeline: _timeline, wave: _wave, size: 150.sp),
+              ),
               SizedBox(height: 18.sp),
               Semantics(
                 header: true,
@@ -158,20 +176,24 @@ class _BuildingPageState extends State<BuildingPage> with TickerProviderStateMix
               Text(
                 'Using your answers, just a moment.',
                 textAlign: TextAlign.center,
-                style: AppText.bodyText.copyWith(fontSize: 15.5.sp, height: 1.45, color: k.muted),
+                style: AppText.bodyText.copyWith(
+                  fontSize: 15.5.sp,
+                  height: 1.45,
+                  color: k.muted,
+                ),
               ).enter(motion, delay: 140, dy: 0.12),
               SizedBox(height: 22.sp),
               AnimatedBuilder(
-                  animation: _timeline,
-                  builder: (context, _) {
-                    final t = _timeline.value;
-                    return Column(
-                      children: [
-                        for (var i = 0; i < _items.length; i++) ...[
-                          _StepRow(row: _items[i], state: _stateOf(i, t)),
-                          Divider(height: 1, thickness: 1, color: k.border),
-                        ],
+                animation: _timeline,
+                builder: (context, _) {
+                  final t = _timeline.value;
+                  return Column(
+                    children: [
+                      for (var i = 0; i < _items.length; i++) ...[
+                        _StepRow(row: _items[i], state: _stateOf(i, t)),
+                        Divider(height: 1, thickness: 1, color: k.border),
                       ],
+                    ],
                   );
                 },
               ).enter(motion, delay: 220, dy: 0.18),
@@ -183,7 +205,11 @@ class _BuildingPageState extends State<BuildingPage> with TickerProviderStateMix
           child: Text(
             'Goals are general guidance, not medical advice. Your doctor can adjust them with you.',
             textAlign: TextAlign.center,
-            style: AppText.small.copyWith(fontSize: 12.5.sp, height: 1.4, color: k.faint),
+            style: AppText.small.copyWith(
+              fontSize: 12.5.sp,
+              height: 1.4,
+              color: k.faint,
+            ),
           ),
         ),
       ],
@@ -206,7 +232,8 @@ class _Hero extends StatelessWidget {
   final AnimationController wave;
   final double size;
 
-  static double _span(double t, double a, double b) => ((t - a) / (b - a)).clamp(0.0, 1.0);
+  static double _span(double t, double a, double b) =>
+      ((t - a) / (b - a)).clamp(0.0, 1.0);
 
   @override
   Widget build(BuildContext context) {
@@ -215,9 +242,15 @@ class _Hero extends StatelessWidget {
         animation: Listenable.merge([timeline, wave]),
         builder: (context, _) {
           final t = timeline.value;
-          final fill = Curves.easeInOutCubic.transform(_span(t, 0, _BuildingPageState._fillEnd));
+          final fill = Curves.easeInOutCubic.transform(
+            _span(t, 0, _BuildingPageState._fillEnd),
+          );
           final smile = Curves.easeOut.transform(
-            _span(t, _BuildingPageState._smileStart, _BuildingPageState._smileEnd),
+            _span(
+              t,
+              _BuildingPageState._smileStart,
+              _BuildingPageState._smileEnd,
+            ),
           );
           final squash = _span(t, 0.8, 0.95);
           final breathe = 0.5 + 0.5 * math.sin(wave.value * 2 * math.pi);
@@ -272,37 +305,50 @@ class _StepRow extends StatelessWidget {
 
     final Widget mark = switch (state) {
       2 => Container(
-          key: const ValueKey('done'),
-          width: dot,
-          height: dot,
-          decoration: BoxDecoration(color: k.selectedBorder, shape: BoxShape.circle),
-          child: Icon(
-            Icons.check_rounded,
-            size: 17.sp,
-            color: k.selectedBorder == AppColors.lime ? AppColors.ink : AppColors.lime,
-          ),
+        key: const ValueKey('done'),
+        width: dot,
+        height: dot,
+        decoration: BoxDecoration(
+          color: k.selectedBorder,
+          shape: BoxShape.circle,
         ),
+        child: Icon(
+          Icons.check_rounded,
+          size: 17.sp,
+          color: k.selectedBorder == AppColors.lime
+              ? AppColors.ink
+              : AppColors.lime,
+        ),
+      ),
       1 => SizedBox(
-          key: const ValueKey('active'),
-          width: dot,
-          height: dot,
-          child: CircularProgressIndicator(
-            strokeWidth: 3,
-            color: k.text,
-            backgroundColor: k.border,
-            strokeCap: StrokeCap.round,
-          ),
+        key: const ValueKey('active'),
+        width: dot,
+        height: dot,
+        child: CircularProgressIndicator(
+          strokeWidth: 3,
+          color: k.text,
+          backgroundColor: k.border,
+          strokeCap: StrokeCap.round,
         ),
+      ),
       _ => Container(
-          key: const ValueKey('pending'),
-          width: dot,
-          height: dot,
-          decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: k.border, width: 3)),
+        key: const ValueKey('pending'),
+        width: dot,
+        height: dot,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: k.border, width: 3),
         ),
+      ),
     };
 
     return Semantics(
-      label: '${row.title}${done ? ', done. ${row.detail}' : active ? ', in progress' : ''}',
+      label:
+          '${row.title}${done
+              ? ', done. ${row.detail}'
+              : active
+              ? ', in progress'
+              : ''}',
       excludeSemantics: true,
       child: Padding(
         padding: EdgeInsets.symmetric(vertical: 12.sp),
@@ -310,38 +356,47 @@ class _StepRow extends StatelessWidget {
           duration: const Duration(milliseconds: 300),
           opacity: state == 0 ? 0.25 : 1,
           child: Row(
-          children: [
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 260),
-              switchInCurve: Curves.easeOutBack,
-              transitionBuilder: (child, a) => ScaleTransition(scale: a, child: child),
-              child: mark,
-            ),
-            SizedBox(width: 14.sp),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    row.title,
-                    style: AppText.bodyStrong.copyWith(fontSize: 16.sp, fontWeight: FontWeight.w800, color: k.text),
-                  ),
-                  SizedBox(height: 2.sp),
-                  // Space is kept so rows don't jump when the detail appears.
-                  AnimatedOpacity(
-                    duration: const Duration(milliseconds: 300),
-                    opacity: done ? 1 : 0,
-                    child: Text(
-                      row.detail,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppText.small.copyWith(fontSize: 13.5.sp, fontWeight: FontWeight.w600, color: k.muted),
-                    ),
-                  ),
-                ],
+            children: [
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 260),
+                switchInCurve: Curves.easeOutBack,
+                transitionBuilder: (child, a) =>
+                    ScaleTransition(scale: a, child: child),
+                child: mark,
               ),
-            ),
-          ],
+              SizedBox(width: 14.sp),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      row.title,
+                      style: AppText.bodyStrong.copyWith(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w800,
+                        color: k.text,
+                      ),
+                    ),
+                    SizedBox(height: 2.sp),
+                    // Space is kept so rows don't jump when the detail appears.
+                    AnimatedOpacity(
+                      duration: const Duration(milliseconds: 300),
+                      opacity: done ? 1 : 0,
+                      child: Text(
+                        row.detail,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppText.small.copyWith(
+                          fontSize: 13.5.sp,
+                          fontWeight: FontWeight.w600,
+                          color: k.muted,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),

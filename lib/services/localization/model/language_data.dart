@@ -5,8 +5,6 @@ class LanguageData {
   LanguageData(this.name, this.languageCode);
 
   static List<LanguageData> languageList() {
-    return <LanguageData>[
-      LanguageData("English", 'en'),
-    ];
+    return <LanguageData>[LanguageData("English", 'en')];
   }
 }

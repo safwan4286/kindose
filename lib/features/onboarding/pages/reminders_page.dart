@@ -27,7 +27,9 @@ class RemindersPage extends GetView<OnboardingController> {
     final m = controller.medicine;
     final name = Catalog.medicineName(m.id, controller.customMedicine.value);
     final mark = m.mark ?? '';
-    final dose = controller.doseMode.value == 'unsure' ? '' : ' ${Catalog.mgLabel(controller.strength.value)}';
+    final dose = controller.doseMode.value == 'unsure'
+        ? ''
+        : ' ${Catalog.mgLabel(controller.strength.value)}';
     final time = Dates.timeOfDay(controller.shotMinutes.value);
     final tablet = controller.form.value == 'tablet';
     final goal = controller.suggestedProtein;
@@ -36,11 +38,21 @@ class RemindersPage extends GetView<OnboardingController> {
     final previews = [
       _Preview(
         tablet ? 'Time for your tablet' : "It's dose day",
-        tablet ? '$name$mark$dose at $time.' : '$name$mark$dose at $time. $site is next.',
+        tablet
+            ? '$name$mark$dose at $time.'
+            : '$name$mark$dose at $time. $site is next.',
         time,
       ),
-      _Preview('Protein check', 'About ${(goal * 0.58).round()} of $goal g so far. A protein snack would help.', '4:30 PM'),
-      const _Preview('Water', "Two more glasses to hit today's goal.", '6:00 PM'),
+      _Preview(
+        'Protein check',
+        'About ${(goal * 0.58).round()} of $goal g so far. A protein snack would help.',
+        '4:30 PM',
+      ),
+      const _Preview(
+        'Water',
+        "Two more glasses to hit today's goal.",
+        '6:00 PM',
+      ),
     ];
 
     return Column(
@@ -63,7 +75,11 @@ class RemindersPage extends GetView<OnboardingController> {
               Text(
                 'A nudge on dose day, plus gentle protein and water check-ins. You choose which ones, anytime.',
                 textAlign: TextAlign.center,
-                style: AppText.bodyText.copyWith(fontSize: 15.5.sp, height: 1.45, color: k.muted),
+                style: AppText.bodyText.copyWith(
+                  fontSize: 15.5.sp,
+                  height: 1.45,
+                  color: k.muted,
+                ),
               ).enter(motion, delay: 140, dy: 0.12),
               SizedBox(height: 22.sp),
               ExcludeSemantics(
@@ -71,7 +87,9 @@ class RemindersPage extends GetView<OnboardingController> {
                   children: [
                     for (var i = 0; i < previews.length; i++) ...[
                       if (i > 0) SizedBox(height: 10.sp),
-                      _NotificationCard(previews[i]).enter(motion, delay: 260 + i * 150, dy: 0.25),
+                      _NotificationCard(
+                        previews[i],
+                      ).enter(motion, delay: 260 + i * 150, dy: 0.25),
                     ],
                   ],
                 ),
@@ -93,7 +111,9 @@ class RemindersPage extends GetView<OnboardingController> {
                 SizedBox(height: 4.sp),
                 LinkButton(
                   label: 'Not now',
-                  onTap: controller.askingReminders.value ? null : controller.skipReminders,
+                  onTap: controller.askingReminders.value
+                      ? null
+                      : controller.skipReminders,
                 ),
               ],
             ),
@@ -126,7 +146,13 @@ class _NotificationCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: k.card,
         borderRadius: BorderRadius.circular(20.sp),
-        boxShadow: [BoxShadow(color: AppColors.ink.withValues(alpha: 0.08), blurRadius: 20.sp, offset: Offset(0, 6.sp))],
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.ink.withValues(alpha: 0.08),
+            blurRadius: 20.sp,
+            offset: Offset(0, 6.sp),
+          ),
+        ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -134,7 +160,10 @@ class _NotificationCard extends StatelessWidget {
           Container(
             width: 22.sp,
             height: 22.sp,
-            decoration: BoxDecoration(color: AppColors.ink, borderRadius: BorderRadius.circular(6.sp)),
+            decoration: BoxDecoration(
+              color: AppColors.ink,
+              borderRadius: BorderRadius.circular(6.sp),
+            ),
             alignment: Alignment.center,
             child: DropMark(size: 22.sp),
           ),
@@ -145,16 +174,37 @@ class _NotificationCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Expanded(child: Text('KINDOSE', style: AppText.small.copyWith(fontSize: 12.sp, color: k.faint))),
-                    Text(p.time, style: AppText.small.copyWith(fontSize: 12.sp, color: k.faint)),
+                    Expanded(
+                      child: Text(
+                        'KINDOSE',
+                        style: AppText.small.copyWith(
+                          fontSize: 12.sp,
+                          color: k.faint,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      p.time,
+                      style: AppText.small.copyWith(
+                        fontSize: 12.sp,
+                        color: k.faint,
+                      ),
+                    ),
                   ],
                 ),
                 SizedBox(height: 2.sp),
-                Text(p.title, style: AppText.title.copyWith(fontSize: 15.sp, color: k.text)),
+                Text(
+                  p.title,
+                  style: AppText.title.copyWith(fontSize: 15.sp, color: k.text),
+                ),
                 SizedBox(height: 2.sp),
                 Text(
                   p.body,
-                  style: AppText.bodyText.copyWith(fontSize: 13.5.sp, height: 1.35, color: k.textSoft),
+                  style: AppText.bodyText.copyWith(
+                    fontSize: 13.5.sp,
+                    height: 1.35,
+                    color: k.textSoft,
+                  ),
                 ),
               ],
             ),
@@ -174,8 +224,12 @@ class _RingingBell extends StatefulWidget {
   State<_RingingBell> createState() => _RingingBellState();
 }
 
-class _RingingBellState extends State<_RingingBell> with SingleTickerProviderStateMixin {
-  late final AnimationController _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 2600));
+class _RingingBellState extends State<_RingingBell>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 2600),
+  );
   bool _started = false;
 
   @override
@@ -211,7 +265,9 @@ class _RingingBellState extends State<_RingingBell> with SingleTickerProviderSta
       width: 104.sp,
       height: 104.sp,
       decoration: BoxDecoration(
-        color: dark ? AppColors.lime.withValues(alpha: 0.14) : const Color(0xFFF1F7D6),
+        color: dark
+            ? AppColors.lime.withValues(alpha: 0.14)
+            : const Color(0xFFF1F7D6),
         shape: BoxShape.circle,
       ),
       alignment: Alignment.center,

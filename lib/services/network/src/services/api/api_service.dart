@@ -3,12 +3,10 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:kindose/services/network/src/services/api/sequential_api_engine.dart';
 
 import '../../../../../controllers/user_controller.dart';
-import '../../../../../resources/common_methods.dart';
 import '../../../../../resources/end_points.dart';
 import '../../../../get_it/get_it_setup.dart';
 import '../../../../logs/logs.dart';
@@ -278,7 +276,7 @@ class ApiService {
       devPrint("🔍 Completer completed? ${completer.isCompleted}");
 
       final userController = getIt<UserController>();
-      final newAccessToken = userController.userData?.value?.accessToken;
+      final newAccessToken = userController.userData?.value.accessToken;
 
       if (newAccessToken == null || newAccessToken.isEmpty) {
         devPrint("❌ No access token available after refresh!");
@@ -444,7 +442,7 @@ class ApiService {
       await userController.saveUserData(updatedUserData);
 
       // ✅ Verify token was saved
-      final verifyToken = userController.userData?.value?.accessToken;
+      final verifyToken = userController.userData?.value.accessToken;
       devPrint(
         "✅ Token saved. Verification: ${verifyToken?.substring(0, 20)}...",
       );

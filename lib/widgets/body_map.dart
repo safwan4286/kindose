@@ -35,7 +35,11 @@ class BodyMap extends StatelessWidget {
     final w = width.sp;
     final scale = w / 200;
     final hit = 42.sp;
-    final side = AppText.small.copyWith(fontSize: 13.sp, fontWeight: FontWeight.w800, color: k.faint);
+    final side = AppText.small.copyWith(
+      fontSize: 13.sp,
+      fontWeight: FontWeight.w800,
+      color: k.faint,
+    );
     return SizedBox(
       width: w + 60.sp,
       height: 300 * scale,
@@ -43,14 +47,24 @@ class BodyMap extends StatelessWidget {
         clipBehavior: Clip.none,
         children: [
           // The user's right is on the left of the drawing (facing you).
-          Positioned(left: 0, top: 138 * scale, child: ExcludeSemantics(child: Text('R', style: side))),
-          Positioned(right: 0, top: 138 * scale, child: ExcludeSemantics(child: Text('L', style: side))),
+          Positioned(
+            left: 0,
+            top: 138 * scale,
+            child: ExcludeSemantics(child: Text('R', style: side)),
+          ),
+          Positioned(
+            right: 0,
+            top: 138 * scale,
+            child: ExcludeSemantics(child: Text('L', style: side)),
+          ),
           Positioned(
             left: 30.sp,
             top: 0,
             width: w,
             height: 300 * scale,
-            child: CustomPaint(painter: _BodyPainter(fill: k.cardAlt, navel: k.border)),
+            child: CustomPaint(
+              painter: _BodyPainter(fill: k.cardAlt, navel: k.border),
+            ),
           ),
           for (final s in Catalog.sites)
             Positioned(
@@ -96,12 +110,12 @@ class _Spot extends StatelessWidget {
     final state = selected
         ? 'selected'
         : suggested
-            ? 'suggested next'
-            : rank == 1
-                ? 'used last time'
-                : rank > 1
-                    ? 'used $rank doses ago'
-                    : 'not used recently';
+        ? 'suggested next'
+        : rank == 1
+        ? 'used last time'
+        : rank > 1
+        ? 'used $rank doses ago'
+        : 'not used recently';
     final size = 26.sp;
     return Semantics(
       button: true,
@@ -127,22 +141,37 @@ class _Spot extends StatelessWidget {
                 color: selected
                     ? ink
                     : rank > 0
-                        ? k.border
-                        : k.card,
+                    ? k.border
+                    : k.card,
                 border: Border.all(
                   color: selected || suggested ? ink : k.faint,
                   width: 2.5,
                 ),
                 boxShadow: [
-                  if (suggested && !selected) BoxShadow(color: AppColors.lime.withValues(alpha: 0.95), spreadRadius: 5.sp),
-                  if (selected) BoxShadow(color: ink.withValues(alpha: 0.14), spreadRadius: 5.sp),
+                  if (suggested && !selected)
+                    BoxShadow(
+                      color: AppColors.lime.withValues(alpha: 0.95),
+                      spreadRadius: 5.sp,
+                    ),
+                  if (selected)
+                    BoxShadow(
+                      color: ink.withValues(alpha: 0.14),
+                      spreadRadius: 5.sp,
+                    ),
                 ],
               ),
               child: selected
                   ? Icon(Icons.check_rounded, size: 15.sp, color: onInk)
                   : rank > 0
-                      ? Text('$rank', style: AppText.tiny.copyWith(fontSize: 11.5.sp, fontWeight: FontWeight.w800, color: k.muted))
-                      : null,
+                  ? Text(
+                      '$rank',
+                      style: AppText.tiny.copyWith(
+                        fontSize: 11.5.sp,
+                        fontWeight: FontWeight.w800,
+                        color: k.muted,
+                      ),
+                    )
+                  : null,
             ),
           ),
         ),
@@ -163,7 +192,13 @@ class _BodyPainter extends CustomPainter {
     canvas.scale(size.width / 200, size.height / 300);
     final p = Paint()..color = fill;
     canvas.drawCircle(const Offset(100, 30), 20, p);
-    canvas.drawRRect(RRect.fromRectAndRadius(const Rect.fromLTWH(91, 48, 18, 14), const Radius.circular(5)), p);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        const Rect.fromLTWH(91, 48, 18, 14),
+        const Radius.circular(5),
+      ),
+      p,
+    );
     // Torso.
     canvas.drawPath(
       Path()
@@ -221,5 +256,6 @@ class _BodyPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_BodyPainter old) => old.fill != fill || old.navel != navel;
+  bool shouldRepaint(_BodyPainter old) =>
+      old.fill != fill || old.navel != navel;
 }

@@ -41,141 +41,210 @@ class WeightChart extends StatelessWidget {
     final k = context.k;
     final h = height.sp;
     final labelW = 34.sp;
-    return LayoutBuilder(builder: (context, c) {
-      final w = c.maxWidth - labelW;
-      final g = goal;
-      final all = [...values, if (g != null) g];
-      final lo = (all.reduce(math.min) - 0.5).floorToDouble();
-      final hi = (all.reduce(math.max) + 0.5).ceilToDouble();
-      final top = 22.sp, bottom = h - 48.sp;
-      final first = dates.first;
-      final spanDays = math.max(1, Dates.daysBetween(first, dates.last));
-      double x(DateTime d) => values.length == 1 ? w / 2 : 8 + (w - 16) * Dates.daysBetween(first, d) / spanDays;
-      double y(double v) => top + (hi - v) / (hi - lo) * (bottom - top);
-      final sel = selected < 0 || selected >= values.length ? values.length - 1 : selected;
-      final tipText = '${Dates.short(dates[sel])} · ${values[sel].toStringAsFixed(1)} $unit';
-      final tipW = 128.sp;
-      final tipX = (x(dates[sel]) - tipW / 2).clamp(0.0, math.max(0.0, w - tipW));
-      final tipY = math.max(0.0, y(values[sel]) - 44.sp);
-      final shownMarkers = markers.where((m) => !m.$1.isBefore(first)).toList();
+    return LayoutBuilder(
+      builder: (context, c) {
+        final w = c.maxWidth - labelW;
+        final g = goal;
+        final all = [...values, if (g != null) g];
+        final lo = (all.reduce(math.min) - 0.5).floorToDouble();
+        final hi = (all.reduce(math.max) + 0.5).ceilToDouble();
+        final top = 22.sp, bottom = h - 48.sp;
+        final first = dates.first;
+        final spanDays = math.max(1, Dates.daysBetween(first, dates.last));
+        double x(DateTime d) => values.length == 1
+            ? w / 2
+            : 8 + (w - 16) * Dates.daysBetween(first, d) / spanDays;
+        double y(double v) => top + (hi - v) / (hi - lo) * (bottom - top);
+        final sel = selected < 0 || selected >= values.length
+            ? values.length - 1
+            : selected;
+        final tipText =
+            '${Dates.short(dates[sel])} · ${values[sel].toStringAsFixed(1)} $unit';
+        final tipW = 128.sp;
+        final tipX = (x(dates[sel]) - tipW / 2).clamp(
+          0.0,
+          math.max(0.0, w - tipW),
+        );
+        final tipY = math.max(0.0, y(values[sel]) - 44.sp);
+        final shownMarkers = markers
+            .where((m) => !m.$1.isBefore(first))
+            .toList();
 
-      return SizedBox(
-        height: h,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Positioned.fill(
-              child: CustomPaint(
-                painter: _ChartPainter(
-                  xs: [for (final d in dates) x(d)],
-                  ys: [for (final v in values) y(v)],
-                  gridYs: [top, (top + bottom) / 2, bottom],
-                  plotWidth: w,
-                  goalY: g == null ? null : y(g),
-                  markerXs: [for (final m in shownMarkers) x(m.$1)],
-                  markerTop: 18.sp,
-                  markerBottom: bottom + 2,
-                  grid: k.border,
-                  line: k.text,
-                  goalColor: k.faint,
-                ),
-              ),
-            ),
-            for (final (v, yy) in [(hi, top), ((hi + lo) / 2, (top + bottom) / 2), (lo, bottom)])
-              Positioned(
-                right: 0,
-                top: yy - 8.sp,
-                child: ExcludeSemantics(
-                  child: Text(v.toStringAsFixed(0), style: AppText.tiny.copyWith(fontSize: 11.sp, color: k.faint)),
-                ),
-              ),
-            if (g != null)
-              Positioned(
-                left: 0,
-                top: y(g) - 18.sp,
-                child: Text('Goal ${g.toStringAsFixed(0)} $unit', style: AppText.tiny.copyWith(fontSize: 11.sp, color: k.muted)),
-              ),
-            for (final m in shownMarkers)
-              Positioned(
-                left: math.min(x(m.$1) + 6, w - 110.sp),
-                top: 0,
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 7.sp, vertical: 2.sp),
-                  decoration: BoxDecoration(
-                    color: k.selectedBorder == AppColors.lime ? k.cardAlt : AppColors.limeSoft,
-                    borderRadius: BorderRadius.circular(8.sp),
+        return SizedBox(
+          height: h,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: _ChartPainter(
+                    xs: [for (final d in dates) x(d)],
+                    ys: [for (final v in values) y(v)],
+                    gridYs: [top, (top + bottom) / 2, bottom],
+                    plotWidth: w,
+                    goalY: g == null ? null : y(g),
+                    markerXs: [for (final m in shownMarkers) x(m.$1)],
+                    markerTop: 18.sp,
+                    markerBottom: bottom + 2,
+                    grid: k.border,
+                    line: k.text,
+                    goalColor: k.faint,
                   ),
+                ),
+              ),
+              for (final (v, yy) in [
+                (hi, top),
+                ((hi + lo) / 2, (top + bottom) / 2),
+                (lo, bottom),
+              ])
+                Positioned(
+                  right: 0,
+                  top: yy - 8.sp,
+                  child: ExcludeSemantics(
+                    child: Text(
+                      v.toStringAsFixed(0),
+                      style: AppText.tiny.copyWith(
+                        fontSize: 11.sp,
+                        color: k.faint,
+                      ),
+                    ),
+                  ),
+                ),
+              if (g != null)
+                Positioned(
+                  left: 0,
+                  top: y(g) - 18.sp,
                   child: Text(
-                    m.$2,
-                    style: AppText.tiny.copyWith(fontSize: 11.sp, fontWeight: FontWeight.w800, color: k.selectedBorder == AppColors.lime ? k.text : AppColors.limeText),
+                    'Goal ${g.toStringAsFixed(0)} $unit',
+                    style: AppText.tiny.copyWith(
+                      fontSize: 11.sp,
+                      color: k.muted,
+                    ),
                   ),
                 ),
-              ),
-            for (var i = 0; i < values.length; i++)
+              for (final m in shownMarkers)
+                Positioned(
+                  left: math.min(x(m.$1) + 6, w - 110.sp),
+                  top: 0,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 7.sp,
+                      vertical: 2.sp,
+                    ),
+                    decoration: BoxDecoration(
+                      color: k.selectedBorder == AppColors.lime
+                          ? k.cardAlt
+                          : AppColors.limeSoft,
+                      borderRadius: BorderRadius.circular(8.sp),
+                    ),
+                    child: Text(
+                      m.$2,
+                      style: AppText.tiny.copyWith(
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w800,
+                        color: k.selectedBorder == AppColors.lime
+                            ? k.text
+                            : AppColors.limeText,
+                      ),
+                    ),
+                  ),
+                ),
+              for (var i = 0; i < values.length; i++)
+                Positioned(
+                  left: x(dates[i]) - 16,
+                  top: y(values[i]) - 16,
+                  width: 32,
+                  height: 32,
+                  child: Semantics(
+                    button: true,
+                    selected: i == sel,
+                    label:
+                        '${Dates.long(dates[i])}, ${values[i].toStringAsFixed(1)} $unit',
+                    excludeSemantics: true,
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => onPick(i),
+                      child: Center(
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 160),
+                          width: i == sel ? 13 : 9,
+                          height: i == sel ? 13 : 9,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: i == sel ? AppColors.lime : k.card,
+                            border: Border.all(color: k.text, width: 2.5),
+                            boxShadow: [
+                              BoxShadow(color: k.card, spreadRadius: 2),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               Positioned(
-                left: x(dates[i]) - 16,
-                top: y(values[i]) - 16,
-                width: 32,
-                height: 32,
-                child: Semantics(
-                  button: true,
-                  selected: i == sel,
-                  label: '${Dates.long(dates[i])}, ${values[i].toStringAsFixed(1)} $unit',
-                  excludeSemantics: true,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () => onPick(i),
-                    child: Center(
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 160),
-                        width: i == sel ? 13 : 9,
-                        height: i == sel ? 13 : 9,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: i == sel ? AppColors.lime : k.card,
-                          border: Border.all(color: k.text, width: 2.5),
-                          boxShadow: [BoxShadow(color: k.card, spreadRadius: 2)],
+                left: tipX.toDouble(),
+                top: tipY,
+                width: tipW,
+                child: IgnorePointer(
+                  child: ExcludeSemantics(
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10.sp,
+                        vertical: 6.sp,
+                      ),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: k.text,
+                        borderRadius: BorderRadius.circular(10.sp),
+                      ),
+                      child: Text(
+                        tipText,
+                        maxLines: 1,
+                        style: AppText.tiny.copyWith(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w800,
+                          color: k.bg,
                         ),
                       ),
                     ),
                   ),
                 ),
               ),
-            Positioned(
-              left: tipX.toDouble(),
-              top: tipY,
-              width: tipW,
-              child: IgnorePointer(
+              Positioned(
+                left: 0,
+                right: labelW,
+                top: bottom + 10.sp,
                 child: ExcludeSemantics(
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 10.sp, vertical: 6.sp),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(color: k.text, borderRadius: BorderRadius.circular(10.sp)),
-                    child: Text(tipText, maxLines: 1, style: AppText.tiny.copyWith(fontSize: 12.sp, fontWeight: FontWeight.w800, color: k.bg)),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          Dates.short(first),
+                          style: AppText.tiny.copyWith(
+                            fontSize: 11.sp,
+                            color: k.faint,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        Dates.sameDay(dates.last, DateTime.now())
+                            ? 'Today'
+                            : Dates.short(dates.last),
+                        style: AppText.tiny.copyWith(
+                          fontSize: 11.sp,
+                          color: k.faint,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ),
-            Positioned(
-              left: 0,
-              right: labelW,
-              top: bottom + 10.sp,
-              child: ExcludeSemantics(
-                child: Row(
-                  children: [
-                    Expanded(child: Text(Dates.short(first), style: AppText.tiny.copyWith(fontSize: 11.sp, color: k.faint))),
-                    Text(
-                      Dates.sameDay(dates.last, DateTime.now()) ? 'Today' : Dates.short(dates.last),
-                      style: AppText.tiny.copyWith(fontSize: 11.sp, color: k.faint),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    });
+            ],
+          ),
+        );
+      },
+    );
   }
 }
 
@@ -220,7 +289,11 @@ class _ChartPainter extends CustomPainter {
         ..color = goalColor
         ..strokeWidth = 2;
       for (var dx = 0.0; dx < plotWidth; dx += 10) {
-        canvas.drawLine(Offset(dx, g), Offset(math.min(dx + 5, plotWidth), g), p);
+        canvas.drawLine(
+          Offset(dx, g),
+          Offset(math.min(dx + 5, plotWidth), g),
+          p,
+        );
       }
     }
     final mp = Paint()
@@ -248,5 +321,9 @@ class _ChartPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_ChartPainter old) =>
-      old.xs != xs || old.ys != ys || old.goalY != goalY || old.line != line || old.markerXs != markerXs;
+      old.xs != xs ||
+      old.ys != ys ||
+      old.goalY != goalY ||
+      old.line != line ||
+      old.markerXs != markerXs;
 }

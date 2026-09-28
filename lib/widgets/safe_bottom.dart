@@ -29,18 +29,13 @@ class KBottomPadding extends StatelessWidget {
   final Widget child;
   final double iosPadding;
 
-  const KBottomPadding({
-    super.key,
-    required this.child,
-    this.iosPadding = 10,
-  }) : assert(iosPadding >= 0);
+  const KBottomPadding({super.key, required this.child, this.iosPadding = 10})
+    : assert(iosPadding >= 0);
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(
-        bottom: Platform.isIOS ? iosPadding.sp : 0,
-      ),
+      padding: EdgeInsets.only(bottom: Platform.isIOS ? iosPadding.sp : 0),
       child: child,
     );
   }

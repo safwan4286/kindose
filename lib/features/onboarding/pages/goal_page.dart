@@ -66,7 +66,11 @@ class _GoalSummary extends GetView<OnboardingController> {
       final diffKg = controller.goalDiffKg;
       final diff = (useKg ? diffKg : diffKg * Imperial.lbPerKg).abs();
       final steady = diff < 0.05;
-      final label = steady ? 'keep it steady' : diffKg > 0 ? 'to lose' : 'to gain';
+      final label = steady
+          ? 'keep it steady'
+          : diffKg > 0
+          ? 'to lose'
+          : 'to gain';
       final bmi = controller.goalBmi;
       final low = bmi != null && Bmi.range(bmi) == BmiRange.below;
 
@@ -74,7 +78,9 @@ class _GoalSummary extends GetView<OnboardingController> {
         children: [
           Semantics(
             liveRegion: true,
-            label: steady ? 'Keep your weight steady' : '${diff.toStringAsFixed(1)} $unit $label',
+            label: steady
+                ? 'Keep your weight steady'
+                : '${diff.toStringAsFixed(1)} $unit $label',
             excludeSemantics: true,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
@@ -91,11 +97,21 @@ class _GoalSummary extends GetView<OnboardingController> {
                   if (!steady) ...[
                     Text(
                       '${diff.toStringAsFixed(1)} $unit',
-                      style: AppText.h1.copyWith(fontSize: 30.sp, height: 1, color: AppColors.lime),
+                      style: AppText.h1.copyWith(
+                        fontSize: 30.sp,
+                        height: 1,
+                        color: AppColors.lime,
+                      ),
                     ),
                     SizedBox(width: 6.sp),
                   ],
-                  Text(label, style: AppText.title.copyWith(fontSize: 15.sp, color: AppColors.white)),
+                  Text(
+                    label,
+                    style: AppText.title.copyWith(
+                      fontSize: 15.sp,
+                      color: AppColors.white,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -114,15 +130,26 @@ class _GoalSummary extends GetView<OnboardingController> {
                 ? Padding(
                     padding: EdgeInsets.only(top: 12.sp),
                     child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 14.sp, vertical: 12.sp),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 14.sp,
+                        vertical: 12.sp,
+                      ),
                       decoration: BoxDecoration(
-                        color: dark ? const Color(0xFF7A4E0B).withValues(alpha: 0.3) : const Color(0xFFFBEFD9),
+                        color: dark
+                            ? const Color(0xFF7A4E0B).withValues(alpha: 0.3)
+                            : const Color(0xFFFBEFD9),
                         borderRadius: BorderRadius.circular(16.sp),
                       ),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          PhosphorIcon(PhosphorIconsBold.info, size: 16.sp, color: dark ? const Color(0xFFFBEFD9) : const Color(0xFF7A4E0B)),
+                          PhosphorIcon(
+                            PhosphorIconsBold.info,
+                            size: 16.sp,
+                            color: dark
+                                ? const Color(0xFFFBEFD9)
+                                : const Color(0xFF7A4E0B),
+                          ),
                           SizedBox(width: 8.sp),
                           Expanded(
                             child: Text(
@@ -131,7 +158,9 @@ class _GoalSummary extends GetView<OnboardingController> {
                                 fontSize: 13.sp,
                                 height: 1.4,
                                 fontWeight: FontWeight.w600,
-                                color: dark ? const Color(0xFFFBEFD9) : const Color(0xFF7A4E0B),
+                                color: dark
+                                    ? const Color(0xFFFBEFD9)
+                                    : const Color(0xFF7A4E0B),
                               ),
                             ),
                           ),

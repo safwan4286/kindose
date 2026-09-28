@@ -49,7 +49,11 @@ class ChoiceTile extends StatelessWidget {
       button: true,
       selected: selected,
       inMutuallyExclusiveGroup: !multi,
-      label: [title, if (tag != null) tag!.toLowerCase(), if (sub != null) sub!].join('. '),
+      label: [
+        title,
+        if (tag != null) tag!.toLowerCase(),
+        if (sub != null) sub!,
+      ].join('. '),
       excludeSemantics: true,
       child: PressScale(
         onTap: onTap,
@@ -68,7 +72,10 @@ class ChoiceTile extends StatelessWidget {
             decoration: BoxDecoration(
               color: k.card,
               borderRadius: BorderRadius.circular(24.sp),
-              border: Border.all(color: selected ? k.selectedBorder : k.card, width: 2),
+              border: Border.all(
+                color: selected ? k.selectedBorder : k.card,
+                width: 2,
+              ),
               boxShadow: [
                 BoxShadow(
                   color: AppColors.ink.withValues(alpha: 0.05),
@@ -133,7 +140,9 @@ class _Tag extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 8.sp, vertical: 2.sp),
       decoration: BoxDecoration(
-        color: dark ? AppColors.lime.withValues(alpha: 0.16) : const Color(0xFFF1F7D6),
+        color: dark
+            ? AppColors.lime.withValues(alpha: 0.16)
+            : const Color(0xFFF1F7D6),
         borderRadius: BorderRadius.circular(8.sp),
       ),
       child: Text(
@@ -157,7 +166,11 @@ class _Title extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = AppText.title.copyWith(fontSize: 17.sp, height: 1.25, color: context.k.text);
+    final style = AppText.title.copyWith(
+      fontSize: 17.sp,
+      height: 1.25,
+      color: context.k.text,
+    );
     if (superscript == null) return Text(title, style: style);
     return Text.rich(
       TextSpan(
@@ -169,7 +182,11 @@ class _Title extends StatelessWidget {
               padding: EdgeInsets.only(left: 1.sp),
               child: Text(
                 superscript!,
-                style: style.copyWith(fontSize: 10.sp, fontWeight: FontWeight.w700, color: context.k.muted),
+                style: style.copyWith(
+                  fontSize: 10.sp,
+                  fontWeight: FontWeight.w700,
+                  color: context.k.muted,
+                ),
               ),
             ),
           ),
@@ -193,7 +210,9 @@ class _Indicator extends StatelessWidget {
     final k = context.k;
     final size = 26.sp;
     // Ink fill with a lime check in light mode, lime fill with an ink check in dark.
-    final checkColor = k.selectedBorder == AppColors.lime ? AppColors.ink : AppColors.lime;
+    final checkColor = k.selectedBorder == AppColors.lime
+        ? AppColors.ink
+        : AppColors.lime;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 180),
       curve: Curves.easeOut,
@@ -202,14 +221,21 @@ class _Indicator extends StatelessWidget {
       decoration: BoxDecoration(
         color: selected ? k.selectedBorder : Colors.transparent,
         borderRadius: BorderRadius.circular(multi ? 8.sp : size / 2),
-        border: Border.all(color: selected ? k.selectedBorder : k.border, width: 2),
+        border: Border.all(
+          color: selected ? k.selectedBorder : k.border,
+          width: 2,
+        ),
       ),
       child: Center(
         child: AnimatedScale(
           scale: selected ? 1 : 0,
           duration: const Duration(milliseconds: 220),
           curve: Curves.easeOutBack,
-          child: PhosphorIcon(PhosphorIconsBold.check, size: 14.sp, color: checkColor),
+          child: PhosphorIcon(
+            PhosphorIconsBold.check,
+            size: 14.sp,
+            color: checkColor,
+          ),
         ),
       ),
     );
@@ -228,7 +254,10 @@ class ChoiceIcon extends StatelessWidget {
     return Container(
       width: 54.sp,
       height: 54.sp,
-      decoration: BoxDecoration(color: tint, borderRadius: BorderRadius.circular(18.sp)),
+      decoration: BoxDecoration(
+        color: tint,
+        borderRadius: BorderRadius.circular(18.sp),
+      ),
       alignment: Alignment.center,
       child: ThreeD(asset, size: 36.sp),
     );
@@ -238,10 +267,12 @@ class ChoiceIcon extends StatelessWidget {
 /// Tinted square with a short number or symbol ("7", "14", "?"), used as
 /// [ChoiceTile.leading] when an illustration would be noise.
 class ChoiceGlyph extends StatelessWidget {
-  const ChoiceGlyph(String this.text, {super.key, required this.tint}) : icon = null;
+  const ChoiceGlyph(String this.text, {super.key, required this.tint})
+    : icon = null;
 
   /// Same tile with an icon instead of text.
-  const ChoiceGlyph.icon(IconData this.icon, {super.key, required this.tint}) : text = null;
+  const ChoiceGlyph.icon(IconData this.icon, {super.key, required this.tint})
+    : text = null;
 
   final String? text;
   final IconData? icon;
@@ -252,13 +283,20 @@ class ChoiceGlyph extends StatelessWidget {
     return Container(
       width: 46.sp,
       height: 46.sp,
-      decoration: BoxDecoration(color: tint, borderRadius: BorderRadius.circular(15.sp)),
+      decoration: BoxDecoration(
+        color: tint,
+        borderRadius: BorderRadius.circular(15.sp),
+      ),
       alignment: Alignment.center,
       child: icon != null
           ? PhosphorIcon(icon!, size: 22.sp, color: context.k.text)
           : Text(
               text!,
-              style: AppText.h1.copyWith(fontSize: 16.sp, letterSpacing: -0.2, color: context.k.text),
+              style: AppText.h1.copyWith(
+                fontSize: 16.sp,
+                letterSpacing: -0.2,
+                color: context.k.text,
+              ),
             ),
     );
   }

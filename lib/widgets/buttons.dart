@@ -43,8 +43,8 @@ class PillButton extends StatelessWidget {
     final bg = ink
         ? AppColors.ink
         : lime || context.k.selectedBorder == AppColors.lime
-            ? AppColors.lime
-            : AppColors.ink;
+        ? AppColors.lime
+        : AppColors.ink;
     final onLime = bg == AppColors.lime;
     final fg = onLime ? AppColors.ink : AppColors.white;
     final circle = onLime ? AppColors.ink : AppColors.lime;
@@ -67,7 +67,13 @@ class PillButton extends StatelessWidget {
               color: bg,
               borderRadius: BorderRadius.circular(30.sp),
               boxShadow: enabled
-                  ? [BoxShadow(color: AppColors.ink.withValues(alpha: 0.18), blurRadius: 18.sp, offset: Offset(0, 8.sp))]
+                  ? [
+                      BoxShadow(
+                        color: AppColors.ink.withValues(alpha: 0.18),
+                        blurRadius: 18.sp,
+                        offset: Offset(0, 8.sp),
+                      ),
+                    ]
                   : null,
             ),
             child: Row(
@@ -84,13 +90,19 @@ class PillButton extends StatelessWidget {
                 Container(
                   width: 44.sp,
                   height: 44.sp,
-                  decoration: BoxDecoration(color: circle, shape: BoxShape.circle),
+                  decoration: BoxDecoration(
+                    color: circle,
+                    shape: BoxShape.circle,
+                  ),
                   alignment: Alignment.center,
                   child: busy
                       ? SizedBox(
                           width: 18.sp,
                           height: 18.sp,
-                          child: CircularProgressIndicator(strokeWidth: 2.5, color: circleIcon),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: circleIcon,
+                          ),
                         )
                       : PhosphorIcon(icon, size: 20.sp, color: circleIcon),
                 ),
@@ -106,7 +118,12 @@ class PillButton extends StatelessWidget {
 /// Quiet text button under a main CTA ("Skip for now", "I already have an
 /// account"). 44pt tall for an easy tap.
 class LinkButton extends StatelessWidget {
-  const LinkButton({super.key, required this.label, required this.onTap, this.color});
+  const LinkButton({
+    super.key,
+    required this.label,
+    required this.onTap,
+    this.color,
+  });
 
   final String label;
   final VoidCallback? onTap;
@@ -131,7 +148,10 @@ class LinkButton extends StatelessWidget {
               child: Text(
                 label,
                 textAlign: TextAlign.center,
-                style: AppText.title.copyWith(fontSize: 15.sp, color: color ?? context.k.muted),
+                style: AppText.title.copyWith(
+                  fontSize: 15.sp,
+                  color: color ?? context.k.muted,
+                ),
               ),
             ),
           ),
@@ -329,17 +349,27 @@ class KSegmented<T> extends StatelessWidget {
                     height: (dense ? 34 : 42).sp,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: o == selected ? (darkSelected ? k.text : k.card) : Colors.transparent,
+                      color: o == selected
+                          ? (darkSelected ? k.text : k.card)
+                          : Colors.transparent,
                       borderRadius: BorderRadius.circular(14.sp),
                       boxShadow: o == selected && !darkSelected
-                          ? [BoxShadow(color: AppColors.ink.withValues(alpha: 0.08), blurRadius: 6.sp, offset: Offset(0, 2.sp))]
+                          ? [
+                              BoxShadow(
+                                color: AppColors.ink.withValues(alpha: 0.08),
+                                blurRadius: 6.sp,
+                                offset: Offset(0, 2.sp),
+                              ),
+                            ]
                           : null,
                     ),
                     child: Text(
                       labelOf(o),
                       style: AppText.title.copyWith(
                         fontSize: (dense ? 13.5 : 15).sp,
-                        color: o == selected ? (darkSelected ? k.bg : k.text) : k.muted,
+                        color: o == selected
+                            ? (darkSelected ? k.bg : k.text)
+                            : k.muted,
                       ),
                     ),
                   ),

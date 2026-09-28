@@ -79,7 +79,9 @@ class LogDoseController extends GetxController {
 
   String get medicineName {
     final p = profile;
-    return p == null ? 'Dose' : Catalog.medicineName(p.medicineId, p.customMedicine);
+    return p == null
+        ? 'Dose'
+        : Catalog.medicineName(p.medicineId, p.customMedicine);
   }
 
   Medicine? get medicine {
@@ -89,7 +91,8 @@ class LogDoseController extends GetxController {
 
   String? get medicineMark => medicine?.mark;
 
-  String get strengthLabel => strengthMg.value > 0 ? Catalog.mgLabel(strengthMg.value) : '';
+  String get strengthLabel =>
+      strengthMg.value > 0 ? Catalog.mgLabel(strengthMg.value) : '';
 
   bool get isUsualStrength => strengthMg.value == (profile?.strengthMg ?? 0);
 
@@ -113,7 +116,9 @@ class LogDoseController extends GetxController {
   }
 
   int? get _treatmentWeek {
-    final start = profile?.treatmentStartedAt ?? (tracker.doses.isEmpty ? null : tracker.doses.last.takenAt);
+    final start =
+        profile?.treatmentStartedAt ??
+        (tracker.doses.isEmpty ? null : tracker.doses.last.takenAt);
     if (start == null || start.isAfter(takenAt.value)) return null;
     return Dates.daysBetween(start, takenAt.value) ~/ 7 + 1;
   }
@@ -132,10 +137,14 @@ class LogDoseController extends GetxController {
   // ------------------------------------------------------------------ time
 
   String timeSub(DoseTime t) => switch (t) {
-        DoseTime.now => Dates.time(DateTime.now()),
-        DoseTime.earlier => timeMode.value == DoseTime.earlier ? Dates.time(takenAt.value) : 'Today',
-        DoseTime.pick => timeMode.value == DoseTime.pick ? Dates.short(takenAt.value) : 'Date & time',
-      };
+    DoseTime.now => Dates.time(DateTime.now()),
+    DoseTime.earlier =>
+      timeMode.value == DoseTime.earlier ? Dates.time(takenAt.value) : 'Today',
+    DoseTime.pick =>
+      timeMode.value == DoseTime.pick
+          ? Dates.short(takenAt.value)
+          : 'Date & time',
+  };
 
   Future<void> pickTime(BuildContext context, DoseTime t) async {
     Haptics.instance.selectionClick();
@@ -151,7 +160,13 @@ class LogDoseController extends GetxController {
           helpText: 'When today?',
         );
         if (time == null) return;
-        final picked = DateTime(now.year, now.month, now.day, time.hour, time.minute);
+        final picked = DateTime(
+          now.year,
+          now.month,
+          now.day,
+          time.hour,
+          time.minute,
+        );
         takenAt.value = picked.isAfter(now) ? now : picked;
         timeMode.value = t;
       case DoseTime.pick:
@@ -163,9 +178,18 @@ class LogDoseController extends GetxController {
           helpText: 'When did you take it?',
         );
         if (date == null || !context.mounted) return;
-        final time = await showTimePicker(context: context, initialTime: TimeOfDay.fromDateTime(takenAt.value));
+        final time = await showTimePicker(
+          context: context,
+          initialTime: TimeOfDay.fromDateTime(takenAt.value),
+        );
         if (time == null) return;
-        final picked = DateTime(date.year, date.month, date.day, time.hour, time.minute);
+        final picked = DateTime(
+          date.year,
+          date.month,
+          date.day,
+          time.hour,
+          time.minute,
+        );
         takenAt.value = picked.isAfter(now) ? now : picked;
         timeMode.value = t;
     }
@@ -176,8 +200,10 @@ class LogDoseController extends GetxController {
   String get suggestedSite => tracker.nextSiteId;
 
   /// Last 3 injections with a site, newest first (not the one being edited).
-  List<DoseLog> get recentSites =>
-      tracker.siteDoses.where((d) => d.id != editing.value?.id).take(3).toList();
+  List<DoseLog> get recentSites => tracker.siteDoses
+      .where((d) => d.id != editing.value?.id)
+      .take(3)
+      .toList();
 
   /// 1 = used last time, 2, 3, or 0 when not in the last 3.
   int recentRank(String id) {
@@ -205,19 +231,21 @@ class LogDoseController extends GetxController {
   }
 
   String get siteTagText => switch (siteTag) {
-        SiteTag.suggested => 'Suggested next',
-        SiteTag.usedLast => 'Used last time',
-        SiteTag.usedRecently => 'Used ${recentRank(site.value)} doses ago',
-        SiteTag.fresh => 'Not used recently',
-      };
+    SiteTag.suggested => 'Suggested next',
+    SiteTag.usedLast => 'Used last time',
+    SiteTag.usedRecently => 'Used ${recentRank(site.value)} doses ago',
+    SiteTag.fresh => 'Not used recently',
+  };
 
   String get siteHint => switch (siteTag) {
-        SiteTag.suggested => recentSites.isEmpty
-            ? 'We will suggest a new spot each time so your skin can rest.'
-            : 'Not used in your last ${recentSites.length} doses, so it is next in your rotation.',
-        SiteTag.usedLast => 'You used this spot last time. Picking a different one is gentler on your skin.',
-        _ => 'Rotating spots is gentler on your skin. Tap any spot to choose it.',
-      };
+    SiteTag.suggested =>
+      recentSites.isEmpty
+          ? 'We will suggest a new spot each time so your skin can rest.'
+          : 'Not used in your last ${recentSites.length} doses, so it is next in your rotation.',
+    SiteTag.usedLast =>
+      'You used this spot last time. Picking a different one is gentler on your skin.',
+    _ => 'Rotating spots is gentler on your skin. Tap any spot to choose it.',
+  };
 
   // ------------------------------------------------------------------ pain
 
@@ -260,7 +288,8 @@ class LogDoseController extends GetxController {
       return;
     }
     strengthMg.value = result.strength;
-    makeUsual.value = result.makeUsual && result.strength != (profile?.strengthMg ?? 0);
+    makeUsual.value =
+        result.makeUsual && result.strength != (profile?.strengthMg ?? 0);
   }
 
   // ------------------------------------------------------------ late dose
@@ -269,10 +298,14 @@ class LogDoseController extends GetxController {
   /// on time, daily, editing, or no plan yet.
   int get lateDays {
     final p = profile;
-    if (p == null || isEditing || !(p.everyDays == 7 || p.everyDays == 14)) return 0;
+    if (p == null || isEditing || !(p.everyDays == 7 || p.everyDays == 14))
+      return 0;
     final due = tracker.nextDoseAt(takenAt.value);
     if (due == null) return 0;
-    final d = Dates.daysBetween(Dates.dateOnly(due), Dates.dateOnly(takenAt.value));
+    final d = Dates.daysBetween(
+      Dates.dateOnly(due),
+      Dates.dateOnly(takenAt.value),
+    );
     return d >= 2 ? d : 0;
   }
 
@@ -280,7 +313,9 @@ class LogDoseController extends GetxController {
   String get todayDayName => Dates.weekdayName(takenAt.value.weekday);
 
   String get nextIfKeep => _fmtNext(tracker.nextDoseAfter(takenAt.value));
-  String get nextIfCount => _fmtNext(tracker.nextDoseAfter(takenAt.value, weekday: takenAt.value.weekday));
+  String get nextIfCount => _fmtNext(
+    tracker.nextDoseAfter(takenAt.value, weekday: takenAt.value.weekday),
+  );
 
   String _fmtNext(DateTime? d) => d == null ? '' : Dates.shortWithDay(d);
 
@@ -311,7 +346,10 @@ class LogDoseController extends GetxController {
     if (saving.value) return;
     final close = _closeDose;
     if (close != null) {
-      final choice = await showCloseDoseSheet(close, daily: profile?.isDaily ?? false);
+      final choice = await showCloseDoseSheet(
+        close,
+        daily: profile?.isDaily ?? false,
+      );
       if (choice == null) return;
       if (choice == CloseDoseChoice.editThat) {
         _startEditing(close);
@@ -322,13 +360,15 @@ class LogDoseController extends GetxController {
     try {
       final e = editing.value;
       if (e != null) {
-        await tracker.updateDose(e.copyWith(
-          takenAt: takenAt.value,
-          strengthMg: strengthMg.value,
-          site: isTablet ? '' : site.value,
-          pain: () => isTablet ? null : pain.value,
-          note: () => noteCtrl.text,
-        ));
+        await tracker.updateDose(
+          e.copyWith(
+            takenAt: takenAt.value,
+            strengthMg: strengthMg.value,
+            site: isTablet ? '' : site.value,
+            pain: () => isTablet ? null : pain.value,
+            note: () => noteCtrl.text,
+          ),
+        );
         Haptics.instance.mediumImpact();
         popRoute();
         showToast('Dose updated');
@@ -345,16 +385,23 @@ class LogDoseController extends GetxController {
         strengthMg: strengthMg.value,
       );
       if (before != null && (late || makeUsual.value)) {
-        await tracker.saveProfile(before.copyWith(
-          shotWeekday: late ? takenAt.value.weekday : null,
-          strengthMg: makeUsual.value ? strengthMg.value : null,
-        ));
+        await tracker.saveProfile(
+          before.copyWith(
+            shotWeekday: late ? takenAt.value.weekday : null,
+            strengthMg: makeUsual.value ? strengthMg.value : null,
+          ),
+        );
       }
       Haptics.instance.mediumImpact();
-      unawaited(Get.offNamed<void>(
-        Routes.doseDone,
-        arguments: DoseDoneArgs(dose: dose, profileBefore: before != tracker.profile.value ? before : null),
-      ));
+      unawaited(
+        Get.offNamed<void>(
+          Routes.doseDone,
+          arguments: DoseDoneArgs(
+            dose: dose,
+            profileBefore: before != tracker.profile.value ? before : null,
+          ),
+        ),
+      );
     } catch (_) {
       showToast("Couldn't save. Please try again.");
     } finally {

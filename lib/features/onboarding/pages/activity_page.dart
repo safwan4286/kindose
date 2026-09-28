@@ -19,18 +19,45 @@ class ActivityPage extends GetView<OnboardingController> {
     final k = context.k;
     final dark = k.selectedBorder == AppColors.lime;
     final motion = !MediaQuery.disableAnimationsOf(context);
-    Color tint(Color light, Color accent) => dark ? accent.withValues(alpha: 0.16) : light;
+    Color tint(Color light, Color accent) =>
+        dark ? accent.withValues(alpha: 0.16) : light;
 
     final options = [
-      ('sed', 'Mostly sitting', 'Little or no exercise', PhosphorIconsBold.armchair, k.cardAlt),
-      ('light', 'Lightly active', 'Walks or light exercise 1–3 days a week', PhosphorIconsBold.personSimpleWalk,
-          tint(AppColors.aquaSoft, AppColors.aqua)),
-      ('mod', 'Moderately active', 'Exercise 3–5 days a week', PhosphorIconsBold.personSimpleBike,
-          tint(const Color(0xFFF1F7D6), AppColors.lime)),
-      ('active', 'Very active', 'Hard exercise 6–7 days a week', PhosphorIconsBold.barbell,
-          tint(AppColors.tangerineSoft, AppColors.tangerine)),
-      ('athlete', 'Athlete level', 'Physical job or training twice a day', PhosphorIconsBold.lightning,
-          tint(const Color(0xFFFBEFD9), const Color(0xFFE0A23B))),
+      (
+        'sed',
+        'Mostly sitting',
+        'Little or no exercise',
+        PhosphorIconsBold.armchair,
+        k.cardAlt,
+      ),
+      (
+        'light',
+        'Lightly active',
+        'Walks or light exercise 1–3 days a week',
+        PhosphorIconsBold.personSimpleWalk,
+        tint(AppColors.aquaSoft, AppColors.aqua),
+      ),
+      (
+        'mod',
+        'Moderately active',
+        'Exercise 3–5 days a week',
+        PhosphorIconsBold.personSimpleBike,
+        tint(const Color(0xFFF1F7D6), AppColors.lime),
+      ),
+      (
+        'active',
+        'Very active',
+        'Hard exercise 6–7 days a week',
+        PhosphorIconsBold.barbell,
+        tint(AppColors.tangerineSoft, AppColors.tangerine),
+      ),
+      (
+        'athlete',
+        'Athlete level',
+        'Physical job or training twice a day',
+        PhosphorIconsBold.lightning,
+        tint(const Color(0xFFFBEFD9), const Color(0xFFE0A23B)),
+      ),
     ];
 
     return StepScaffold(

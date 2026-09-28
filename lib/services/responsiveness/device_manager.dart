@@ -36,7 +36,7 @@ class DeviceManager {
     _pixelRatio = mediaQuery.devicePixelRatio;
     _statusBarHeight = mediaQuery.padding.top;
     _bottomBarHeight = mediaQuery.padding.bottom;
-    _textScaleFactor = mediaQuery.textScaleFactor;
+    _textScaleFactor = mediaQuery.textScaler.scale(1);
   }
 
   double get scaleFactor {

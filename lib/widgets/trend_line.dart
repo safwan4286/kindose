@@ -32,7 +32,9 @@ class TrendLine extends StatelessWidget {
         width: double.infinity,
         child: TweenAnimationBuilder<double>(
           tween: Tween(begin: 0, end: 1),
-          duration: Duration(milliseconds: MediaQuery.disableAnimationsOf(context) ? 0 : 600),
+          duration: Duration(
+            milliseconds: MediaQuery.disableAnimationsOf(context) ? 0 : 600,
+          ),
           curve: Curves.easeOutCubic,
           builder: (context, t, _) => CustomPaint(
             painter: _TrendPainter(
@@ -79,7 +81,9 @@ class _TrendPainter extends CustomPainter {
     final hi = all.reduce(math.max) + 1;
     const pad = 8.0;
     double y(double v) => pad + (hi - v) / (hi - lo) * (size.height - pad * 2);
-    double x(int i) => values.length == 1 ? size.width / 2 : pad + i * (size.width - pad * 2) / (values.length - 1);
+    double x(int i) => values.length == 1
+        ? size.width / 2
+        : pad + i * (size.width - pad * 2) / (values.length - 1);
 
     if (g != null) {
       final gy = y(g);
@@ -87,7 +91,11 @@ class _TrendPainter extends CustomPainter {
         ..color = goalColor
         ..strokeWidth = 2;
       for (var dx = 0.0; dx < size.width; dx += 10) {
-        canvas.drawLine(Offset(dx, gy), Offset(math.min(dx + 5, size.width), gy), p);
+        canvas.drawLine(
+          Offset(dx, gy),
+          Offset(math.min(dx + 5, size.width), gy),
+          p,
+        );
       }
     }
 
@@ -111,7 +119,11 @@ class _TrendPainter extends CustomPainter {
       if (i / math.max(1, values.length - 1) > progress + 0.001) break;
       final c = Offset(x(i), y(values[i]));
       final big = last && highlightLast;
-      canvas.drawCircle(c, big ? 6.5 : 3.5, Paint()..color = big ? AppColors.lime : dot);
+      canvas.drawCircle(
+        c,
+        big ? 6.5 : 3.5,
+        Paint()..color = big ? AppColors.lime : dot,
+      );
       canvas.drawCircle(
         c,
         big ? 6.5 : 3.5,
@@ -125,5 +137,8 @@ class _TrendPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_TrendPainter old) =>
-      old.values != values || old.goal != goal || old.progress != progress || old.line != line;
+      old.values != values ||
+      old.goal != goal ||
+      old.progress != progress ||
+      old.line != line;
 }

@@ -23,11 +23,20 @@ class WhenPage extends GetView<OnboardingController> {
 
   (String, String) get _copy {
     if (!controller.needsDoseDate) {
-      return ('What time do you usually take it?', "We'll remind you at the same time each day.");
+      return (
+        'What time do you usually take it?',
+        "We'll remind you at the same time each day.",
+      );
     }
     return switch (controller.stage.value) {
-      'starting' => ('When is your first dose?', "We'll have everything ready for it."),
-      'restart' => ('When will you restart?', 'Pick the day of your first dose back.'),
+      'starting' => (
+        'When is your first dose?',
+        "We'll have everything ready for it.",
+      ),
+      'restart' => (
+        'When will you restart?',
+        'Pick the day of your first dose back.',
+      ),
       _ => ('When was your last dose?', "We'll work out your next one."),
     };
   }
@@ -52,7 +61,8 @@ class WhenPage extends GetView<OnboardingController> {
       initialTime: TimeOfDay(hour: m ~/ 60, minute: m % 60),
       helpText: 'Usual time',
     );
-    if (picked != null) controller.pickDoseTime(picked.hour * 60 + picked.minute);
+    if (picked != null)
+      controller.pickDoseTime(picked.hour * 60 + picked.minute);
   }
 
   @override
@@ -67,7 +77,9 @@ class WhenPage extends GetView<OnboardingController> {
       cta: Obx(
         () => PillButton(
           label: controller.editMode ? 'Save changes' : 'Continue',
-          onPressed: controller.scheduleReady ? controller.confirmSchedule : null,
+          onPressed: controller.scheduleReady
+              ? controller.confirmSchedule
+              : null,
         ),
       ),
       children: [
@@ -82,7 +94,9 @@ class WhenPage extends GetView<OnboardingController> {
               final selected = controller.doseDate.value;
               final days = [
                 for (var i = 0; i < _stripDays; i++)
-                  past ? today.subtract(Duration(days: i)) : today.add(Duration(days: i)),
+                  past
+                      ? today.subtract(Duration(days: i))
+                      : today.add(Duration(days: i)),
               ];
               final outside = selected != null && !days.contains(selected);
               return ListView.separated(
@@ -101,7 +115,11 @@ class WhenPage extends GetView<OnboardingController> {
                   final d = days[i];
                   return _DayCard(
                     day: d,
-                    top: i == 0 ? 'Today' : i == 1 ? (past ? 'Yest.' : 'Tmrw') : Dates.weekdayShort(d.weekday),
+                    top: i == 0
+                        ? 'Today'
+                        : i == 1
+                        ? (past ? 'Yest.' : 'Tmrw')
+                        : Dates.weekdayShort(d.weekday),
                     selected: selected == d,
                     onTap: () => controller.pickDoseDate(d),
                   ).enter(motion, delay: 140 + i.clamp(0, 5) * 40, dy: 0.1);
@@ -116,7 +134,8 @@ class WhenPage extends GetView<OnboardingController> {
         Obx(() {
           final m = controller.shotMinutes.value;
           final custom = !OnboardingController.timePresets.contains(m);
-          Widget tile(IconData icon, Color tint, String label, int minutes) => _TimeTile(
+          Widget tile(IconData icon, Color tint, String label, int minutes) =>
+              _TimeTile(
                 icon: icon,
                 tint: tint,
                 label: label,
@@ -126,11 +145,24 @@ class WhenPage extends GetView<OnboardingController> {
               );
           return _TwoByTwo(
             children: [
-              tile(PhosphorIconsBold.sun, _tint(context, AppColors.tangerineSoft, AppColors.tangerine), 'Morning',
-                  OnboardingController.morningMinutes),
-              tile(PhosphorIconsBold.cloudSun, _tint(context, AppColors.aquaSoft, AppColors.aqua), 'Afternoon',
-                  OnboardingController.afternoonMinutes),
-              tile(PhosphorIconsBold.moon, context.k.cardAlt, 'Evening', OnboardingController.eveningMinutes),
+              tile(
+                PhosphorIconsBold.sun,
+                _tint(context, AppColors.tangerineSoft, AppColors.tangerine),
+                'Morning',
+                OnboardingController.morningMinutes,
+              ),
+              tile(
+                PhosphorIconsBold.cloudSun,
+                _tint(context, AppColors.aquaSoft, AppColors.aqua),
+                'Afternoon',
+                OnboardingController.afternoonMinutes,
+              ),
+              tile(
+                PhosphorIconsBold.moon,
+                context.k.cardAlt,
+                'Evening',
+                OnboardingController.eveningMinutes,
+              ),
               _TimeTile(
                 icon: PhosphorIconsBold.clock,
                 tint: _tint(context, const Color(0xFFF1F7D6), AppColors.lime),
@@ -149,7 +181,9 @@ class WhenPage extends GetView<OnboardingController> {
   }
 
   static Color _tint(BuildContext context, Color light, Color accent) =>
-      context.k.selectedBorder == AppColors.lime ? accent.withValues(alpha: 0.16) : light;
+      context.k.selectedBorder == AppColors.lime
+      ? accent.withValues(alpha: 0.16)
+      : light;
 }
 
 /// Two equal columns, rows as tall as their content.
@@ -168,7 +202,11 @@ class _TwoByTwo extends StatelessWidget {
           children: [
             Expanded(child: children[i]),
             SizedBox(width: 8.sp),
-            Expanded(child: i + 1 < children.length ? children[i + 1] : const SizedBox.shrink()),
+            Expanded(
+              child: i + 1 < children.length
+                  ? children[i + 1]
+                  : const SizedBox.shrink(),
+            ),
           ],
         ),
       );
@@ -178,7 +216,12 @@ class _TwoByTwo extends StatelessWidget {
 }
 
 class _DayCard extends StatelessWidget {
-  const _DayCard({required this.day, required this.top, required this.selected, required this.onTap});
+  const _DayCard({
+    required this.day,
+    required this.top,
+    required this.selected,
+    required this.onTap,
+  });
 
   final DateTime day;
   final String top;
@@ -190,7 +233,9 @@ class _DayCard extends StatelessWidget {
     final k = context.k;
     final onLime = k.selectedBorder == AppColors.lime;
     final fg = selected ? (onLime ? AppColors.ink : AppColors.white) : k.text;
-    final sub = selected ? (onLime ? AppColors.ink.withValues(alpha: 0.7) : AppColors.lime) : k.muted;
+    final sub = selected
+        ? (onLime ? AppColors.ink.withValues(alpha: 0.7) : AppColors.lime)
+        : k.muted;
     return Semantics(
       button: true,
       selected: selected,
@@ -205,16 +250,39 @@ class _DayCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: selected ? k.selectedBorder : k.card,
             borderRadius: BorderRadius.circular(20.sp),
-            boxShadow: [BoxShadow(color: AppColors.ink.withValues(alpha: 0.05), blurRadius: 2.sp, offset: Offset(0, 1.sp))],
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.ink.withValues(alpha: 0.05),
+                blurRadius: 2.sp,
+                offset: Offset(0, 1.sp),
+              ),
+            ],
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(top, style: AppText.small.copyWith(fontSize: 12.sp, fontWeight: FontWeight.w800, color: sub)),
+              Text(
+                top,
+                style: AppText.small.copyWith(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w800,
+                  color: sub,
+                ),
+              ),
               SizedBox(height: 2.sp),
-              Text('${day.day}', style: AppText.h1.copyWith(fontSize: 24.sp, height: 1, color: fg)),
+              Text(
+                '${day.day}',
+                style: AppText.h1.copyWith(
+                  fontSize: 24.sp,
+                  height: 1,
+                  color: fg,
+                ),
+              ),
               SizedBox(height: 2.sp),
-              Text(Dates.monthShort(day.month), style: AppText.small.copyWith(fontSize: 11.sp, color: sub)),
+              Text(
+                Dates.monthShort(day.month),
+                style: AppText.small.copyWith(fontSize: 11.sp, color: sub),
+              ),
             ],
           ),
         ),
@@ -226,7 +294,11 @@ class _DayCard extends StatelessWidget {
 /// Dashed "Earlier…" / "Later…" card that opens the calendar. Shows the
 /// picked date when it's outside the strip.
 class _MoreDaysCard extends StatelessWidget {
-  const _MoreDaysCard({required this.label, required this.picked, required this.onTap});
+  const _MoreDaysCard({
+    required this.label,
+    required this.picked,
+    required this.onTap,
+  });
 
   final String label;
   final DateTime? picked;
@@ -239,7 +311,9 @@ class _MoreDaysCard extends StatelessWidget {
     return Semantics(
       button: true,
       selected: has,
-      label: has ? 'Picked ${Dates.long(picked!)}. Change date' : 'Pick another date',
+      label: has
+          ? 'Picked ${Dates.long(picked!)}. Change date'
+          : 'Pick another date',
       excludeSemantics: true,
       child: PressScale(
         onTap: onTap,
@@ -259,15 +333,28 @@ class _MoreDaysCard extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: AppText.title.copyWith(
                     fontSize: 14.sp,
-                    color: k.selectedBorder == AppColors.lime ? AppColors.ink : AppColors.white,
+                    color: k.selectedBorder == AppColors.lime
+                        ? AppColors.ink
+                        : AppColors.white,
                   ),
                 )
               : Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    PhosphorIcon(PhosphorIconsBold.calendarDots, size: 18.sp, color: k.muted),
+                    PhosphorIcon(
+                      PhosphorIconsBold.calendarDots,
+                      size: 18.sp,
+                      color: k.muted,
+                    ),
                     SizedBox(height: 4.sp),
-                    Text(label, style: AppText.small.copyWith(fontSize: 11.5.sp, fontWeight: FontWeight.w800, color: k.muted)),
+                    Text(
+                      label,
+                      style: AppText.small.copyWith(
+                        fontSize: 11.5.sp,
+                        fontWeight: FontWeight.w800,
+                        color: k.muted,
+                      ),
+                    ),
                   ],
                 ),
         ),
@@ -311,14 +398,20 @@ class _TimeTile extends StatelessWidget {
           decoration: BoxDecoration(
             color: k.card,
             borderRadius: BorderRadius.circular(18.sp),
-            border: Border.all(color: selected ? k.selectedBorder : k.card, width: 2),
+            border: Border.all(
+              color: selected ? k.selectedBorder : k.card,
+              width: 2,
+            ),
           ),
           child: Row(
             children: [
               Container(
                 width: 34.sp,
                 height: 34.sp,
-                decoration: BoxDecoration(color: tint, borderRadius: BorderRadius.circular(11.sp)),
+                decoration: BoxDecoration(
+                  color: tint,
+                  borderRadius: BorderRadius.circular(11.sp),
+                ),
                 alignment: Alignment.center,
                 child: PhosphorIcon(icon, size: 18.sp, color: k.text),
               ),
@@ -328,8 +421,22 @@ class _TimeTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.title.copyWith(fontSize: 15.sp, color: k.text)),
-                    Text(time, style: AppText.small.copyWith(fontSize: 12.5.sp, color: k.muted)),
+                    Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.title.copyWith(
+                        fontSize: 15.sp,
+                        color: k.text,
+                      ),
+                    ),
+                    Text(
+                      time,
+                      style: AppText.small.copyWith(
+                        fontSize: 12.5.sp,
+                        color: k.muted,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -366,7 +473,11 @@ class _NextDoseCard extends GetView<OnboardingController> {
         duration: const Duration(milliseconds: 250),
         transitionBuilder: (child, anim) => FadeTransition(
           opacity: anim,
-          child: SizeTransition(sizeFactor: anim, axisAlignment: -1, child: child),
+          child: SizeTransition(
+            sizeFactor: anim,
+            alignment: Alignment.topLeft,
+            child: child,
+          ),
         ),
         child: next == null
             ? const SizedBox(width: double.infinity, key: ValueKey('empty'))
@@ -376,7 +487,8 @@ class _NextDoseCard extends GetView<OnboardingController> {
                 children: [
                   Semantics(
                     liveRegion: true,
-                    label: 'Next dose ${Dates.shortWithDay(next)} at ${Dates.time(next)}',
+                    label:
+                        'Next dose ${Dates.shortWithDay(next)} at ${Dates.time(next)}',
                     excludeSemantics: true,
                     child: Container(
                       padding: EdgeInsets.fromLTRB(16.sp, 16.sp, 18.sp, 16.sp),
@@ -389,18 +501,30 @@ class _NextDoseCard extends GetView<OnboardingController> {
                           Container(
                             width: 44.sp,
                             height: 44.sp,
-                            decoration: BoxDecoration(color: AppColors.lime, borderRadius: BorderRadius.circular(14.sp)),
+                            decoration: BoxDecoration(
+                              color: AppColors.lime,
+                              borderRadius: BorderRadius.circular(14.sp),
+                            ),
                             alignment: Alignment.center,
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
                                   Dates.monthShort(next.month).toUpperCase(),
-                                  style: AppText.small.copyWith(fontSize: 9.sp, height: 1, letterSpacing: 0.5, color: AppColors.ink),
+                                  style: AppText.small.copyWith(
+                                    fontSize: 9.sp,
+                                    height: 1,
+                                    letterSpacing: 0.5,
+                                    color: AppColors.ink,
+                                  ),
                                 ),
                                 Text(
                                   '${next.day}',
-                                  style: AppText.h1.copyWith(fontSize: 19.sp, height: 1.05, color: AppColors.ink),
+                                  style: AppText.h1.copyWith(
+                                    fontSize: 19.sp,
+                                    height: 1.05,
+                                    color: AppColors.ink,
+                                  ),
                                 ),
                               ],
                             ),
@@ -412,12 +536,19 @@ class _NextDoseCard extends GetView<OnboardingController> {
                               children: [
                                 Text(
                                   'NEXT DOSE',
-                                  style: AppText.caps.copyWith(fontSize: 12.sp, letterSpacing: 1, color: AppColors.heroMuted),
+                                  style: AppText.caps.copyWith(
+                                    fontSize: 12.sp,
+                                    letterSpacing: 1,
+                                    color: AppColors.heroMuted,
+                                  ),
                                 ),
                                 SizedBox(height: 2.sp),
                                 Text(
                                   '${Dates.relativeDay(next, DateTime.now())} · ${Dates.time(next)}',
-                                  style: AppText.title.copyWith(fontSize: 17.sp, color: AppColors.white),
+                                  style: AppText.title.copyWith(
+                                    fontSize: 17.sp,
+                                    color: AppColors.white,
+                                  ),
                                 ),
                               ],
                             ),
@@ -430,7 +561,12 @@ class _NextDoseCard extends GetView<OnboardingController> {
                     padding: EdgeInsets.fromLTRB(4.sp, 12.sp, 4.sp, 0),
                     child: Text(
                       '${_rhythm(controller.everyDays, next)} You can move it any time.',
-                      style: AppText.small.copyWith(fontSize: 12.sp, height: 1.45, fontWeight: FontWeight.w500, color: k.faint),
+                      style: AppText.small.copyWith(
+                        fontSize: 12.sp,
+                        height: 1.45,
+                        fontWeight: FontWeight.w500,
+                        color: k.faint,
+                      ),
                     ),
                   ),
                 ],

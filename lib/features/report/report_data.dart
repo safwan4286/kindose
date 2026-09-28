@@ -26,7 +26,12 @@ class ReportSections {
 
 /// One side effect over the period.
 class SymptomRow {
-  const SymptomRow({required this.label, required this.days, required this.strongest, this.usualDay});
+  const SymptomRow({
+    required this.label,
+    required this.days,
+    required this.strongest,
+    this.usualDay,
+  });
 
   final String label;
   final int days;
@@ -87,13 +92,17 @@ class ReportData {
 
     final allDoses = t.doses.reversed.toList(); // oldest first
     final doses = allDoses.where((d) => inRange(d.takenAt)).toList();
-    final days = t.days.values.where((d) => inRange(d.date)).toList()..sort((a, b) => a.key.compareTo(b.key));
+    final days = t.days.values.where((d) => inRange(d.date)).toList()
+      ..sort((a, b) => a.key.compareTo(b.key));
 
     // Dose changes over the whole treatment (for the chart and header).
     final changes = <(DateTime, double)>[];
     for (var i = 0; i < allDoses.length; i++) {
       if (i == 0 || allDoses[i].strengthMg != allDoses[i - 1].strengthMg) {
-        changes.add((Dates.dateOnly(allDoses[i].takenAt), allDoses[i].strengthMg));
+        changes.add((
+          Dates.dateOnly(allDoses[i].takenAt),
+          allDoses[i].strengthMg,
+        ));
       }
     }
 
@@ -118,7 +127,9 @@ class ReportData {
       final offsets = <int>[];
       final weeks = <String>{};
       for (final d in days) {
-        final level = id == 'nausea' ? (d.symptoms.contains('nausea') ? (d.nausea ?? 0) + 1 : 0) : d.levelOf(id);
+        final level = id == 'nausea'
+            ? (d.symptoms.contains('nausea') ? (d.nausea ?? 0) + 1 : 0)
+            : d.levelOf(id);
         if (level == 0) continue;
         count++;
         strongest = math.max(strongest, level);
@@ -132,16 +143,21 @@ class ReportData {
         }
       }
       if (count == 0) continue;
-      rows.add(SymptomRow(
-        label: Catalog.symptoms[id] ?? id,
-        days: count,
-        strongest: strongest.clamp(1, 3),
-        usualDay: (p?.isDaily ?? false) || weeks.length < 3 ? null : _usualDay(offsets),
-      ));
+      rows.add(
+        SymptomRow(
+          label: Catalog.symptoms[id] ?? id,
+          days: count,
+          strongest: strongest.clamp(1, 3),
+          usualDay: (p?.isDaily ?? false) || weeks.length < 3
+              ? null
+              : _usualDay(offsets),
+        ),
+      );
     }
     rows.sort((a, b) => b.days.compareTo(a.days));
 
-    int countOf(Iterable<int?> values, int v) => values.where((x) => x == v).length;
+    int countOf(Iterable<int?> values, int v) =>
+        values.where((x) => x == v).length;
     final checkIns = days.where((d) => d.hasCheckIn).toList();
     final noise = checkIns.map((d) => d.foodNoise);
     final appetite = checkIns.map((d) => d.appetite);
@@ -153,10 +169,13 @@ class ReportData {
         counts[m] = (counts[m] ?? 0) + 1;
       }
       final top = counts.entries.reduce((a, b) => a.value >= b.value ? a : b);
-      moodLine = 'Mood: mostly "${Catalog.moods[top.key].label}" (${top.value} of ${moods.length})';
+      moodLine =
+          'Mood: mostly "${Catalog.moods[top.key].label}" (${top.value} of ${moods.length})';
     }
 
-    final withFood = days.where((d) => d.proteinG > 0 || d.waterMl > 0).toList();
+    final withFood = days
+        .where((d) => d.proteinG > 0 || d.waterMl > 0)
+        .toList();
     final goal = p?.proteinGoalG ?? 100;
     final firstDose = allDoses.isEmpty ? null : allDoses.first.takenAt;
 
@@ -173,11 +192,18 @@ class ReportData {
       symptoms: rows,
       checkInDays: checkIns.length,
       days: Dates.daysBetween(start, Dates.dateOnly(to)) + 1,
-      avgProtein: withFood.isEmpty ? 0 : withFood.fold<int>(0, (s, d) => s + d.proteinG) ~/ withFood.length,
+      avgProtein: withFood.isEmpty
+          ? 0
+          : withFood.fold<int>(0, (s, d) => s + d.proteinG) ~/ withFood.length,
       proteinDaysHit: withFood.where((d) => d.proteinG >= goal).length,
       loggedDays: withFood.length,
-      avgWaterMl: withFood.isEmpty ? 0 : withFood.fold<int>(0, (s, d) => s + d.waterMl) ~/ withFood.length,
-      notes: days.where((d) => d.note != null).map((d) => '${Dates.short(d.date)}: ${d.note}').toList(),
+      avgWaterMl: withFood.isEmpty
+          ? 0
+          : withFood.fold<int>(0, (s, d) => s + d.waterMl) ~/ withFood.length,
+      notes: days
+          .where((d) => d.note != null)
+          .map((d) => '${Dates.short(d.date)}: ${d.note}')
+          .toList(),
       questions: questions.where((q) => q.trim().isNotEmpty).toList(),
       onSchedule: onSchedule,
       startKg: t.startWeightKg,
@@ -209,10 +235,14 @@ class ReportData {
       counts[o]++;
     }
     final best = counts.reduce(math.max);
-    final top = [for (var i = 0; i < 7; i++) if (counts[i] == best) i];
+    final top = [
+      for (var i = 0; i < 7; i++)
+        if (counts[i] == best) i,
+    ];
     String name(int d) => d == 0 ? 'Dose day' : 'Day $d';
     if (top.length == 1) return name(top.first);
-    if (top.length == 2 && top[1] == top[0] + 1 && top[0] > 0) return 'Day ${top[0]}–${top[1]}';
+    if (top.length == 2 && top[1] == top[0] + 1 && top[0] > 0)
+      return 'Day ${top[0]}–${top[1]}';
     return null;
   }
 
@@ -261,7 +291,9 @@ class ReportData {
 
   String get period {
     final sameYear = from.year == to.year;
-    final a = sameYear ? Dates.short(from) : '${Dates.short(from)} ${from.year}';
+    final a = sameYear
+        ? Dates.short(from)
+        : '${Dates.short(from)} ${from.year}';
     return '$a – ${Dates.short(to)} ${to.year}';
   }
 
@@ -271,14 +303,18 @@ class ReportData {
     final m = Catalog.medicine(p.medicineId);
     final name = Catalog.medicineName(p.medicineId, p.customMedicine);
     final molecule = m.molecule;
-    final withMolecule = molecule == null || name.toLowerCase() == molecule ? name : '$name ($molecule)';
+    final withMolecule = molecule == null || name.toLowerCase() == molecule
+        ? name
+        : '$name ($molecule)';
     final every = switch (p.everyDays) {
       1 => 'daily',
       7 => 'weekly',
       14 => 'every 2 weeks',
       _ => 'every ${p.everyDays} days',
     };
-    final parts = <String>['$withMolecule ${Catalog.mgLabel(p.strengthMg)}, $every, ${Catalog.formLabel(p.form).toLowerCase()}'];
+    final parts = <String>[
+      '$withMolecule ${Catalog.mgLabel(p.strengthMg)}, $every, ${Catalog.formLabel(p.form).toLowerCase()}',
+    ];
     final s = treatmentStart;
     if (s != null) parts.add('started ${Dates.short(s)} ${s.year}');
     if (doseChanges.length > 1) {

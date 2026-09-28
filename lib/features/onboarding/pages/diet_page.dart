@@ -22,16 +22,47 @@ class DietPage extends GetView<OnboardingController> {
     final k = context.k;
     final dark = k.selectedBorder == AppColors.lime;
     final motion = !MediaQuery.disableAnimationsOf(context);
-    Color tint(Color light, Color accent) => dark ? accent.withValues(alpha: 0.16) : light;
+    Color tint(Color light, Color accent) =>
+        dark ? accent.withValues(alpha: 0.16) : light;
     final showJain = Region.isIndia || controller.diet.value == 'jain';
 
     final options = [
-      ('veg', 'Vegetarian', 'Dairy, no meat, fish or eggs', Img3d.paneer, k.cardAlt),
-      ('egg', 'Eggetarian', 'Vegetarian plus eggs', Img3d.egg, tint(const Color(0xFFFBEFD9), const Color(0xFFE0A23B))),
-      ('nonveg', 'Non-vegetarian', 'Eggs, chicken, fish and meat', Img3d.chicken,
-          tint(AppColors.tangerineSoft, AppColors.tangerine)),
-      ('vegan', 'Vegan', 'No animal foods, including dairy', Img3d.seedling, tint(const Color(0xFFF1F7D6), AppColors.lime)),
-      if (showJain) ('jain', 'Jain', 'No root vegetables, onion or garlic', Img3d.dal, tint(AppColors.aquaSoft, AppColors.aqua)),
+      (
+        'veg',
+        'Vegetarian',
+        'Dairy, no meat, fish or eggs',
+        Img3d.paneer,
+        k.cardAlt,
+      ),
+      (
+        'egg',
+        'Eggetarian',
+        'Vegetarian plus eggs',
+        Img3d.egg,
+        tint(const Color(0xFFFBEFD9), const Color(0xFFE0A23B)),
+      ),
+      (
+        'nonveg',
+        'Non-vegetarian',
+        'Eggs, chicken, fish and meat',
+        Img3d.chicken,
+        tint(AppColors.tangerineSoft, AppColors.tangerine),
+      ),
+      (
+        'vegan',
+        'Vegan',
+        'No animal foods, including dairy',
+        Img3d.seedling,
+        tint(const Color(0xFFF1F7D6), AppColors.lime),
+      ),
+      if (showJain)
+        (
+          'jain',
+          'Jain',
+          'No root vegetables, onion or garlic',
+          Img3d.dal,
+          tint(AppColors.aquaSoft, AppColors.aqua),
+        ),
     ];
 
     return StepScaffold(

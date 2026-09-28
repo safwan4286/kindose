@@ -77,9 +77,12 @@ class _GoalCurvePainter extends CustomPainter {
     final curve = Path()
       ..moveTo(start.dx, start.dy)
       ..cubicTo(
-        start.dx + (end.dx - start.dx) * 0.29, start.dy + (end.dy - start.dy) * 0.07,
-        start.dx + (end.dx - start.dx) * 0.55, end.dy - (end.dy - start.dy) * 0.04,
-        end.dx, end.dy,
+        start.dx + (end.dx - start.dx) * 0.29,
+        start.dy + (end.dy - start.dy) * 0.07,
+        start.dx + (end.dx - start.dx) * 0.55,
+        end.dy - (end.dy - start.dy) * 0.04,
+        end.dx,
+        end.dy,
       );
 
     // Dashed goal guide.
@@ -87,7 +90,11 @@ class _GoalCurvePainter extends CustomPainter {
       ..color = guide.withValues(alpha: 0.35)
       ..strokeWidth = 1.5;
     for (var x = start.dx; x < end.dx; x += 9) {
-      canvas.drawLine(Offset(x, end.dy), Offset(math.min(x + 4, end.dx), end.dy), dash);
+      canvas.drawLine(
+        Offset(x, end.dy),
+        Offset(math.min(x + 4, end.dx), end.dy),
+        dash,
+      );
     }
 
     // Soft area under the line, fading down.
@@ -100,11 +107,10 @@ class _GoalCurvePainter extends CustomPainter {
       canvas.drawPath(
         area,
         Paint()
-          ..shader = ui.Gradient.linear(
-            Offset(0, high),
-            Offset(0, h),
-            [line.withValues(alpha: 0.22 * areaAlpha), line.withValues(alpha: 0)],
-          ),
+          ..shader = ui.Gradient.linear(Offset(0, high), Offset(0, h), [
+            line.withValues(alpha: 0.22 * areaAlpha),
+            line.withValues(alpha: 0),
+          ]),
       );
     }
 

@@ -22,10 +22,10 @@ class DosePage extends GetView<OnboardingController> {
   const DosePage({super.key});
 
   String get _title => switch (controller.stage.value) {
-        'starting' => 'What dose will you start with?',
-        'restart' => 'What dose are you restarting on?',
-        _ => "What's your current dose?",
-      };
+    'starting' => 'What dose will you start with?',
+    'restart' => 'What dose are you restarting on?',
+    _ => "What's your current dose?",
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +66,8 @@ class DosePage extends GetView<OnboardingController> {
                 label: Catalog.mg(strengths[i]),
                 sub: 'mg',
                 tag: i == 0 ? 'START' : null,
-                semanticLabel: '${Catalog.mg(strengths[i])} milligrams${i == 0 ? ', first dose on the label' : ''}',
+                semanticLabel:
+                    '${Catalog.mg(strengths[i])} milligrams${i == 0 ? ', first dose on the label' : ''}',
                 selected: mode == 'label' && current == strengths[i],
                 onTap: () => controller.pickDose(strengths[i]),
               ),
@@ -96,11 +97,18 @@ class DosePage extends GetView<OnboardingController> {
           final hasStart = controller.medicine.strengths.isNotEmpty;
           return Text(
             [
-              if (hasStart) "START marks the first dose on the medicine's label.",
+              if (hasStart)
+                "START marks the first dose on the medicine's label.",
               'Kindose records your dose; it never suggests one.',
-              if (vial) 'Using a vial? Enter mg from your prescription, not units.',
+              if (vial)
+                'Using a vial? Enter mg from your prescription, not units.',
             ].join(' '),
-            style: AppText.small.copyWith(fontSize: 12.sp, height: 1.45, fontWeight: FontWeight.w500, color: k.faint),
+            style: AppText.small.copyWith(
+              fontSize: 12.sp,
+              height: 1.45,
+              fontWeight: FontWeight.w500,
+              color: k.faint,
+            ),
           );
         }),
       ],
@@ -119,7 +127,10 @@ class _MedicineChip extends GetView<OnboardingController> {
       alignment: Alignment.centerLeft,
       child: Obx(() {
         final m = controller.medicine;
-        final name = Catalog.medicineName(m.id, controller.customMedicine.value);
+        final name = Catalog.medicineName(
+          m.id,
+          controller.customMedicine.value,
+        );
         final every = switch (controller.frequency.value) {
           'daily' => 'daily ',
           'weekly' => 'weekly ',
@@ -130,18 +141,24 @@ class _MedicineChip extends GetView<OnboardingController> {
         final icon = controller.form.value == 'tablet'
             ? PhosphorIconsBold.pill
             : controller.form.value == 'vial'
-                ? PhosphorIconsBold.testTube
-                : PhosphorIconsBold.syringe;
+            ? PhosphorIconsBold.testTube
+            : PhosphorIconsBold.syringe;
         return Container(
           padding: EdgeInsets.fromLTRB(8.sp, 7.sp, 12.sp, 7.sp),
-          decoration: BoxDecoration(color: k.cardAlt, borderRadius: BorderRadius.circular(14.sp)),
+          decoration: BoxDecoration(
+            color: k.cardAlt,
+            borderRadius: BorderRadius.circular(14.sp),
+          ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
                 width: 22.sp,
                 height: 22.sp,
-                decoration: BoxDecoration(color: AppColors.ink, borderRadius: BorderRadius.circular(7.sp)),
+                decoration: BoxDecoration(
+                  color: AppColors.ink,
+                  borderRadius: BorderRadius.circular(7.sp),
+                ),
                 alignment: Alignment.center,
                 child: PhosphorIcon(icon, size: 12.sp, color: AppColors.lime),
               ),
@@ -151,7 +168,10 @@ class _MedicineChip extends GetView<OnboardingController> {
                   '$name${m.mark ?? ''} · $every$form',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppText.small.copyWith(fontSize: 13.5.sp, color: k.textSoft),
+                  style: AppText.small.copyWith(
+                    fontSize: 13.5.sp,
+                    color: k.textSoft,
+                  ),
                 ),
               ),
             ],
@@ -177,7 +197,14 @@ class _FormSwitch extends GetView<OnboardingController> {
       children: [
         Padding(
           padding: EdgeInsets.only(left: 4.sp, bottom: 8.sp),
-          child: Text('How do you take it?', style: AppText.small.copyWith(fontSize: 13.sp, fontWeight: FontWeight.w800, color: k.textSoft)),
+          child: Text(
+            'How do you take it?',
+            style: AppText.small.copyWith(
+              fontSize: 13.sp,
+              fontWeight: FontWeight.w800,
+              color: k.textSoft,
+            ),
+          ),
         ),
         Obx(
           () => KSegmented<String>(
@@ -201,7 +228,9 @@ class _CustomDosePanel extends GetView<OnboardingController> {
     return Obx(
       () => StepInputPanel(
         label: 'Your dose',
-        onContinue: controller.customDoseMg != null ? controller.confirmCustomDose : null,
+        onContinue: controller.customDoseMg != null
+            ? controller.confirmCustomDose
+            : null,
         child: KTextField(
           controller: controller.customDoseField,
           autofocus: true,
@@ -209,7 +238,11 @@ class _CustomDosePanel extends GetView<OnboardingController> {
           hint: 'e.g. 3.75',
           suffix: 'mg',
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d{0,3}([.,]\d{0,3})?'))],
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(
+              RegExp(r'^\d{0,3}([.,]\d{0,3})?'),
+            ),
+          ],
           onChanged: controller.setCustomDose,
           onSubmitted: (_) => controller.confirmCustomDose(),
         ),

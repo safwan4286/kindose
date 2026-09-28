@@ -91,8 +91,9 @@ class WelcomeScreen extends GetView<WelcomeController> {
                       ).enter(motion, delay: 720),
                     ),
                     KBottomPadding(
-                      child: _LegalLine(onTap: controller.openLegal)
-                          .enter(motion, delay: 780),
+                      child: _LegalLine(
+                        onTap: controller.openLegal,
+                      ).enter(motion, delay: 780),
                     ),
                   ],
                 ),

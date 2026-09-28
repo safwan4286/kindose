@@ -8,6 +8,11 @@ extension Entrance on Widget {
     if (!motion) return this;
     return animate(delay: delay.ms)
         .fadeIn(duration: 380.ms, curve: Curves.easeOut)
-        .slideY(begin: dy, end: 0, duration: 480.ms, curve: Curves.easeOutCubic);
+        .slideY(
+          begin: dy,
+          end: 0,
+          duration: 480.ms,
+          curve: Curves.easeOutCubic,
+        );
   }
 }

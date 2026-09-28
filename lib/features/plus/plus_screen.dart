@@ -59,8 +59,9 @@ class PlusScreen extends GetView<PlusController> {
                               ),
                               SizedBox(height: 12.sp),
                             ],
-                            _Perks(controller: controller)
-                                .enter(motion, delay: 220, dy: 0.12),
+                            _Perks(
+                              controller: controller,
+                            ).enter(motion, delay: 220, dy: 0.12),
                             AnimatedSize(
                               duration: const Duration(milliseconds: 280),
                               curve: Curves.easeOutCubic,

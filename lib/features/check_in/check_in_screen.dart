@@ -38,7 +38,11 @@ class CheckInScreen extends GetView<CheckInController> {
                   Expanded(
                     child: Text(
                       controller.eyebrow,
-                      style: AppText.caps.copyWith(fontSize: 12.sp, letterSpacing: 1.1, color: k.muted),
+                      style: AppText.caps.copyWith(
+                        fontSize: 12.sp,
+                        letterSpacing: 1.1,
+                        color: k.muted,
+                      ),
                     ),
                   ),
                 ],
@@ -46,37 +50,65 @@ class CheckInScreen extends GetView<CheckInController> {
             ),
             Expanded(
               child: ListView(
-                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
                 padding: EdgeInsets.fromLTRB(20.sp, 16.sp, 20.sp, 24.sp),
                 children: [
                   Semantics(
                     header: true,
-                    child: Text('How are you today?', style: AppText.h1.copyWith(fontSize: 30.sp, color: k.text)),
+                    child: Text(
+                      'How are you today?',
+                      style: AppText.h1.copyWith(
+                        fontSize: 30.sp,
+                        color: k.text,
+                      ),
+                    ),
                   ).enter(motion),
                   SizedBox(height: 6.sp),
                   Text(
                     'About 20 seconds. Everything is optional.',
-                    style: AppText.bodyStrong.copyWith(fontSize: 14.sp, fontWeight: FontWeight.w600, color: k.muted),
+                    style: AppText.bodyStrong.copyWith(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                      color: k.muted,
+                    ),
                   ).enter(motion, delay: 40),
                   SizedBox(height: 18.sp),
-                  Obx(() => MoodRow(
-                        selected: controller.mood.value,
-                        onPick: controller.pickMood,
-                        height: 92.sp,
-                        onCard: false,
-                      )).enter(motion, delay: 80),
+                  Obx(
+                    () => MoodRow(
+                      selected: controller.mood.value,
+                      onPick: controller.pickMood,
+                      height: 92.sp,
+                      onCard: false,
+                    ),
+                  ).enter(motion, delay: 80),
                   SizedBox(height: 18.sp),
                   const _Scales().enter(motion, delay: 120),
-                  _label(context, 'Anything else?', 'Tap again = stronger').enter(motion, delay: 160),
+                  _label(
+                    context,
+                    'Anything else?',
+                    'Tap again = stronger',
+                  ).enter(motion, delay: 160),
                   const _Effects().enter(motion, delay: 180),
                   SizedBox(height: 8.sp),
                   ExcludeSemantics(
                     child: Row(
                       children: [
                         for (var l = 1; l <= 3; l++) ...[
-                          _Bars(level: l, color: k.faint, faint: Colors.transparent, small: true),
+                          _Bars(
+                            level: l,
+                            color: k.faint,
+                            faint: Colors.transparent,
+                            small: true,
+                          ),
                           SizedBox(width: 4.sp),
-                          Text(Catalog.levelWords[l], style: AppText.small.copyWith(fontSize: 12.sp, color: k.faint)),
+                          Text(
+                            Catalog.levelWords[l],
+                            style: AppText.small.copyWith(
+                              fontSize: 12.sp,
+                              color: k.faint,
+                            ),
+                          ),
                           SizedBox(width: 14.sp),
                         ],
                       ],
@@ -90,19 +122,25 @@ class CheckInScreen extends GetView<CheckInController> {
                   SizedBox(height: 12.sp),
                   Text(
                     'This is for your own record and your doctor. It isn’t medical advice.',
-                    style: AppText.small.copyWith(fontSize: 12.sp, fontWeight: FontWeight.w600, color: k.faint),
+                    style: AppText.small.copyWith(
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w600,
+                      color: k.faint,
+                    ),
                   ),
                 ],
               ),
             ),
             Padding(
               padding: EdgeInsets.fromLTRB(20.sp, 8.sp, 20.sp, 12.sp),
-              child: Obx(() => PillButton(
-                    label: 'Save check-in',
-                    icon: PhosphorIconsBold.check,
-                    busy: controller.saving.value,
-                    onPressed: controller.save,
-                  )),
+              child: Obx(
+                () => PillButton(
+                  label: 'Save check-in',
+                  icon: PhosphorIconsBold.check,
+                  busy: controller.saving.value,
+                  onPressed: controller.save,
+                ),
+              ),
             ),
           ],
         ),
@@ -119,10 +157,20 @@ class CheckInScreen extends GetView<CheckInController> {
           Expanded(
             child: Semantics(
               header: true,
-              child: Text(text.toUpperCase(), style: AppText.caps.copyWith(fontSize: 12.sp, letterSpacing: 1.1, color: k.muted)),
+              child: Text(
+                text.toUpperCase(),
+                style: AppText.caps.copyWith(
+                  fontSize: 12.sp,
+                  letterSpacing: 1.1,
+                  color: k.muted,
+                ),
+              ),
             ),
           ),
-          Text(trailing, style: AppText.small.copyWith(fontSize: 12.5.sp, color: k.faint)),
+          Text(
+            trailing,
+            style: AppText.small.copyWith(fontSize: 12.5.sp, color: k.faint),
+          ),
         ],
       ),
     );
@@ -136,37 +184,44 @@ class _Scales extends GetView<CheckInController> {
   @override
   Widget build(BuildContext context) {
     final k = context.k;
-    return Obx(() => Container(
-          padding: EdgeInsets.symmetric(horizontal: 16.sp, vertical: 4.sp),
-          decoration: BoxDecoration(color: k.card, borderRadius: BorderRadius.circular(22.sp)),
-          child: Column(
-            children: [
-              _ScaleRow(
-                title: 'Nausea',
-                hint: 'Feeling sick',
-                options: const ['None', 'Mild', 'Moderate', 'Severe'],
-                selected: controller.nausea.value == null ? null : controller.nauseaOnScreen,
-                onPick: controller.pickNausea,
-              ),
-              Divider(height: 1, color: k.border),
-              _ScaleRow(
-                title: 'Food noise',
-                hint: 'Thinking about food',
-                options: const ['Quiet', 'Some', 'Loud'],
-                selected: controller.foodNoise.value,
-                onPick: (v) => controller.pickLevel(controller.foodNoise, v),
-              ),
-              Divider(height: 1, color: k.border),
-              _ScaleRow(
-                title: 'Appetite',
-                hint: 'How hungry',
-                options: const ['Low', 'Normal', 'High'],
-                selected: controller.appetite.value,
-                onPick: (v) => controller.pickLevel(controller.appetite, v),
-              ),
-            ],
-          ),
-        ));
+    return Obx(
+      () => Container(
+        padding: EdgeInsets.symmetric(horizontal: 16.sp, vertical: 4.sp),
+        decoration: BoxDecoration(
+          color: k.card,
+          borderRadius: BorderRadius.circular(22.sp),
+        ),
+        child: Column(
+          children: [
+            _ScaleRow(
+              title: 'Nausea',
+              hint: 'Feeling sick',
+              options: const ['None', 'Mild', 'Moderate', 'Severe'],
+              selected: controller.nausea.value == null
+                  ? null
+                  : controller.nauseaOnScreen,
+              onPick: controller.pickNausea,
+            ),
+            Divider(height: 1, color: k.border),
+            _ScaleRow(
+              title: 'Food noise',
+              hint: 'Thinking about food',
+              options: const ['Quiet', 'Some', 'Loud'],
+              selected: controller.foodNoise.value,
+              onPick: (v) => controller.pickLevel(controller.foodNoise, v),
+            ),
+            Divider(height: 1, color: k.border),
+            _ScaleRow(
+              title: 'Appetite',
+              hint: 'How hungry',
+              options: const ['Low', 'Normal', 'High'],
+              selected: controller.appetite.value,
+              onPick: (v) => controller.pickLevel(controller.appetite, v),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -197,8 +252,16 @@ class _ScaleRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
-              Expanded(child: Text(title, style: AppText.title.copyWith(fontSize: 15.sp, color: k.text))),
-              Text(hint, style: AppText.small.copyWith(fontSize: 12.sp, color: k.faint)),
+              Expanded(
+                child: Text(
+                  title,
+                  style: AppText.title.copyWith(fontSize: 15.sp, color: k.text),
+                ),
+              ),
+              Text(
+                hint,
+                style: AppText.small.copyWith(fontSize: 12.sp, color: k.faint),
+              ),
             ],
           ),
           SizedBox(height: 8.sp),
@@ -261,46 +324,53 @@ class _Effects extends GetView<CheckInController> {
         runSpacing: 8.sp,
         children: [
           for (final id in Catalog.checkInEffects)
-            Builder(builder: (context) {
-              final l = controller.levelOf(id);
-              final name = Catalog.symptoms[id] ?? id;
-              final severe = l == 3;
-              final strong = severe ? AppColors.danger : k.text;
-              return Semantics(
-                button: true,
-                label: l == 0 ? '$name, not felt. Tap to add' : '$name, ${Catalog.levelWords[l]}. Tap to change',
-                excludeSemantics: true,
-                child: PressScale(
-                  pressedScale: 0.94,
-                  onTap: () => controller.tapEffect(id),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 160),
-                    height: 42.sp,
-                    padding: EdgeInsets.fromLTRB(12.sp, 0, 14.sp, 0),
-                    decoration: BoxDecoration(
-                      color: severe ? AppColors.dangerSoft : k.card,
-                      borderRadius: BorderRadius.circular(21.sp),
-                      border: Border.all(color: l > 0 ? strong : k.border, width: 1.5),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _Bars(level: l, color: strong, faint: k.border),
-                        SizedBox(width: 8.sp),
-                        Text(
-                          name,
-                          style: AppText.small.copyWith(
-                            fontSize: 13.5.sp,
-                            fontWeight: FontWeight.w800,
-                            color: severe ? AppColors.dangerText : k.text,
-                          ),
+            Builder(
+              builder: (context) {
+                final l = controller.levelOf(id);
+                final name = Catalog.symptoms[id] ?? id;
+                final severe = l == 3;
+                final strong = severe ? AppColors.danger : k.text;
+                return Semantics(
+                  button: true,
+                  label: l == 0
+                      ? '$name, not felt. Tap to add'
+                      : '$name, ${Catalog.levelWords[l]}. Tap to change',
+                  excludeSemantics: true,
+                  child: PressScale(
+                    pressedScale: 0.94,
+                    onTap: () => controller.tapEffect(id),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 160),
+                      height: 42.sp,
+                      padding: EdgeInsets.fromLTRB(12.sp, 0, 14.sp, 0),
+                      decoration: BoxDecoration(
+                        color: severe ? AppColors.dangerSoft : k.card,
+                        borderRadius: BorderRadius.circular(21.sp),
+                        border: Border.all(
+                          color: l > 0 ? strong : k.border,
+                          width: 1.5,
                         ),
-                      ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _Bars(level: l, color: strong, faint: k.border),
+                          SizedBox(width: 8.sp),
+                          Text(
+                            name,
+                            style: AppText.small.copyWith(
+                              fontSize: 13.5.sp,
+                              fontWeight: FontWeight.w800,
+                              color: severe ? AppColors.dangerText : k.text,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              );
-            }),
+                );
+              },
+            ),
         ],
       );
     });
@@ -308,7 +378,12 @@ class _Effects extends GetView<CheckInController> {
 }
 
 class _Bars extends StatelessWidget {
-  const _Bars({required this.level, required this.color, required this.faint, this.small = false});
+  const _Bars({
+    required this.level,
+    required this.color,
+    required this.faint,
+    this.small = false,
+  });
 
   final int level;
   final Color color;
@@ -356,16 +431,30 @@ class _SevereCard extends GetView<CheckInController> {
                   liveRegion: true,
                   child: Container(
                     padding: EdgeInsets.fromLTRB(16.sp, 14.sp, 16.sp, 14.sp),
-                    decoration: BoxDecoration(color: AppColors.dangerSoft, borderRadius: BorderRadius.circular(18.sp)),
+                    decoration: BoxDecoration(
+                      color: AppColors.dangerSoft,
+                      borderRadius: BorderRadius.circular(18.sp),
+                    ),
                     child: Text.rich(
-                      const TextSpan(children: [
-                        TextSpan(text: 'That sounds hard. ', style: TextStyle(fontWeight: FontWeight.w800)),
-                        TextSpan(
-                          text: 'If you have severe stomach pain, can’t keep fluids down, feel very dizzy, '
-                              'have vision changes or chest pain, contact your doctor or local emergency services now.',
-                        ),
-                      ]),
-                      style: AppText.small.copyWith(fontSize: 13.5.sp, fontWeight: FontWeight.w600, height: 1.45, color: AppColors.dangerText),
+                      const TextSpan(
+                        children: [
+                          TextSpan(
+                            text: 'That sounds hard. ',
+                            style: TextStyle(fontWeight: FontWeight.w800),
+                          ),
+                          TextSpan(
+                            text:
+                                'If you have severe stomach pain, can’t keep fluids down, feel very dizzy, '
+                                'have vision changes or chest pain, contact your doctor or local emergency services now.',
+                          ),
+                        ],
+                      ),
+                      style: AppText.small.copyWith(
+                        fontSize: 13.5.sp,
+                        fontWeight: FontWeight.w600,
+                        height: 1.45,
+                        color: AppColors.dangerText,
+                      ),
                     ),
                   ),
                 ),
@@ -394,7 +483,8 @@ class _PatternTeaser extends GetView<CheckInController> {
   Widget build(BuildContext context) {
     final bordered = context.k.selectedBorder == AppColors.lime;
     return PressScale(
-      semanticLabel: 'Your pattern, a Kindose Plus feature. See which day after your dose feels hardest. Opens Plus',
+      semanticLabel:
+          'Your pattern, a Kindose Plus feature. See which day after your dose feels hardest. Opens Plus',
       onTap: controller.openPlus,
       child: ExcludeSemantics(
         child: Container(
@@ -411,12 +501,22 @@ class _PatternTeaser extends GetView<CheckInController> {
                 children: [
                   Text(
                     'YOUR PATTERN',
-                    style: AppText.caps.copyWith(fontSize: 12.sp, letterSpacing: 1, color: AppColors.lime),
+                    style: AppText.caps.copyWith(
+                      fontSize: 12.sp,
+                      letterSpacing: 1,
+                      color: AppColors.lime,
+                    ),
                   ),
                   SizedBox(width: 8.sp),
                   const PlusTag(onDark: true),
                   const Spacer(),
-                  Text('Example', style: AppText.small.copyWith(fontSize: 11.5.sp, color: AppColors.heroMuted)),
+                  Text(
+                    'Example',
+                    style: AppText.small.copyWith(
+                      fontSize: 11.5.sp,
+                      color: AppColors.heroMuted,
+                    ),
+                  ),
                 ],
               ),
               SizedBox(height: 10.sp),
@@ -434,12 +534,20 @@ class _PatternTeaser extends GetView<CheckInController> {
                             Container(
                               height: 44.sp * h,
                               decoration: BoxDecoration(
-                                color: i == 1 ? AppColors.lime : AppColors.white.withValues(alpha: 0.14),
+                                color: i == 1
+                                    ? AppColors.lime
+                                    : AppColors.white.withValues(alpha: 0.14),
                                 borderRadius: BorderRadius.circular(6.sp),
                               ),
                             ),
                             SizedBox(height: 4.sp),
-                            Text(label, style: AppText.tiny.copyWith(fontSize: 10.5.sp, color: AppColors.heroMuted)),
+                            Text(
+                              label,
+                              style: AppText.tiny.copyWith(
+                                fontSize: 10.5.sp,
+                                color: AppColors.heroMuted,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -450,7 +558,12 @@ class _PatternTeaser extends GetView<CheckInController> {
               SizedBox(height: 10.sp),
               Text(
                 'After 3 dose weeks you’ll see which day after your dose feels hardest, and it goes into your doctor report.',
-                style: AppText.small.copyWith(fontSize: 13.sp, fontWeight: FontWeight.w600, height: 1.45, color: AppColors.heroMuted),
+                style: AppText.small.copyWith(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w600,
+                  height: 1.45,
+                  color: AppColors.heroMuted,
+                ),
               ),
             ],
           ),
@@ -477,7 +590,9 @@ class _Note extends GetView<CheckInController> {
           maxLength: 500,
           textCapitalization: TextCapitalization.sentences,
           style: AppText.bodyStrong.copyWith(fontSize: 14.5.sp, color: k.text),
-          decoration: const InputDecoration(hintText: 'What you ate, sleep, anything to remember'),
+          decoration: const InputDecoration(
+            hintText: 'What you ate, sleep, anything to remember',
+          ),
         );
       }
       return Material(
@@ -491,12 +606,19 @@ class _Note extends GetView<CheckInController> {
             padding: EdgeInsets.symmetric(horizontal: 16.sp),
             child: Row(
               children: [
-                PhosphorIcon(PhosphorIconsBold.pencilSimple, size: 18.sp, color: k.muted),
+                PhosphorIcon(
+                  PhosphorIconsBold.pencilSimple,
+                  size: 18.sp,
+                  color: k.muted,
+                ),
                 SizedBox(width: 10.sp),
                 Expanded(
                   child: Text(
                     'Add a note (what you ate, sleep…)',
-                    style: AppText.bodyStrong.copyWith(fontSize: 14.5.sp, color: k.muted),
+                    style: AppText.bodyStrong.copyWith(
+                      fontSize: 14.5.sp,
+                      color: k.muted,
+                    ),
                   ),
                 ),
               ],

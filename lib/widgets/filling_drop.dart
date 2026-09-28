@@ -123,7 +123,9 @@ class _FillingDropPainter extends CustomPainter {
           ..style = PaintingStyle.stroke
           ..strokeWidth = 3.6
           ..strokeCap = StrokeCap.round
-          ..color = AppColors.white.withValues(alpha: 0.75 * shine.clamp(0.0, 1.0)),
+          ..color = AppColors.white.withValues(
+            alpha: 0.75 * shine.clamp(0.0, 1.0),
+          ),
       );
     }
     if (smile > 0) {
@@ -142,5 +144,10 @@ class _FillingDropPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_FillingDropPainter old) =>
-      old.fill != fill || old.wave != wave || old.smile != smile || old.shine != shine || old.outline != outline || old.color != color;
+      old.fill != fill ||
+      old.wave != wave ||
+      old.smile != smile ||
+      old.shine != shine ||
+      old.outline != outline ||
+      old.color != color;
 }

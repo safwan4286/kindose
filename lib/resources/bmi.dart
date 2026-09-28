@@ -21,9 +21,9 @@ class Bmi {
   }
 
   static String label(BmiRange r) => switch (r) {
-        BmiRange.below => 'Below healthy range',
-        BmiRange.healthy => 'Healthy range',
-        BmiRange.above => 'Above healthy range',
-        BmiRange.obesity => 'Obesity range',
-      };
+    BmiRange.below => 'Below healthy range',
+    BmiRange.healthy => 'Healthy range',
+    BmiRange.above => 'Above healthy range',
+    BmiRange.obesity => 'Obesity range',
+  };
 }

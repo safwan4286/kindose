@@ -1,4 +1,3 @@
-
 import 'map_read.dart';
 
 /// Everything the user told us during onboarding. Stored as one record.
@@ -110,7 +109,10 @@ class UserProfile {
     String? activity,
     String? diet,
     bool? useKg,
+    double? goalWeightKg,
+    bool clearGoalWeight = false,
     int? proteinGoalG,
+    bool? vegDiet,
     int? waterGoalMl,
     bool? remindersOn,
   }) {
@@ -133,11 +135,13 @@ class UserProfile {
       diet: diet ?? this.diet,
       useKg: useKg ?? this.useKg,
       startWeightKg: startWeightKg,
-      goalWeightKg: goalWeightKg,
+      goalWeightKg: clearGoalWeight
+          ? null
+          : (goalWeightKg ?? this.goalWeightKg),
       heightCm: heightCm,
       proteinGoalG: proteinGoalG ?? this.proteinGoalG,
       waterGoalMl: waterGoalMl ?? this.waterGoalMl,
-      vegDiet: vegDiet,
+      vegDiet: vegDiet ?? this.vegDiet,
       focus: focus,
       remindersOn: remindersOn ?? this.remindersOn,
       startedAt: startedAt,
@@ -145,40 +149,42 @@ class UserProfile {
   }
 
   Map<String, dynamic> toMap() => {
-        'stage': stage,
-        'medicineId': medicineId,
-        'customMedicine': customMedicine,
-        'form': form,
-        'strengthMg': strengthMg,
-        'everyDays': everyDays,
-        'frequencyUnsure': frequencyUnsure,
-        'shotWeekday': shotWeekday,
-        'shotMinutes': shotMinutes,
-        'plannedFirstDose': plannedFirstDose?.millisecondsSinceEpoch,
-        'treatmentStartedAt': treatmentStartedAt?.millisecondsSinceEpoch,
-        'sex': sex,
-        'birthDate': birthDate?.millisecondsSinceEpoch,
-        'heightInCm': heightInCm,
-        'activity': activity,
-        'diet': diet,
-        'useKg': useKg,
-        'startWeightKg': startWeightKg,
-        'goalWeightKg': goalWeightKg,
-        'heightCm': heightCm,
-        'proteinGoalG': proteinGoalG,
-        'waterGoalMl': waterGoalMl,
-        'vegDiet': vegDiet,
-        'focus': focus,
-        'remindersOn': remindersOn,
-        'startedAt': startedAt.millisecondsSinceEpoch,
-      };
+    'stage': stage,
+    'medicineId': medicineId,
+    'customMedicine': customMedicine,
+    'form': form,
+    'strengthMg': strengthMg,
+    'everyDays': everyDays,
+    'frequencyUnsure': frequencyUnsure,
+    'shotWeekday': shotWeekday,
+    'shotMinutes': shotMinutes,
+    'plannedFirstDose': plannedFirstDose?.millisecondsSinceEpoch,
+    'treatmentStartedAt': treatmentStartedAt?.millisecondsSinceEpoch,
+    'sex': sex,
+    'birthDate': birthDate?.millisecondsSinceEpoch,
+    'heightInCm': heightInCm,
+    'activity': activity,
+    'diet': diet,
+    'useKg': useKg,
+    'startWeightKg': startWeightKg,
+    'goalWeightKg': goalWeightKg,
+    'heightCm': heightCm,
+    'proteinGoalG': proteinGoalG,
+    'waterGoalMl': waterGoalMl,
+    'vegDiet': vegDiet,
+    'focus': focus,
+    'remindersOn': remindersOn,
+    'startedAt': startedAt.millisecondsSinceEpoch,
+  };
 
   static UserProfile? fromMap(Map<dynamic, dynamic>? m) {
     if (m == null || m.str('medicineId').isEmpty) return null;
     return UserProfile(
       stage: m.str('stage', 'taking'),
       medicineId: m.str('medicineId'),
-      customMedicine: m.str('customMedicine').isEmpty ? null : m.str('customMedicine'),
+      customMedicine: m.str('customMedicine').isEmpty
+          ? null
+          : m.str('customMedicine'),
       form: m.str('form', 'pen'),
       strengthMg: m.dbl('strengthMg', 2.5),
       everyDays: m.integer('everyDays', 7).clamp(1, 60),

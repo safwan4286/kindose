@@ -2,7 +2,6 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import 'network/src/services/build_variant/build_variants_service.dart';
 
-
 class AppInfo {
   static final AppInfo _instance = AppInfo._internal();
 
@@ -38,16 +37,12 @@ class AppInfo {
   void _getBuildType() {
     String packageName = package.packageName;
 
-    switch (packageName) {
-      case PackageNames.androidDev || PackageNames.iosDev:
-        _buildType = BuildType.TESTING;
-        break;
-      case PackageNames.androidLive || PackageNames.iosLive:
-        _buildType = BuildType.LIVE;
-        break;
-      default:
-        _buildType = BuildType.UNKNOWN;
-        break;
+    if (packageName == PackageNames.androidDev || packageName == PackageNames.iosDev) {
+      _buildType = BuildType.TESTING;
+    } else if (packageName == PackageNames.androidLive || packageName == PackageNames.iosLive) {
+      _buildType = BuildType.LIVE;
+    } else {
+      _buildType = BuildType.UNKNOWN;
     }
   }
 }

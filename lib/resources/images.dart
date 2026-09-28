@@ -1,4 +1,3 @@
-const String _images = "assets/images";
 const String _lotties = "assets/lottie";
 
 /// 3D illustrations from Microsoft Fluent Emoji (MIT licence, see
@@ -48,7 +47,6 @@ class Img3d {
   static const String vial = '${_p}test_tube.png';
   static const String weary = '${_p}weary_face.png';
 }
-
 
 class Lotties {
   static const String loader = "$_lotties/loader.json";

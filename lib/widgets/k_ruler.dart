@@ -43,7 +43,9 @@ class KRuler extends StatefulWidget {
 }
 
 class _KRulerState extends State<KRuler> with SingleTickerProviderStateMixin {
-  late final AnimationController _fling = AnimationController.unbounded(vsync: this)..addListener(_onFlingTick);
+  late final AnimationController _fling = AnimationController.unbounded(
+    vsync: this,
+  )..addListener(_onFlingTick);
   double _pendingPx = 0;
   double _lastFlingPx = 0;
   DateTime _lastHaptic = DateTime.fromMillisecondsSinceEpoch(0);
@@ -53,7 +55,9 @@ class _KRulerState extends State<KRuler> with SingleTickerProviderStateMixin {
   @override
   void didUpdateWidget(covariant KRuler old) {
     super.didUpdateWidget(old);
-    if (old.step != widget.step || old.min != widget.min || old.max != widget.max) {
+    if (old.step != widget.step ||
+        old.min != widget.min ||
+        old.max != widget.max) {
       _fling.stop();
       _pendingPx = 0;
     }
@@ -67,7 +71,9 @@ class _KRulerState extends State<KRuler> with SingleTickerProviderStateMixin {
 
   double _snap(double v) {
     final snapped = (v / widget.step).round() * widget.step;
-    return double.parse(snapped.clamp(widget.min, widget.max).toStringAsFixed(3));
+    return double.parse(
+      snapped.clamp(widget.min, widget.max).toStringAsFixed(3),
+    );
   }
 
   /// Turns dragged pixels into whole steps; leftovers carry over.
@@ -144,7 +150,12 @@ class _KRulerState extends State<KRuler> with SingleTickerProviderStateMixin {
           child: ShaderMask(
             blendMode: BlendMode.dstIn,
             shaderCallback: (rect) => const LinearGradient(
-              colors: [Colors.transparent, Colors.black, Colors.black, Colors.transparent],
+              colors: [
+                Colors.transparent,
+                Colors.black,
+                Colors.black,
+                Colors.transparent,
+              ],
               stops: [0, 0.2, 0.8, 1],
             ).createShader(rect),
             child: SizedBox(
@@ -223,13 +234,20 @@ class _RulerPainter extends CustomPainter {
       final isMajor = n % majorEvery == 0;
       final isMid = !isMajor && midEvery != null && n % midEvery! == 0;
       tick.color = isMajor ? major : minor;
-      final h = isMajor ? longH : isMid ? midH : shortH;
+      final h = isMajor
+          ? longH
+          : isMid
+          ? midH
+          : shortH;
       if (i != 0) canvas.drawLine(Offset(x, 4.sp), Offset(x, 4.sp + h), tick);
       if (isMajor) {
         final text = labelOf?.call(v);
         if (text != null) {
           final tp = TextPainter(
-            text: TextSpan(text: text, style: AppText.small.copyWith(fontSize: 12.sp, color: label)),
+            text: TextSpan(
+              text: text,
+              style: AppText.small.copyWith(fontSize: 12.sp, color: label),
+            ),
             textDirection: TextDirection.ltr,
           )..layout();
           tp.paint(canvas, Offset(x - tp.width / 2, 4.sp + longH + 8.sp));
@@ -246,7 +264,10 @@ class _RulerPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_RulerPainter old) =>
-      old.value != value || old.marker != marker || old.minor != minor || old.step != step;
+      old.value != value ||
+      old.marker != marker ||
+      old.minor != minor ||
+      old.step != step;
 }
 
 /// Imperial helpers shared by height screens.

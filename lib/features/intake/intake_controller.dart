@@ -31,7 +31,8 @@ class IntakeController extends GetxController {
     Portion('2', 2),
   ];
 
-  late final RxString tab = (Get.arguments == 'water' ? 'water' : 'protein').obs;
+  late final RxString tab =
+      (Get.arguments == 'water' ? 'water' : 'protein').obs;
   final RxString query = ''.obs;
   final RxString category = 'all'.obs;
 
@@ -71,7 +72,8 @@ class IntakeController extends GetxController {
   int get proteinGoal => profile?.proteinGoalG ?? 100;
   int get proteinToday => tracker.today.proteinG;
   int get proteinLeft => (proteinGoal - proteinToday).clamp(0, 999);
-  double get proteinProgress => proteinGoal == 0 ? 0 : (proteinToday / proteinGoal).clamp(0.0, 1.0);
+  double get proteinProgress =>
+      proteinGoal == 0 ? 0 : (proteinToday / proteinGoal).clamp(0.0, 1.0);
 
   String get proteinLine {
     final left = proteinLeft;
@@ -84,19 +86,20 @@ class IntakeController extends GetxController {
 
   /// "VEGETARIAN" etc. for the browse title, or null for everyone.
   String? get dietName => switch (_diet) {
-        'veg' => 'Vegetarian',
-        'jain' => 'Jain',
-        'egg' => 'Eggetarian',
-        'vegan' => 'Vegan',
-        _ => null,
-      };
+    'veg' => 'Vegetarian',
+    'jain' => 'Jain',
+    'egg' => 'Eggetarian',
+    'vegan' => 'Vegan',
+    _ => null,
+  };
 
   /// Most-logged foods first, topped up from the diet's everyday list.
   List<Food> get usualFoods {
     final allowed = Catalog.foodsFor(_diet).map((f) => f.id).toSet();
     final out = <Food>[];
     void addIfNew(Food? f) {
-      if (f != null && allowed.contains(f.id) && out.every((o) => o.id != f.id)) out.add(f);
+      if (f != null && allowed.contains(f.id) && out.every((o) => o.id != f.id))
+        out.add(f);
     }
 
     for (final (label, _) in tracker.favouriteFoods(3)) {
@@ -116,11 +119,19 @@ class IntakeController extends GetxController {
     final list = Catalog.foodsFor(_diet);
     final q = query.value.trim().toLowerCase();
     if (q.isNotEmpty) {
-      return list.where((f) => f.name.toLowerCase().contains(q) || f.portion.toLowerCase().contains(q)).toList();
+      return list
+          .where(
+            (f) =>
+                f.name.toLowerCase().contains(q) ||
+                f.portion.toLowerCase().contains(q),
+          )
+          .toList();
     }
     final usual = usualFoods.map((f) => f.id).toSet();
     final c = category.value;
-    return list.where((f) => !usual.contains(f.id) && (c == 'all' || f.cat == c)).toList();
+    return list
+        .where((f) => !usual.contains(f.id) && (c == 'all' || f.cat == c))
+        .toList();
   }
 
   void pickCategory(String id) {
@@ -144,13 +155,19 @@ class IntakeController extends GetxController {
 
   Future<void> addFood(Food f, [double times = 1]) async {
     final grams = gramsFor(f, times);
-    final label = times == 1 ? f.label : '${f.name}, ${_portionLabel(times)} × ${f.portion}';
+    final label = times == 1
+        ? f.label
+        : '${f.name}, ${_portionLabel(times)} × ${f.portion}';
     openFood.value = '';
     await _add('protein', grams, label, 'Added ${f.name} · $grams g');
   }
 
-  String _portionLabel(double times) =>
-      portions.firstWhere((p) => p.times == times, orElse: () => Portion(times.toString(), times)).label;
+  String _portionLabel(double times) => portions
+      .firstWhere(
+        (p) => p.times == times,
+        orElse: () => Portion(times.toString(), times),
+      )
+      .label;
 
   void stepCustom(int by) {
     Haptics.instance.selectionClick();
@@ -170,14 +187,19 @@ class IntakeController extends GetxController {
     if (v != null && !v.isNaN) customGrams.value = v.round();
   }
 
-  Future<void> addCustomProtein() =>
-      _add('protein', customGrams.value, null, 'Added ${customGrams.value} g protein');
+  Future<void> addCustomProtein() => _add(
+    'protein',
+    customGrams.value,
+    null,
+    'Added ${customGrams.value} g protein',
+  );
 
   // ------------------------------------------------------------------ water
 
   int get waterGoal => profile?.waterGoalMl ?? 2500;
   int get waterToday => tracker.today.waterMl;
-  double get waterProgress => waterGoal == 0 ? 0 : (waterToday / waterGoal).clamp(0.0, 1.0);
+  double get waterProgress =>
+      waterGoal == 0 ? 0 : (waterToday / waterGoal).clamp(0.0, 1.0);
 
   String litres(int ml) {
     final l = ml / 1000;
@@ -197,10 +219,23 @@ class IntakeController extends GetxController {
     return Catalog.otherDrinks.where((d) => !(noDairy && d.dairy)).toList();
   }
 
-  Future<void> addDrink(Drink d) => _add('water', d.ml, d.label, 'Added ${d.label.toLowerCase()} · ${d.ml} ml');
+  Future<void> addDrink(Drink d) => _add(
+    'water',
+    d.ml,
+    d.label,
+    'Added ${d.label.toLowerCase()} · ${d.ml} ml',
+  );
 
   Future<void> addCustomWater(BuildContext context) async {
-    final v = await askNumber(context, title: 'How much?', unit: 'ml', initial: 330, min: 50, max: 2000, decimals: 0);
+    final v = await askNumber(
+      context,
+      title: 'How much?',
+      unit: 'ml',
+      initial: 330,
+      min: 50,
+      max: 2000,
+      decimals: 0,
+    );
     if (v == null || v.isNaN) return;
     final ml = v.round();
     await _add('water', ml, null, 'Added $ml ml');
@@ -208,8 +243,11 @@ class IntakeController extends GetxController {
 
   // ---------------------------------------------------------------- entries
 
-  List<LogEntry> entriesFor(String kind) =>
-      tracker.today.entries.where((e) => e.kind == kind).toList().reversed.toList();
+  List<LogEntry> entriesFor(String kind) => tracker.today.entries
+      .where((e) => e.kind == kind)
+      .toList()
+      .reversed
+      .toList();
 
   String entryTitle(LogEntry e) {
     final l = e.label;
@@ -231,7 +269,12 @@ class IntakeController extends GetxController {
     showToast('Removed');
   }
 
-  Future<void> _add(String kind, int amount, String? label, String message) async {
+  Future<void> _add(
+    String kind,
+    int amount,
+    String? label,
+    String message,
+  ) async {
     Haptics.instance.lightImpact();
     final now = DateTime.now();
     final id = kind == 'protein'

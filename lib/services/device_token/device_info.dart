@@ -31,8 +31,8 @@ class DeviceInfo {
 
   String get udid => _udid;
 
-  bool get isAndroid => Platform.isAndroid ;
-  bool get isIos => Platform.isIOS ;
+  bool get isAndroid => Platform.isAndroid;
+  bool get isIos => Platform.isIOS;
 
   bool get isPhysicalDevice {
     if (kDebugMode) {
@@ -52,14 +52,11 @@ class DeviceInfo {
         _ios = await DeviceInfoPlugin().iosInfo;
       }
 
-      _token = await getToken(
-        freshToken: false,
-        recursive: false,
-      );
+      _token = await getToken(freshToken: false, recursive: false);
       devPrint("token $_token");
 
       _udid = await getUdid();
-    } catch (e, stackTrace) {
+    } catch (e) {
       devPrint('Error in get(): $e');
     }
   }

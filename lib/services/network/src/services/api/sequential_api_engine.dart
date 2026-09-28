@@ -10,7 +10,6 @@ import '../../core/enums.dart';
 import '../../core/typedefs.dart';
 import '../../models/multipart_file_data.dart';
 import '../../models/request.dart';
-import '../build_variant/build_variants_service.dart';
 import '../encryption/encryption.dart';
 import '../internet/internet_service.dart';
 import '../network_service.dart';

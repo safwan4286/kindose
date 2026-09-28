@@ -180,7 +180,7 @@ class _ChecklistItem extends StatelessWidget {
           Container(
             width: 20.sp,
             height: 20.sp,
-            decoration:  BoxDecoration(
+            decoration: BoxDecoration(
               color: AppColors.teal1A9E6E,
               shape: BoxShape.circle,
             ),

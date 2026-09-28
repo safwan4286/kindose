@@ -11,7 +11,29 @@ import '../../services/tracker_service.dart';
 import '../../widgets/social_button.dart';
 import '../../widgets/toast.dart';
 
-enum OnboardingStep { welcome, stage, medicine, dose, frequency, schedule, treatmentStart, sex, birth, height, weight, goal, activity, diet, baseline, protein, focus, reminders, building, plan, save }
+enum OnboardingStep {
+  welcome,
+  stage,
+  medicine,
+  dose,
+  frequency,
+  schedule,
+  treatmentStart,
+  sex,
+  birth,
+  height,
+  weight,
+  goal,
+  activity,
+  diet,
+  baseline,
+  protein,
+  focus,
+  reminders,
+  building,
+  plan,
+  save,
+}
 
 /// Holds the answers while the user moves through onboarding, then saves
 /// them as one [UserProfile]. In edit mode only the medicine, dose, frequency and schedule steps
@@ -29,7 +51,12 @@ class OnboardingController extends GetxController {
   /// the first answer changes the flow.
   List<OnboardingStep> get steps {
     if (editMode) {
-      return const [OnboardingStep.medicine, OnboardingStep.dose, OnboardingStep.frequency, OnboardingStep.schedule];
+      return const [
+        OnboardingStep.medicine,
+        OnboardingStep.dose,
+        OnboardingStep.frequency,
+        OnboardingStep.schedule,
+      ];
     }
     final starting = stage.value == 'starting';
     return [
@@ -52,6 +79,7 @@ class OnboardingController extends GetxController {
   /// 'taking', 'starting' or 'restart'. Empty until the user picks one,
   /// so nothing looks pre-selected on the first question.
   final RxString stage = ''.obs;
+
   /// Empty until picked, so no medicine looks pre-selected.
   final RxString medicineId = ''.obs;
 
@@ -197,7 +225,9 @@ class OnboardingController extends GetxController {
     strength.value = p.strengthMg;
     if (p.strengthMg <= 0) {
       doseMode.value = 'unsure';
-    } else if (Catalog.medicine(p.medicineId).strengths.contains(p.strengthMg)) {
+    } else if (Catalog.medicine(
+      p.medicineId,
+    ).strengths.contains(p.strengthMg)) {
       doseMode.value = 'label';
     } else {
       doseMode.value = 'custom';
@@ -262,7 +292,8 @@ class OnboardingController extends GetxController {
       finish();
       return;
     }
-    if (steps[page.value + 1] == OnboardingStep.protein && !proteinTouched.value) {
+    if (steps[page.value + 1] == OnboardingStep.protein &&
+        !proteinTouched.value) {
       proteinGoal.value = suggestedProtein;
     }
     _go(page.value + 1);
@@ -317,7 +348,8 @@ class OnboardingController extends GetxController {
     }
   }
 
-  void pickStage(String id) => _pickThenNext(OnboardingStep.stage, () => stage.value = id);
+  void pickStage(String id) =>
+      _pickThenNext(OnboardingStep.stage, () => stage.value = id);
 
   /// Tapping a medicine selects it and moves on, except "Something else",
   /// which waits for a typed name (see [confirmCustomMedicine]).
@@ -375,7 +407,8 @@ class OnboardingController extends GetxController {
   /// on. "Another schedule" opens the every-N-days stepper instead.
   void pickFrequency(String id) {
     if (id == 'custom') {
-      if (!(frequencyAnswered.value && frequency.value == 'custom')) Haptics.instance.selectionClick();
+      if (!(frequencyAnswered.value && frequency.value == 'custom'))
+        Haptics.instance.selectionClick();
       frequency.value = 'custom';
       frequencyAnswered.value = true;
       return;
@@ -394,7 +427,8 @@ class OnboardingController extends GetxController {
   }
 
   void confirmCustomFrequency() {
-    if (frequency.value != 'custom' || current != OnboardingStep.frequency) return;
+    if (frequency.value != 'custom' || current != OnboardingStep.frequency)
+      return;
     Haptics.instance.lightImpact();
     next();
   }
@@ -404,7 +438,11 @@ class OnboardingController extends GetxController {
   static const int morningMinutes = 8 * 60;
   static const int afternoonMinutes = 13 * 60;
   static const int eveningMinutes = 20 * 60;
-  static const List<int> timePresets = [morningMinutes, afternoonMinutes, eveningMinutes];
+  static const List<int> timePresets = [
+    morningMinutes,
+    afternoonMinutes,
+    eveningMinutes,
+  ];
 
   /// Already taking: we ask for the last dose. Starting or restarting: the
   /// first dose.
@@ -434,7 +472,9 @@ class OnboardingController extends GetxController {
     DateTime day;
     if (!needsDoseDate) {
       final nowMinutes = DateTime.now().hour * 60 + DateTime.now().minute;
-      day = nowMinutes < shotMinutes.value ? today : today.add(const Duration(days: 1));
+      day = nowMinutes < shotMinutes.value
+          ? today
+          : today.add(const Duration(days: 1));
     } else {
       final picked = doseDate.value;
       if (picked == null) return null;
@@ -470,41 +510,47 @@ class OnboardingController extends GetxController {
     return days < 0 ? 1 : days ~/ 7 + 1;
   }
 
-  void pickStartMonth(DateTime month) => _pickThenNext(OnboardingStep.treatmentStart, () {
+  void pickStartMonth(DateTime month) =>
+      _pickThenNext(OnboardingStep.treatmentStart, () {
         treatmentStart.value = approxStart(month);
         treatmentStartMode.value = 'month';
       });
 
-  void pickStartOlder(DateTime month) => _pickThenNext(OnboardingStep.treatmentStart, () {
+  void pickStartOlder(DateTime month) =>
+      _pickThenNext(OnboardingStep.treatmentStart, () {
         treatmentStart.value = approxStart(month);
         treatmentStartMode.value = 'older';
       });
 
   void skipStart() => _pickThenNext(OnboardingStep.treatmentStart, () {
-        treatmentStart.value = null;
-        treatmentStartMode.value = 'skip';
-      });
+    treatmentStart.value = null;
+    treatmentStartMode.value = 'skip';
+  });
 
   // ------------------------------------------------------------------- sex
 
   void pickSex(String id) => _pickThenNext(OnboardingStep.sex, () {
-        sex.value = id;
-        _defaultWeightFromSex();
-      });
+    sex.value = id;
+    _defaultWeightFromSex();
+  });
 
   // ---------------------------------------------------------- date of birth
 
   static const int adultAge = 18;
   static const int oldestYears = 100;
 
-  static int daysInMonth(int year, int month) => DateTime(year, month + 1, 0).day;
+  static int daysInMonth(int year, int month) =>
+      DateTime(year, month + 1, 0).day;
 
-  DateTime get birthDate => DateTime(birthYear.value, birthMonth.value, birthDay.value);
+  DateTime get birthDate =>
+      DateTime(birthYear.value, birthMonth.value, birthDay.value);
 
   int get age {
     final now = DateTime.now();
     var years = now.year - birthYear.value;
-    final hadBirthday = now.month > birthMonth.value || (now.month == birthMonth.value && now.day >= birthDay.value);
+    final hadBirthday =
+        now.month > birthMonth.value ||
+        (now.month == birthMonth.value && now.day >= birthDay.value);
     if (!hadBirthday) years--;
     return years;
   }
@@ -521,7 +567,8 @@ class OnboardingController extends GetxController {
     final y = year ?? birthYear.value;
     final m = month ?? birthMonth.value;
     final d = (day ?? birthDay.value).clamp(1, daysInMonth(y, m));
-    if (y == birthYear.value && m == birthMonth.value && d == birthDay.value) return;
+    if (y == birthYear.value && m == birthMonth.value && d == birthDay.value)
+      return;
     Haptics.instance.selectionClick();
     birthYear.value = y;
     birthMonth.value = m;
@@ -541,14 +588,15 @@ class OnboardingController extends GetxController {
 
   /// Starting point for the ruler before the user moves it.
   double get defaultHeightCm => switch (sex.value) {
-        'female' => 162,
-        'male' => 175,
-        _ => 168,
-      };
+    'female' => 162,
+    'male' => 175,
+    _ => 168,
+  };
 
   double get heightShownCm => heightCm.value ?? defaultHeightCm;
 
-  void setHeightCm(double cm) => heightCm.value = cm.clamp(minHeightCm, maxHeightCm);
+  void setHeightCm(double cm) =>
+      heightCm.value = cm.clamp(minHeightCm, maxHeightCm);
 
   void confirmHeight() {
     if (current != OnboardingStep.height) return;
@@ -559,7 +607,8 @@ class OnboardingController extends GetxController {
 
   // -------------------------------------------------------------- activity
 
-  void pickActivity(String id) => _pickThenNext(OnboardingStep.activity, () => activity.value = id);
+  void pickActivity(String id) =>
+      _pickThenNext(OnboardingStep.activity, () => activity.value = id);
 
   // ------------------------------------------------------------------ diet
 
@@ -567,10 +616,10 @@ class OnboardingController extends GetxController {
   static const Set<String> _meatFree = {'veg', 'vegan', 'jain'};
 
   void pickDiet(String id) => _pickThenNext(OnboardingStep.diet, () {
-        diet.value = id;
-        veg.value = _meatFree.contains(id);
-        plateOff.clear();
-      });
+    diet.value = id;
+    veg.value = _meatFree.contains(id);
+    plateOff.clear();
+  });
 
   // ------------------------------------------------------------- reminders
 
@@ -604,11 +653,12 @@ class OnboardingController extends GetxController {
   // ------------------------------------------------------------------ dose
 
   void pickDose(double mg) => _pickThenNext(OnboardingStep.dose, () {
-        strength.value = mg;
-        doseMode.value = 'label';
-      });
+    strength.value = mg;
+    doseMode.value = 'label';
+  });
 
-  void pickDoseUnsure() => _pickThenNext(OnboardingStep.dose, () => doseMode.value = 'unsure');
+  void pickDoseUnsure() =>
+      _pickThenNext(OnboardingStep.dose, () => doseMode.value = 'unsure');
 
   /// Opens the mg field; the user confirms with [confirmCustomDose].
   void pickCustomDose() {
@@ -671,7 +721,8 @@ class OnboardingController extends GetxController {
 
   void setGoalDraft(double kg) {
     goalTouched.value = true;
-    goalDraftKg.value = (kg.clamp(minWeightKg, maxWeightKg) * 100).round() / 100;
+    goalDraftKg.value =
+        (kg.clamp(minWeightKg, maxWeightKg) * 100).round() / 100;
   }
 
   /// kg still to go: positive to lose, negative to gain.
@@ -699,7 +750,9 @@ class OnboardingController extends GetxController {
   /// starting point the user can change.
   int get suggestedProtein {
     // A little more for people who train hard. General guidance only.
-    final perKg = activity.value == 'active' || activity.value == 'athlete' ? 1.4 : 1.2;
+    final perKg = activity.value == 'active' || activity.value == 'athlete'
+        ? 1.4
+        : 1.2;
     final g = (weightKg.value * perKg / 5).round() * 5;
     return g.clamp(60, 180);
   }
@@ -728,8 +781,10 @@ class OnboardingController extends GetxController {
     };
   }
 
-  int get proteinShown => proteinTouched.value ? proteinGoal.value : suggestedProtein;
-  int get waterShownMl => waterTouched.value ? waterGoal.value : suggestedWaterMl;
+  int get proteinShown =>
+      proteinTouched.value ? proteinGoal.value : suggestedProtein;
+  int get waterShownMl =>
+      waterTouched.value ? waterGoal.value : suggestedWaterMl;
 
   void setWaterGoal(double litres) {
     waterTouched.value = true;
@@ -790,7 +845,8 @@ class OnboardingController extends GetxController {
     }
   }
 
-  List<Food> get plateFoods => veg.value ? Catalog.vegFoods : Catalog.everydayFoods;
+  List<Food> get plateFoods =>
+      veg.value ? Catalog.vegFoods : Catalog.everydayFoods;
 
   int get plateTotal => plateFoods
       .where((f) => !plateOff.contains(f.id))
@@ -821,7 +877,9 @@ class OnboardingController extends GetxController {
   // ------------------------------------------------------------------ save
 
   String? get _customMedicineOrNull =>
-      medicineId.value == Catalog.other && customMedicineValid ? customMedicine.value.trim() : null;
+      medicineId.value == Catalog.other && customMedicineValid
+      ? customMedicine.value.trim()
+      : null;
 
   UserProfile _build({required bool remindersOn}) {
     final old = _tracker.profile.value;
@@ -848,7 +906,9 @@ class OnboardingController extends GetxController {
       shotWeekday: shotWeekday.value,
       shotMinutes: shotMinutes.value,
       plannedFirstDose: asksLastDose ? null : doseDate.value,
-      treatmentStartedAt: stage.value == 'starting' ? doseDate.value : treatmentStart.value,
+      treatmentStartedAt: stage.value == 'starting'
+          ? doseDate.value
+          : treatmentStart.value,
       sex: sex.value.isEmpty ? null : sex.value,
       birthDate: birthDate,
       heightInCm: heightInCm.value,
@@ -887,7 +947,9 @@ class OnboardingController extends GetxController {
     if (saving.value) return;
     saving.value = true;
     try {
-      final profile = _build(remindersOn: remindersOn ?? this.remindersOn.value);
+      final profile = _build(
+        remindersOn: remindersOn ?? this.remindersOn.value,
+      );
       await _tracker.saveProfile(profile);
       if (!editMode) {
         await _tracker.addWeight(profile.startWeightKg);

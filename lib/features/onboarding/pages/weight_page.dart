@@ -35,7 +35,10 @@ class WeightPage extends GetView<OnboardingController> {
         ),
         SizedBox(height: 18.sp),
         Obx(() {
-          final bmi = Bmi.of(controller.weightKg.value, controller.heightCm.value);
+          final bmi = Bmi.of(
+            controller.weightKg.value,
+            controller.heightCm.value,
+          );
           if (bmi == null) return const SizedBox.shrink();
           return BmiCard(bmi: bmi);
         }).enter(motion, delay: 320),

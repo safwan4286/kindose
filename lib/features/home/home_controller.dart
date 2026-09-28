@@ -13,7 +13,8 @@ class HomeController extends GetxController {
   void onReady() {
     super.onReady();
     // App opened by tapping a dose reminder: go straight to Log dose.
-    if (Get.isRegistered<ReminderService>()) Get.find<ReminderService>().openLaunchPayload();
+    if (Get.isRegistered<ReminderService>())
+      Get.find<ReminderService>().openLaunchPayload();
   }
 
   void select(HomeTab t) => tab.value = t;

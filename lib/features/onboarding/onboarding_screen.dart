@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -92,24 +91,26 @@ class OnboardingScreen extends GetView<OnboardingController> {
           if (!didPop) controller.back();
         },
         child: AnnotatedRegion<SystemUiOverlayStyle>(
-          value: KSystemUi.style(darkBackground: dark || context.k.bg == KColors.dark.bg),
+          value: KSystemUi.style(
+            darkBackground: dark || context.k.bg == KColors.dark.bg,
+          ),
           child: Scaffold(
-          backgroundColor: dark ? AppColors.hero : context.k.bg,
-          body: KSafeArea(
-            child: Column(
-              children: [
-                if (!dark) const _StepHeader(),
-                Expanded(
-                  child: PageView(
-                    controller: controller.pageController,
-                    physics: const NeverScrollableScrollPhysics(),
-                    children: [for (final s in controller.steps) _pageFor(s)],
+            backgroundColor: dark ? AppColors.hero : context.k.bg,
+            body: KSafeArea(
+              child: Column(
+                children: [
+                  if (!dark) const _StepHeader(),
+                  Expanded(
+                    child: PageView(
+                      controller: controller.pageController,
+                      physics: const NeverScrollableScrollPhysics(),
+                      children: [for (final s in controller.steps) _pageFor(s)],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
         ),
       );
     });
@@ -135,7 +136,8 @@ class _StepHeader extends GetView<OnboardingController> {
                 opacity: controller.isWrapUp ? 0 : 1,
                 child: _ProgressBar(
                   value: controller.progress,
-                  label: 'Step ${controller.stepNumber} of ${controller.stepCount}',
+                  label:
+                      'Step ${controller.stepNumber} of ${controller.stepCount}',
                 ),
               ),
             ),
@@ -168,7 +170,10 @@ class _ProgressBar extends StatelessWidget {
         builder: (context, v, _) {
           return Container(
             height: height,
-            decoration: BoxDecoration(color: k.border, borderRadius: BorderRadius.circular(height)),
+            decoration: BoxDecoration(
+              color: k.border,
+              borderRadius: BorderRadius.circular(height),
+            ),
             alignment: Alignment.centerLeft,
             child: FractionallySizedBox(
               widthFactor: v,
@@ -214,13 +219,23 @@ class StepScaffold extends StatelessWidget {
             children: [
               Semantics(
                 header: true,
-                child: Text(title, style: AppText.h1.copyWith(fontSize: 30.sp, color: context.k.text)),
+                child: Text(
+                  title,
+                  style: AppText.h1.copyWith(
+                    fontSize: 30.sp,
+                    color: context.k.text,
+                  ),
+                ),
               ).enter(motion, dy: 0.12),
               if (subtitle != null) ...[
                 SizedBox(height: 10.sp),
                 Text(
                   subtitle!,
-                  style: AppText.bodyText.copyWith(fontSize: 15.sp, height: 1.45, color: context.k.muted),
+                  style: AppText.bodyText.copyWith(
+                    fontSize: 15.sp,
+                    height: 1.45,
+                    color: context.k.muted,
+                  ),
                 ).enter(motion, delay: 60, dy: 0.12),
               ],
               SizedBox(height: 20.sp),

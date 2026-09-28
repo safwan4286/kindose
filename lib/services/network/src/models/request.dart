@@ -1,4 +1,3 @@
-
 import 'package:kindose/services/network/src/models/scripts.dart';
 
 import '../core/enums.dart';

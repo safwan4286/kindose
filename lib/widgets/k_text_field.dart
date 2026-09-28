@@ -49,13 +49,23 @@ class KTextField extends StatelessWidget {
       textInputAction: textInputAction,
       inputFormatters: inputFormatters,
       maxLength: maxLength,
-      maxLengthEnforcement: maxLength == null ? null : MaxLengthEnforcement.enforced,
+      maxLengthEnforcement: maxLength == null
+          ? null
+          : MaxLengthEnforcement.enforced,
       onChanged: onChanged,
       onSubmitted: onSubmitted,
       cursorColor: k.text,
       style: large
-          ? AppText.h1.copyWith(fontSize: 22.sp, letterSpacing: -0.4, color: k.text)
-          : AppText.bodyText.copyWith(fontSize: 16.sp, fontWeight: FontWeight.w600, color: k.text),
+          ? AppText.h1.copyWith(
+              fontSize: 22.sp,
+              letterSpacing: -0.4,
+              color: k.text,
+            )
+          : AppText.bodyText.copyWith(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w600,
+              color: k.text,
+            ),
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: AppText.bodyText.copyWith(fontSize: 16.sp, color: k.faint),
@@ -64,9 +74,18 @@ class KTextField extends StatelessWidget {
         counterText: '',
         filled: true,
         fillColor: k.card,
-        contentPadding: EdgeInsets.symmetric(horizontal: 16.sp, vertical: 16.sp),
-        border: OutlineInputBorder(borderRadius: radius, borderSide: BorderSide.none),
-        enabledBorder: OutlineInputBorder(borderRadius: radius, borderSide: BorderSide.none),
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: 16.sp,
+          vertical: 16.sp,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: radius,
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: radius,
+          borderSide: BorderSide.none,
+        ),
         focusedBorder: OutlineInputBorder(
           borderRadius: radius,
           borderSide: BorderSide(color: k.selectedBorder, width: 2),

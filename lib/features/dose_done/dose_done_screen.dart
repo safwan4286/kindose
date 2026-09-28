@@ -35,7 +35,12 @@ class DoseDoneScreen extends GetView<DoseDoneController> {
               children: [
                 Align(
                   alignment: Alignment.centerRight,
-                  child: Obx(() => _UndoButton(busy: controller.busy.value, onTap: controller.undo)),
+                  child: Obx(
+                    () => _UndoButton(
+                      busy: controller.busy.value,
+                      onTap: controller.undo,
+                    ),
+                  ),
                 ),
                 Expanded(
                   child: Center(
@@ -51,14 +56,20 @@ class DoseDoneScreen extends GetView<DoseDoneController> {
                             child: Text(
                               controller.title,
                               textAlign: TextAlign.center,
-                              style: AppText.h1.copyWith(fontSize: 32.sp, color: AppColors.white),
+                              style: AppText.h1.copyWith(
+                                fontSize: 32.sp,
+                                color: AppColors.white,
+                              ),
                             ),
                           ).enter(motion, delay: 300),
                           SizedBox(height: 8.sp),
                           Text(
                             controller.summary,
                             textAlign: TextAlign.center,
-                            style: AppText.bodyStrong.copyWith(fontSize: 15.5.sp, color: AppColors.heroMuted),
+                            style: AppText.bodyStrong.copyWith(
+                              fontSize: 15.5.sp,
+                              color: AppColors.heroMuted,
+                            ),
                           ).enter(motion, delay: 360),
                           SizedBox(height: 26.sp),
                           Row(
@@ -86,10 +97,17 @@ class DoseDoneScreen extends GetView<DoseDoneController> {
                             SizedBox(height: 10.sp),
                             _InfoRow(
                               icon: PhosphorIconsBold.bell,
-                              text: TextSpan(children: [
-                                const TextSpan(text: 'Reminder set for '),
-                                TextSpan(text: reminder, style: const TextStyle(color: AppColors.white)),
-                              ]),
+                              text: TextSpan(
+                                children: [
+                                  const TextSpan(text: 'Reminder set for '),
+                                  TextSpan(
+                                    text: reminder,
+                                    style: const TextStyle(
+                                      color: AppColors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ).enter(motion, delay: 520),
                           ],
                         ],
@@ -101,10 +119,15 @@ class DoseDoneScreen extends GetView<DoseDoneController> {
                 SizedBox(height: 6.sp),
                 TextButton(
                   onPressed: controller.feeling,
-                  style: TextButton.styleFrom(minimumSize: Size.fromHeight(44.sp)),
+                  style: TextButton.styleFrom(
+                    minimumSize: Size.fromHeight(44.sp),
+                  ),
                   child: Text(
                     'How are you feeling after it?',
-                    style: AppText.title.copyWith(fontSize: 15.sp, color: AppColors.white),
+                    style: AppText.title.copyWith(
+                      fontSize: 15.sp,
+                      color: AppColors.white,
+                    ),
                   ),
                 ).enter(motion, delay: 640),
               ],
@@ -134,17 +157,31 @@ class _UndoButton extends StatelessWidget {
           minimumSize: Size(64.sp, 40.sp),
           padding: EdgeInsets.symmetric(horizontal: 16.sp),
           foregroundColor: AppColors.white,
-          side: BorderSide(color: AppColors.white.withValues(alpha: 0.18), width: 1.5),
+          side: BorderSide(
+            color: AppColors.white.withValues(alpha: 0.18),
+            width: 1.5,
+          ),
           shape: const StadiumBorder(),
         ),
-        child: Text('Undo', style: AppText.title.copyWith(fontSize: 14.sp, color: AppColors.white)),
+        child: Text(
+          'Undo',
+          style: AppText.title.copyWith(
+            fontSize: 14.sp,
+            color: AppColors.white,
+          ),
+        ),
       ),
     );
   }
 }
 
 class _StatBox extends StatelessWidget {
-  const _StatBox({required this.label, required this.value, required this.sub, this.lime = false});
+  const _StatBox({
+    required this.label,
+    required this.value,
+    required this.sub,
+    this.lime = false,
+  });
 
   final String label;
   final String value;
@@ -159,7 +196,9 @@ class _StatBox extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.all(14.sp),
         decoration: BoxDecoration(
-          color: lime ? AppColors.lime.withValues(alpha: 0.12) : AppColors.white.withValues(alpha: 0.07),
+          color: lime
+              ? AppColors.lime.withValues(alpha: 0.12)
+              : AppColors.white.withValues(alpha: 0.07),
           borderRadius: BorderRadius.circular(18.sp),
         ),
         child: Column(
@@ -174,12 +213,22 @@ class _StatBox extends StatelessWidget {
               ),
             ),
             SizedBox(height: 4.sp),
-            Text(value, style: AppText.title.copyWith(fontSize: 16.sp, color: AppColors.white)),
+            Text(
+              value,
+              style: AppText.title.copyWith(
+                fontSize: 16.sp,
+                color: AppColors.white,
+              ),
+            ),
             Text(
               sub,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: AppText.small.copyWith(fontSize: 12.5.sp, fontWeight: FontWeight.w600, color: AppColors.heroMuted),
+              style: AppText.small.copyWith(
+                fontSize: 12.5.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.heroMuted,
+              ),
             ),
           ],
         ),
@@ -209,7 +258,11 @@ class _InfoRow extends StatelessWidget {
           Expanded(
             child: Text.rich(
               text,
-              style: AppText.small.copyWith(fontSize: 13.5.sp, fontWeight: FontWeight.w600, color: AppColors.heroMuted),
+              style: AppText.small.copyWith(
+                fontSize: 13.5.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.heroMuted,
+              ),
             ),
           ),
         ],
@@ -233,7 +286,10 @@ class _DoneButton extends StatelessWidget {
         minimumSize: Size.fromHeight(58.sp),
         shape: const StadiumBorder(),
       ),
-      child: Text('Done', style: AppText.button.copyWith(fontSize: 17.sp, color: AppColors.ink)),
+      child: Text(
+        'Done',
+        style: AppText.button.copyWith(fontSize: 17.sp, color: AppColors.ink),
+      ),
     );
   }
 }
@@ -252,7 +308,8 @@ class _SuccessMark extends StatefulWidget {
   State<_SuccessMark> createState() => _SuccessMarkState();
 }
 
-class _SuccessMarkState extends State<_SuccessMark> with SingleTickerProviderStateMixin {
+class _SuccessMarkState extends State<_SuccessMark>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _c = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 1400),
@@ -320,7 +377,12 @@ class _SuccessMarkState extends State<_SuccessMark> with SingleTickerProviderSta
                       height: s,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.lime.withValues(alpha: 0.6 * (1 - r)), width: 3),
+                        border: Border.all(
+                          color: AppColors.lime.withValues(
+                            alpha: 0.6 * (1 - r),
+                          ),
+                          width: 3,
+                        ),
                       ),
                     ),
                   ),
@@ -329,7 +391,10 @@ class _SuccessMarkState extends State<_SuccessMark> with SingleTickerProviderSta
                   child: Container(
                     width: s,
                     height: s,
-                    decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.lime),
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.lime,
+                    ),
                     child: CustomPaint(painter: _TickPainter(_tick.value)),
                   ),
                 ),

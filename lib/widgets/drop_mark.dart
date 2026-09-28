@@ -37,7 +37,11 @@ class DropMark extends StatelessWidget {
 }
 
 class DropMarkPainter extends CustomPainter {
-  DropMarkPainter({required this.smile, required this.shine, required this.ripple});
+  DropMarkPainter({
+    required this.smile,
+    required this.shine,
+    required this.ripple,
+  });
 
   final double smile;
   final double shine;
@@ -46,7 +50,11 @@ class DropMarkPainter extends CustomPainter {
   static Path get dropPath => Path()
     ..moveTo(50, 14)
     ..cubicTo(50, 14, 26, 43, 26, 59)
-    ..arcToPoint(const Offset(74, 59), radius: const Radius.circular(24), clockwise: false)
+    ..arcToPoint(
+      const Offset(74, 59),
+      radius: const Radius.circular(24),
+      clockwise: false,
+    )
     ..cubicTo(74, 43, 50, 14, 50, 14)
     ..close();
 
@@ -69,7 +77,11 @@ class DropMarkPainter extends CustomPainter {
         ..strokeWidth = 1.6
         ..color = AppColors.lime.withValues(alpha: 0.55 * (1 - ripple));
       canvas.drawOval(
-        Rect.fromCenter(center: const Offset(50, 85), width: 34 + 44 * ripple, height: 8 + 8 * ripple),
+        Rect.fromCenter(
+          center: const Offset(50, 85),
+          width: 34 + 44 * ripple,
+          height: 8 + 8 * ripple,
+        ),
         ring,
       );
     }
@@ -89,7 +101,10 @@ class DropMarkPainter extends CustomPainter {
 
     if (smile > 0) {
       final metric = smilePath.computeMetrics().first;
-      final partial = metric.extractPath(0, metric.length * smile.clamp(0.0, 1.0));
+      final partial = metric.extractPath(
+        0,
+        metric.length * smile.clamp(0.0, 1.0),
+      );
       canvas.drawPath(
         partial,
         Paint()

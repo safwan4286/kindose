@@ -12,7 +12,10 @@ import '../../../widgets/toast.dart';
 import '../today_controller.dart';
 
 Future<void> showEditTodaySheet() {
-  return Get.bottomSheet<void>(const _EditTodaySheet(), isScrollControlled: true);
+  return Get.bottomSheet<void>(
+    const _EditTodaySheet(),
+    isScrollControlled: true,
+  );
 }
 
 /// Drag to reorder Today's cards, switch off the ones you don't want.
@@ -36,7 +39,10 @@ class _EditTodaySheetState extends State<_EditTodaySheet> {
     final k = context.k;
     return KSafeArea(
       child: Container(
-        decoration: BoxDecoration(color: k.bg, borderRadius: BorderRadius.vertical(top: Radius.circular(28.sp))),
+        decoration: BoxDecoration(
+          color: k.bg,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28.sp)),
+        ),
         padding: EdgeInsets.fromLTRB(20.sp, 10.sp, 20.sp, 8.sp),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -46,15 +52,25 @@ class _EditTodaySheetState extends State<_EditTodaySheet> {
               child: Container(
                 width: 40.sp,
                 height: 5.sp,
-                decoration: BoxDecoration(color: k.border, borderRadius: BorderRadius.circular(3.sp)),
+                decoration: BoxDecoration(
+                  color: k.border,
+                  borderRadius: BorderRadius.circular(3.sp),
+                ),
               ),
             ),
             SizedBox(height: 14.sp),
-            Text('Edit Today', style: AppText.h1.copyWith(fontSize: 24.sp, color: k.text)),
+            Text(
+              'Edit Today',
+              style: AppText.h1.copyWith(fontSize: 24.sp, color: k.text),
+            ),
             SizedBox(height: 4.sp),
             Text(
               'Drag to reorder. Switch off what you don’t need. Your next dose always stays on top.',
-              style: AppText.small.copyWith(fontSize: 13.5.sp, height: 1.4, color: k.muted),
+              style: AppText.small.copyWith(
+                fontSize: 13.5.sp,
+                height: 1.4,
+                color: k.muted,
+              ),
             ),
             SizedBox(height: 12.sp),
             Flexible(
@@ -62,9 +78,9 @@ class _EditTodaySheetState extends State<_EditTodaySheet> {
                 shrinkWrap: true,
                 buildDefaultDragHandles: false,
                 onReorderStart: (_) => Haptics.instance.selectionClick(),
-                onReorder: (from, to) {
+                // onReorderItem already adjusts `to` for the removed item.
+                onReorderItem: (from, to) {
                   setState(() {
-                    if (to > from) to--;
                     _order.insert(to, _order.removeAt(from));
                   });
                   Haptics.instance.lightImpact();
@@ -76,7 +92,10 @@ class _EditTodaySheetState extends State<_EditTodaySheet> {
                       padding: EdgeInsets.only(bottom: 8.sp),
                       child: Container(
                         padding: EdgeInsets.fromLTRB(6.sp, 4.sp, 8.sp, 4.sp),
-                        decoration: BoxDecoration(color: k.card, borderRadius: BorderRadius.circular(18.sp)),
+                        decoration: BoxDecoration(
+                          color: k.card,
+                          borderRadius: BorderRadius.circular(18.sp),
+                        ),
                         child: Row(
                           children: [
                             ReorderableDragStartListener(
@@ -84,7 +103,12 @@ class _EditTodaySheetState extends State<_EditTodaySheet> {
                               child: SizedBox(
                                 width: 44.sp,
                                 height: 44.sp,
-                                child: Icon(PhosphorIconsBold.dotsSixVertical, size: 20.sp, color: k.faint, semanticLabel: 'Drag'),
+                                child: Icon(
+                                  PhosphorIconsBold.dotsSixVertical,
+                                  size: 20.sp,
+                                  color: k.faint,
+                                  semanticLabel: 'Drag',
+                                ),
                               ),
                             ),
                             Expanded(
@@ -93,17 +117,27 @@ class _EditTodaySheetState extends State<_EditTodaySheet> {
                                 style: AppText.bodyStrong.copyWith(
                                   fontSize: 15.sp,
                                   fontWeight: FontWeight.w700,
-                                  color: _hidden.contains(_order[i]) ? k.faint : k.text,
+                                  color: _hidden.contains(_order[i])
+                                      ? k.faint
+                                      : k.text,
                                 ),
                               ),
                             ),
                             Switch.adaptive(
                               value: !_hidden.contains(_order[i]),
                               activeTrackColor: k.selectedBorder,
-                              thumbColor: WidgetStatePropertyAll(k.selectedBorder == AppColors.lime ? AppColors.ink : AppColors.white),
+                              thumbColor: WidgetStatePropertyAll(
+                                k.selectedBorder == AppColors.lime
+                                    ? AppColors.ink
+                                    : AppColors.white,
+                              ),
                               onChanged: (on) {
                                 Haptics.instance.selectionClick();
-                                setState(() => on ? _hidden.remove(_order[i]) : _hidden.add(_order[i]));
+                                setState(
+                                  () => on
+                                      ? _hidden.remove(_order[i])
+                                      : _hidden.add(_order[i]),
+                                );
                               },
                             ),
                           ],

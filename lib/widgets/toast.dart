@@ -12,7 +12,10 @@ void popRoute() => Get.key.currentState?.pop();
 /// Short confirmation at the bottom of the screen, above the tab bar.
 void showToast(String message) {
   Get.rawSnackbar(
-    messageText: Text(message, style: AppText.bodyStrong.copyWith(color: AppColors.white)),
+    messageText: Text(
+      message,
+      style: AppText.bodyStrong.copyWith(color: AppColors.white),
+    ),
     backgroundColor: AppColors.ink,
     borderRadius: 18,
     margin: const EdgeInsets.fromLTRB(16, 0, 16, 104),
@@ -27,7 +30,10 @@ void showUndoToast(String message, Future<void> Function() onUndo) {
   var done = false;
   Get.closeCurrentSnackbar();
   Get.rawSnackbar(
-    messageText: Text(message, style: AppText.bodyStrong.copyWith(color: AppColors.white)),
+    messageText: Text(
+      message,
+      style: AppText.bodyStrong.copyWith(color: AppColors.white),
+    ),
     mainButton: TextButton(
       onPressed: () async {
         if (done) return;
@@ -35,7 +41,10 @@ void showUndoToast(String message, Future<void> Function() onUndo) {
         Get.closeCurrentSnackbar();
         await onUndo();
       },
-      style: TextButton.styleFrom(foregroundColor: AppColors.lime, minimumSize: const Size(64, 44)),
+      style: TextButton.styleFrom(
+        foregroundColor: AppColors.lime,
+        minimumSize: const Size(64, 44),
+      ),
       child: Text('Undo', style: AppText.title.copyWith(color: AppColors.lime)),
     ),
     backgroundColor: AppColors.ink,

@@ -12,22 +12,24 @@ class ApiScripts {
     ApiRequest request,
     Map<String, dynamic> response, [
     Completer<ApiResponse>? completer,
-  ])? preCheckResponse;
+  ])?
+  preCheckResponse;
 
   /// Can call when you want to specify the the error code that is not available in the check response switch case.
   final Future<void> Function(
     ApiRequest request,
     Map<String, dynamic> response,
     Completer<ApiResponse> completer,
-  )? onUnknownErrorCode;
+  )?
+  onUnknownErrorCode;
 
   /// Can call when the unexpected error occured in the API.
   final Future<void> Function(ApiRequest request, [ApiResponse response])?
-      onError;
+  onError;
 
   /// Can call after the error if you want to return the custom response.
   final Future<void> Function(ApiRequest request, [ApiResponse response])?
-      postError;
+  postError;
 
   ApiScripts({
     this.preApiCall,

@@ -1,5 +1,3 @@
-
-
 import '../resources/date_utils.dart';
 import 'map_read.dart';
 
@@ -29,15 +27,15 @@ class DoseLog {
   final String? note;
 
   Map<String, dynamic> toMap() => {
-        'id': id,
-        'takenAt': takenAt.millisecondsSinceEpoch,
-        'medicineId': medicineId,
-        'strengthMg': strengthMg,
-        'site': site,
-        'pain': pain,
-        'painScale': 4,
-        'note': note,
-      };
+    'id': id,
+    'takenAt': takenAt.millisecondsSinceEpoch,
+    'medicineId': medicineId,
+    'strengthMg': strengthMg,
+    'site': site,
+    'pain': pain,
+    'painScale': 4,
+    'note': note,
+  };
 
   static DoseLog? fromMap(Map<dynamic, dynamic> m) {
     final at = m.date('takenAt');
@@ -88,7 +86,13 @@ class DoseLog {
 
 /// One protein or water entry, so Today can show a timeline and undo.
 class LogEntry {
-  const LogEntry({required this.id, required this.at, required this.kind, required this.amount, this.label});
+  const LogEntry({
+    required this.id,
+    required this.at,
+    required this.kind,
+    required this.amount,
+    this.label,
+  });
 
   final String id;
   final DateTime at;
@@ -103,20 +107,27 @@ class LogEntry {
   bool get isProtein => kind == 'protein';
 
   Map<String, dynamic> toMap() => {
-        'id': id,
-        'at': at.millisecondsSinceEpoch,
-        'kind': kind,
-        'amount': amount,
-        'label': label,
-      };
+    'id': id,
+    'at': at.millisecondsSinceEpoch,
+    'kind': kind,
+    'amount': amount,
+    'label': label,
+  };
 
   static LogEntry? fromMap(dynamic raw) {
     if (raw is! Map) return null;
     final at = raw.date('at');
     final id = raw.str('id');
     final kind = raw.str('kind');
-    if (at == null || id.isEmpty || (kind != 'protein' && kind != 'water')) return null;
-    return LogEntry(id: id, at: at, kind: kind, amount: raw.integer('amount'), label: raw.strOrNull('label'));
+    if (at == null || id.isEmpty || (kind != 'protein' && kind != 'water'))
+      return null;
+    return LogEntry(
+      id: id,
+      at: at,
+      kind: kind,
+      amount: raw.integer('amount'),
+      label: raw.strOrNull('label'),
+    );
   }
 }
 
@@ -168,10 +179,16 @@ class DayLog {
   DateTime get date => Dates.parseKey(key) ?? DateTime.now();
 
   bool get hasCheckIn =>
-      mood != null || symptoms.isNotEmpty || nausea != null || foodNoise != null || appetite != null || note != null;
+      mood != null ||
+      symptoms.isNotEmpty ||
+      nausea != null ||
+      foodNoise != null ||
+      appetite != null ||
+      note != null;
 
   /// 0 (not felt) to 3 (severe) for a side effect id.
-  int levelOf(String id) => symptomLevels[id] ?? (symptoms.contains(id) ? 1 : 0);
+  int levelOf(String id) =>
+      symptomLevels[id] ?? (symptoms.contains(id) ? 1 : 0);
 
   DayLog copyWith({
     int? proteinG,
@@ -202,18 +219,18 @@ class DayLog {
   }
 
   Map<String, dynamic> toMap() => {
-        'key': key,
-        'proteinG': proteinG,
-        'waterMl': waterMl,
-        'mood': mood,
-        'symptoms': symptoms,
-        'symptomLevels': symptomLevels,
-        'nausea': nausea,
-        'foodNoise': foodNoise,
-        'appetite': appetite,
-        'note': note,
-        'entries': entries.map((e) => e.toMap()).toList(),
-      };
+    'key': key,
+    'proteinG': proteinG,
+    'waterMl': waterMl,
+    'mood': mood,
+    'symptoms': symptoms,
+    'symptomLevels': symptomLevels,
+    'nausea': nausea,
+    'foodNoise': foodNoise,
+    'appetite': appetite,
+    'note': note,
+    'entries': entries.map((e) => e.toMap()).toList(),
+  };
 
   static DayLog? fromMap(Map<dynamic, dynamic> m) {
     final key = m.str('key');
@@ -240,7 +257,8 @@ class DayLog {
     if (raw is! Map) return const <String, int>{};
     return {
       for (final e in raw.entries)
-        if (e.key is String && e.value is num) e.key as String: (e.value as num).toInt().clamp(1, 3),
+        if (e.key is String && e.value is num)
+          e.key as String: (e.value as num).toInt().clamp(1, 3),
     };
   }
 }
@@ -255,9 +273,9 @@ class WeightEntry {
   String get key => Dates.key(date);
 
   Map<String, dynamic> toMap() => {
-        'date': Dates.dateOnly(date).millisecondsSinceEpoch,
-        'kg': kg,
-      };
+    'date': Dates.dateOnly(date).millisecondsSinceEpoch,
+    'kg': kg,
+  };
 
   static WeightEntry? fromMap(Map<dynamic, dynamic> m) {
     final d = m.date('date');

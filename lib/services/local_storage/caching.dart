@@ -13,12 +13,11 @@ class Caching {
   final LocalStorage _localStorage = LocalStorage();
 
   // Read data from a box
-  Future<T?> readData<T>({
-    required String boxName,
-    required String key,
-  }) async {
-    final storedData =
-    await _localStorage.readData<T>(boxName: boxName, key: key);
+  Future<T?> readData<T>({required String boxName, required String key}) async {
+    final storedData = await _localStorage.readData<T>(
+      boxName: boxName,
+      key: key,
+    );
     return storedData;
   }
 }

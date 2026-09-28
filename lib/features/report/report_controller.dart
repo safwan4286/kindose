@@ -23,7 +23,10 @@ class ReportController extends GetxController {
   final TextEditingController questionCtrl = TextEditingController();
 
   late final Rx<ReportPeriod> period =
-      (tracker.lastAppointment.value != null ? ReportPeriod.lastVisit : ReportPeriod.weeks4).obs;
+      (tracker.lastAppointment.value != null
+              ? ReportPeriod.lastVisit
+              : ReportPeriod.weeks4)
+          .obs;
 
   final RxBool doses = true.obs;
   final RxBool weight = true.obs;
@@ -60,6 +63,7 @@ class ReportController extends GetxController {
     tracker.nextAppointment.value;
     tracker.lastAppointment.value;
     tracker.reportQuestions.length;
+    tracker.visitReminderOn.value;
     tracker.doses.length;
     tracker.days.length;
     tracker.weights.length;
@@ -93,16 +97,18 @@ class ReportController extends GetxController {
 
   String get appointmentSub => nextAppointment == null
       ? 'We’ll remind you 3 days before to get your report ready.'
-      : (tracker.profile.value?.remindersOn ?? false)
-          ? 'We’ll remind you 3 days before.'
-          : 'Turn on reminders in Me to get a nudge 3 days before.';
+      : tracker.visitReminderOn.value
+      ? 'We’ll remind you 3 days before.'
+      : 'Turn on Doctor visit reminders in Me to get a nudge 3 days before.';
 
   Future<void> pickAppointment(BuildContext context) async {
     Haptics.instance.selectionClick();
     final now = DateTime.now();
     final first = Dates.dateOnly(now);
     final saved = nextAppointment;
-    final initial = (saved == null || saved.isBefore(first)) ? now.add(const Duration(days: 7)) : saved;
+    final initial = (saved == null || saved.isBefore(first))
+        ? now.add(const Duration(days: 7))
+        : saved;
     final picked = await showDatePicker(
       context: context,
       initialDate: initial,
@@ -116,18 +122,18 @@ class ReportController extends GetxController {
   // ---------------------------------------------------------------- period
 
   List<ReportPeriod> get periods => [
-        if (tracker.lastAppointment.value != null) ReportPeriod.lastVisit,
-        ReportPeriod.weeks4,
-        ReportPeriod.months3,
-        ReportPeriod.all,
-      ];
+    if (tracker.lastAppointment.value != null) ReportPeriod.lastVisit,
+    ReportPeriod.weeks4,
+    ReportPeriod.months3,
+    ReportPeriod.all,
+  ];
 
   String periodLabel(ReportPeriod p) => switch (p) {
-        ReportPeriod.lastVisit => 'Last visit',
-        ReportPeriod.weeks4 => '4 weeks',
-        ReportPeriod.months3 => '3 months',
-        ReportPeriod.all => 'All',
-      };
+    ReportPeriod.lastVisit => 'Last visit',
+    ReportPeriod.weeks4 => '4 weeks',
+    ReportPeriod.months3 => '3 months',
+    ReportPeriod.all => 'All',
+  };
 
   String periodSub(ReportPeriod p) {
     switch (p) {
@@ -165,24 +171,29 @@ class ReportController extends GetxController {
     final today = Dates.dateOnly(DateTime.now());
     switch (period.value) {
       case ReportPeriod.lastVisit:
-        return Dates.dateOnly(tracker.lastAppointment.value ?? today.subtract(const Duration(days: 27)));
+        return Dates.dateOnly(
+          tracker.lastAppointment.value ??
+              today.subtract(const Duration(days: 27)),
+        );
       case ReportPeriod.weeks4:
         return today.subtract(const Duration(days: 27));
       case ReportPeriod.months3:
         return today.subtract(const Duration(days: 90));
       case ReportPeriod.all:
-        return Dates.dateOnly(_treatmentStart ?? today.subtract(const Duration(days: 27)));
+        return Dates.dateOnly(
+          _treatmentStart ?? today.subtract(const Duration(days: 27)),
+        );
     }
   }
 
   DateTime get to => Dates.dateOnly(DateTime.now());
 
   String get periodNote => switch (period.value) {
-        ReportPeriod.lastVisit => 'since last visit',
-        ReportPeriod.weeks4 => 'last 4 weeks',
-        ReportPeriod.months3 => 'last 3 months',
-        ReportPeriod.all => 'whole treatment',
-      };
+    ReportPeriod.lastVisit => 'since last visit',
+    ReportPeriod.weeks4 => 'last 4 weeks',
+    ReportPeriod.months3 => 'last 3 months',
+    ReportPeriod.all => 'whole treatment',
+  };
 
   String get periodTitle {
     final days = Dates.daysBetween(from, to) + 1;
@@ -193,14 +204,19 @@ class ReportController extends GetxController {
   // -------------------------------------------------------------- sections
 
   ReportSections get sections => ReportSections(
-        doses: doses.value,
-        weight: weight.value,
-        sideEffects: sideEffects.value,
-        nutrition: nutrition.value,
-        notes: notes.value,
-      );
+    doses: doses.value,
+    weight: weight.value,
+    sideEffects: sideEffects.value,
+    nutrition: nutrition.value,
+    notes: notes.value,
+  );
 
-  bool get anySection => doses.value || weight.value || sideEffects.value || nutrition.value || notes.value;
+  bool get anySection =>
+      doses.value ||
+      weight.value ||
+      sideEffects.value ||
+      nutrition.value ||
+      notes.value;
 
   void flip(RxBool v) {
     Haptics.instance.selectionClick();
@@ -217,7 +233,9 @@ class ReportController extends GetxController {
     ];
     if (parts.isEmpty) return 'Pick at least one section.';
     final qs = questions.length;
-    final joined = parts.length == 1 ? parts.first : '${parts.sublist(0, parts.length - 1).join(', ')} and ${parts.last}';
+    final joined = parts.length == 1
+        ? parts.first
+        : '${parts.sublist(0, parts.length - 1).join(', ')} and ${parts.last}';
     return 'Includes $joined${qs == 0 ? '.' : ', plus $qs ${qs == 1 ? 'question' : 'questions'}.'}';
   }
 
@@ -225,7 +243,8 @@ class ReportController extends GetxController {
 
   List<String> get questions => tracker.reportQuestions;
 
-  List<String> get ideas => ideaPool.where((q) => !questions.contains(q)).take(3).toList();
+  List<String> get ideas =>
+      ideaPool.where((q) => !questions.contains(q)).take(3).toList();
 
   Future<void> addQuestion([String? text]) async {
     final q = (text ?? questionCtrl.text).trim();
@@ -244,15 +263,15 @@ class ReportController extends GetxController {
   // --------------------------------------------------------- preview/share
 
   ReportData buildData() => ReportData.build(
-        tracker,
-        from: from,
-        to: to,
-        sections: sections,
-        periodNote: periodNote,
-        questions: questions,
-        patientName: includeName.value ? nameCtrl.text.trim() : null,
-        patientDob: includeName.value ? dobCtrl.text.trim() : null,
-      );
+    tracker,
+    from: from,
+    to: to,
+    sections: sections,
+    periodNote: periodNote,
+    questions: questions,
+    patientName: includeName.value ? nameCtrl.text.trim() : null,
+    patientDob: includeName.value ? dobCtrl.text.trim() : null,
+  );
 
   void preview() {
     if (!anySection) {
@@ -283,7 +302,10 @@ class ReportController extends GetxController {
     try {
       Haptics.instance.mediumImpact();
       final bytes = await ReportPdf.build(data);
-      await Printing.sharePdf(bytes: bytes, filename: 'kindose-report-${Dates.key(DateTime.now())}.pdf');
+      await Printing.sharePdf(
+        bytes: bytes,
+        filename: 'kindose-report-${Dates.key(DateTime.now())}.pdf',
+      );
     } catch (_) {
       showToast("Couldn't create the PDF. Please try again.");
     } finally {

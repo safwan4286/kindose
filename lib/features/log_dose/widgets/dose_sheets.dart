@@ -18,7 +18,10 @@ import '../../../widgets/k_widgets.dart';
 enum CloseDoseChoice { editThat, logNew }
 
 /// Asked when a new dose is close to a saved one. Returns null if closed.
-Future<CloseDoseChoice?> showCloseDoseSheet(DoseLog close, {required bool daily}) {
+Future<CloseDoseChoice?> showCloseDoseSheet(
+  DoseLog close, {
+  required bool daily,
+}) {
   Haptics.instance.lightImpact();
   return Get.bottomSheet<CloseDoseChoice>(
     _CloseDoseSheet(close: close, daily: daily),
@@ -41,7 +44,9 @@ class _CloseDoseSheet extends StatelessWidget {
       1 => 'yesterday',
       _ => '$ago days ago',
     };
-    final site = close.site.isEmpty ? '' : ' · ${Catalog.siteName(close.site).toLowerCase()}';
+    final site = close.site.isEmpty
+        ? ''
+        : ' · ${Catalog.siteName(close.site).toLowerCase()}';
     final day = Dates.weekdayName(close.takenAt.weekday);
     return KSheetFrame(
       icon: const KIconTile(
@@ -49,8 +54,11 @@ class _CloseDoseSheet extends StatelessWidget {
         bg: AppColors.amberSoft,
         fg: AppColors.amberText,
       ),
-      title: daily ? 'Already marked as taken today' : 'You logged a dose $when',
-      sub: '${Dates.shortWithDay(close.takenAt)}, ${Dates.time(close.takenAt)} · '
+      title: daily
+          ? 'Already marked as taken today'
+          : 'You logged a dose $when',
+      sub:
+          '${Dates.shortWithDay(close.takenAt)}, ${Dates.time(close.takenAt)} · '
           '${Catalog.mgLabel(close.strengthMg)}$site. '
           'Is this a new dose, or do you want to fix that one?',
       children: [
@@ -73,7 +81,11 @@ class _CloseDoseSheet extends StatelessWidget {
 // ------------------------------------------------------------ change dose
 
 class ChangeDoseResult {
-  const ChangeDoseResult({required this.strength, required this.makeUsual, this.switchMedicine = false});
+  const ChangeDoseResult({
+    required this.strength,
+    required this.makeUsual,
+    this.switchMedicine = false,
+  });
 
   final double strength;
   final bool makeUsual;
@@ -141,7 +153,8 @@ class _ChangeDoseSheetState extends State<_ChangeDoseSheet> {
                 width: 98.sp,
                 child: ChoiceBox(
                   selected: s == _pick,
-                  semanticLabel: '${Catalog.mgLabel(s)}${s == widget.usual ? ', your usual dose' : ''}',
+                  semanticLabel:
+                      '${Catalog.mgLabel(s)}${s == widget.usual ? ', your usual dose' : ''}',
                   onTap: () {
                     Haptics.instance.selectionClick();
                     setState(() => _pick = s);
@@ -150,9 +163,21 @@ class _ChangeDoseSheetState extends State<_ChangeDoseSheet> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(Catalog.mgLabel(s), style: AppText.title.copyWith(fontSize: 15.sp, color: k.text)),
+                      Text(
+                        Catalog.mgLabel(s),
+                        style: AppText.title.copyWith(
+                          fontSize: 15.sp,
+                          color: k.text,
+                        ),
+                      ),
                       if (s == widget.usual)
-                        Text('Usual', style: AppText.tiny.copyWith(fontSize: 11.sp, color: k.muted)),
+                        Text(
+                          'Usual',
+                          style: AppText.tiny.copyWith(
+                            fontSize: 11.sp,
+                            color: k.muted,
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -178,14 +203,20 @@ class _ChangeDoseSheetState extends State<_ChangeDoseSheet> {
         PillButton(
           label: 'Use ${Catalog.mgLabel(_pick)}',
           icon: PhosphorIconsBold.check,
-          onPressed: () => Navigator.of(context).pop(ChangeDoseResult(strength: _pick, makeUsual: _usual && changed)),
+          onPressed: () => Navigator.of(context).pop(
+            ChangeDoseResult(strength: _pick, makeUsual: _usual && changed),
+          ),
         ),
         SizedBox(height: 4.sp),
         LinkButton(
           label: 'Switched medicine?',
           color: k.text,
           onTap: () => Navigator.of(context).pop(
-            ChangeDoseResult(strength: _pick, makeUsual: false, switchMedicine: true),
+            ChangeDoseResult(
+              strength: _pick,
+              makeUsual: false,
+              switchMedicine: true,
+            ),
           ),
         ),
       ],

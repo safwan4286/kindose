@@ -22,7 +22,8 @@ class BaselinePage extends GetView<OnboardingController> {
   const BaselinePage({super.key});
 
   double _shown(double kg) => controller.useKg.value ? kg : kg * _lbPerKg;
-  double _toKg(double shown) => controller.useKg.value ? shown : shown / _lbPerKg;
+  double _toKg(double shown) =>
+      controller.useKg.value ? shown : shown / _lbPerKg;
   String get _unit => controller.useKg.value ? 'kg' : 'lb';
 
   /// One tap = 0.1 in the unit on screen.
@@ -85,7 +86,12 @@ class BaselinePage extends GetView<OnboardingController> {
               children: [
                 Row(
                   children: [
-                    Expanded(child: Text('Weight today', style: AppText.title.copyWith(color: k.muted))),
+                    Expanded(
+                      child: Text(
+                        'Weight today',
+                        style: AppText.title.copyWith(color: k.muted),
+                      ),
+                    ),
                     SizedBox(
                       width: 110,
                       child: KSegmented<bool>(
@@ -112,7 +118,8 @@ class BaselinePage extends GetView<OnboardingController> {
                     Expanded(
                       child: Semantics(
                         button: true,
-                        label: 'Weight ${_shown(kg).toStringAsFixed(1)} $_unit. Tap to type',
+                        label:
+                            'Weight ${_shown(kg).toStringAsFixed(1)} $_unit. Tap to type',
                         excludeSemantics: true,
                         child: GestureDetector(
                           onTap: () => _typeWeight(context),
@@ -123,9 +130,18 @@ class BaselinePage extends GetView<OnboardingController> {
                               crossAxisAlignment: CrossAxisAlignment.baseline,
                               textBaseline: TextBaseline.alphabetic,
                               children: [
-                                Text(_shown(kg).toStringAsFixed(1), style: AppText.number(58)),
+                                Text(
+                                  _shown(kg).toStringAsFixed(1),
+                                  style: AppText.number(58),
+                                ),
                                 const SizedBox(width: 4),
-                                Text(_unit, style: AppText.title.copyWith(fontSize: 20, color: k.muted)),
+                                Text(
+                                  _unit,
+                                  style: AppText.title.copyWith(
+                                    fontSize: 20,
+                                    color: k.muted,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -144,7 +160,9 @@ class BaselinePage extends GetView<OnboardingController> {
                 const SizedBox(height: 14),
                 _Ruler(
                   value: _shown(kg),
-                  onDrag: (deltaShown) => controller.stepWeight(controller.useKg.value ? deltaShown : deltaShown / _lbPerKg),
+                  onDrag: (deltaShown) => controller.stepWeight(
+                    controller.useKg.value ? deltaShown : deltaShown / _lbPerKg,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -166,12 +184,14 @@ class BaselinePage extends GetView<OnboardingController> {
               Expanded(
                 child: _OptionalCard(
                   label: 'Goal weight · optional',
-                  value: goal == null ? 'Add' : '${_shown(goal).toStringAsFixed(goal % 1 == 0 ? 0 : 1)} $_unit',
+                  value: goal == null
+                      ? 'Add'
+                      : '${_shown(goal).toStringAsFixed(goal % 1 == 0 ? 0 : 1)} $_unit',
                   note: toGo == null
                       ? 'Skip if unsure'
                       : toGo > 0
-                          ? '${_shown(toGo).toStringAsFixed(1)} $_unit to go'
-                          : 'At or below today',
+                      ? '${_shown(toGo).toStringAsFixed(1)} $_unit to go'
+                      : 'At or below today',
                   onTap: () => _typeGoal(context),
                 ),
               ),
@@ -180,7 +200,9 @@ class BaselinePage extends GetView<OnboardingController> {
                 child: _OptionalCard(
                   label: 'Height · optional',
                   value: h == null ? 'Add' : '${h.toStringAsFixed(0)} cm',
-                  note: bmi == null ? 'For BMI on reports' : 'BMI ${bmi.toStringAsFixed(1)}',
+                  note: bmi == null
+                      ? 'For BMI on reports'
+                      : 'BMI ${bmi.toStringAsFixed(1)}',
                   onTap: () => _typeHeight(context),
                 ),
               ),
@@ -193,7 +215,12 @@ class BaselinePage extends GetView<OnboardingController> {
 }
 
 class _OptionalCard extends StatelessWidget {
-  const _OptionalCard({required this.label, required this.value, required this.note, required this.onTap});
+  const _OptionalCard({
+    required this.label,
+    required this.value,
+    required this.note,
+    required this.onTap,
+  });
 
   final String label;
   final String value;
@@ -210,11 +237,22 @@ class _OptionalCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: AppText.tiny.copyWith(fontSize: 12, color: k.muted)),
+          Text(
+            label,
+            style: AppText.tiny.copyWith(fontSize: 12, color: k.muted),
+          ),
           const SizedBox(height: 6),
-          Text(value, style: AppText.h2.copyWith(color: value == 'Add' ? AppColors.violet : k.text)),
+          Text(
+            value,
+            style: AppText.h2.copyWith(
+              color: value == 'Add' ? AppColors.violet : k.text,
+            ),
+          ),
           const SizedBox(height: 2),
-          Text(note, style: AppText.tiny.copyWith(fontSize: 12, color: k.faint)),
+          Text(
+            note,
+            style: AppText.tiny.copyWith(fontSize: 12, color: k.faint),
+          ),
         ],
       ),
     );
@@ -261,7 +299,12 @@ class _RulerState extends State<_Ruler> {
           height: 54,
           width: double.infinity,
           child: CustomPaint(
-            painter: _RulerPainter(widget.value, k.border, k.muted, AppColors.violet),
+            painter: _RulerPainter(
+              widget.value,
+              k.border,
+              k.muted,
+              AppColors.violet,
+            ),
           ),
         ),
       ),
@@ -292,13 +335,20 @@ class _RulerPainter extends CustomPainter {
       final x = cx + (i - frac) * _Ruler.pxPerTenth;
       final isWhole = t % 10 == 0;
       final isHalf = t % 5 == 0;
-      final h = isWhole ? 26.0 : isHalf ? 18.0 : 11.0;
+      final h = isWhole
+          ? 26.0
+          : isHalf
+          ? 18.0
+          : 11.0;
       canvas.drawLine(Offset(x, 0), Offset(x, h), paint);
       if (isWhole) {
         final tp = TextPainter(
           text: TextSpan(
             text: (t ~/ 10).toString(),
-            style: AppText.tiny.copyWith(color: label, fontWeight: FontWeight.w800),
+            style: AppText.tiny.copyWith(
+              color: label,
+              fontWeight: FontWeight.w800,
+            ),
           ),
           textDirection: TextDirection.ltr,
         )..layout();
@@ -313,7 +363,8 @@ class _RulerPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_RulerPainter old) => old.value != value || old.tick != tick;
+  bool shouldRepaint(_RulerPainter old) =>
+      old.value != value || old.tick != tick;
 }
 
 /// Step 5: protein goal with an interactive sample plate.
@@ -325,7 +376,8 @@ class ProteinPage extends GetView<OnboardingController> {
     final k = context.k;
     return StepScaffold(
       title: 'Protect your muscle',
-      subtitle: 'Eating less can mean losing muscle. A daily protein goal helps. Adjust it with your dietitian.',
+      subtitle:
+          'Eating less can mean losing muscle. A daily protein goal helps. Adjust it with your dietitian.',
       cta: PillButton(label: 'Continue', onPressed: controller.next),
       children: [
         Obx(() {
@@ -338,8 +390,15 @@ class ProteinPage extends GetView<OnboardingController> {
                   children: [
                     const ThreeD(Img3d.biceps, size: 34),
                     const SizedBox(width: 10),
-                    Expanded(child: Text('Daily protein goal', style: AppText.title)),
-                    Text('$goal g', style: AppText.number(26).copyWith(color: AppColors.tangerine)),
+                    Expanded(
+                      child: Text('Daily protein goal', style: AppText.title),
+                    ),
+                    Text(
+                      '$goal g',
+                      style: AppText.number(
+                        26,
+                      ).copyWith(color: AppColors.tangerine),
+                    ),
                   ],
                 ),
                 Slider(
@@ -362,17 +421,19 @@ class ProteinPage extends GetView<OnboardingController> {
         Row(
           children: [
             Expanded(child: SectionLabel('Try a sample day')),
-            Obx(() => SizedBox(
-                  width: 170,
-                  child: KSegmented<bool>(
-                    options: const [false, true],
-                    selected: controller.veg.value,
-                    onChanged: controller.setVeg,
-                    labelOf: (v) => v ? 'Veg' : 'Everyday',
-                    dense: true,
-                    darkSelected: true,
-                  ),
-                )),
+            Obx(
+              () => SizedBox(
+                width: 170,
+                child: KSegmented<bool>(
+                  options: const [false, true],
+                  selected: controller.veg.value,
+                  onChanged: controller.setVeg,
+                  labelOf: (v) => v ? 'Veg' : 'Everyday',
+                  dense: true,
+                  darkSelected: true,
+                ),
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 12),
@@ -399,8 +460,12 @@ class ProteinPage extends GetView<OnboardingController> {
                         children: [
                           for (var i = 0; i < foods.length; i++)
                             Positioned(
-                              left: 43 + 38 * math.cos(-math.pi / 2 + i * math.pi / 3),
-                              top: 43 + 38 * math.sin(-math.pi / 2 + i * math.pi / 3),
+                              left:
+                                  43 +
+                                  38 * math.cos(-math.pi / 2 + i * math.pi / 3),
+                              top:
+                                  43 +
+                                  38 * math.sin(-math.pi / 2 + i * math.pi / 3),
                               child: AnimatedOpacity(
                                 duration: const Duration(milliseconds: 200),
                                 opacity: off.contains(foods[i].id) ? 0.15 : 1,
@@ -417,12 +482,19 @@ class ProteinPage extends GetView<OnboardingController> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('$total g', style: AppText.number(40)),
-                        Text('of $goal g', style: AppText.small.copyWith(color: k.muted)),
+                        Text(
+                          'of $goal g',
+                          style: AppText.small.copyWith(color: k.muted),
+                        ),
                         const SizedBox(height: 10),
                         KTag(
                           hit ? 'Goal reached' : '${goal - total} g to go',
-                          bg: hit ? AppColors.limeSoft : AppColors.tangerineSoft,
-                          fg: hit ? AppColors.limeText : AppColors.tangerineText,
+                          bg: hit
+                              ? AppColors.limeSoft
+                              : AppColors.tangerineSoft,
+                          fg: hit
+                              ? AppColors.limeText
+                              : AppColors.tangerineText,
                         ),
                       ],
                     ),
@@ -439,7 +511,11 @@ class ProteinPage extends GetView<OnboardingController> {
                 childAspectRatio: 3.1,
                 children: [
                   for (final f in foods)
-                    _FoodToggle(food: f, on: !off.contains(f.id), onTap: () => controller.toggleFood(f.id)),
+                    _FoodToggle(
+                      food: f,
+                      on: !off.contains(f.id),
+                      onTap: () => controller.toggleFood(f.id),
+                    ),
                 ],
               ),
             ],
@@ -451,7 +527,11 @@ class ProteinPage extends GetView<OnboardingController> {
 }
 
 class _FoodToggle extends StatelessWidget {
-  const _FoodToggle({required this.food, required this.on, required this.onTap});
+  const _FoodToggle({
+    required this.food,
+    required this.on,
+    required this.onTap,
+  });
 
   final Food food;
   final bool on;
@@ -473,7 +553,10 @@ class _FoodToggle extends StatelessWidget {
           decoration: BoxDecoration(
             color: k.card,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: on ? AppColors.tangerine : k.border, width: 2),
+            border: Border.all(
+              color: on ? AppColors.tangerine : k.border,
+              width: 2,
+            ),
           ),
           child: Opacity(
             opacity: on ? 1 : 0.45,
@@ -486,8 +569,18 @@ class _FoodToggle extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(food.name, style: AppText.small.copyWith(fontWeight: FontWeight.w800), maxLines: 1, overflow: TextOverflow.ellipsis),
-                      Text('${food.grams} g', style: AppText.tiny.copyWith(color: k.muted)),
+                      Text(
+                        food.name,
+                        style: AppText.small.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        '${food.grams} g',
+                        style: AppText.tiny.copyWith(color: k.muted),
+                      ),
                     ],
                   ),
                 ),

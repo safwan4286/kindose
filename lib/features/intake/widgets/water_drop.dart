@@ -6,7 +6,12 @@ import '../../../widgets/filling_drop.dart';
 /// The Kindose drop filled with water: the level eases to [fill] and the
 /// surface keeps a slow wave (still when reduce-motion is on).
 class WaterDrop extends StatefulWidget {
-  const WaterDrop({super.key, required this.size, required this.fill, this.animate = true});
+  const WaterDrop({
+    super.key,
+    required this.size,
+    required this.fill,
+    this.animate = true,
+  });
 
   final double size;
 
@@ -18,7 +23,8 @@ class WaterDrop extends StatefulWidget {
   State<WaterDrop> createState() => _WaterDropState();
 }
 
-class _WaterDropState extends State<WaterDrop> with SingleTickerProviderStateMixin {
+class _WaterDropState extends State<WaterDrop>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _wave = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 2400),

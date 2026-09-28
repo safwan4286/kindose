@@ -2,11 +2,9 @@ import 'dart:io';
 
 import 'package:package_info_plus/package_info_plus.dart';
 
-
 import '../../../../resources/common_methods.dart';
 import '../../../../resources/constants.dart';
 import '../../../device_token/device_info.dart';
-import '../../../get_it/get_it_setup.dart';
 import '../services/network_service.dart';
 import 'constants.dart';
 
@@ -39,8 +37,6 @@ class CommonValues {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
 
     headers[Body.appVersion] = packageInfo.version;
-
-
 
     return headers;
   }

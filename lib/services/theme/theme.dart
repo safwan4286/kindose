@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../resources/colors.dart';
 import 'system_ui.dart';
@@ -98,18 +97,19 @@ class AppTheme {
   static ThemeData get dark => _build(Brightness.dark, KColors.dark);
 
   static ThemeData _build(Brightness brightness, KColors k) {
-    final scheme = ColorScheme.fromSeed(
-      seedColor: AppColors.violet,
-      brightness: brightness,
-    ).copyWith(
-      primary: AppColors.violet,
-      onPrimary: AppColors.white,
-      secondary: AppColors.lime,
-      onSecondary: AppColors.ink,
-      surface: k.card,
-      onSurface: k.text,
-      error: AppColors.danger,
-    );
+    final scheme =
+        ColorScheme.fromSeed(
+          seedColor: AppColors.violet,
+          brightness: brightness,
+        ).copyWith(
+          primary: AppColors.violet,
+          onPrimary: AppColors.white,
+          secondary: AppColors.lime,
+          onSecondary: AppColors.ink,
+          surface: k.card,
+          onSurface: k.text,
+          error: AppColors.danger,
+        );
 
     final base = ThemeData(
       useMaterial3: true,
@@ -131,7 +131,9 @@ class AppTheme {
         foregroundColor: k.text,
         elevation: 0,
         scrolledUnderElevation: 0,
-        systemOverlayStyle: KSystemUi.style(darkBackground: brightness == Brightness.dark),
+        systemOverlayStyle: KSystemUi.style(
+          darkBackground: brightness == Brightness.dark,
+        ),
       ),
       bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: k.bg,
@@ -165,7 +167,10 @@ class AppTheme {
           borderRadius: BorderRadius.circular(18),
           borderSide: BorderSide(color: k.selectedBorder, width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: k.card,

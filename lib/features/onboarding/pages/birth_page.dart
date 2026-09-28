@@ -83,9 +83,15 @@ class _AgeTag extends GetView<OnboardingController> {
       final adult = controller.isAdult;
       final age = controller.age;
       final bg = adult
-          ? (dark ? AppColors.lime.withValues(alpha: 0.16) : const Color(0xFFF1F7D6))
-          : (dark ? AppColors.danger.withValues(alpha: 0.25) : AppColors.dangerSoft);
-      final fg = adult ? (dark ? AppColors.lime : AppColors.limeText) : (dark ? AppColors.dangerSoft : AppColors.dangerText);
+          ? (dark
+                ? AppColors.lime.withValues(alpha: 0.16)
+                : const Color(0xFFF1F7D6))
+          : (dark
+                ? AppColors.danger.withValues(alpha: 0.25)
+                : AppColors.dangerSoft);
+      final fg = adult
+          ? (dark ? AppColors.lime : AppColors.limeText)
+          : (dark ? AppColors.dangerSoft : AppColors.dangerText);
       final text = adult ? "You're $age" : 'Kindose is for adults 18 and over';
       return Semantics(
         liveRegion: true,
@@ -94,7 +100,10 @@ class _AgeTag extends GetView<OnboardingController> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           padding: EdgeInsets.symmetric(horizontal: 14.sp, vertical: 8.sp),
-          decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(14.sp)),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(14.sp),
+          ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -104,7 +113,11 @@ class _AgeTag extends GetView<OnboardingController> {
               ],
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 180),
-                child: Text(text, key: ValueKey(text), style: AppText.title.copyWith(fontSize: 15.sp, color: fg)),
+                child: Text(
+                  text,
+                  key: ValueKey(text),
+                  style: AppText.title.copyWith(fontSize: 15.sp, color: fg),
+                ),
               ),
             ],
           ),

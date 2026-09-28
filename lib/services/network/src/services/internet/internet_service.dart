@@ -63,12 +63,12 @@ class InternetService {
   }
 
   // Future<bool> isInternetAvailable() async {
-    // bool result = await InternetConnectionChecker.instance.hasConnection;
-    // if (result == true) {
-    //   return true;
-    // } else {
-    //   return false;
-    // }
+  // bool result = await InternetConnectionChecker.instance.hasConnection;
+  // if (result == true) {
+  //   return true;
+  // } else {
+  //   return false;
+  // }
   // }
 
   static Future<bool> checkInternetIsAvailable() async {
@@ -98,7 +98,8 @@ class InternetService {
 
       _isDialogShowing = true;
       Dialogs.def(
-        message: "Your phone is not connected to the Internet. Please check your data/wifi connection and try again.",
+        message:
+            "Your phone is not connected to the Internet. Please check your data/wifi connection and try again.",
         hideSecondIcon: true,
         buttonText: "Retry",
       ).then((value) => _isDialogShowing = false);

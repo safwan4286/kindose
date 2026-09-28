@@ -39,7 +39,12 @@ class DoseMarker {
 /// One cell of the "How you felt" grid. [level] is -1 for no check-in,
 /// 0 fine, 1 mild, 2 moderate, 3 severe. [inFuture] cells are blank.
 class FeelCell {
-  const FeelCell({required this.date, required this.level, required this.doseDay, required this.inFuture});
+  const FeelCell({
+    required this.date,
+    required this.level,
+    required this.doseDay,
+    required this.inFuture,
+  });
 
   final DateTime date;
   final int level;
@@ -76,7 +81,8 @@ class ProgressController extends GetxController {
   }
 
   /// Longer ranges need Plus.
-  bool get locked => range.value != ProgressRange.month && !PlusAccess.active.value;
+  bool get locked =>
+      range.value != ProgressRange.month && !PlusAccess.active.value;
 
   void openPlus() {
     Haptics.instance.selectionClick();
@@ -85,7 +91,8 @@ class ProgressController extends GetxController {
 
   void openReport() {
     Haptics.instance.selectionClick();
-    if (Get.isRegistered<HomeController>()) Get.find<HomeController>().select(HomeTab.report);
+    if (Get.isRegistered<HomeController>())
+      Get.find<HomeController>().select(HomeTab.report);
   }
 
   void logWeight() => showWeightSheet();
@@ -105,13 +112,20 @@ class ProgressController extends GetxController {
       case ProgressRange.quarter:
         return today.subtract(const Duration(days: 90));
       case ProgressRange.all:
-        final firstWeight = tracker.weights.isNotEmpty ? tracker.weights.first.date : today;
-        final firstDose = tracker.doses.isNotEmpty ? tracker.doses.last.takenAt : today;
-        return Dates.dateOnly(firstWeight.isBefore(firstDose) ? firstWeight : firstDose);
+        final firstWeight = tracker.weights.isNotEmpty
+            ? tracker.weights.first.date
+            : today;
+        final firstDose = tracker.doses.isNotEmpty
+            ? tracker.doses.last.takenAt
+            : today;
+        return Dates.dateOnly(
+          firstWeight.isBefore(firstDose) ? firstWeight : firstDose,
+        );
     }
   }
 
-  List<WeightEntry> get points => tracker.weights.where((w) => !w.date.isBefore(rangeStart)).toList();
+  List<WeightEntry> get points =>
+      tracker.weights.where((w) => !w.date.isBefore(rangeStart)).toList();
 
   bool get hasWeights => tracker.weights.isNotEmpty;
   double get startKg => tracker.startWeightKg;
@@ -169,8 +183,14 @@ class ProgressController extends GetxController {
     final out = <DoseMarker>[];
     for (var i = 1; i < list.length; i++) {
       final d = list[i];
-      if (d.strengthMg != list[i - 1].strengthMg && !d.takenAt.isBefore(rangeStart)) {
-        out.add(DoseMarker(Dates.dateOnly(d.takenAt), '${Catalog.mgLabel(d.strengthMg)} from here'));
+      if (d.strengthMg != list[i - 1].strengthMg &&
+          !d.takenAt.isBefore(rangeStart)) {
+        out.add(
+          DoseMarker(
+            Dates.dateOnly(d.takenAt),
+            '${Catalog.mgLabel(d.strengthMg)} from here',
+          ),
+        );
       }
     }
     return out;
@@ -230,7 +250,9 @@ class ProgressController extends GetxController {
     final n = tracker.nextDoseAt();
     if (n == null) return '—';
     final rel = Dates.relativeDay(n, DateTime.now());
-    return rel == 'Today' || rel == 'Tomorrow' ? rel : Dates.weekdayShort(n.weekday);
+    return rel == 'Today' || rel == 'Tomorrow'
+        ? rel
+        : Dates.weekdayShort(n.weekday);
   }
 
   /// (area, count) for belly, thighs, arms inside the range.
@@ -250,21 +272,27 @@ class ProgressController extends GetxController {
     return [('Belly', belly), ('Thighs', thigh), ('Arms', arm)];
   }
 
-  bool get showSites => !isDaily && profile?.form != 'tablet' && siteAreas.any((a) => a.$2 > 0);
+  bool get showSites =>
+      !isDaily && profile?.form != 'tablet' && siteAreas.any((a) => a.$2 > 0);
 
   String get sitesNote {
     final areas = siteAreas;
-    final unused = areas.where((a) => a.$2 == 0).map((a) => a.$1.toLowerCase()).toList();
+    final unused = areas
+        .where((a) => a.$2 == 0)
+        .map((a) => a.$1.toLowerCase())
+        .toList();
     if (unused.isEmpty) return 'Nice rotation. Each spot gets time to rest.';
-    final names = unused.length == 1 ? unused.first : '${unused.first} and ${unused.last}';
+    final names = unused.length == 1
+        ? unused.first
+        : '${unused.first} and ${unused.last}';
     return '${names[0].toUpperCase()}${names.substring(1)} not used lately. Rotating gives each spot time to rest.';
   }
 
   String get rangeWord => switch (range.value) {
-        ProgressRange.month => 'last 4 weeks',
-        ProgressRange.quarter => 'last 3 months',
-        ProgressRange.all => 'all time',
-      };
+    ProgressRange.month => 'last 4 weeks',
+    ProgressRange.quarter => 'last 3 months',
+    ProgressRange.all => 'all time',
+  };
 
   // ------------------------------------------------------- protein / water
 
@@ -275,12 +303,26 @@ class ProgressController extends GetxController {
 
   List<DayBar> get proteinBars {
     final goal = (profile?.proteinGoalG ?? 100).toDouble();
-    return [for (final d in last7Days) DayBar(date: d, value: tracker.dayLog(d).proteinG.toDouble(), goal: goal)];
+    return [
+      for (final d in last7Days)
+        DayBar(
+          date: d,
+          value: tracker.dayLog(d).proteinG.toDouble(),
+          goal: goal,
+        ),
+    ];
   }
 
   List<DayBar> get waterBars {
     final goal = (profile?.waterGoalMl ?? 2500).toDouble();
-    return [for (final d in last7Days) DayBar(date: d, value: tracker.dayLog(d).waterMl.toDouble(), goal: goal)];
+    return [
+      for (final d in last7Days)
+        DayBar(
+          date: d,
+          value: tracker.dayLog(d).waterMl.toDouble(),
+          goal: goal,
+        ),
+    ];
   }
 
   String barsHeadline(List<DayBar> bars, {required bool water}) {
@@ -288,7 +330,9 @@ class ProgressController extends GetxController {
     if (logged.isEmpty) return 'Nothing logged this week yet';
     final hit = bars.where((b) => b.hit).length;
     final avg = logged.fold<double>(0, (s, b) => s + b.value) / logged.length;
-    final avgLabel = water ? '${(avg / 1000).toStringAsFixed(1)} L' : '${avg.round()} g';
+    final avgLabel = water
+        ? '${(avg / 1000).toStringAsFixed(1)} L'
+        : '${avg.round()} g';
     return 'Goal reached $hit of 7 days · avg $avgLabel';
   }
 
@@ -325,9 +369,14 @@ class ProgressController extends GetxController {
 
   String get feelHeadline {
     final cells = feelCells.where((c) => c.level >= 0).toList();
-    if (cells.isEmpty) return 'Check in a few times to see how you feel over time.';
+    if (cells.isEmpty)
+      return 'Check in a few times to see how you feel over time.';
     final avg = cells.fold<int>(0, (s, c) => s + c.level) / cells.length;
-    final word = avg < 0.5 ? 'Mostly fine' : (avg < 1.5 ? 'Mostly mild' : (avg < 2.3 ? 'Some harder days' : 'A tough few weeks'));
+    final word = avg < 0.5
+        ? 'Mostly fine'
+        : (avg < 1.5
+              ? 'Mostly mild'
+              : (avg < 2.3 ? 'Some harder days' : 'A tough few weeks'));
     final counts = <String, int>{};
     for (final c in cells) {
       final log = tracker.dayLog(c.date);
@@ -375,8 +424,11 @@ class ProgressController extends GetxController {
         best = i;
       }
     }
-    if (best < 0 || bestAvg < 0.5) return 'No hard day stands out. Your weeks look steady.';
-    return best == 0 ? 'Dose day is usually your hardest.' : 'Day $best after your dose is usually your hardest.';
+    if (best < 0 || bestAvg < 0.5)
+      return 'No hard day stands out. Your weeks look steady.';
+    return best == 0
+        ? 'Dose day is usually your hardest.'
+        : 'Day $best after your dose is usually your hardest.';
   }
 
   bool get isPlus => PlusAccess.active.value;

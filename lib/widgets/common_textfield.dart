@@ -173,8 +173,9 @@ class _CommonTextFieldState extends State<CommonTextField> {
           prefixIcon: widget.leftIcon,
           labelText: (widget.floatingTitleEnable) ? widget.hintText : null,
 
-          labelStyle: Theme.of(context).textTheme.bodyMedium
-              ?.copyWith(color: AppColors.white),
+          labelStyle: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: AppColors.white),
           prefixIconConstraints: widget.leftIconConstraints,
           prefixIconColor: widget.leftIconColor,
           suffixIcon: widget.rightIcon,
@@ -184,12 +185,15 @@ class _CommonTextFieldState extends State<CommonTextField> {
           // isDense: true,
           // floatingLabelAlignment: FloatingLabelAlignment.start,
           // floatingLabelBehavior: FloatingLabelBehavior.auto,
-          floatingLabelStyle: Theme.of(context).textTheme.bodyMedium
-              ?.copyWith(color: AppColors.white, height: 0),
+          floatingLabelStyle: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: AppColors.white, height: 0),
           hintStyle:
               widget.hintTextStyle ??
-              Theme.of(context).textTheme.bodyMedium
-                  ?.copyWith(color: AppColors.white, height: 0),
+              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColors.white,
+                height: 0,
+              ),
           contentPadding:
               widget.contentPadding ?? const EdgeInsets.only(left: 15),
           errorStyle: Theme.of(context).textTheme.bodySmall?.copyWith(

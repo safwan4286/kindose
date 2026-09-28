@@ -13,7 +13,9 @@ class WelcomeController extends GetxController {
     if (_navigating) return;
     _navigating = true;
     Haptics.instance.mediumImpact();
-    Get.toNamed<void>(Routes.onboarding)?.whenComplete(() => _navigating = false);
+    Get.toNamed<void>(
+      Routes.onboarding,
+    )?.whenComplete(() => _navigating = false);
   }
 
   /// Google / Apple sign-in arrives with the account step (Firebase Auth).

@@ -1,4 +1,3 @@
-import 'package:get/get.dart';
 
 import '../../resources/common_methods.dart';
 import '../../resources/functions.dart';

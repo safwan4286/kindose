@@ -14,7 +14,8 @@ class NotificationService {
 
   static final NotificationService instance = NotificationService._();
 
-  final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _plugin =
+      FlutterLocalNotificationsPlugin();
   bool _ready = false;
 
   /// Called when the user taps a notification while the app is open.
@@ -35,7 +36,11 @@ class NotificationService {
 
   static const NotificationDetails _details = NotificationDetails(
     android: _android,
-    iOS: DarwinNotificationDetails(presentAlert: true, presentBanner: true, presentSound: true),
+    iOS: DarwinNotificationDetails(
+      presentAlert: true,
+      presentBanner: true,
+      presentSound: true,
+    ),
   );
 
   Future<void> init() async {
@@ -78,12 +83,23 @@ class NotificationService {
     try {
       await init();
       if (Platform.isAndroid) {
-        final android = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+        final android = _plugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >();
         return await android?.requestNotificationsPermission() ?? true;
       }
       if (Platform.isIOS) {
-        final ios = _plugin.resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>();
-        return await ios?.requestPermissions(alert: true, badge: true, sound: true) ?? false;
+        final ios = _plugin
+            .resolvePlatformSpecificImplementation<
+              IOSFlutterLocalNotificationsPlugin
+            >();
+        return await ios?.requestPermissions(
+              alert: true,
+              badge: true,
+              sound: true,
+            ) ??
+            false;
       }
       return false;
     } catch (_) {

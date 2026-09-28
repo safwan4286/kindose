@@ -45,10 +45,14 @@ class MoodRow extends StatelessWidget {
                   duration: const Duration(milliseconds: 160),
                   height: height,
                   decoration: BoxDecoration(
-                    color: selected == i ? k.selectedBg : (onCard ? k.card : k.card),
+                    color: selected == i
+                        ? k.selectedBg
+                        : (onCard ? k.card : k.card),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: selected == i ? k.selectedBorder : (onCard ? k.card : k.card),
+                      color: selected == i
+                          ? k.selectedBorder
+                          : (onCard ? k.card : k.card),
                       width: 2,
                     ),
                   ),
@@ -58,7 +62,10 @@ class MoodRow extends StatelessWidget {
                       AnimatedScale(
                         duration: const Duration(milliseconds: 160),
                         scale: selected == i ? 1.18 : 1,
-                        child: ThreeD(Catalog.moods[i].icon, size: height * 0.44),
+                        child: ThreeD(
+                          Catalog.moods[i].icon,
+                          size: height * 0.44,
+                        ),
                       ),
                       const SizedBox(height: 3),
                       Text(

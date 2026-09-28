@@ -46,7 +46,13 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen> {
                   Expanded(
                     child: Semantics(
                       header: true,
-                      child: Text('Your report', style: AppText.h2.copyWith(fontSize: 22.sp, color: k.text)),
+                      child: Text(
+                        'Your report',
+                        style: AppText.h2.copyWith(
+                          fontSize: 22.sp,
+                          color: k.text,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -54,7 +60,12 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen> {
             ),
             Expanded(
               child: args is! ReportData
-                  ? Center(child: Text('Nothing to preview', style: AppText.title.copyWith(color: k.muted)))
+                  ? Center(
+                      child: Text(
+                        'Nothing to preview',
+                        style: AppText.title.copyWith(color: k.muted),
+                      ),
+                    )
                   : PdfPreview(
                       build: (_) => ReportPdf.build(args),
                       useActions: false,
@@ -63,24 +74,36 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen> {
                       canChangePageFormat: false,
                       canChangeOrientation: false,
                       canDebug: false,
-                      pdfFileName: 'kindose-report-${Dates.key(DateTime.now())}.pdf',
+                      pdfFileName:
+                          'kindose-report-${Dates.key(DateTime.now())}.pdf',
                       scrollViewDecoration: BoxDecoration(color: k.cardAlt),
                       pdfPreviewPageDecoration: BoxDecoration(
                         color: AppColors.white,
-                        boxShadow: [BoxShadow(color: AppColors.ink.withValues(alpha: 0.12), blurRadius: 16)],
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.ink.withValues(alpha: 0.12),
+                            blurRadius: 16,
+                          ),
+                        ],
                       ),
-                      loadingWidget: const Center(child: CircularProgressIndicator()),
+                      loadingWidget: const Center(
+                        child: CircularProgressIndicator(),
+                      ),
                     ),
             ),
             if (args is ReportData)
               Padding(
                 padding: EdgeInsets.fromLTRB(20.sp, 8.sp, 20.sp, 12.sp),
-                child: Obx(() => PillButton(
-                      label: PlusAccess.active.value ? 'Share PDF' : 'Share PDF · Plus',
-                      icon: PhosphorIconsBold.shareNetwork,
-                      busy: _sharing.value,
-                      onPressed: () => ReportController.share(args, _sharing),
-                    )),
+                child: Obx(
+                  () => PillButton(
+                    label: PlusAccess.active.value
+                        ? 'Share PDF'
+                        : 'Share PDF · Plus',
+                    icon: PhosphorIconsBold.shareNetwork,
+                    busy: _sharing.value,
+                    onPressed: () => ReportController.share(args, _sharing),
+                  ),
+                ),
               ),
           ],
         ),

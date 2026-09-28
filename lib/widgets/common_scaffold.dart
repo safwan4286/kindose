@@ -7,8 +7,6 @@ import 'package:get/get.dart';
 import '../controllers/base_controller.dart';
 import '../services/get_it/get_it_setup.dart';
 
-
-
 class CommonScaffold extends StatelessWidget {
   const CommonScaffold({
     super.key,

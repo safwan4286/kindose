@@ -55,7 +55,8 @@ class _WeightSheetState extends State<WeightSheet> {
   }
 
   /// Weigh-ins before the chosen day, oldest first.
-  List<WeightEntry> get _before => _t.weights.where((w) => w.date.isBefore(_day)).toList();
+  List<WeightEntry> get _before =>
+      _t.weights.where((w) => w.date.isBefore(_day)).toList();
 
   WeightEntry? get _sameDay {
     for (final w in _t.weights) {
@@ -96,7 +97,8 @@ class _WeightSheetState extends State<WeightSheet> {
     try {
       await _t.addWeight(_kg, _day);
       final p = _t.profile.value;
-      if (p != null && p.useKg != _useKg) await _t.saveProfile(p.copyWith(useKg: _useKg));
+      if (p != null && p.useKg != _useKg)
+        await _t.saveProfile(p.copyWith(useKg: _useKg));
       Haptics.instance.mediumImpact();
       popRoute();
       showToast('Weight saved: ${_fmt(_kg)} $_unit');
@@ -114,14 +116,29 @@ class _WeightSheetState extends State<WeightSheet> {
     final last = before.isEmpty ? null : before.last;
     final start = _t.startWeightKg;
     final goal = _t.profile.value?.goalWeightKg;
-    final trend = [...before.skip(before.length > 6 ? before.length - 6 : 0).map((w) => _conv(w.kg)), _conv(_kg)];
+    final trend = [
+      ...before
+          .skip(before.length > 6 ? before.length - 6 : 0)
+          .map((w) => _conv(w.kg)),
+      _conv(_kg),
+    ];
     final replaces = _sameDay;
 
     return KSafeArea(
       child: Container(
-        constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.92),
-        decoration: BoxDecoration(color: k.bg, borderRadius: BorderRadius.vertical(top: Radius.circular(28.sp))),
-        padding: EdgeInsets.fromLTRB(20.sp, 10.sp, 20.sp, 12.sp + MediaQuery.viewInsetsOf(context).bottom),
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(context).height * 0.92,
+        ),
+        decoration: BoxDecoration(
+          color: k.bg,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28.sp)),
+        ),
+        padding: EdgeInsets.fromLTRB(
+          20.sp,
+          10.sp,
+          20.sp,
+          12.sp + MediaQuery.viewInsetsOf(context).bottom,
+        ),
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -131,7 +148,10 @@ class _WeightSheetState extends State<WeightSheet> {
                 child: Container(
                   width: 40.sp,
                   height: 5.sp,
-                  decoration: BoxDecoration(color: k.border, borderRadius: BorderRadius.circular(3.sp)),
+                  decoration: BoxDecoration(
+                    color: k.border,
+                    borderRadius: BorderRadius.circular(3.sp),
+                  ),
                 ),
               ),
               SizedBox(height: 14.sp),
@@ -140,10 +160,21 @@ class _WeightSheetState extends State<WeightSheet> {
                   Expanded(
                     child: Semantics(
                       header: true,
-                      child: Text('Log weight', style: AppText.h2.copyWith(fontSize: 24.sp, color: k.text)),
+                      child: Text(
+                        'Log weight',
+                        style: AppText.h2.copyWith(
+                          fontSize: 24.sp,
+                          color: k.text,
+                        ),
+                      ),
                     ),
                   ),
-                  CircleIconButton(icon: PhosphorIconsBold.x, label: 'Close', size: 40.sp, onTap: popRoute),
+                  CircleIconButton(
+                    icon: PhosphorIconsBold.x,
+                    label: 'Close',
+                    size: 40.sp,
+                    onTap: popRoute,
+                  ),
                 ],
               ),
               SizedBox(height: 10.sp),
@@ -155,15 +186,29 @@ class _WeightSheetState extends State<WeightSheet> {
                   child: Container(
                     height: 36.sp,
                     padding: EdgeInsets.symmetric(horizontal: 12.sp),
-                    decoration: BoxDecoration(color: k.card, borderRadius: BorderRadius.circular(18.sp)),
+                    decoration: BoxDecoration(
+                      color: k.card,
+                      borderRadius: BorderRadius.circular(18.sp),
+                    ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         ThreeD(Img3d.calendar, size: 18.sp),
                         SizedBox(width: 6.sp),
-                        Text(_dayLabel, style: AppText.small.copyWith(fontSize: 13.sp, fontWeight: FontWeight.w800, color: k.text)),
+                        Text(
+                          _dayLabel,
+                          style: AppText.small.copyWith(
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.w800,
+                            color: k.text,
+                          ),
+                        ),
                         SizedBox(width: 4.sp),
-                        Icon(PhosphorIconsBold.caretDown, size: 12.sp, color: k.muted),
+                        Icon(
+                          PhosphorIconsBold.caretDown,
+                          size: 12.sp,
+                          color: k.muted,
+                        ),
                       ],
                     ),
                   ),
@@ -173,7 +218,11 @@ class _WeightSheetState extends State<WeightSheet> {
                 SizedBox(height: 6.sp),
                 Text(
                   'Replaces the ${_fmt(replaces.kg)} $_unit saved for this day.',
-                  style: AppText.small.copyWith(fontSize: 12.5.sp, fontWeight: FontWeight.w600, color: k.muted),
+                  style: AppText.small.copyWith(
+                    fontSize: 12.5.sp,
+                    fontWeight: FontWeight.w600,
+                    color: k.muted,
+                  ),
                 ),
               ],
               SizedBox(height: 16.sp),
@@ -190,8 +239,12 @@ class _WeightSheetState extends State<WeightSheet> {
                 children: [
                   Expanded(
                     child: _StatBox(
-                      label: last == null ? 'SINCE LAST' : 'SINCE ${Dates.short(last.date).toUpperCase()}',
-                      value: last == null ? 'First one' : _signed(_kg - last.kg),
+                      label: last == null
+                          ? 'SINCE LAST'
+                          : 'SINCE ${Dates.short(last.date).toUpperCase()}',
+                      value: last == null
+                          ? 'First one'
+                          : _signed(_kg - last.kg),
                     ),
                   ),
                   SizedBox(width: 10.sp),
@@ -209,12 +262,16 @@ class _WeightSheetState extends State<WeightSheet> {
               if (trend.length >= 2) ...[
                 SizedBox(height: 10.sp),
                 Semantics(
-                  label: 'Trend of your last ${trend.length} weigh-ins, from ${trend.first.toStringAsFixed(1)} '
+                  label:
+                      'Trend of your last ${trend.length} weigh-ins, from ${trend.first.toStringAsFixed(1)} '
                       'to ${trend.last.toStringAsFixed(1)} $_unit',
                   excludeSemantics: true,
                   child: Container(
                     padding: EdgeInsets.fromLTRB(16.sp, 14.sp, 16.sp, 10.sp),
-                    decoration: BoxDecoration(color: k.card, borderRadius: BorderRadius.circular(18.sp)),
+                    decoration: BoxDecoration(
+                      color: k.card,
+                      borderRadius: BorderRadius.circular(18.sp),
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -223,27 +280,52 @@ class _WeightSheetState extends State<WeightSheet> {
                             Expanded(
                               child: Text(
                                 'LAST ${trend.length} WEIGH-INS',
-                                style: AppText.caps.copyWith(fontSize: 11.5.sp, letterSpacing: 0.6, color: k.faint),
+                                style: AppText.caps.copyWith(
+                                  fontSize: 11.5.sp,
+                                  letterSpacing: 0.6,
+                                  color: k.faint,
+                                ),
                               ),
                             ),
                             if (goal != null)
                               Text(
                                 '- - Goal ${_fmt(goal)} $_unit',
-                                style: AppText.small.copyWith(fontSize: 11.5.sp, color: k.faint),
+                                style: AppText.small.copyWith(
+                                  fontSize: 11.5.sp,
+                                  color: k.faint,
+                                ),
                               ),
                           ],
                         ),
                         SizedBox(height: 6.sp),
-                        TrendLine(values: trend, goal: goal == null ? null : _conv(goal), height: 90.sp),
+                        TrendLine(
+                          values: trend,
+                          goal: goal == null ? null : _conv(goal),
+                          height: 90.sp,
+                        ),
                         Row(
                           children: [
                             Expanded(
                               child: Text(
-                                Dates.short(before[before.length > 6 ? before.length - 6 : 0].date),
-                                style: AppText.small.copyWith(fontSize: 11.5.sp, color: k.faint),
+                                Dates.short(
+                                  before[before.length > 6
+                                          ? before.length - 6
+                                          : 0]
+                                      .date,
+                                ),
+                                style: AppText.small.copyWith(
+                                  fontSize: 11.5.sp,
+                                  color: k.faint,
+                                ),
                               ),
                             ),
-                            Text(_dayLabel, style: AppText.small.copyWith(fontSize: 11.5.sp, color: k.faint)),
+                            Text(
+                              _dayLabel,
+                              style: AppText.small.copyWith(
+                                fontSize: 11.5.sp,
+                                color: k.faint,
+                              ),
+                            ),
                           ],
                         ),
                       ],
@@ -253,16 +335,36 @@ class _WeightSheetState extends State<WeightSheet> {
               ],
               SizedBox(height: 10.sp),
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 14.sp, vertical: 12.sp),
-                decoration: BoxDecoration(color: k.cardAlt, borderRadius: BorderRadius.circular(16.sp)),
+                padding: EdgeInsets.symmetric(
+                  horizontal: 14.sp,
+                  vertical: 12.sp,
+                ),
+                decoration: BoxDecoration(
+                  color: k.cardAlt,
+                  borderRadius: BorderRadius.circular(16.sp),
+                ),
                 child: Text.rich(
-                  TextSpan(children: [
-                    TextSpan(text: 'Same time, same scale. ', style: TextStyle(fontWeight: FontWeight.w800, color: k.text)),
-                    const TextSpan(
-                      text: 'Weigh after waking; once a week is enough. A 1–2 kg swing from day to day is normal (water, salt).',
-                    ),
-                  ]),
-                  style: AppText.small.copyWith(fontSize: 12.5.sp, fontWeight: FontWeight.w600, height: 1.45, color: k.textSoft),
+                  TextSpan(
+                    children: [
+                      TextSpan(
+                        text: 'Same time, same scale. ',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          color: k.text,
+                        ),
+                      ),
+                      const TextSpan(
+                        text:
+                            'Weigh after waking; once a week is enough. A 1–2 kg swing from day to day is normal (water, salt).',
+                      ),
+                    ],
+                  ),
+                  style: AppText.small.copyWith(
+                    fontSize: 12.5.sp,
+                    fontWeight: FontWeight.w600,
+                    height: 1.45,
+                    color: k.textSoft,
+                  ),
                 ),
               ),
               SizedBox(height: 14.sp),
@@ -295,15 +397,33 @@ class _StatBox extends StatelessWidget {
       excludeSemantics: true,
       child: Container(
         padding: EdgeInsets.all(14.sp),
-        decoration: BoxDecoration(color: k.card, borderRadius: BorderRadius.circular(18.sp)),
+        decoration: BoxDecoration(
+          color: k.card,
+          borderRadius: BorderRadius.circular(18.sp),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.caps.copyWith(fontSize: 11.5.sp, letterSpacing: 0.6, color: k.faint)),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppText.caps.copyWith(
+                fontSize: 11.5.sp,
+                letterSpacing: 0.6,
+                color: k.faint,
+              ),
+            ),
             SizedBox(height: 4.sp),
-            Text(value, style: AppText.h3.copyWith(fontSize: 21.sp, color: k.text)),
+            Text(
+              value,
+              style: AppText.h3.copyWith(fontSize: 21.sp, color: k.text),
+            ),
             if (sub != null)
-              Text(sub!, style: AppText.small.copyWith(fontSize: 12.sp, color: k.muted)),
+              Text(
+                sub!,
+                style: AppText.small.copyWith(fontSize: 12.sp, color: k.muted),
+              ),
           ],
         ),
       ),

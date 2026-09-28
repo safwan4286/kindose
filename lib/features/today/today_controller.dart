@@ -66,7 +66,13 @@ class SetupItem {
 
 /// One row in "Today's log".
 class TodayLogRow {
-  const TodayLogRow({required this.at, required this.title, required this.value, required this.kind, this.entryId});
+  const TodayLogRow({
+    required this.at,
+    required this.title,
+    required this.value,
+    required this.kind,
+    this.entryId,
+  });
 
   final DateTime? at;
   final String title;
@@ -94,7 +100,10 @@ class TodayController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _ticker = Timer.periodic(const Duration(seconds: 30), (_) => now.value = DateTime.now());
+    _ticker = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) => now.value = DateTime.now(),
+    );
   }
 
   @override
@@ -120,7 +129,8 @@ class TodayController extends GetxController {
   DayLog get day => tracker.dayLog(now.value);
   String get greeting => Dates.greeting(now.value);
   String get dateLine =>
-      '${Dates.weekdayName(now.value.weekday)}, ${now.value.day} ${Dates.monthShort(now.value.month)}'.toUpperCase();
+      '${Dates.weekdayName(now.value.weekday)}, ${now.value.day} ${Dates.monthShort(now.value.month)}'
+          .toUpperCase();
   int get streak => tracker.logStreak;
 
   // ------------------------------------------------------------------ dose
@@ -135,7 +145,8 @@ class TodayController extends GetxController {
     return Catalog.medicineName(p.medicineId, p.customMedicine);
   }
 
-  String? get medicineMark => profile == null ? null : Catalog.medicine(profile!.medicineId).mark;
+  String? get medicineMark =>
+      profile == null ? null : Catalog.medicine(profile!.medicineId).mark;
 
   String get doseLabel {
     final p = profile;
@@ -145,7 +156,8 @@ class TodayController extends GetxController {
 
   /// "Week 16" since treatment start (or first dose).
   int? get treatmentWeek {
-    final start = profile?.treatmentStartedAt ??
+    final start =
+        profile?.treatmentStartedAt ??
         (tracker.doses.isEmpty ? null : tracker.doses.last.takenAt);
     if (start == null || start.isAfter(now.value)) return null;
     return Dates.daysBetween(start, now.value) ~/ 7 + 1;
@@ -156,7 +168,8 @@ class TodayController extends GetxController {
 
   DoseCardState get doseState {
     final p = profile;
-    if (p == null || p.medicineId == Catalog.undecided) return DoseCardState.noMedicine;
+    if (p == null || p.medicineId == Catalog.undecided)
+      return DoseCardState.noMedicine;
     if (p.isDaily) return DoseCardState.daily;
     if (doseToday != null) return DoseCardState.takenToday;
     final next = nextDoseAt;
@@ -193,13 +206,16 @@ class TodayController extends GetxController {
   String get nextSiteName => Catalog.siteName(tracker.nextSiteId);
   String siteName(String id) => Catalog.siteName(id);
   String timeOf(DateTime t) => Dates.time(t);
-  String? get lastSiteName => tracker.lastSiteId == null ? null : Catalog.siteName(tracker.lastSiteId!);
+  String? get lastSiteName =>
+      tracker.lastSiteId == null ? null : Catalog.siteName(tracker.lastSiteId!);
 
   /// 7 cells ending on the next dose day: 'done', 'today', 'dose', ''.
   List<(String letter, String state)> get weekStrip {
     final next = nextDoseAt;
     final today = Dates.dateOnly(now.value);
-    final end = next == null ? today.add(const Duration(days: 6)) : Dates.dateOnly(next);
+    final end = next == null
+        ? today.add(const Duration(days: 6))
+        : Dates.dateOnly(next);
     final start = end.subtract(const Duration(days: 6));
     return [
       for (var i = 0; i < 7; i++)
@@ -259,7 +275,9 @@ class TodayController extends GetxController {
     final current = nextDoseAt;
     final picked = await showDatePicker(
       context: context,
-      initialDate: current == null || current.isBefore(today) ? today : Dates.dateOnly(current),
+      initialDate: current == null || current.isBefore(today)
+          ? today
+          : Dates.dateOnly(current),
       firstDate: today,
       lastDate: today.add(const Duration(days: 21)),
       helpText: 'Move this dose to',
@@ -275,16 +293,20 @@ class TodayController extends GetxController {
 
   int get proteinGoal => profile?.proteinGoalG ?? 100;
   int get proteinLeft => (proteinGoal - day.proteinG).clamp(0, 999);
-  double get proteinProgress => proteinGoal == 0 ? 0 : (day.proteinG / proteinGoal).clamp(0.0, 1.0);
+  double get proteinProgress =>
+      proteinGoal == 0 ? 0 : (day.proteinG / proteinGoal).clamp(0.0, 1.0);
   List<Food> get quickFoods => Catalog.quickFoods(profile?.diet);
 
   Future<void> addProtein(int grams, [String? label]) async {
     Haptics.instance.lightImpact();
     await tracker.addProtein(grams, null, label);
-    showToast(label == null ? 'Added $grams g protein' : 'Added $label · $grams g');
+    showToast(
+      label == null ? 'Added $grams g protein' : 'Added $label · $grams g',
+    );
   }
 
-  void openProtein() => Get.toNamed<void>(Routes.addIntake, arguments: 'protein');
+  void openProtein() =>
+      Get.toNamed<void>(Routes.addIntake, arguments: 'protein');
 
   // ----------------------------------------------------------------- water
 
@@ -318,7 +340,9 @@ class TodayController extends GetxController {
 
   bool get useKg => profile?.useKg ?? true;
   String get unit => useKg ? 'kg' : 'lb';
-  String fmtWeight(double kg) => useKg ? kg.toStringAsFixed(1) : (kg * Imperial.lbPerKg).toStringAsFixed(0);
+  String fmtWeight(double kg) => useKg
+      ? kg.toStringAsFixed(1)
+      : (kg * Imperial.lbPerKg).toStringAsFixed(0);
 
   double? get latestKg => tracker.latestWeightKg;
   double get startKg => tracker.startWeightKg;
@@ -337,7 +361,9 @@ class TodayController extends GetxController {
     if (now == null) return '';
     final diff = now - startKg;
     if (diff.abs() < 0.05) return 'Same as your start';
-    final amount = useKg ? diff.abs().toStringAsFixed(1) : (diff.abs() * Imperial.lbPerKg).toStringAsFixed(1);
+    final amount = useKg
+        ? diff.abs().toStringAsFixed(1)
+        : (diff.abs() * Imperial.lbPerKg).toStringAsFixed(1);
     return '${diff < 0 ? '−' : '+'}$amount $unit since start';
   }
 
@@ -357,7 +383,13 @@ class TodayController extends GetxController {
   // ------------------------------------------------------------------ feel
 
   /// Faces left to right: Rough … Great. Catalog.moods is Great … Rough.
-  static const List<String> faceLabels = ['Rough', 'Low', 'Okay', 'Good', 'Great'];
+  static const List<String> faceLabels = [
+    'Rough',
+    'Low',
+    'Okay',
+    'Good',
+    'Great',
+  ];
   int? get selectedFace => day.mood == null ? null : 4 - day.mood!;
 
   String get feelNote {
@@ -381,9 +413,14 @@ class TodayController extends GetxController {
     final dayIndex = now.value.difference(DateTime(now.value.year)).inDays;
     final state = doseState;
     if (state == DoseCardState.doseDay || state == DoseCardState.takenToday) {
-      return ('DOSE DAY TIP', Catalog.doseDayTips[dayIndex % Catalog.doseDayTips.length]);
+      return (
+        'DOSE DAY TIP',
+        Catalog.doseDayTips[dayIndex % Catalog.doseDayTips.length],
+      );
     }
-    final focus = (profile?.focus ?? const <String>[]).where(Catalog.tips.containsKey).toList();
+    final focus = (profile?.focus ?? const <String>[])
+        .where(Catalog.tips.containsKey)
+        .toList();
     final key = focus.isEmpty ? 'muscle' : focus[dayIndex % focus.length];
     final list = Catalog.tips[key]!;
     final title = switch (key) {
@@ -401,10 +438,14 @@ class TodayController extends GetxController {
   /// Icon for the tip card (focus → 3D image), chosen in the widget.
   String get tipFocus {
     final state = doseState;
-    if (state == DoseCardState.doseDay || state == DoseCardState.takenToday) return 'nausea';
-    final focus = (profile?.focus ?? const <String>[]).where(Catalog.tips.containsKey).toList();
+    if (state == DoseCardState.doseDay || state == DoseCardState.takenToday)
+      return 'nausea';
+    final focus = (profile?.focus ?? const <String>[])
+        .where(Catalog.tips.containsKey)
+        .toList();
     if (focus.isEmpty) return 'muscle';
-    return focus[now.value.difference(DateTime(now.value.year)).inDays % focus.length];
+    return focus[now.value.difference(DateTime(now.value.year)).inDays %
+        focus.length];
   }
 
   // ------------------------------------------------------------- today log
@@ -414,7 +455,9 @@ class TodayController extends GetxController {
       for (final e in day.entries)
         TodayLogRow(
           at: e.at,
-          title: e.isProtein ? 'Protein${e.label == null ? '' : ' · ${e.label}'}' : 'Water',
+          title: e.isProtein
+              ? 'Protein${e.label == null ? '' : ' · ${e.label}'}'
+              : 'Water',
           value: e.isProtein ? '+${e.amount} g' : '+${e.amount} ml',
           kind: e.kind,
           entryId: e.id,
@@ -423,11 +466,27 @@ class TodayController extends GetxController {
     final dose = doseToday;
     if (dose != null) {
       final site = dose.site.isEmpty ? '' : ' · ${Catalog.siteName(dose.site)}';
-      rows.add(TodayLogRow(at: dose.takenAt, title: 'Dose$site', value: doseLabel.isEmpty ? '✓' : doseLabel, kind: 'dose'));
+      rows.add(
+        TodayLogRow(
+          at: dose.takenAt,
+          title: 'Dose$site',
+          value: doseLabel.isEmpty ? '✓' : doseLabel,
+          kind: 'dose',
+        ),
+      );
     }
-    final weighIn = tracker.weights.where((w) => Dates.sameDay(w.date, now.value));
+    final weighIn = tracker.weights.where(
+      (w) => Dates.sameDay(w.date, now.value),
+    );
     if (weighIn.isNotEmpty) {
-      rows.add(TodayLogRow(at: null, title: 'Weigh-in', value: '${fmtWeight(weighIn.last.kg)} $unit', kind: 'weight'));
+      rows.add(
+        TodayLogRow(
+          at: null,
+          title: 'Weigh-in',
+          value: '${fmtWeight(weighIn.last.kg)} $unit',
+          kind: 'weight',
+        ),
+      );
     }
     rows.sort((a, b) => (a.at ?? DateTime(0)).compareTo(b.at ?? DateTime(0)));
     return rows;
@@ -444,21 +503,30 @@ class TodayController extends GetxController {
   // ----------------------------------------------------------- set-up card
 
   List<SetupItem> get setupItems => [
-        SetupItem('Log your starting weight', tracker.weights.isNotEmpty, logWeight),
-        SetupItem(
-          isTablet ? 'Log your first tablet' : 'Log your first dose',
-          tracker.doses.isNotEmpty,
-          () => Get.toNamed<void>(Routes.logDose),
-        ),
-        SetupItem(
-          'Add your first protein',
-          tracker.days.values.any((d) => d.proteinG > 0),
-          openProtein,
-        ),
-        SetupItem('Turn on reminders', profile?.remindersOn ?? false, turnOnReminders),
-      ];
+    SetupItem(
+      'Log your starting weight',
+      tracker.weights.isNotEmpty,
+      logWeight,
+    ),
+    SetupItem(
+      isTablet ? 'Log your first tablet' : 'Log your first dose',
+      tracker.doses.isNotEmpty,
+      () => Get.toNamed<void>(Routes.logDose),
+    ),
+    SetupItem(
+      'Add your first protein',
+      tracker.days.values.any((d) => d.proteinG > 0),
+      openProtein,
+    ),
+    SetupItem(
+      'Turn on reminders',
+      profile?.remindersOn ?? false,
+      turnOnReminders,
+    ),
+  ];
 
-  bool get showSetup => !tracker.setupDismissed.value && setupItems.any((i) => !i.done);
+  bool get showSetup =>
+      !tracker.setupDismissed.value && setupItems.any((i) => !i.done);
   int get setupDone => setupItems.where((i) => i.done).length;
 
   Future<void> dismissSetup() async {
@@ -483,12 +551,17 @@ class TodayController extends GetxController {
 
   /// Card ids in display order, without the hidden ones.
   List<String> get cardOrder {
-    final saved = tracker.todayOrder.where((id) => TodayCard.all.any((c) => c.id == id)).toList();
-    final missing = TodayCard.all.map((c) => c.id).where((id) => !saved.contains(id));
+    final saved = tracker.todayOrder
+        .where((id) => TodayCard.all.any((c) => c.id == id))
+        .toList();
+    final missing = TodayCard.all
+        .map((c) => c.id)
+        .where((id) => !saved.contains(id));
     return [...saved, ...missing];
   }
 
-  List<String> get visibleCards => cardOrder.where((id) => !tracker.todayHidden.contains(id)).toList();
+  List<String> get visibleCards =>
+      cardOrder.where((id) => !tracker.todayHidden.contains(id)).toList();
 
   Future<void> saveLayout(List<String> order, Set<String> hidden) async {
     Haptics.instance.lightImpact();

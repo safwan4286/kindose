@@ -14,10 +14,7 @@ class GlobalLoaderWidget extends StatelessWidget {
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(10.0),
         ),
-        child: Lottie.asset(
-          Lotties.loader,
-          height: 160.0.sp,
-        ),
+        child: Lottie.asset(Lotties.loader, height: 160.0.sp),
       ),
     );
   }

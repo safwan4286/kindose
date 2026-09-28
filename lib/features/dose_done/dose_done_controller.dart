@@ -68,10 +68,14 @@ class DoseDoneController extends GetxController {
   String get nextDate {
     final next = tracker.nextDoseAt();
     if (next == null) return '—';
-    return Dates.relativeDay(next, DateTime.now()) == 'Tomorrow' ? 'Tomorrow' : Dates.shortWithDay(next);
+    return Dates.relativeDay(next, DateTime.now()) == 'Tomorrow'
+        ? 'Tomorrow'
+        : Dates.shortWithDay(next);
   }
 
-  String get nextSub => isTablet ? Dates.time(tracker.nextDoseAt() ?? DateTime.now()) : '${Catalog.siteName(tracker.nextSiteId)} next';
+  String get nextSub => isTablet
+      ? Dates.time(tracker.nextDoseAt() ?? DateTime.now())
+      : '${Catalog.siteName(tracker.nextSiteId)} next';
 
   int get streak => tracker.onTimeStreak;
 

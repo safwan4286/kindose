@@ -10,15 +10,9 @@ class MultipartFileDataModel {
   String filePath;
   String parameterName;
 
-  MultipartFileDataModel({
-    required this.filePath,
-    required this.parameterName,
-  });
+  MultipartFileDataModel({required this.filePath, required this.parameterName});
 
-  MultipartFileDataModel copyWith({
-    String? filePath,
-    String? parameterName,
-  }) =>
+  MultipartFileDataModel copyWith({String? filePath, String? parameterName}) =>
       MultipartFileDataModel(
         filePath: filePath ?? this.filePath,
         parameterName: parameterName ?? this.parameterName,
@@ -31,7 +25,7 @@ class MultipartFileDataModel {
       );
 
   Map<String, dynamic> toJson() => {
-        "file_path": filePath,
-        "parameter_name": parameterName,
-      };
+    "file_path": filePath,
+    "parameter_name": parameterName,
+  };
 }

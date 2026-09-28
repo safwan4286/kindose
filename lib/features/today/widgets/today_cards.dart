@@ -15,7 +15,12 @@ import '../today_controller.dart';
 
 /// White rounded card used by every Today section.
 class TodaySection extends StatelessWidget {
-  const TodaySection({super.key, required this.child, this.padding, this.color});
+  const TodaySection({
+    super.key,
+    required this.child,
+    this.padding,
+    this.color,
+  });
 
   final Widget child;
   final EdgeInsetsGeometry? padding;
@@ -26,13 +31,21 @@ class TodaySection extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: padding ?? EdgeInsets.all(16.sp),
-      decoration: BoxDecoration(color: color ?? context.k.card, borderRadius: BorderRadius.circular(22.sp)),
+      decoration: BoxDecoration(
+        color: color ?? context.k.card,
+        borderRadius: BorderRadius.circular(22.sp),
+      ),
       child: child,
     );
   }
 }
 
-TextStyle _value(Color c) => AppText.h1.copyWith(fontSize: 24.sp, height: 1.1, letterSpacing: -0.5, color: c);
+TextStyle _value(Color c) => AppText.h1.copyWith(
+  fontSize: 24.sp,
+  height: 1.1,
+  letterSpacing: -0.5,
+  color: c,
+);
 
 class _ValueText extends StatelessWidget {
   const _ValueText(this.value, this.suffix, {this.color});
@@ -44,10 +57,17 @@ class _ValueText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final k = context.k;
-    return Text.rich(TextSpan(children: [
-      TextSpan(text: value, style: _value(color ?? k.text)),
-      TextSpan(text: ' $suffix', style: AppText.bodyStrong.copyWith(fontSize: 14.sp, color: k.faint)),
-    ]));
+    return Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(text: value, style: _value(color ?? k.text)),
+          TextSpan(
+            text: ' $suffix',
+            style: AppText.bodyStrong.copyWith(fontSize: 14.sp, color: k.faint),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -75,7 +95,10 @@ class _Bar extends StatelessWidget {
                 widthFactor: v.clamp(0.0, 1.0),
                 heightFactor: 1,
                 child: DecoratedBox(
-                  decoration: BoxDecoration(color: fill, borderRadius: BorderRadius.circular(5.sp)),
+                  decoration: BoxDecoration(
+                    color: fill,
+                    borderRadius: BorderRadius.circular(5.sp),
+                  ),
                 ),
               ),
             ),
@@ -97,7 +120,10 @@ class _IconTile extends StatelessWidget {
     return Container(
       width: 44.sp,
       height: 44.sp,
-      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(14.sp)),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(14.sp),
+      ),
       alignment: Alignment.center,
       child: child,
     );
@@ -105,7 +131,9 @@ class _IconTile extends StatelessWidget {
 }
 
 Color _tint(BuildContext context, Color light, Color accent) =>
-    context.k.selectedBorder == AppColors.lime ? accent.withValues(alpha: 0.16) : light;
+    context.k.selectedBorder == AppColors.lime
+    ? accent.withValues(alpha: 0.16)
+    : light;
 
 // ------------------------------------------------------------------ header
 
@@ -114,9 +142,9 @@ class TodayHeader extends GetView<TodayController> {
 
   @override
   Widget build(BuildContext context) => Obx(() {
-        controller.watch();
-        return _build(context);
-      });
+    controller.watch();
+    return _build(context);
+  });
 
   Widget _build(BuildContext context) {
     final k = context.k;
@@ -127,11 +155,25 @@ class TodayHeader extends GetView<TodayController> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(controller.dateLine, style: AppText.caps.copyWith(fontSize: 12.sp, letterSpacing: 1.1, color: k.faint)),
+              Text(
+                controller.dateLine,
+                style: AppText.caps.copyWith(
+                  fontSize: 12.sp,
+                  letterSpacing: 1.1,
+                  color: k.faint,
+                ),
+              ),
               SizedBox(height: 4.sp),
               Semantics(
                 header: true,
-                child: Text(controller.greeting, style: AppText.h1.copyWith(fontSize: 30.sp, height: 1.08, color: k.text)),
+                child: Text(
+                  controller.greeting,
+                  style: AppText.h1.copyWith(
+                    fontSize: 30.sp,
+                    height: 1.08,
+                    color: k.text,
+                  ),
+                ),
               ),
             ],
           ),
@@ -149,13 +191,27 @@ class TodayHeader extends GetView<TodayController> {
               child: Container(
                 height: 40.sp,
                 padding: EdgeInsets.symmetric(horizontal: 12.sp),
-                decoration: BoxDecoration(color: k.card, borderRadius: BorderRadius.circular(20.sp)),
+                decoration: BoxDecoration(
+                  color: k.card,
+                  borderRadius: BorderRadius.circular(20.sp),
+                ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(PhosphorIconsFill.flame, size: 18.sp, color: AppColors.tangerine),
+                    Icon(
+                      PhosphorIconsFill.flame,
+                      size: 18.sp,
+                      color: AppColors.tangerine,
+                    ),
                     SizedBox(width: 5.sp),
-                    Text('$streak', style: AppText.bodyStrong.copyWith(fontSize: 14.sp, fontWeight: FontWeight.w800, color: k.text)),
+                    Text(
+                      '$streak',
+                      style: AppText.bodyStrong.copyWith(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w800,
+                        color: k.text,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -187,9 +243,9 @@ class SetupCard extends GetView<TodayController> {
 
   @override
   Widget build(BuildContext context) => Obx(() {
-        controller.watch();
-        return _build(context);
-      });
+    controller.watch();
+    return _build(context);
+  });
 
   Widget _build(BuildContext context) {
     final k = context.k;
@@ -203,9 +259,23 @@ class SetupCard extends GetView<TodayController> {
           Row(
             children: [
               Expanded(
-                child: Text('Get set up', style: AppText.bodyStrong.copyWith(fontSize: 15.sp, fontWeight: FontWeight.w800, color: k.text)),
+                child: Text(
+                  'Get set up',
+                  style: AppText.bodyStrong.copyWith(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w800,
+                    color: k.text,
+                  ),
+                ),
               ),
-              Text('$done of ${items.length}', style: AppText.small.copyWith(fontSize: 13.sp, fontWeight: FontWeight.w800, color: k.muted)),
+              Text(
+                '$done of ${items.length}',
+                style: AppText.small.copyWith(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w800,
+                  color: k.muted,
+                ),
+              ),
               CircleIconButton(
                 icon: PhosphorIconsBold.x,
                 label: 'Hide set-up list',
@@ -218,7 +288,11 @@ class SetupCard extends GetView<TodayController> {
           ),
           Padding(
             padding: EdgeInsets.only(right: 8.sp),
-            child: _Bar(value: done / items.length, track: k.border, fill: AppColors.lime),
+            child: _Bar(
+              value: done / items.length,
+              track: k.border,
+              fill: AppColors.lime,
+            ),
           ),
           SizedBox(height: 4.sp),
           for (final item in items)
@@ -239,10 +313,18 @@ class SetupCard extends GetView<TodayController> {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: item.done ? k.selectedBorder : null,
-                          border: item.done ? null : Border.all(color: k.border, width: 2),
+                          border: item.done
+                              ? null
+                              : Border.all(color: k.border, width: 2),
                         ),
                         child: item.done
-                            ? Icon(PhosphorIconsBold.check, size: 14.sp, color: k.selectedBorder == AppColors.lime ? AppColors.ink : AppColors.lime)
+                            ? Icon(
+                                PhosphorIconsBold.check,
+                                size: 14.sp,
+                                color: k.selectedBorder == AppColors.lime
+                                    ? AppColors.ink
+                                    : AppColors.lime,
+                              )
                             : null,
                       ),
                       SizedBox(width: 12.sp),
@@ -253,12 +335,19 @@ class SetupCard extends GetView<TodayController> {
                             fontSize: 14.5.sp,
                             fontWeight: FontWeight.w700,
                             color: item.done ? k.faint : k.text,
-                            decoration: item.done ? TextDecoration.lineThrough : null,
+                            decoration: item.done
+                                ? TextDecoration.lineThrough
+                                : null,
                             decorationColor: k.faint,
                           ),
                         ),
                       ),
-                      if (!item.done) Icon(PhosphorIconsBold.caretRight, size: 16.sp, color: k.faint),
+                      if (!item.done)
+                        Icon(
+                          PhosphorIconsBold.caretRight,
+                          size: 16.sp,
+                          color: k.faint,
+                        ),
                       SizedBox(width: 8.sp),
                     ],
                   ),
@@ -278,9 +367,9 @@ class ProteinCard extends GetView<TodayController> {
 
   @override
   Widget build(BuildContext context) => Obx(() {
-        controller.watch();
-        return _build(context);
-      });
+    controller.watch();
+    return _build(context);
+  });
 
   Widget _build(BuildContext context) {
     final k = context.k;
@@ -289,26 +378,33 @@ class ProteinCard extends GetView<TodayController> {
     final foods = controller.quickFoods;
 
     Widget chip(String label, VoidCallback onTap) => Padding(
-          padding: EdgeInsets.only(right: 8.sp),
-          child: Semantics(
-            button: true,
-            label: 'Add $label',
-            excludeSemantics: true,
-            child: PressScale(
-              onTap: onTap,
-              child: Container(
-                height: 38.sp,
-                padding: EdgeInsets.symmetric(horizontal: 12.sp),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(19.sp),
-                  border: Border.all(color: k.border, width: 1.5),
-                ),
-                child: Text(label, style: AppText.bodyStrong.copyWith(fontSize: 13.5.sp, fontWeight: FontWeight.w800, color: k.text)),
+      padding: EdgeInsets.only(right: 8.sp),
+      child: Semantics(
+        button: true,
+        label: 'Add $label',
+        excludeSemantics: true,
+        child: PressScale(
+          onTap: onTap,
+          child: Container(
+            height: 38.sp,
+            padding: EdgeInsets.symmetric(horizontal: 12.sp),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(19.sp),
+              border: Border.all(color: k.border, width: 1.5),
+            ),
+            child: Text(
+              label,
+              style: AppText.bodyStrong.copyWith(
+                fontSize: 13.5.sp,
+                fontWeight: FontWeight.w800,
+                color: k.text,
               ),
             ),
           ),
-        );
+        ),
+      ),
+    );
 
     return TodaySection(
       child: Column(
@@ -316,20 +412,38 @@ class ProteinCard extends GetView<TodayController> {
         children: [
           Semantics(
             button: true,
-            label: 'Protein ${controller.day.proteinG} of ${controller.proteinGoal} grams. Open protein',
+            label:
+                'Protein ${controller.day.proteinG} of ${controller.proteinGoal} grams. Open protein',
             excludeSemantics: true,
             child: PressScale(
               onTap: controller.openProtein,
               child: Row(
                 children: [
-                  _IconTile(color: _tint(context, AppColors.tangerineSoft, AppColors.tangerine), child: ThreeD(Img3d.biceps, size: 30.sp)),
+                  _IconTile(
+                    color: _tint(
+                      context,
+                      AppColors.tangerineSoft,
+                      AppColors.tangerine,
+                    ),
+                    child: ThreeD(Img3d.biceps, size: 30.sp),
+                  ),
                   SizedBox(width: 12.sp),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Protein', style: AppText.small.copyWith(fontSize: 13.5.sp, fontWeight: FontWeight.w700, color: k.muted)),
-                        _ValueText('${controller.day.proteinG}', '/ ${controller.proteinGoal} g'),
+                        Text(
+                          'Protein',
+                          style: AppText.small.copyWith(
+                            fontSize: 13.5.sp,
+                            fontWeight: FontWeight.w700,
+                            color: k.muted,
+                          ),
+                        ),
+                        _ValueText(
+                          '${controller.day.proteinG}',
+                          '/ ${controller.proteinGoal} g',
+                        ),
                       ],
                     ),
                   ),
@@ -338,7 +452,9 @@ class ProteinCard extends GetView<TodayController> {
                     style: AppText.small.copyWith(
                       fontSize: 13.sp,
                       fontWeight: FontWeight.w800,
-                      color: dark ? AppColors.tangerine : AppColors.tangerineText,
+                      color: dark
+                          ? AppColors.tangerine
+                          : AppColors.tangerineText,
                     ),
                   ),
                 ],
@@ -346,7 +462,11 @@ class ProteinCard extends GetView<TodayController> {
             ),
           ),
           SizedBox(height: 12.sp),
-          _Bar(value: controller.proteinProgress, track: _tint(context, AppColors.tangerineSoft, AppColors.tangerine), fill: AppColors.tangerine),
+          _Bar(
+            value: controller.proteinProgress,
+            track: _tint(context, AppColors.tangerineSoft, AppColors.tangerine),
+            fill: AppColors.tangerine,
+          ),
           SizedBox(height: 12.sp),
           SizedBox(
             height: 38.sp,
@@ -355,7 +475,11 @@ class ProteinCard extends GetView<TodayController> {
               children: [
                 chip('+10 g', () => controller.addProtein(10)),
                 chip('+20 g', () => controller.addProtein(20)),
-                for (final f in foods) chip('${f.name.split(',').first} · ${f.grams} g', () => controller.addProtein(f.grams, f.name)),
+                for (final f in foods)
+                  chip(
+                    '${f.name.split(',').first} · ${f.grams} g',
+                    () => controller.addProtein(f.grams, f.name),
+                  ),
                 chip('More…', controller.openProtein),
               ],
             ),
@@ -373,9 +497,9 @@ class WaterCard extends GetView<TodayController> {
 
   @override
   Widget build(BuildContext context) => Obx(() {
-        controller.watch();
-        return _build(context);
-      });
+    controller.watch();
+    return _build(context);
+  });
 
   Widget _build(BuildContext context) {
     final k = context.k;
@@ -388,19 +512,39 @@ class WaterCard extends GetView<TodayController> {
             children: [
               _IconTile(
                 color: _tint(context, AppColors.aquaSoft, AppColors.aqua),
-                child: SizedBox.square(dimension: 30.sp, child: const CustomPaint(painter: _DropIconPainter())),
+                child: SizedBox.square(
+                  dimension: 30.sp,
+                  child: const CustomPaint(painter: _DropIconPainter()),
+                ),
               ),
               SizedBox(width: 12.sp),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Water', style: AppText.small.copyWith(fontSize: 13.5.sp, fontWeight: FontWeight.w700, color: k.muted)),
-                    _ValueText(controller.litres, '/ ${controller.waterGoalLitres} L'),
+                    Text(
+                      'Water',
+                      style: AppText.small.copyWith(
+                        fontSize: 13.5.sp,
+                        fontWeight: FontWeight.w700,
+                        color: k.muted,
+                      ),
+                    ),
+                    _ValueText(
+                      controller.litres,
+                      '/ ${controller.waterGoalLitres} L',
+                    ),
                   ],
                 ),
               ),
-              Text('Tap a glass · 250 ml', style: AppText.small.copyWith(fontSize: 12.5.sp, fontWeight: FontWeight.w700, color: k.faint)),
+              Text(
+                'Tap a glass · 250 ml',
+                style: AppText.small.copyWith(
+                  fontSize: 12.5.sp,
+                  fontWeight: FontWeight.w700,
+                  color: k.faint,
+                ),
+              ),
             ],
           ),
           SizedBox(height: 10.sp),
@@ -414,7 +558,9 @@ class WaterCard extends GetView<TodayController> {
               for (var i = 0; i < count; i++)
                 Semantics(
                   button: true,
-                  label: i < full ? 'Glass ${i + 1}, full' : 'Glass ${i + 1}, empty',
+                  label: i < full
+                      ? 'Glass ${i + 1}, full'
+                      : 'Glass ${i + 1}, empty',
                   excludeSemantics: true,
                   child: PressScale(
                     onTap: () => controller.tapGlass(i),
@@ -428,7 +574,11 @@ class WaterCard extends GetView<TodayController> {
                           painter: _GlassPainter(
                             fill: v,
                             showPlus: i == full,
-                            empty: _tint(context, AppColors.aquaSoft, AppColors.aqua),
+                            empty: _tint(
+                              context,
+                              AppColors.aquaSoft,
+                              AppColors.aqua,
+                            ),
                             edge: k.waterEdge,
                           ),
                         ),
@@ -445,7 +595,12 @@ class WaterCard extends GetView<TodayController> {
 }
 
 class _GlassPainter extends CustomPainter {
-  const _GlassPainter({required this.fill, required this.showPlus, required this.empty, required this.edge});
+  const _GlassPainter({
+    required this.fill,
+    required this.showPlus,
+    required this.empty,
+    required this.edge,
+  });
 
   final double fill;
   final bool showPlus;
@@ -469,7 +624,10 @@ class _GlassPainter extends CustomPainter {
       canvas.save();
       canvas.clipPath(glass);
       final top = 25 - 16 * fill;
-      canvas.drawRect(Rect.fromLTRB(0, top, 28, 28), Paint()..color = AppColors.aqua);
+      canvas.drawRect(
+        Rect.fromLTRB(0, top, 28, 28),
+        Paint()..color = AppColors.aqua,
+      );
       canvas.restore();
     }
     canvas.drawPath(
@@ -491,7 +649,8 @@ class _GlassPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_GlassPainter old) => old.fill != fill || old.showPlus != showPlus || old.empty != empty;
+  bool shouldRepaint(_GlassPainter old) =>
+      old.fill != fill || old.showPlus != showPlus || old.empty != empty;
 }
 
 class _DropIconPainter extends CustomPainter {
@@ -522,49 +681,87 @@ class WeightCard extends GetView<TodayController> {
 
   @override
   Widget build(BuildContext context) => Obx(() {
-        controller.watch();
-        return _build(context);
-      });
+    controller.watch();
+    return _build(context);
+  });
 
   Widget _build(BuildContext context) {
     final k = context.k;
     final now = controller.latestKg;
     final goal = controller.goalKg;
     Widget col(String label, String value, {Color? color}) => Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: AppText.small.copyWith(fontSize: 12.5.sp, fontWeight: FontWeight.w700, color: k.muted)),
-              _ValueText(value, controller.unit, color: color),
-            ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: AppText.small.copyWith(
+              fontSize: 12.5.sp,
+              fontWeight: FontWeight.w700,
+              color: k.muted,
+            ),
           ),
-        );
+          _ValueText(value, controller.unit, color: color),
+        ],
+      ),
+    );
     return TodaySection(
       child: Column(
         children: [
           Row(
             children: [
               col('Now', now == null ? '—' : controller.fmtWeight(now)),
-              if (goal != null) col('Goal', controller.fmtWeight(goal), color: k.selectedBorder == AppColors.lime ? AppColors.lime : AppColors.limeText),
+              if (goal != null)
+                col(
+                  'Goal',
+                  controller.fmtWeight(goal),
+                  color: k.selectedBorder == AppColors.lime
+                      ? AppColors.lime
+                      : AppColors.limeText,
+                ),
               CircleIconButton(
                 icon: PhosphorIconsBold.plus,
                 label: 'Log weight',
                 size: 44.sp,
-                background: k.selectedBorder == AppColors.lime ? AppColors.lime : AppColors.ink,
-                foreground: k.selectedBorder == AppColors.lime ? AppColors.ink : AppColors.lime,
+                background: k.selectedBorder == AppColors.lime
+                    ? AppColors.lime
+                    : AppColors.ink,
+                foreground: k.selectedBorder == AppColors.lime
+                    ? AppColors.ink
+                    : AppColors.lime,
                 onTap: controller.logWeight,
               ),
             ],
           ),
           if (goal != null) ...[
             SizedBox(height: 12.sp),
-            _Bar(value: controller.goalProgress, track: k.border, fill: k.selectedBorder),
+            _Bar(
+              value: controller.goalProgress,
+              track: k.border,
+              fill: k.selectedBorder,
+            ),
           ],
           SizedBox(height: 8.sp),
           Row(
             children: [
-              Expanded(child: Text(controller.changeSinceStart, style: AppText.small.copyWith(fontSize: 12.5.sp, fontWeight: FontWeight.w700, color: k.muted))),
-              Text(controller.lastWeighIn, style: AppText.small.copyWith(fontSize: 12.5.sp, fontWeight: FontWeight.w700, color: k.muted)),
+              Expanded(
+                child: Text(
+                  controller.changeSinceStart,
+                  style: AppText.small.copyWith(
+                    fontSize: 12.5.sp,
+                    fontWeight: FontWeight.w700,
+                    color: k.muted,
+                  ),
+                ),
+              ),
+              Text(
+                controller.lastWeighIn,
+                style: AppText.small.copyWith(
+                  fontSize: 12.5.sp,
+                  fontWeight: FontWeight.w700,
+                  color: k.muted,
+                ),
+              ),
             ],
           ),
         ],
@@ -580,9 +777,9 @@ class FeelCard extends GetView<TodayController> {
 
   @override
   Widget build(BuildContext context) => Obx(() {
-        controller.watch();
-        return _build(context);
-      });
+    controller.watch();
+    return _build(context);
+  });
 
   Widget _build(BuildContext context) {
     final k = context.k;
@@ -595,9 +792,24 @@ class FeelCard extends GetView<TodayController> {
           Row(
             children: [
               Expanded(
-                child: Text('How are you feeling?', style: AppText.bodyStrong.copyWith(fontSize: 15.sp, fontWeight: FontWeight.w800, color: k.text)),
+                child: Text(
+                  'How are you feeling?',
+                  style: AppText.bodyStrong.copyWith(
+                    fontSize: 15.sp,
+                    fontWeight: FontWeight.w800,
+                    color: k.text,
+                  ),
+                ),
               ),
-              if (note.isNotEmpty) Text(note, style: AppText.small.copyWith(fontSize: 12.5.sp, fontWeight: FontWeight.w700, color: k.faint)),
+              if (note.isNotEmpty)
+                Text(
+                  note,
+                  style: AppText.small.copyWith(
+                    fontSize: 12.5.sp,
+                    fontWeight: FontWeight.w700,
+                    color: k.faint,
+                  ),
+                ),
             ],
           ),
           SizedBox(height: 12.sp),
@@ -619,7 +831,12 @@ class FeelCard extends GetView<TodayController> {
                         decoration: BoxDecoration(
                           color: selected == i ? k.selectedBg : k.bg,
                           borderRadius: BorderRadius.circular(16.sp),
-                          border: Border.all(color: selected == i ? k.selectedBorder : Colors.transparent, width: 2),
+                          border: Border.all(
+                            color: selected == i
+                                ? k.selectedBorder
+                                : Colors.transparent,
+                            width: 2,
+                          ),
                         ),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -628,12 +845,19 @@ class FeelCard extends GetView<TodayController> {
                               scale: selected == i ? 1.12 : 1,
                               duration: const Duration(milliseconds: 250),
                               curve: Curves.easeOutBack,
-                              child: ThreeD(Catalog.moods[4 - i].icon, size: 28.sp),
+                              child: ThreeD(
+                                Catalog.moods[4 - i].icon,
+                                size: 28.sp,
+                              ),
                             ),
                             SizedBox(height: 3.sp),
                             Text(
                               TodayController.faceLabels[i],
-                              style: AppText.small.copyWith(fontSize: 10.5.sp, fontWeight: FontWeight.w700, color: k.muted),
+                              style: AppText.small.copyWith(
+                                fontSize: 10.5.sp,
+                                fontWeight: FontWeight.w700,
+                                color: k.muted,
+                              ),
                             ),
                           ],
                         ),
@@ -663,10 +887,18 @@ class FeelCard extends GetView<TodayController> {
                             children: [
                               Text(
                                 'Add side effects or a note',
-                                style: AppText.small.copyWith(fontSize: 13.5.sp, fontWeight: FontWeight.w800, color: k.text),
+                                style: AppText.small.copyWith(
+                                  fontSize: 13.5.sp,
+                                  fontWeight: FontWeight.w800,
+                                  color: k.text,
+                                ),
                               ),
                               SizedBox(width: 4.sp),
-                              Icon(PhosphorIconsBold.caretRight, size: 14.sp, color: k.text),
+                              Icon(
+                                PhosphorIconsBold.caretRight,
+                                size: 14.sp,
+                                color: k.text,
+                              ),
                             ],
                           ),
                         ),
@@ -697,9 +929,9 @@ class TipCard extends GetView<TodayController> {
 
   @override
   Widget build(BuildContext context) => Obx(() {
-        controller.watch();
-        return _build(context);
-      });
+    controller.watch();
+    return _build(context);
+  });
 
   Widget _build(BuildContext context) {
     final k = context.k;
@@ -716,9 +948,24 @@ class TipCard extends GetView<TodayController> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: AppText.caps.copyWith(fontSize: 11.5.sp, letterSpacing: 0.8, color: dark ? AppColors.lime : AppColors.limeText)),
+                Text(
+                  title,
+                  style: AppText.caps.copyWith(
+                    fontSize: 11.5.sp,
+                    letterSpacing: 0.8,
+                    color: dark ? AppColors.lime : AppColors.limeText,
+                  ),
+                ),
                 SizedBox(height: 3.sp),
-                Text(text, style: AppText.bodyStrong.copyWith(fontSize: 14.sp, height: 1.45, fontWeight: FontWeight.w600, color: k.text)),
+                Text(
+                  text,
+                  style: AppText.bodyStrong.copyWith(
+                    fontSize: 14.sp,
+                    height: 1.45,
+                    fontWeight: FontWeight.w600,
+                    color: k.text,
+                  ),
+                ),
               ],
             ),
           ),
@@ -735,19 +982,19 @@ class TodayLogCard extends GetView<TodayController> {
 
   @override
   Widget build(BuildContext context) => Obx(() {
-        controller.watch();
-        return _build(context);
-      });
+    controller.watch();
+    return _build(context);
+  });
 
   Widget _build(BuildContext context) {
     final k = context.k;
     final rows = controller.logRows;
     Color dot(String kind) => switch (kind) {
-          'protein' => AppColors.tangerine,
-          'water' => AppColors.aqua,
-          'dose' => AppColors.lime,
-          _ => k.muted,
-        };
+      'protein' => AppColors.tangerine,
+      'water' => AppColors.aqua,
+      'dose' => AppColors.lime,
+      _ => k.muted,
+    };
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -755,7 +1002,14 @@ class TodayLogCard extends GetView<TodayController> {
           children: [
             const Expanded(child: SectionLabel("TODAY'S LOG")),
             if (rows.any((r) => r.entryId != null))
-              Text('Swipe to remove', style: AppText.small.copyWith(fontSize: 12.5.sp, fontWeight: FontWeight.w700, color: k.faint)),
+              Text(
+                'Swipe to remove',
+                style: AppText.small.copyWith(
+                  fontSize: 12.5.sp,
+                  fontWeight: FontWeight.w700,
+                  color: k.faint,
+                ),
+              ),
           ],
         ),
         SizedBox(height: 8.sp),
@@ -767,13 +1021,21 @@ class TodayLogCard extends GetView<TodayController> {
                   child: Text(
                     'Nothing yet today. Tap + to log anything.',
                     textAlign: TextAlign.center,
-                    style: AppText.small.copyWith(fontSize: 13.5.sp, color: k.muted),
+                    style: AppText.small.copyWith(
+                      fontSize: 13.5.sp,
+                      color: k.muted,
+                    ),
                   ),
                 )
               : Column(
                   children: [
                     for (var i = 0; i < rows.length; i++)
-                      _row(context, rows[i], dot(rows[i].kind), last: i == rows.length - 1),
+                      _row(
+                        context,
+                        rows[i],
+                        dot(rows[i].kind),
+                        last: i == rows.length - 1,
+                      ),
                   ],
                 ),
         ),
@@ -781,28 +1043,59 @@ class TodayLogCard extends GetView<TodayController> {
     );
   }
 
-  Widget _row(BuildContext context, TodayLogRow r, Color dot, {required bool last}) {
+  Widget _row(
+    BuildContext context,
+    TodayLogRow r,
+    Color dot, {
+    required bool last,
+  }) {
     final k = context.k;
     final content = Container(
       padding: EdgeInsets.symmetric(vertical: 11.sp),
-      decoration: BoxDecoration(border: last ? null : Border(bottom: BorderSide(color: k.border))),
+      decoration: BoxDecoration(
+        border: last ? null : Border(bottom: BorderSide(color: k.border)),
+      ),
       child: Row(
         children: [
-          Container(width: 10.sp, height: 10.sp, decoration: BoxDecoration(color: dot, shape: BoxShape.circle)),
+          Container(
+            width: 10.sp,
+            height: 10.sp,
+            decoration: BoxDecoration(color: dot, shape: BoxShape.circle),
+          ),
           SizedBox(width: 12.sp),
           SizedBox(
             width: 70.sp,
             child: Text(
               r.at == null ? 'Today' : controller.timeOf(r.at!),
               maxLines: 1,
-              style: AppText.small.copyWith(fontSize: 12.5.sp, fontWeight: FontWeight.w700, color: k.faint),
+              style: AppText.small.copyWith(
+                fontSize: 12.5.sp,
+                fontWeight: FontWeight.w700,
+                color: k.faint,
+              ),
             ),
           ),
           Expanded(
-            child: Text(r.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.bodyStrong.copyWith(fontSize: 14.sp, fontWeight: FontWeight.w700, color: k.text)),
+            child: Text(
+              r.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppText.bodyStrong.copyWith(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w700,
+                color: k.text,
+              ),
+            ),
           ),
           SizedBox(width: 8.sp),
-          Text(r.value, style: AppText.bodyStrong.copyWith(fontSize: 13.5.sp, fontWeight: FontWeight.w800, color: k.text)),
+          Text(
+            r.value,
+            style: AppText.bodyStrong.copyWith(
+              fontSize: 13.5.sp,
+              fontWeight: FontWeight.w800,
+              color: k.text,
+            ),
+          ),
         ],
       ),
     );
@@ -814,7 +1107,11 @@ class TodayLogCard extends GetView<TodayController> {
       background: Container(
         alignment: Alignment.centerRight,
         padding: EdgeInsets.only(right: 8.sp),
-        child: Icon(PhosphorIconsBold.trash, size: 20.sp, color: AppColors.danger),
+        child: Icon(
+          PhosphorIconsBold.trash,
+          size: 20.sp,
+          color: AppColors.danger,
+        ),
       ),
       child: content,
     );

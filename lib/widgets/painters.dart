@@ -82,7 +82,13 @@ class _RingPainter extends CustomPainter {
 
 /// Simple injector pen drawn in the medicine's colours.
 class PenArt extends StatelessWidget {
-  const PenArt({super.key, required this.body, required this.cap, this.height = 70, this.tilt = -0.2});
+  const PenArt({
+    super.key,
+    required this.body,
+    required this.cap,
+    this.height = 70,
+    this.tilt = -0.2,
+  });
 
   final Color body;
   final Color cap;
@@ -113,7 +119,10 @@ class _PenPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final s = size.height / 84;
     RRect r(double x, double y, double w, double h, double rad) =>
-        RRect.fromRectAndRadius(Rect.fromLTWH(x * s, y * s, w * s, h * s), Radius.circular(rad * s));
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(x * s, y * s, w * s, h * s),
+          Radius.circular(rad * s),
+        );
     canvas.drawRRect(r(9, 2, 16, 16, 5), Paint()..color = cap);
     canvas.drawRRect(r(5, 15, 24, 64, 10), Paint()..color = body);
     canvas.drawRRect(

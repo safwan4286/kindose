@@ -48,7 +48,13 @@ class BmiCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: k.card,
           borderRadius: BorderRadius.circular(22.sp),
-          boxShadow: [BoxShadow(color: AppColors.ink.withValues(alpha: 0.05), blurRadius: 2.sp, offset: Offset(0, 1.sp))],
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.ink.withValues(alpha: 0.05),
+              blurRadius: 2.sp,
+              offset: Offset(0, 1.sp),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -59,17 +65,43 @@ class BmiCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('BMI', style: AppText.caps.copyWith(fontSize: 12.sp, letterSpacing: 1, color: k.faint)),
+                      Text(
+                        'BMI',
+                        style: AppText.caps.copyWith(
+                          fontSize: 12.sp,
+                          letterSpacing: 1,
+                          color: k.faint,
+                        ),
+                      ),
                       SizedBox(height: 2.sp),
-                      Text(bmi.toStringAsFixed(1), style: AppText.h1.copyWith(fontSize: 30.sp, height: 1, color: k.text)),
+                      Text(
+                        bmi.toStringAsFixed(1),
+                        style: AppText.h1.copyWith(
+                          fontSize: 30.sp,
+                          height: 1,
+                          color: k.text,
+                        ),
+                      ),
                     ],
                   ),
                 ),
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  padding: EdgeInsets.symmetric(horizontal: 12.sp, vertical: 6.sp),
-                  decoration: BoxDecoration(color: tagBg, borderRadius: BorderRadius.circular(12.sp)),
-                  child: Text(label, style: AppText.title.copyWith(fontSize: 13.5.sp, color: tagFg)),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 12.sp,
+                    vertical: 6.sp,
+                  ),
+                  decoration: BoxDecoration(
+                    color: tagBg,
+                    borderRadius: BorderRadius.circular(12.sp),
+                  ),
+                  child: Text(
+                    label,
+                    style: AppText.title.copyWith(
+                      fontSize: 13.5.sp,
+                      color: tagFg,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -94,7 +126,13 @@ class BmiCard extends StatelessWidget {
                             children: [
                               for (var i = 0; i < _bands.length; i++)
                                 Expanded(
-                                  flex: ((_bands[i].$1 - (i == 0 ? 0 : _bands[i - 1].$1)) * 10).round(),
+                                  flex:
+                                      ((_bands[i].$1 -
+                                                  (i == 0
+                                                      ? 0
+                                                      : _bands[i - 1].$1)) *
+                                              10)
+                                          .round(),
                                   child: ColoredBox(color: _bands[i].$2),
                                 ),
                             ],
@@ -125,14 +163,25 @@ class BmiCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 for (final t in const ['Under', 'Healthy', 'Over', 'Obesity'])
-                  Text(t, style: AppText.small.copyWith(fontSize: 11.5.sp, color: k.faint)),
+                  Text(
+                    t,
+                    style: AppText.small.copyWith(
+                      fontSize: 11.5.sp,
+                      color: k.faint,
+                    ),
+                  ),
               ],
             ),
             if (showNote) ...[
               SizedBox(height: 10.sp),
               Text(
                 'BMI is a rough guide, not a diagnosis. Your doctor knows your full picture.',
-                style: AppText.small.copyWith(fontSize: 12.sp, height: 1.4, fontWeight: FontWeight.w500, color: k.faint),
+                style: AppText.small.copyWith(
+                  fontSize: 12.sp,
+                  height: 1.4,
+                  fontWeight: FontWeight.w500,
+                  color: k.faint,
+                ),
               ),
             ],
           ],

@@ -1,5 +1,3 @@
-
-
 import '../../../progress_indicator/loader.dart';
 import '../models/api_progress_indicator.dart';
 

@@ -9,8 +9,6 @@ import '../services/responsiveness/device_manager.dart';
 import 'bounce.dart';
 import 'common_text.dart';
 
-
-
 class CommonButton extends StatefulWidget {
   final double? height;
   final double? width;

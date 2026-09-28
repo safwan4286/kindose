@@ -19,13 +19,38 @@ class SexPage extends GetView<OnboardingController> {
     final k = context.k;
     final dark = k.selectedBorder == AppColors.lime;
     final motion = !MediaQuery.disableAnimationsOf(context);
-    Color tint(Color light, Color accent) => dark ? accent.withValues(alpha: 0.16) : light;
+    Color tint(Color light, Color accent) =>
+        dark ? accent.withValues(alpha: 0.16) : light;
 
     final options = [
-      ('female', 'Female', null, PhosphorIconsBold.genderFemale, tint(AppColors.tangerineSoft, AppColors.tangerine)),
-      ('male', 'Male', null, PhosphorIconsBold.genderMale, tint(AppColors.aquaSoft, AppColors.aqua)),
-      ('other', 'Other', null, PhosphorIconsBold.genderIntersex, tint(const Color(0xFFF1F7D6), AppColors.lime)),
-      ('none', 'Prefer not to say', "We'll use a middle estimate", PhosphorIconsBold.eyeSlash, k.cardAlt),
+      (
+        'female',
+        'Female',
+        null,
+        PhosphorIconsBold.genderFemale,
+        tint(AppColors.tangerineSoft, AppColors.tangerine),
+      ),
+      (
+        'male',
+        'Male',
+        null,
+        PhosphorIconsBold.genderMale,
+        tint(AppColors.aquaSoft, AppColors.aqua),
+      ),
+      (
+        'other',
+        'Other',
+        null,
+        PhosphorIconsBold.genderIntersex,
+        tint(const Color(0xFFF1F7D6), AppColors.lime),
+      ),
+      (
+        'none',
+        'Prefer not to say',
+        "We'll use a middle estimate",
+        PhosphorIconsBold.eyeSlash,
+        k.cardAlt,
+      ),
     ];
 
     return StepScaffold(
@@ -34,7 +59,9 @@ class SexPage extends GetView<OnboardingController> {
       cta: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const PrivacyNote('Stays on this phone. You can change or remove it in Me.').enter(motion, delay: 420, dy: 0.1),
+          const PrivacyNote(
+            'Stays on this phone. You can change or remove it in Me.',
+          ).enter(motion, delay: 420, dy: 0.1),
           SizedBox(height: 10.sp),
           const TapHint('Tap one to continue').enter(motion, delay: 480, dy: 0),
         ],

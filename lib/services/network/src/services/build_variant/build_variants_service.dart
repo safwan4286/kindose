@@ -1,4 +1,3 @@
-
 import '../network_service.dart';
 
 enum Environment { staging, production, local }
@@ -28,8 +27,6 @@ class BuildVariantService {
       case Environment.production:
         return NetworkService.instance.apiModel?.buildVariants.productionUrl ??
             "";
-      default:
-        throw Exception("Unknown environment");
     }
   }
 }

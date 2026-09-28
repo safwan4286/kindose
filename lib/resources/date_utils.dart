@@ -30,7 +30,8 @@ class Dates {
 
   /// `DateTime.weekday` is 1 (Mon) … 7 (Sun).
   static String weekdayName(int weekday) => weekdays[(weekday - 1) % 7];
-  static String weekdayShort(int weekday) => weekdayName(weekday).substring(0, 3);
+  static String weekdayShort(int weekday) =>
+      weekdayName(weekday).substring(0, 3);
   static String monthShort(int month) => months[month - 1].substring(0, 3);
 
   static DateTime dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);

@@ -46,11 +46,7 @@ class KCard extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         borderRadius: shape,
-        child: InkWell(
-          borderRadius: shape,
-          onTap: onTap,
-          child: content,
-        ),
+        child: InkWell(borderRadius: shape, onTap: onTap, child: content),
       ),
     );
   }
@@ -79,7 +75,12 @@ class ThreeD extends StatelessWidget {
 /// Gently bobs its child up and down. Stays still when the user has
 /// asked the system to reduce motion.
 class Floaty extends StatefulWidget {
-  const Floaty({super.key, required this.child, this.distance = 6, this.delayMs = 0});
+  const Floaty({
+    super.key,
+    required this.child,
+    this.distance = 6,
+    this.delayMs = 0,
+  });
 
   final Widget child;
   final double distance;
@@ -95,9 +96,13 @@ class _FloatyState extends State<Floaty> with SingleTickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 2600));
+    _c = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2600),
+    );
     Future<void>.delayed(Duration(milliseconds: widget.delayMs), () {
-      if (mounted && !MediaQuery.disableAnimationsOf(context)) _c.repeat(reverse: true);
+      if (mounted && !MediaQuery.disableAnimationsOf(context))
+        _c.repeat(reverse: true);
     });
   }
 
@@ -149,7 +154,10 @@ class KSwitch extends StatelessWidget {
         child: Container(
           width: h - 6,
           height: h - 6,
-          decoration: const BoxDecoration(color: AppColors.white, shape: BoxShape.circle),
+          decoration: const BoxDecoration(
+            color: AppColors.white,
+            shape: BoxShape.circle,
+          ),
         ),
       ),
     );
@@ -194,7 +202,10 @@ class SwitchRow extends StatelessWidget {
                     children: [
                       Text(label, style: AppText.title),
                       if (sub != null)
-                        Text(sub!, style: AppText.small.copyWith(color: context.k.muted)),
+                        Text(
+                          sub!,
+                          style: AppText.small.copyWith(color: context.k.muted),
+                        ),
                     ],
                   ),
                 ),
@@ -240,27 +251,36 @@ class CircleIconButton extends StatelessWidget {
         duration: const Duration(milliseconds: 150),
         opacity: onTap == null ? 0.35 : 1,
         child: Material(
-        color: background ?? context.k.card,
-        shape: const CircleBorder(),
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: onTap,
-          child: SizedBox(
-            width: size,
-            height: size,
-            child: Center(
-              child: PhosphorIcon(icon, size: size * 0.45, color: foreground ?? context.k.text),
+          color: background ?? context.k.card,
+          shape: const CircleBorder(),
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: onTap,
+            child: SizedBox(
+              width: size,
+              height: size,
+              child: Center(
+                child: PhosphorIcon(
+                  icon,
+                  size: size * 0.45,
+                  color: foreground ?? context.k.text,
+                ),
+              ),
             ),
           ),
         ),
-      ),
       ),
     );
   }
 }
 
 class BackCircle extends StatelessWidget {
-  const BackCircle({super.key, required this.onTap, this.dark = false, this.size = 44});
+  const BackCircle({
+    super.key,
+    required this.onTap,
+    this.dark = false,
+    this.size = 44,
+  });
 
   final VoidCallback onTap;
   final bool dark;
@@ -292,7 +312,10 @@ class SectionLabel extends StatelessWidget {
       header: true,
       child: Text(
         text.toUpperCase(),
-        style: AppText.caps.copyWith(fontSize: 12.sp, color: color ?? context.k.muted),
+        style: AppText.caps.copyWith(
+          fontSize: 12.sp,
+          color: color ?? context.k.muted,
+        ),
       ),
     );
   }
@@ -310,10 +333,17 @@ class KTag extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(9)),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(9),
+      ),
       child: Text(
         text.toUpperCase(),
-        style: AppText.tiny.copyWith(color: fg, fontWeight: FontWeight.w800, letterSpacing: 0.5),
+        style: AppText.tiny.copyWith(
+          color: fg,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.5,
+        ),
       ),
     );
   }

@@ -42,7 +42,9 @@ class SocialButton extends StatelessWidget {
       bg = dark ? AppColors.white : Colors.black;
       fg = dark ? Colors.black : AppColors.white;
       border = null;
-      logo = dark ? 'assets/social/apple_logo_black.png' : 'assets/social/apple_logo_white.png';
+      logo = dark
+          ? 'assets/social/apple_logo_black.png'
+          : 'assets/social/apple_logo_white.png';
     } else {
       bg = dark ? _googleDarkBg : AppColors.white;
       fg = dark ? _googleDarkText : _googleText;
@@ -64,7 +66,9 @@ class SocialButton extends StatelessWidget {
           decoration: BoxDecoration(
             color: bg,
             borderRadius: BorderRadius.circular(28.sp),
-            border: border == null ? null : Border.all(color: border, width: 1.5),
+            border: border == null
+                ? null
+                : Border.all(color: border, width: 1.5),
           ),
           alignment: Alignment.center,
           child: busy
@@ -89,7 +93,11 @@ class SocialButton extends StatelessWidget {
                         label,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: AppText.button.copyWith(fontSize: 17.sp, fontWeight: FontWeight.w700, color: fg),
+                        style: AppText.button.copyWith(
+                          fontSize: 17.sp,
+                          fontWeight: FontWeight.w700,
+                          color: fg,
+                        ),
                       ),
                     ),
                   ],

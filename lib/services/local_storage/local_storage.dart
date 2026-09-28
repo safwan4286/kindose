@@ -8,7 +8,6 @@ import 'package:path_provider/path_provider.dart' as path;
 
 import '../logs/logs.dart';
 
-
 part 'caching.dart';
 
 part 'hive_box.dart';
@@ -80,10 +79,7 @@ class LocalStorage {
   }
 
   // Read data from a box
-  Future<T?> readData<T>({
-    required String boxName,
-    required String key,
-  }) async {
+  Future<T?> readData<T>({required String boxName, required String key}) async {
     final box = await _getBoxByName(boxName);
     final encodedString = await box!.get(key);
     if (encodedString != null) {
@@ -95,10 +91,7 @@ class LocalStorage {
   }
 
   // Delete data from a box
-  Future<void> deleteData<T>({
-    required String boxName,
-    String? key,
-  }) async {
+  Future<void> deleteData<T>({required String boxName, String? key}) async {
     final box = await _getBoxByName(boxName);
     if (key != null) {
       await box!.delete(key);

@@ -19,22 +19,31 @@ class TreatmentStartPage extends GetView<OnboardingController> {
 
   List<DateTime> _recentMonths() {
     final now = DateTime.now();
-    return [for (var i = 0; i < _months; i++) DateTime(now.year, now.month - i)];
+    return [
+      for (var i = 0; i < _months; i++) DateTime(now.year, now.month - i),
+    ];
   }
 
   String _monthLabel(DateTime m) {
     final now = DateTime.now();
     final name = Dates.monthShort(m.month);
-    return m.year == now.year ? name : "$name '${(m.year % 100).toString().padLeft(2, '0')}";
+    return m.year == now.year
+        ? name
+        : "$name '${(m.year % 100).toString().padLeft(2, '0')}";
   }
 
   Future<void> _pickOlder(BuildContext context) async {
     final now = DateTime.now();
     final lastInGrid = DateTime(now.year, now.month - _months + 1);
-    final latest = DateTime(lastInGrid.year, lastInGrid.month).subtract(const Duration(days: 1));
+    final latest = DateTime(
+      lastInGrid.year,
+      lastInGrid.month,
+    ).subtract(const Duration(days: 1));
     final picked = await showDatePicker(
       context: context,
-      initialDate: controller.treatmentStartMode.value == 'older' && controller.treatmentStart.value != null
+      initialDate:
+          controller.treatmentStartMode.value == 'older' &&
+              controller.treatmentStart.value != null
           ? controller.treatmentStart.value!
           : latest,
       firstDate: DateTime(now.year - 10),
@@ -52,7 +61,9 @@ class TreatmentStartPage extends GetView<OnboardingController> {
     final restart = controller.stage.value == 'restart';
 
     return StepScaffold(
-      title: restart ? 'When did you first start?' : 'When did you start treatment?',
+      title: restart
+          ? 'When did you first start?'
+          : 'When did you start treatment?',
       subtitle: "Roughly is fine. We'll count your weeks from it.",
       cta: const StepFooter(),
       children: [
@@ -69,8 +80,13 @@ class TreatmentStartPage extends GetView<OnboardingController> {
               return ChoiceBlock(
                 label: _monthLabel(m),
                 sub: i == 0 ? 'Weeks 1–4' : '≈ Week $week',
-                semanticLabel: '${Dates.monthShort(m.month)} ${m.year}, about week $week',
-                selected: mode == 'month' && picked != null && picked.year == m.year && picked.month == m.month,
+                semanticLabel:
+                    '${Dates.monthShort(m.month)} ${m.year}, about week $week',
+                selected:
+                    mode == 'month' &&
+                    picked != null &&
+                    picked.year == m.year &&
+                    picked.month == m.month,
                 onTap: () => controller.pickStartMonth(m),
               );
             },

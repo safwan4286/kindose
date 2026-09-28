@@ -70,7 +70,10 @@ class LogSheet extends StatelessWidget {
     final motion = !MediaQuery.disableAnimationsOf(context);
     return KSafeArea(
       child: Container(
-        decoration: BoxDecoration(color: k.bg, borderRadius: BorderRadius.vertical(top: Radius.circular(28.sp))),
+        decoration: BoxDecoration(
+          color: k.bg,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28.sp)),
+        ),
         padding: EdgeInsets.fromLTRB(20.sp, 10.sp, 20.sp, 12.sp),
         child: Obx(() {
           final p = _t.profile.value;
@@ -91,7 +94,10 @@ class LogSheet extends StatelessWidget {
                 child: Container(
                   width: 40.sp,
                   height: 5.sp,
-                  decoration: BoxDecoration(color: k.border, borderRadius: BorderRadius.circular(3.sp)),
+                  decoration: BoxDecoration(
+                    color: k.border,
+                    borderRadius: BorderRadius.circular(3.sp),
+                  ),
                 ),
               ),
               SizedBox(height: 14.sp),
@@ -100,10 +106,21 @@ class LogSheet extends StatelessWidget {
                   Expanded(
                     child: Semantics(
                       header: true,
-                      child: Text('Log something', style: AppText.h2.copyWith(fontSize: 24.sp, color: k.text)),
+                      child: Text(
+                        'Log something',
+                        style: AppText.h2.copyWith(
+                          fontSize: 24.sp,
+                          color: k.text,
+                        ),
+                      ),
                     ),
                   ),
-                  CircleIconButton(icon: PhosphorIconsBold.x, label: 'Close', size: 40, onTap: popRoute),
+                  CircleIconButton(
+                    icon: PhosphorIconsBold.x,
+                    label: 'Close',
+                    size: 40,
+                    onTap: popRoute,
+                  ),
                 ],
               ),
               SizedBox(height: 14.sp),
@@ -115,7 +132,9 @@ class LogSheet extends StatelessWidget {
                     child: _Tile(
                       icon: Img3d.biceps,
                       title: 'Protein',
-                      sub: proteinLeft == 0 ? 'Goal reached' : '$proteinLeft g to go',
+                      sub: proteinLeft == 0
+                          ? 'Goal reached'
+                          : '$proteinLeft g to go',
                       bg: AppColors.tangerineSoft,
                       subColor: AppColors.tangerineText,
                       onTap: () => _goTo(Routes.addIntake, 'protein'),
@@ -176,7 +195,10 @@ class LogSheet extends StatelessWidget {
                     _QuickChip(label: '+ Glass of water', onTap: _quickWater),
                     for (final (name, grams) in _favourites()) ...[
                       SizedBox(width: 8.sp),
-                      _QuickChip(label: '$name · $grams g', onTap: () => _quickProtein(name, grams)),
+                      _QuickChip(
+                        label: '$name · $grams g',
+                        onTap: () => _quickProtein(name, grams),
+                      ),
                     ],
                   ],
                 ),
@@ -184,7 +206,11 @@ class LogSheet extends StatelessWidget {
               SizedBox(height: 8.sp),
               Text(
                 'Your most-used items, learned from what you log.',
-                style: AppText.small.copyWith(fontSize: 12.sp, fontWeight: FontWeight.w600, color: k.faint),
+                style: AppText.small.copyWith(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w600,
+                  color: k.faint,
+                ),
               ),
             ],
           );
@@ -214,14 +240,20 @@ class _DoseRow extends StatelessWidget {
         due = t.isDoseDay();
         final name = Catalog.medicineName(p.medicineId, p.customMedicine);
         final mark = Catalog.medicine(p.medicineId).mark ?? '';
-        final dose = p.strengthMg <= 0 ? '' : ' ${Catalog.mgLabel(p.strengthMg)}';
+        final dose = p.strengthMg <= 0
+            ? ''
+            : ' ${Catalog.mgLabel(p.strengthMg)}';
         final next = t.nextDoseAt();
         if (due) {
-          sub = tablet ? '$name$mark$dose' : '$name$mark$dose · ${Catalog.siteName(t.nextSiteId).toLowerCase()} next';
+          sub = tablet
+              ? '$name$mark$dose'
+              : '$name$mark$dose · ${Catalog.siteName(t.nextSiteId).toLowerCase()} next';
         } else if (t.doseOn(DateTime.now()) != null) {
           sub = 'Logged today · add another or fix a time';
         } else {
-          sub = next == null ? '$name$mark$dose' : 'Next: ${Dates.relativeDay(next, DateTime.now())}';
+          sub = next == null
+              ? '$name$mark$dose'
+              : 'Next: ${Dates.relativeDay(next, DateTime.now())}';
         }
       }
 
@@ -231,7 +263,9 @@ class _DoseRow extends StatelessWidget {
       final dark = k.selectedBorder == AppColors.lime;
 
       return PressScale(
-        semanticLabel: noMedicine ? 'Add your medicine' : 'Log dose. $sub${due ? '. Due today' : ''}',
+        semanticLabel: noMedicine
+            ? 'Add your medicine'
+            : 'Log dose. $sub${due ? '. Due today' : ''}',
         onTap: () {
           Haptics.instance.selectionClick();
           popRoute();
@@ -266,22 +300,40 @@ class _DoseRow extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(tablet ? 'Tablet' : 'Dose', style: AppText.title.copyWith(fontSize: 17.sp, color: fg)),
+                      Text(
+                        tablet ? 'Tablet' : 'Dose',
+                        style: AppText.title.copyWith(
+                          fontSize: 17.sp,
+                          color: fg,
+                        ),
+                      ),
                       SizedBox(height: 2.sp),
                       Text(
                         sub,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: AppText.small.copyWith(fontSize: 13.sp, fontWeight: FontWeight.w600, color: subColor),
+                        style: AppText.small.copyWith(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w600,
+                          color: subColor,
+                        ),
                       ),
                     ],
                   ),
                 ),
                 if (due) ...[
                   SizedBox(width: 8.sp),
-                  const KTag('Due today', bg: AppColors.lime, fg: AppColors.ink),
+                  const KTag(
+                    'Due today',
+                    bg: AppColors.lime,
+                    fg: AppColors.ink,
+                  ),
                 ] else
-                  PhosphorIcon(PhosphorIconsBold.caretRight, size: 18.sp, color: k.muted),
+                  PhosphorIcon(
+                    PhosphorIconsBold.caretRight,
+                    size: 18.sp,
+                    color: k.muted,
+                  ),
               ],
             ),
           ),
@@ -318,18 +370,30 @@ class _Tile extends StatelessWidget {
       child: ExcludeSemantics(
         child: Container(
           padding: EdgeInsets.all(14.sp),
-          decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(22.sp)),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(22.sp),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               ThreeD(icon, size: 36.sp),
               SizedBox(height: 10.sp),
-              Text(title, style: AppText.title.copyWith(fontSize: 16.sp, color: titleColor)),
+              Text(
+                title,
+                style: AppText.title.copyWith(
+                  fontSize: 16.sp,
+                  color: titleColor,
+                ),
+              ),
               Text(
                 sub,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppText.small.copyWith(fontSize: 12.5.sp, color: subColor),
+                style: AppText.small.copyWith(
+                  fontSize: 12.5.sp,
+                  color: subColor,
+                ),
               ),
             ],
           ),
@@ -349,7 +413,9 @@ class _QuickChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final k = context.k;
     return PressScale(
-      semanticLabel: label.startsWith('+') ? 'Add a glass of water' : 'Add $label',
+      semanticLabel: label.startsWith('+')
+          ? 'Add a glass of water'
+          : 'Add $label',
       onTap: onTap,
       child: ExcludeSemantics(
         child: Container(
@@ -361,7 +427,14 @@ class _QuickChip extends StatelessWidget {
             borderRadius: BorderRadius.circular(20.sp),
             border: Border.all(color: k.border, width: 1.5),
           ),
-          child: Text(label, style: AppText.small.copyWith(fontSize: 13.5.sp, fontWeight: FontWeight.w800, color: k.text)),
+          child: Text(
+            label,
+            style: AppText.small.copyWith(
+              fontSize: 13.5.sp,
+              fontWeight: FontWeight.w800,
+              color: k.text,
+            ),
+          ),
         ),
       ),
     );

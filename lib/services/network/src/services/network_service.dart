@@ -1,5 +1,3 @@
-
-
 import '../models/api_model.dart';
 import 'build_variant/build_variants_service.dart';
 import 'encryption/encryption.dart';

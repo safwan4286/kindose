@@ -1,4 +1,4 @@
- import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import 'language/language_en.dart';
 import 'language/languages.dart';
@@ -7,9 +7,7 @@ class AppLocalizationsDelegate extends LocalizationsDelegate<Languages> {
   const AppLocalizationsDelegate();
 
   @override
-  bool isSupported(Locale locale) => [
-        'en',
-      ].contains(locale.languageCode);
+  bool isSupported(Locale locale) => ['en'].contains(locale.languageCode);
 
   @override
   Future<Languages> load(Locale locale) => _load(locale);

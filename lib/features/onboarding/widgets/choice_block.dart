@@ -34,7 +34,9 @@ class ChoiceBlock extends StatelessWidget {
     final k = context.k;
     final onLime = k.selectedBorder == AppColors.lime;
     final fg = selected ? (onLime ? AppColors.ink : AppColors.white) : k.text;
-    final subColor = selected ? (onLime ? AppColors.ink.withValues(alpha: 0.7) : AppColors.lime) : k.muted;
+    final subColor = selected
+        ? (onLime ? AppColors.ink.withValues(alpha: 0.7) : AppColors.lime)
+        : k.muted;
 
     return Semantics(
       button: true,
@@ -59,7 +61,11 @@ class ChoiceBlock extends StatelessWidget {
                   color: selected ? k.selectedBorder : k.card,
                   borderRadius: BorderRadius.circular(22.sp),
                   boxShadow: [
-                    BoxShadow(color: AppColors.ink.withValues(alpha: 0.05), blurRadius: 2.sp, offset: Offset(0, 1.sp)),
+                    BoxShadow(
+                      color: AppColors.ink.withValues(alpha: 0.05),
+                      blurRadius: 2.sp,
+                      offset: Offset(0, 1.sp),
+                    ),
                   ],
                 ),
                 alignment: Alignment.center,
@@ -68,13 +74,28 @@ class ChoiceBlock extends StatelessWidget {
                   children: [
                     FittedBox(
                       fit: BoxFit.scaleDown,
-                      child: Text(label, style: AppText.h1.copyWith(fontSize: 26.sp, height: 1, letterSpacing: -0.8, color: fg)),
+                      child: Text(
+                        label,
+                        style: AppText.h1.copyWith(
+                          fontSize: 26.sp,
+                          height: 1,
+                          letterSpacing: -0.8,
+                          color: fg,
+                        ),
+                      ),
                     ),
                     if (sub != null) ...[
                       SizedBox(height: 4.sp),
                       FittedBox(
                         fit: BoxFit.scaleDown,
-                        child: Text(sub!, style: AppText.small.copyWith(fontSize: 12.5.sp, fontWeight: FontWeight.w800, color: subColor)),
+                        child: Text(
+                          sub!,
+                          style: AppText.small.copyWith(
+                            fontSize: 12.5.sp,
+                            fontWeight: FontWeight.w800,
+                            color: subColor,
+                          ),
+                        ),
                       ),
                     ],
                   ],
@@ -84,11 +105,22 @@ class ChoiceBlock extends StatelessWidget {
                 Positioned(
                   top: -8.sp,
                   child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 8.sp, vertical: 2.sp),
-                    decoration: BoxDecoration(color: AppColors.lime, borderRadius: BorderRadius.circular(8.sp)),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 8.sp,
+                      vertical: 2.sp,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.lime,
+                      borderRadius: BorderRadius.circular(8.sp),
+                    ),
                     child: Text(
                       tag!,
-                      style: AppText.small.copyWith(fontSize: 10.sp, fontWeight: FontWeight.w800, letterSpacing: 0.4, color: AppColors.ink),
+                      style: AppText.small.copyWith(
+                        fontSize: 10.sp,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.4,
+                        color: AppColors.ink,
+                      ),
                     ),
                   ),
                 ),
@@ -132,7 +164,10 @@ class ChoiceBlockGrid extends StatelessWidget {
         mainAxisExtent: height.sp,
       ),
       itemCount: itemCount,
-      itemBuilder: (context, i) => itemBuilder(context, i).enter(motion, delay: 140 + i.clamp(0, 8) * 40, dy: 0.12),
+      itemBuilder: (context, i) => itemBuilder(
+        context,
+        i,
+      ).enter(motion, delay: 140 + i.clamp(0, 8) * 40, dy: 0.12),
     );
   }
 }
