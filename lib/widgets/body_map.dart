@@ -180,6 +180,118 @@ class _Spot extends StatelessWidget {
   }
 }
 
+/// Small, non-interactive body with one spot marked, e.g. the next
+/// injection spot on the Today card. The spot pulses gently (off when the
+/// phone asks to reduce motion). Screen readers skip it; the card around
+/// it names the spot in words.
+class BodySpotPreview extends StatefulWidget {
+  const BodySpotPreview({
+    super.key,
+    required this.siteId,
+    required this.bodyColor,
+    required this.dotColor,
+    this.width = 100,
+  });
+
+  final String siteId;
+  final Color bodyColor;
+  final Color dotColor;
+
+  /// Width in design units (scaled with `.sp`); height is 1.5 × width.
+  final double width;
+
+  @override
+  State<BodySpotPreview> createState() => _BodySpotPreviewState();
+}
+
+class _BodySpotPreviewState extends State<BodySpotPreview> with SingleTickerProviderStateMixin {
+  late final AnimationController _pulse = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1600),
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _pulse.stop();
+      _pulse.value = 0;
+    } else if (!_pulse.isAnimating) {
+      _pulse.repeat();
+    }
+  }
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final w = widget.width.sp;
+    final scale = w / 200;
+    final dot = 14.sp;
+    final ring = 34.sp;
+    InjectionSite? site;
+    for (final s in Catalog.sites) {
+      if (s.id == widget.siteId) site = s;
+    }
+    return ExcludeSemantics(
+      child: SizedBox(
+        width: w,
+        height: 300 * scale,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _BodyPainter(
+                  fill: widget.bodyColor,
+                  navel: Color.lerp(widget.bodyColor, widget.dotColor, 0.3)!,
+                ),
+              ),
+            ),
+            if (site != null) ...[
+              Positioned(
+                left: site.x * scale - ring / 2,
+                top: site.y * scale - ring / 2,
+                width: ring,
+                height: ring,
+                child: AnimatedBuilder(
+                  animation: _pulse,
+                  builder: (_, _) {
+                    final t = Curves.easeOut.transform(_pulse.value);
+                    return Center(
+                      child: Container(
+                        width: dot + (ring - dot) * t,
+                        height: dot + (ring - dot) * t,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: widget.dotColor.withValues(alpha: 0.35 * (1 - t)),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              Positioned(
+                left: site.x * scale - dot / 2,
+                top: site.y * scale - dot / 2,
+                width: dot,
+                height: dot,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(shape: BoxShape.circle, color: widget.dotColor),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// Simple silhouette in 200 × 300 units.
 class _BodyPainter extends CustomPainter {
   _BodyPainter({required this.fill, required this.navel});

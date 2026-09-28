@@ -204,6 +204,7 @@ class TodayController extends GetxController {
   String get doseTime => Dates.timeOfDay(profile?.shotMinutes ?? 480);
 
   String get nextSiteName => Catalog.siteName(tracker.nextSiteId);
+  String get nextSiteId => tracker.nextSiteId;
   String siteName(String id) => Catalog.siteName(id);
   String timeOf(DateTime t) => Dates.time(t);
   String? get lastSiteName =>
@@ -311,7 +312,16 @@ class TodayController extends GetxController {
   // ----------------------------------------------------------------- water
 
   int get waterGoal => profile?.waterGoalMl ?? 2500;
-  int get glassCount => (waterGoal / glassMl).ceil().clamp(4, 21);
+  /// Glasses shown: enough for the goal, and always one more empty "+"
+  /// glass so days above the goal can be logged too (max 4 rows).
+  int get glassCount {
+    final goal = (waterGoal / glassMl).ceil().clamp(4, 21);
+    return (glassesFull + 1 > goal ? glassesFull + 1 : goal).clamp(4, 28);
+  }
+
+  bool get waterGoalHit => day.waterMl >= waterGoal;
+
+  void openWater() => Get.toNamed<void>(Routes.addIntake, arguments: 'water');
   int get glassesFull => (day.waterMl / glassMl).floor();
 
   String get litres => _litres(day.waterMl);

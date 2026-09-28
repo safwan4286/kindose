@@ -632,7 +632,7 @@ class _BarsCard extends StatelessWidget {
             ].join(', '),
             excludeSemantics: true,
             child: SizedBox(
-              height: chartH + 18.sp,
+              height: chartH + 24.sp,
               child: Stack(
                 children: [
                   Positioned(
@@ -680,7 +680,11 @@ class _BarsCard extends StatelessWidget {
                                   ),
                                 ),
                                 SizedBox(height: 4.sp),
-                                Text(
+                                SizedBox(
+                                  height: 20.sp,
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Text(
                                   Dates.sameDay(b.date, today)
                                       ? 'Tdy'
                                       : Dates.weekdayShort(
@@ -692,6 +696,8 @@ class _BarsCard extends StatelessWidget {
                                     color: Dates.sameDay(b.date, today)
                                         ? k.text
                                         : k.faint,
+                                  ),
+                                    ),
                                   ),
                                 ),
                               ],

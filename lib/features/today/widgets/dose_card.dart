@@ -5,6 +5,7 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../../../resources/colors.dart';
 import '../../../services/responsiveness/device_manager.dart';
 import '../../../services/theme/theme.dart';
+import '../../../widgets/body_map.dart';
 import '../../../widgets/buttons.dart';
 import '../../../widgets/press_scale.dart';
 import '../today_controller.dart';
@@ -347,103 +348,113 @@ class _DoseDay extends GetView<TodayController> {
   });
 
   Widget _build(BuildContext context) {
-    Widget box(String label, String value) => Expanded(
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 12.sp, vertical: 10.sp),
-        decoration: BoxDecoration(
-          color: AppColors.ink.withValues(alpha: 0.07),
-          borderRadius: BorderRadius.circular(16.sp),
+    final tablet = controller.isTablet;
+    final last = controller.lastSiteName;
+
+    Widget fact(String label, String value) => Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: _caps(AppColors.heroMuted).copyWith(fontSize: 11.sp, letterSpacing: 1)),
+        SizedBox(height: 2.sp),
+        Text(
+          value,
+          maxLines: 2,
+          style: AppText.bodyStrong.copyWith(
+            fontSize: 15.5.sp,
+            fontWeight: FontWeight.w800,
+            color: AppColors.white,
+          ),
         ),
+      ],
+    );
+
+    return Semantics(
+      container: true,
+      label: tablet
+          ? 'Dose day. Today at ${controller.doseTime}.'
+          : 'Dose day. Today at ${controller.doseTime}. Next spot ${controller.nextSiteName}.',
+      child: _InkCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              label,
-              style: _caps(
-                AppColors.limeText,
-              ).copyWith(fontSize: 11.sp, letterSpacing: 0.6),
+            Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 10.sp, vertical: 4.sp),
+                  decoration: BoxDecoration(
+                    color: AppColors.lime,
+                    borderRadius: BorderRadius.circular(9.sp),
+                  ),
+                  child: Text(
+                    'DOSE DAY',
+                    style: _caps(AppColors.ink).copyWith(fontSize: 11.5.sp, letterSpacing: 1),
+                  ),
+                ),
+                SizedBox(width: 8.sp),
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: _MedicineLine(color: AppColors.heroMuted),
+                  ),
+                ),
+              ],
             ),
-            SizedBox(height: 2.sp),
-            Text(
-              value,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppText.bodyStrong.copyWith(
-                fontSize: 15.sp,
-                fontWeight: FontWeight.w800,
-                color: AppColors.ink,
+            SizedBox(height: 14.sp),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Semantics(
+                        header: true,
+                        child: Text('Today', style: _big(AppColors.white, size: 38)),
+                      ),
+                      SizedBox(height: 4.sp),
+                      Text(
+                        controller.doseTime,
+                        style: AppText.bodyStrong.copyWith(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.lime,
+                        ),
+                      ),
+                      if (!tablet) ...[
+                        SizedBox(height: 16.sp),
+                        fact('NEXT SPOT', controller.nextSiteName),
+                        SizedBox(height: 10.sp),
+                        fact('LAST SPOT', last ?? 'None yet · first dose'),
+                      ],
+                    ],
+                  ),
+                ),
+                if (!tablet) ...[
+                  SizedBox(width: 8.sp),
+                  BodySpotPreview(
+                    siteId: controller.nextSiteId,
+                    bodyColor: AppColors.white.withValues(alpha: 0.09),
+                    dotColor: AppColors.lime,
+                    width: 104,
+                  ),
+                ],
+              ],
+            ),
+            SizedBox(height: 16.sp),
+            PillButton(
+              label: tablet ? 'Log my tablet' : 'Log my dose',
+              lime: true,
+              onPressed: controller.logDose,
+            ),
+            Center(
+              child: _TextLink(
+                'Taking it another day?',
+                () => controller.moveDate(context),
+                color: AppColors.heroMuted,
               ),
             ),
           ],
         ),
-      ),
-    );
-
-    return _InkCard(
-      color: AppColors.lime,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 10.sp,
-                  vertical: 4.sp,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.ink,
-                  borderRadius: BorderRadius.circular(9.sp),
-                ),
-                child: Text(
-                  'DOSE DAY',
-                  style: _caps(
-                    AppColors.lime,
-                  ).copyWith(fontSize: 11.5.sp, letterSpacing: 1),
-                ),
-              ),
-              SizedBox(width: 8.sp),
-              Expanded(
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: _MedicineLine(color: AppColors.limeText),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12.sp),
-          Semantics(
-            header: true,
-            child: Text(
-              'Today, ${controller.doseTime}',
-              style: _big(AppColors.ink, size: 32),
-            ),
-          ),
-          if (!controller.isTablet) ...[
-            SizedBox(height: 14.sp),
-            Row(
-              children: [
-                box('NEXT SITE', controller.nextSiteName),
-                SizedBox(width: 8.sp),
-                box('LAST TIME', controller.lastSiteName ?? 'First dose'),
-              ],
-            ),
-          ],
-          SizedBox(height: 14.sp),
-          PillButton(
-            label: controller.isTablet ? 'Log my tablet' : 'Log my dose',
-            icon: PhosphorIconsBold.check,
-            ink: true,
-            onPressed: controller.logDose,
-          ),
-          Center(
-            child: _TextLink(
-              'Taking it another day?',
-              () => controller.moveDate(context),
-              color: AppColors.limeText,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -555,49 +566,72 @@ class _TakenToday extends GetView<TodayController> {
 
   Widget _build(BuildContext context) {
     final dose = controller.doseToday;
-    final site = dose == null || dose.site.isEmpty
-        ? ''
-        : ' · ${controller.siteName(dose.site)}';
+    final time = dose == null ? '' : controller.timeOf(dose.takenAt);
+    final site = dose == null || dose.site.isEmpty ? '' : controller.siteName(dose.site);
+    final when = [time, site].where((s) => s.isNotEmpty).join(' · ');
+    final next = controller.nextDoseWhen.split(' · ').first;
     return _InkCard(
       child: Row(
         children: [
           Container(
             width: 48.sp,
             height: 48.sp,
-            decoration: const BoxDecoration(
-              color: AppColors.lime,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              PhosphorIconsBold.check,
-              size: 24.sp,
-              color: AppColors.ink,
-            ),
+            decoration: const BoxDecoration(color: AppColors.lime, shape: BoxShape.circle),
+            child: Icon(PhosphorIconsBold.check, size: 24.sp, color: AppColors.ink),
           ),
           SizedBox(width: 14.sp),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Dose logged',
-                  style: AppText.h1.copyWith(
-                    fontSize: 22.sp,
-                    color: AppColors.white,
+                Text('Dose logged', style: AppText.h1.copyWith(fontSize: 22.sp, color: AppColors.white)),
+                if (when.isNotEmpty) ...[
+                  SizedBox(height: 2.sp),
+                  Text(
+                    when,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.small.copyWith(fontSize: 13.sp, color: AppColors.heroMuted),
                   ),
-                ),
-                SizedBox(height: 2.sp),
-                Text(
-                  '${dose == null ? '' : controller.timeOf(dose.takenAt)}$site · next ${controller.nextDoseWhen.split(' · ').first}',
-                  style: AppText.small.copyWith(
-                    fontSize: 13.sp,
-                    color: AppColors.heroMuted,
+                ],
+                if (next.isNotEmpty) ...[
+                  SizedBox(height: 2.sp),
+                  Text(
+                    'Next dose $next',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.small.copyWith(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.lime,
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
-          _TextLink('Undo', controller.undoDoseToday, color: AppColors.lime),
+          SizedBox(width: 10.sp),
+          Semantics(
+            button: true,
+            label: 'Undo dose',
+            excludeSemantics: true,
+            child: PressScale(
+              onTap: controller.undoDoseToday,
+              child: Container(
+                constraints: BoxConstraints(minHeight: 36.sp),
+                padding: EdgeInsets.symmetric(horizontal: 14.sp),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(18.sp),
+                  border: Border.all(color: AppColors.white.withValues(alpha: 0.2), width: 1.5),
+                ),
+                child: Text(
+                  'Undo',
+                  style: AppText.small.copyWith(fontSize: 13.sp, fontWeight: FontWeight.w800, color: AppColors.white),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );

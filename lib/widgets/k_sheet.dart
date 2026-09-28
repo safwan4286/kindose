@@ -154,8 +154,8 @@ class ChoiceBox extends StatelessWidget {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 160),
             curve: Curves.easeOut,
-            height: height,
-            constraints: BoxConstraints(minHeight: 44.sp),
+            // [height] is a minimum so larger text never overflows.
+            constraints: BoxConstraints(minHeight: height ?? 44.sp),
             padding:
                 padding ??
                 EdgeInsets.symmetric(horizontal: 12.sp, vertical: 8.sp),

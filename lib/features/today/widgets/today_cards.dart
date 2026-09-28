@@ -109,6 +109,24 @@ class _Bar extends StatelessWidget {
   }
 }
 
+/// Small arrow that says "tap to open the full screen".
+class _OpenArrow extends StatelessWidget {
+  const _OpenArrow();
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    return Container(
+      width: 28.sp,
+      height: 28.sp,
+      margin: EdgeInsets.only(left: 8.sp),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(color: k.cardAlt, shape: BoxShape.circle),
+      child: Icon(PhosphorIconsBold.caretRight, size: 14.sp, color: k.muted),
+    );
+  }
+}
+
 class _IconTile extends StatelessWidget {
   const _IconTile({required this.child, required this.color});
 
@@ -457,6 +475,7 @@ class ProteinCard extends GetView<TodayController> {
                           : AppColors.tangerineText,
                     ),
                   ),
+                  const _OpenArrow(),
                 ],
               ),
             ),
@@ -508,44 +527,55 @@ class WaterCard extends GetView<TodayController> {
     return TodaySection(
       child: Column(
         children: [
-          Row(
-            children: [
-              _IconTile(
-                color: _tint(context, AppColors.aquaSoft, AppColors.aqua),
-                child: SizedBox.square(
-                  dimension: 30.sp,
-                  child: const CustomPaint(painter: _DropIconPainter()),
-                ),
-              ),
-              SizedBox(width: 12.sp),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Water',
-                      style: AppText.small.copyWith(
-                        fontSize: 13.5.sp,
-                        fontWeight: FontWeight.w700,
-                        color: k.muted,
-                      ),
+          Semantics(
+            button: true,
+            label: 'Water ${controller.litres} of ${controller.waterGoalLitres} litres. Open water',
+            excludeSemantics: true,
+            child: PressScale(
+              onTap: controller.openWater,
+              child: Row(
+                children: [
+                  _IconTile(
+                    color: _tint(context, AppColors.aquaSoft, AppColors.aqua),
+                    child: SizedBox.square(
+                      dimension: 30.sp,
+                      child: const CustomPaint(painter: _DropIconPainter()),
                     ),
-                    _ValueText(
-                      controller.litres,
-                      '/ ${controller.waterGoalLitres} L',
+                  ),
+                  SizedBox(width: 12.sp),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Water',
+                          style: AppText.small.copyWith(
+                            fontSize: 13.5.sp,
+                            fontWeight: FontWeight.w700,
+                            color: k.muted,
+                          ),
+                        ),
+                        _ValueText(
+                          controller.litres,
+                          '/ ${controller.waterGoalLitres} L',
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                  Text(
+                    controller.waterGoalHit ? 'Goal hit!' : '250 ml a glass',
+                    style: AppText.small.copyWith(
+                      fontSize: 12.5.sp,
+                      fontWeight: FontWeight.w800,
+                      color: controller.waterGoalHit
+                          ? (k.selectedBorder == AppColors.lime ? AppColors.aqua : AppColors.aquaText)
+                          : k.faint,
+                    ),
+                  ),
+                  const _OpenArrow(),
+                ],
               ),
-              Text(
-                'Tap a glass · 250 ml',
-                style: AppText.small.copyWith(
-                  fontSize: 12.5.sp,
-                  fontWeight: FontWeight.w700,
-                  color: k.faint,
-                ),
-              ),
-            ],
+            ),
           ),
           SizedBox(height: 10.sp),
           GridView.count(

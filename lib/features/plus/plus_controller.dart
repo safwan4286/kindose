@@ -4,6 +4,8 @@ import 'package:get/get.dart';
 import '../../resources/images.dart';
 import '../../resources/routes.dart';
 import '../../services/haptics/haptics.dart';
+import '../../services/offers/offer_service.dart';
+import '../offer/offer_controller.dart';
 import '../../services/tracker_service.dart';
 import '../../widgets/toast.dart';
 
@@ -158,9 +160,18 @@ class PlusController extends GetxController {
     showToast('Nothing to restore yet.');
   }
 
-  void close() {
+  bool _closing = false;
+
+  /// Close (X, back gesture). If the offer rules allow, the paywall is
+  /// replaced by the one-time discount screen instead.
+  Future<void> close() async {
+    if (_closing) return;
+    _closing = true;
     Haptics.instance.selectionClick();
-    if (fromOnboarding) {
+    final showOffer = await Get.find<OfferService>().onPaywallClosed(fromOnboarding: fromOnboarding);
+    if (showOffer) {
+      Get.offNamed<void>(Routes.offer, arguments: OfferArgs(fromOnboarding: fromOnboarding));
+    } else if (fromOnboarding) {
       Get.offAllNamed<void>(Routes.home);
     } else {
       popRoute();

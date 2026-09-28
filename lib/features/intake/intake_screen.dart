@@ -35,14 +35,13 @@ class IntakeScreen extends GetView<IntakeController> {
                 children: [
                   BackCircle(onTap: popRoute),
                   SizedBox(width: 12.sp),
+                  // One screen per card: Protein or Water (no tabs).
                   Expanded(
-                    child: Obx(
-                      () => KSegmented<String>(
-                        options: const ['protein', 'water'],
-                        selected: controller.tab.value,
-                        dense: true,
-                        labelOf: (t) => t == 'protein' ? 'Protein' : 'Water',
-                        onChanged: controller.setTab,
+                    child: Semantics(
+                      header: true,
+                      child: Text(
+                        controller.isProtein ? 'Protein' : 'Water',
+                        style: AppText.h2.copyWith(fontSize: 22.sp, color: k.text),
                       ),
                     ),
                   ),

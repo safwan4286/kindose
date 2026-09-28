@@ -28,7 +28,8 @@ class PlusScreen extends GetView<PlusController> {
     final motion = !MediaQuery.disableAnimationsOf(context);
 
     return PopScope(
-      canPop: !controller.fromOnboarding,
+      // Back always goes through close(), so the offer rules apply.
+      canPop: false,
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) controller.close();
       },

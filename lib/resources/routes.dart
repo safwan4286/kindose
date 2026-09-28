@@ -10,6 +10,8 @@ import '../features/intake/intake_binding.dart';
 import '../features/intake/intake_screen.dart';
 import '../features/log_dose/log_dose_binding.dart';
 import '../features/log_dose/log_dose_screen.dart';
+import '../features/offer/offer_binding.dart';
+import '../features/offer/offer_screen.dart';
 import '../features/onboarding/onboarding_binding.dart';
 import '../features/onboarding/onboarding_screen.dart';
 import '../features/plus/plus_binding.dart';
@@ -28,6 +30,9 @@ class Routes {
   static const String onboarding = '/onboarding';
   static const String editPlan = '/edit-plan';
   static const String plus = '/plus';
+
+  /// Discount offer after closing the paywall. Pass an OfferArgs.
+  static const String offer = '/offer';
   static const String home = '/home';
   static const String logDose = '/log-dose';
 
@@ -72,6 +77,12 @@ class AppPages {
       page: () => const PlusScreen(),
       binding: PlusBinding(),
       transition: Transition.downToUp,
+    ),
+    GetPage<dynamic>(
+      name: Routes.offer,
+      page: () => const OfferScreen(),
+      binding: OfferBinding(),
+      transition: Transition.fadeIn,
     ),
     GetPage<dynamic>(
       name: Routes.home,
