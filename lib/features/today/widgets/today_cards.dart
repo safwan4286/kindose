@@ -173,12 +173,32 @@ class TodayHeader extends GetView<TodayController> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                controller.dateLine,
-                style: AppText.caps.copyWith(
-                  fontSize: 12.sp,
-                  letterSpacing: 1.1,
-                  color: k.faint,
+              // Tap the date to see any day's log.
+              Semantics(
+                button: true,
+                label: '${controller.dateLine}. Open day view',
+                excludeSemantics: true,
+                child: PressScale(
+                  onTap: controller.openDay,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 4.sp),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          controller.dateLine,
+                          style: AppText.caps.copyWith(
+                            fontSize: 12.sp,
+                            letterSpacing: 1.1,
+                            color: k.faint,
+                          ),
+                        ),
+                        SizedBox(width: 6.sp),
+                        Icon(PhosphorIconsBold.calendarDots, size: 14.sp, color: k.muted),
+                        Icon(PhosphorIconsBold.caretRight, size: 11.sp, color: k.muted),
+                      ],
+                    ),
+                  ),
                 ),
               ),
               SizedBox(height: 4.sp),
@@ -1007,6 +1027,8 @@ class TipCard extends GetView<TodayController> {
 
 // ---------------------------------------------------------------- the log
 
+/// Compact "Today's log" row. The full list (with edit and remove) lives
+/// in the Day view, so Today stays short.
 class TodayLogCard extends GetView<TodayController> {
   const TodayLogCard({super.key});
 
@@ -1019,131 +1041,73 @@ class TodayLogCard extends GetView<TodayController> {
   Widget _build(BuildContext context) {
     final k = context.k;
     final rows = controller.logRows;
-    Color dot(String kind) => switch (kind) {
-      'protein' => AppColors.tangerine,
-      'water' => AppColors.aqua,
-      'dose' => AppColors.lime,
-      _ => k.muted,
-    };
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          children: [
-            const Expanded(child: SectionLabel("TODAY'S LOG")),
-            if (rows.any((r) => r.entryId != null))
-              Text(
-                'Swipe to remove',
-                style: AppText.small.copyWith(
-                  fontSize: 12.5.sp,
-                  fontWeight: FontWeight.w700,
-                  color: k.faint,
-                ),
+    int count(String kind) => rows.where((r) => r.kind == kind).length;
+    final parts = <(String, Color)>[
+      if (count('dose') > 0) ('Dose', AppColors.lime),
+      if (count('protein') > 0) ('${count('protein')} protein', AppColors.tangerine),
+      if (count('water') > 0) ('${count('water')} water', AppColors.aqua),
+      if (count('weight') > 0) ('Weigh-in', k.muted),
+    ];
+    final summary = rows.isEmpty
+        ? 'Nothing yet. Tap + to log anything.'
+        : parts.map((p) => p.$1).join(' · ');
+
+    return Semantics(
+      button: true,
+      label: "Today's log. ${rows.length} entries. $summary. Open",
+      excludeSemantics: true,
+      child: PressScale(
+        onTap: controller.openDay,
+        child: TodaySection(
+          child: Row(
+            children: [
+              _IconTile(
+                color: k.cardAlt,
+                child: Icon(PhosphorIconsBold.listBullets, size: 20.sp, color: k.text),
               ),
-          ],
-        ),
-        SizedBox(height: 8.sp),
-        TodaySection(
-          padding: EdgeInsets.symmetric(horizontal: 16.sp, vertical: 2.sp),
-          child: rows.isEmpty
-              ? Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16.sp),
-                  child: Text(
-                    'Nothing yet today. Tap + to log anything.',
-                    textAlign: TextAlign.center,
-                    style: AppText.small.copyWith(
-                      fontSize: 13.5.sp,
-                      color: k.muted,
-                    ),
-                  ),
-                )
-              : Column(
+              SizedBox(width: 12.sp),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    for (var i = 0; i < rows.length; i++)
-                      _row(
-                        context,
-                        rows[i],
-                        dot(rows[i].kind),
-                        last: i == rows.length - 1,
+                    Text(
+                      rows.isEmpty ? "Today's log" : "Today's log · ${rows.length} ${rows.length == 1 ? 'entry' : 'entries'}",
+                      style: AppText.title.copyWith(fontSize: 15.sp, color: k.text),
+                    ),
+                    SizedBox(height: 3.sp),
+                    if (rows.isEmpty)
+                      Text(summary, style: AppText.small.copyWith(fontSize: 12.5.sp, color: k.muted))
+                    else
+                      Wrap(
+                        spacing: 10.sp,
+                        runSpacing: 2.sp,
+                        children: [
+                          for (final (label, color) in parts)
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 7.sp,
+                                  height: 7.sp,
+                                  decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                                ),
+                                SizedBox(width: 5.sp),
+                                Text(
+                                  label,
+                                  style: AppText.small.copyWith(fontSize: 12.5.sp, fontWeight: FontWeight.w700, color: k.muted),
+                                ),
+                              ],
+                            ),
+                        ],
                       ),
                   ],
                 ),
-        ),
-      ],
-    );
-  }
-
-  Widget _row(
-    BuildContext context,
-    TodayLogRow r,
-    Color dot, {
-    required bool last,
-  }) {
-    final k = context.k;
-    final content = Container(
-      padding: EdgeInsets.symmetric(vertical: 11.sp),
-      decoration: BoxDecoration(
-        border: last ? null : Border(bottom: BorderSide(color: k.border)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 10.sp,
-            height: 10.sp,
-            decoration: BoxDecoration(color: dot, shape: BoxShape.circle),
-          ),
-          SizedBox(width: 12.sp),
-          SizedBox(
-            width: 70.sp,
-            child: Text(
-              r.at == null ? 'Today' : controller.timeOf(r.at!),
-              maxLines: 1,
-              style: AppText.small.copyWith(
-                fontSize: 12.5.sp,
-                fontWeight: FontWeight.w700,
-                color: k.faint,
               ),
-            ),
+              const _OpenArrow(),
+            ],
           ),
-          Expanded(
-            child: Text(
-              r.title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppText.bodyStrong.copyWith(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w700,
-                color: k.text,
-              ),
-            ),
-          ),
-          SizedBox(width: 8.sp),
-          Text(
-            r.value,
-            style: AppText.bodyStrong.copyWith(
-              fontSize: 13.5.sp,
-              fontWeight: FontWeight.w800,
-              color: k.text,
-            ),
-          ),
-        ],
-      ),
-    );
-    if (r.entryId == null) return content;
-    return Dismissible(
-      key: ValueKey(r.entryId),
-      direction: DismissDirection.endToStart,
-      onDismissed: (_) => controller.removeRow(r),
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: EdgeInsets.only(right: 8.sp),
-        child: Icon(
-          PhosphorIconsBold.trash,
-          size: 20.sp,
-          color: AppColors.danger,
         ),
       ),
-      child: content,
     );
   }
 }

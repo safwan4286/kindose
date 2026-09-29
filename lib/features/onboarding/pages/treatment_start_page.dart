@@ -9,6 +9,7 @@ import '../onboarding_screen.dart';
 import '../widgets/choice_block.dart';
 import '../widgets/choice_tile.dart';
 import '../widgets/step_footer.dart';
+import '../../../widgets/k_date_picker.dart';
 
 /// Question 6 (already taking / restarting): roughly when treatment began,
 /// so the app can say "Week 16". One tap on a month answers it.
@@ -39,7 +40,7 @@ class TreatmentStartPage extends GetView<OnboardingController> {
       lastInGrid.year,
       lastInGrid.month,
     ).subtract(const Duration(days: 1));
-    final picked = await showDatePicker(
+    final picked = await showKDatePicker(
       context: context,
       initialDate:
           controller.treatmentStartMode.value == 'older' &&
@@ -48,8 +49,9 @@ class TreatmentStartPage extends GetView<OnboardingController> {
           : latest,
       firstDate: DateTime(now.year - 10),
       lastDate: latest,
-      initialDatePickerMode: DatePickerMode.year,
-      helpText: 'Month you started',
+      startWithMonths: true,
+      title: 'When did you start?',
+      note: 'Pick the month, then the day (a rough day is fine).',
     );
     if (picked != null) controller.pickStartOlder(picked);
   }

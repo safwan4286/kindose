@@ -15,6 +15,7 @@ import '../../resources/routes.dart';
 import '../../services/haptics/haptics.dart';
 import '../../services/notifications/notification_service.dart';
 import '../../services/plus/plus_access.dart';
+import '../../services/supply/supply_service.dart';
 import '../../services/tracker_service.dart';
 import '../../widgets/mood_row.dart';
 import '../../widgets/toast.dart';
@@ -54,6 +55,10 @@ class MeController extends GetxController {
     tracker.doses.length;
     tracker.nextDoseOverride.value;
     PlusAccess.active.value;
+    supply.packStartedAt.value;
+    supply.usedOffset.value;
+    supply.spare.value;
+    supply.dosesPerPack.value;
     exporting.value;
     version.value;
   }
@@ -169,6 +174,35 @@ class MeController extends GetxController {
   void openPlus() {
     Haptics.instance.selectionClick();
     Get.toNamed<void>(Routes.plus);
+  }
+
+  // ------------------------------------------------------------- treatment
+
+  SupplyService get supply => Get.find<SupplyService>();
+
+  /// "Pens & cost" / "Vials & cost" / "Tablets & cost".
+  String get pensLabel => switch (tracker.profile.value?.form) {
+    'vial' => 'Vials & cost',
+    'tablet' => 'Tablets & cost',
+    _ => 'Pens & cost',
+  };
+
+  /// "3 doses left" once set up.
+  String? get pensValue {
+    if (!supply.isSetUp) return null;
+    final n = supply.dosesLeft;
+    final word = isTablet ? 'tablet' : 'dose';
+    return '$n ${n == 1 ? word : '${word}s'} left';
+  }
+
+  void openPens() {
+    Haptics.instance.selectionClick();
+    Get.toNamed<void>(Routes.pens);
+  }
+
+  void openGuide() {
+    Haptics.instance.selectionClick();
+    Get.toNamed<void>(Routes.guide);
   }
 
   // ----------------------------------------------------------------- goals

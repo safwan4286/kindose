@@ -9,6 +9,7 @@ import '../../resources/images.dart';
 import '../../services/responsiveness/device_manager.dart';
 import '../../services/theme/theme.dart';
 import '../../widgets/buttons.dart';
+import '../../widgets/day_switcher.dart';
 import '../../widgets/entrance.dart';
 import '../../widgets/k_widgets.dart';
 import '../../widgets/press_scale.dart';
@@ -45,9 +46,11 @@ class IntakeScreen extends GetView<IntakeController> {
                       ),
                     ),
                   ),
+                  DaySwitcher(nav: controller),
                 ],
               ),
             ),
+            PastDayBanner(nav: controller),
             Expanded(
               child: Obx(
                 () => AnimatedSwitcher(
@@ -143,7 +146,7 @@ class _TodayLabel extends GetView<IntakeController> {
   Widget build(BuildContext context) => Obx(() {
     controller.watch();
     final has = controller.entriesFor(kind).isNotEmpty;
-    return _Label('Today', trailing: has ? 'Swipe left to remove' : null);
+    return _Label(controller.dayTitle, trailing: has ? 'Swipe left to remove' : null);
   });
 }
 
@@ -172,8 +175,12 @@ class _EntryList extends GetView<IntakeController> {
         ),
         child: Text(
           kind == 'protein'
-              ? 'Nothing yet today. Tap + on a food to add it.'
-              : 'Nothing yet today. Tap a glass to add it.',
+              ? (controller.isToday
+                    ? 'Nothing yet today. Tap + on a food to add it.'
+                    : 'Nothing logged this day. Tap + on a food to add it.')
+              : (controller.isToday
+                    ? 'Nothing yet today. Tap a glass to add it.'
+                    : 'Nothing logged this day. Tap a glass to add it.'),
           style: AppText.small.copyWith(
             fontSize: 13.sp,
             fontWeight: FontWeight.w600,
@@ -368,7 +375,7 @@ class _ProteinHero extends GetView<IntakeController> {
       final total = controller.proteinToday;
       return Semantics(
         label:
-            'Protein today: $total of ${controller.proteinGoal} grams. ${controller.proteinLine}',
+            'Protein ${controller.dayTitle.toLowerCase()}: $total of ${controller.proteinGoal} grams. ${controller.proteinLine}',
         excludeSemantics: true,
         child: Container(
           padding: EdgeInsets.all(18.sp),
@@ -387,7 +394,7 @@ class _ProteinHero extends GetView<IntakeController> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'PROTEIN TODAY',
+                          'PROTEIN · ${controller.dayTitle.toUpperCase()}',
                           style: _caps(context).copyWith(color: k.faint),
                         ),
                         SizedBox(height: 6.sp),
@@ -865,11 +872,12 @@ class _WaterTab extends GetView<IntakeController> {
       final dark = k.selectedBorder == AppColors.lime;
       final tileBg = dark ? k.card : AppColors.aquaSoft;
       return ListView(
+        physics: BouncingScrollPhysics(),
         padding: EdgeInsets.fromLTRB(20.sp, 8.sp, 20.sp, 32.sp),
         children: [
           Semantics(
             label:
-                'Water today: ${controller.litres(controller.waterToday)} of ${controller.litres(controller.waterGoal)} litres. ${controller.waterLine}',
+                'Water ${controller.dayTitle.toLowerCase()}: ${controller.litres(controller.waterToday)} of ${controller.litres(controller.waterGoal)} litres. ${controller.waterLine}',
             excludeSemantics: true,
             child: Container(
               padding: EdgeInsets.fromLTRB(18.sp, 20.sp, 18.sp, 20.sp),
@@ -890,7 +898,7 @@ class _WaterTab extends GetView<IntakeController> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'WATER TODAY',
+                          'WATER · ${controller.dayTitle.toUpperCase()}',
                           style: _caps(context).copyWith(color: k.faint),
                         ),
                         SizedBox(height: 6.sp),

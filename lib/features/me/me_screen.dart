@@ -41,6 +41,24 @@ class MeScreen extends GetView<MeController> {
             _PlanCard(controller: c).enter(motion),
             SizedBox(height: 12.sp),
             _PlusCard(controller: c).enter(motion, delay: 60),
+            _label(context, 'Treatment'),
+            _Group(
+              children: [
+                _NavRow(
+                  label: c.pensLabel,
+                  sub: 'What’s left, refills and spend',
+                  value: c.pensValue,
+                  plus: !c.isPlus,
+                  onTap: c.openPens,
+                ),
+                if (!c.isTablet)
+                  _NavRow(
+                    label: 'Injection guide',
+                    sub: 'A calm walk-through, step by step',
+                    onTap: c.openGuide,
+                  ),
+              ],
+            ).enter(motion, delay: 80),
             _label(context, 'Goals'),
             _Group(
               children: [
@@ -501,12 +519,16 @@ class _NavRow extends StatelessWidget {
     this.value,
     this.sub,
     this.danger = false,
+    this.plus = false,
   });
 
   final String label;
   final String? value;
   final String? sub;
   final bool danger;
+
+  /// Shows the Plus tag before the arrow.
+  final bool plus;
   final VoidCallback? onTap;
 
   @override
@@ -571,6 +593,7 @@ class _NavRow extends StatelessWidget {
                     ),
                   ),
                 ],
+                if (plus) ...[SizedBox(width: 8.sp), const PlusTag()],
                 SizedBox(width: 6.sp),
                 PhosphorIcon(
                   PhosphorIconsBold.caretRight,

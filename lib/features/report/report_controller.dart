@@ -10,6 +10,7 @@ import '../../services/tracker_service.dart';
 import '../../widgets/toast.dart';
 import 'report_data.dart';
 import 'report_pdf.dart';
+import '../../widgets/k_date_picker.dart';
 
 enum ReportPeriod { lastVisit, weeks4, months3, all }
 
@@ -109,12 +110,13 @@ class ReportController extends GetxController {
     final initial = (saved == null || saved.isBefore(first))
         ? now.add(const Duration(days: 7))
         : saved;
-    final picked = await showDatePicker(
+    final picked = await showKDatePicker(
       context: context,
       initialDate: initial,
       firstDate: first,
       lastDate: now.add(const Duration(days: 365)),
-      helpText: 'Next appointment',
+      title: 'Next appointment',
+      note: 'We’ll remind you 3 days before.',
     );
     if (picked != null) await tracker.setNextAppointment(picked);
   }

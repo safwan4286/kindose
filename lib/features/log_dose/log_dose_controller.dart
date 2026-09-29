@@ -13,7 +13,9 @@ import '../../services/tracker_service.dart';
 import '../../widgets/ask_number.dart';
 import '../../widgets/toast.dart';
 import '../dose_done/dose_done_controller.dart';
+import '../guide/guide_controller.dart';
 import 'widgets/dose_sheets.dart';
+import '../../widgets/k_date_picker.dart';
 
 /// When the dose was taken: right now, earlier today, or a picked date.
 enum DoseTime { now, earlier, pick }
@@ -76,6 +78,12 @@ class LogDoseController extends GetxController {
   UserProfile? get profile => tracker.profile.value;
   bool get isTablet => profile?.form == 'tablet';
   bool get isEditing => editing.value != null;
+
+  /// Injection guide on top; its last step comes back here.
+  void openGuide() {
+    Haptics.instance.lightImpact();
+    Get.toNamed<void>(Routes.guide, arguments: const GuideArgs(fromLogDose: true));
+  }
 
   String get medicineName {
     final p = profile;
@@ -170,12 +178,12 @@ class LogDoseController extends GetxController {
         takenAt.value = picked.isAfter(now) ? now : picked;
         timeMode.value = t;
       case DoseTime.pick:
-        final date = await showDatePicker(
+        final date = await showKDatePicker(
           context: context,
           initialDate: takenAt.value,
           firstDate: now.subtract(const Duration(days: 90)),
           lastDate: now,
-          helpText: 'When did you take it?',
+          title: 'When did you take it?',
         );
         if (date == null || !context.mounted) return;
         final time = await showTimePicker(
@@ -285,6 +293,13 @@ class LogDoseController extends GetxController {
       await Get.toNamed<void>(Routes.editPlan);
       strengthMg.value = profile?.strengthMg ?? strengthMg.value;
       makeUsual.value = false;
+      // Tablets have no injection spot or injection pain.
+      if (isTablet) {
+        site.value = '';
+        pain.value = null;
+      } else if (site.value.isEmpty) {
+        site.value = tracker.nextSiteId;
+      }
       return;
     }
     strengthMg.value = result.strength;

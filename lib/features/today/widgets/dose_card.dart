@@ -446,12 +446,25 @@ class _DoseDay extends GetView<TodayController> {
               lime: true,
               onPressed: controller.logDose,
             ),
-            Center(
-              child: _TextLink(
-                'Taking it another day?',
-                () => controller.moveDate(context),
-                color: AppColors.heroMuted,
-              ),
+            SizedBox(
+              width: double.infinity,
+              child: Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 18.sp,
+              children: [
+                if (controller.showGuideLink)
+                  _TextLink(
+                    'Walk me through it',
+                    controller.openGuide,
+                    color: AppColors.lime,
+                  ),
+                _TextLink(
+                  'Taking it another day?',
+                  () => controller.moveDate(context),
+                  color: AppColors.heroMuted,
+                ),
+              ],
+            ),
             ),
           ],
         ),
@@ -682,8 +695,8 @@ class _Daily extends GetView<TodayController> {
             child: taken == null
                 ? PillButton(
                     key: const ValueKey('take'),
-                    label: 'Taken',
-                    icon: PhosphorIconsBold.check,
+                    label: controller.isTablet ? 'Taken' : 'Log my dose',
+                    icon: controller.isTablet ? PhosphorIconsBold.check : null,
                     lime: true,
                     busy: controller.busy.value,
                     onPressed: controller.markTaken,

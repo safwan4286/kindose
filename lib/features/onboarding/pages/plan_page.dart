@@ -303,8 +303,10 @@ class _GoalCardState extends State<_GoalCard>
                           AppColors.white,
                         ),
                       ),
+                      // Gaining: the drop sits high on the right, so the goal
+                      // label moves left of it instead of being covered.
                       Positioned(
-                        right: 0,
+                        right: diffKg > 0 ? 44.sp : 0,
                         top: diffKg > 0 ? 2.sp : 30.sp,
                         child: FadeTransition(
                           opacity: CurvedAnimation(
@@ -842,7 +844,7 @@ class _FirstWeeks extends GetView<OnboardingController> {
               : 'Dose day. We’ll suggest the next site',
         ),
       ('Every day', 'Quick check-in: protein, water, how you feel'),
-      ('Week 4', 'Your first monthly report to share with your doctor'),
+      ('Week 4', 'Your first report to show your doctor'),
     ];
 
     return Container(

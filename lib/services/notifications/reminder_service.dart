@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
 import '../../models/user_profile.dart';
@@ -7,6 +8,8 @@ import '../../resources/catalog.dart';
 import '../../resources/date_utils.dart';
 import '../../resources/routes.dart';
 import '../../features/home/home_controller.dart';
+import '../plus/plus_access.dart';
+import '../supply/supply_service.dart';
 import '../tracker_service.dart';
 import 'notification_service.dart';
 
@@ -24,6 +27,7 @@ import 'notification_service.dart';
 /// screen, and they never say what to take.
 class ReminderService extends GetxService {
   final TrackerService tracker = Get.find<TrackerService>();
+  final SupplyService supply = Get.find<SupplyService>();
   final NotificationService _notes = NotificationService.instance;
 
   static const int _doseId = 100;
@@ -31,13 +35,16 @@ class ReminderService extends GetxService {
   static const int _dailyFirstId = 110;
   static const int _dailyCount = 7;
   static const int _visitId = 120;
+  static const int _refillId = 130;
   static const String logDosePayload = 'log_dose';
   static const String reportPayload = 'report';
+  static const String pensPayload = 'pens';
 
   static List<int> get _allIds => [
     _doseId,
     _followUpId,
     _visitId,
+    _refillId,
     for (var i = 0; i < _dailyCount; i++) _dailyFirstId + i,
   ];
 
@@ -54,6 +61,12 @@ class ReminderService extends GetxService {
       tracker.nextDoseOverride,
       tracker.nextAppointment,
       tracker.visitReminderOn,
+      supply.packStartedAt,
+      supply.usedOffset,
+      supply.dosesPerPack,
+      supply.spare,
+      supply.refillReminder,
+      PlusAccess.active,
     ], (_) => _queue());
     unawaited(_notes.init().then((_) => sync()));
   }
@@ -79,6 +92,10 @@ class ReminderService extends GetxService {
   }
 
   void _open(String payload) {
+    if (payload == pensPayload) {
+      if (Get.currentRoute != Routes.pens) Get.toNamed<void>(Routes.pens);
+      return;
+    }
     if (payload == reportPayload) {
       if (Get.isRegistered<HomeController>())
         Get.find<HomeController>().select(HomeTab.report);
@@ -96,6 +113,7 @@ class ReminderService extends GetxService {
     final p = tracker.profile.value;
     if (p == null) return;
     if (tracker.visitReminderOn.value) await _planVisit();
+    await _planRefill();
     if (!p.remindersOn || p.medicineId == Catalog.undecided) return;
     if (p.isDaily) {
       await _planDaily(p);
@@ -183,6 +201,28 @@ class ReminderService extends GetxService {
       body:
           'Your one-page report is ready. Tap to check it and add any questions.',
       payload: reportPayload,
+    );
+  }
+
+  /// Pens & cost (Plus): once the supply is down to its last dose (a
+  /// week's worth for daily tablets), one reminder at 10 AM the day after
+  /// the latest dose. Past times are skipped, so it shows once.
+  Future<void> _planRefill() async {
+    // Debug builds too, like the Pens screen, so it can be tested.
+    final plus = PlusAccess.active.value || kDebugMode;
+    if (!plus || !supply.refillReminder.value) return;
+    if (!supply.runningLow) return;
+    final last = tracker.lastDose?.takenAt ?? DateTime.now();
+    final when = Dates.dateOnly(last).add(const Duration(days: 1, hours: 10));
+    final left = supply.dosesLeft;
+    await _notes.scheduleAt(
+      id: _refillId,
+      when: when,
+      title: 'Time to plan a refill',
+      body: left == 0
+          ? 'Your supply at home looks empty. Tap to update it.'
+          : 'You have $left ${left == 1 ? 'dose' : 'doses'} left at home.',
+      payload: pensPayload,
     );
   }
 

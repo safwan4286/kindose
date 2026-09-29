@@ -739,7 +739,7 @@ class Catalog {
     FocusItem(
       'muscle',
       'Keeping my muscle',
-      'Protein and strength',
+      'Protein to protect muscle',
       Img3d.biceps,
     ),
     FocusItem(

@@ -74,7 +74,7 @@ class PlusController extends GetxController {
     PlusPerk(
       Img3d.nauseated,
       'Side-effect patterns',
-      'See how you feel by days since dose and food',
+      'See which day after your dose is usually hardest',
       {'nausea', 'noise'},
     ),
     PlusPerk(

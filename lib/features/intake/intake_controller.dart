@@ -6,6 +6,8 @@ import '../../models/user_profile.dart';
 import '../../resources/catalog.dart';
 import '../../resources/date_utils.dart';
 import '../../services/haptics/haptics.dart';
+import '../../services/plus/plus_access.dart';
+import '../common/day_nav.dart';
 import '../../services/tracker_service.dart';
 import '../../widgets/ask_number.dart';
 import '../../widgets/toast.dart';
@@ -18,9 +20,10 @@ class Portion {
   final double times;
 }
 
-/// Protein and water, two tabs on one screen. Open with 'protein' or
-/// 'water' as the route argument. Every add is one tap and can be undone.
-class IntakeController extends GetxController {
+/// Protein or water for one day (today by default). Open with 'protein'
+/// or 'water' as the route argument. Every add is one tap and can be
+/// undone. Past days: the last 4 weeks free, older with Plus.
+class IntakeController extends GetxController with DayNav {
   final TrackerService tracker = Get.find<TrackerService>();
   final TextEditingController searchCtrl = TextEditingController();
 
@@ -31,8 +34,10 @@ class IntakeController extends GetxController {
     Portion('2', 2),
   ];
 
-  late final RxString tab =
-      (Get.arguments == 'water' ? 'water' : 'protein').obs;
+  /// Route argument: 'protein' / 'water', or {'kind': ..., 'day': DateTime}.
+  static String _kindOf(Object? a) => (a is Map ? a['kind'] : a) == 'water' ? 'water' : 'protein';
+
+  late final RxString tab = _kindOf(Get.arguments).obs;
   final RxString query = ''.obs;
   final RxString category = 'all'.obs;
 
@@ -40,6 +45,14 @@ class IntakeController extends GetxController {
   final RxString openFood = ''.obs;
   final RxDouble portion = 1.0.obs;
   final RxInt customGrams = 20.obs;
+
+
+  @override
+  void onInit() {
+    super.onInit();
+    final a = Get.arguments;
+    if (a is Map) initDay(a['day']);
+  }
 
   @override
   void onClose() {
@@ -59,6 +72,8 @@ class IntakeController extends GetxController {
   void watch() {
     tracker.days.length;
     tracker.today;
+    day.value;
+    PlusAccess.active.value;
     tab.value;
     query.value;
     category.value;
@@ -67,17 +82,25 @@ class IntakeController extends GetxController {
     customGrams.value;
   }
 
+  // -------------------------------------------------------------------- day
+
+  DayLog get dayLog => tracker.dayLog(day.value);
+
+  @override
+  void onDayChanged() => openFood.value = '';
+
   // ---------------------------------------------------------------- protein
 
   int get proteinGoal => profile?.proteinGoalG ?? 100;
-  int get proteinToday => tracker.today.proteinG;
+  int get proteinToday => dayLog.proteinG;
   int get proteinLeft => (proteinGoal - proteinToday).clamp(0, 999);
   double get proteinProgress =>
       proteinGoal == 0 ? 0 : (proteinToday / proteinGoal).clamp(0.0, 1.0);
 
   String get proteinLine {
     final left = proteinLeft;
-    if (left == 0) return 'Goal reached today. Nice work.';
+    if (left == 0) return isToday ? 'Goal reached today. Nice work.' : 'Goal reached that day.';
+    if (!isToday) return '$left g short of the goal that day';
     final meals = (left / 25).ceil();
     return '$left g to go · about $meals protein-first ${meals == 1 ? 'meal' : 'meals'}';
   }
@@ -197,7 +220,7 @@ class IntakeController extends GetxController {
   // ------------------------------------------------------------------ water
 
   int get waterGoal => profile?.waterGoalMl ?? 2500;
-  int get waterToday => tracker.today.waterMl;
+  int get waterToday => dayLog.waterMl;
   double get waterProgress =>
       waterGoal == 0 ? 0 : (waterToday / waterGoal).clamp(0.0, 1.0);
 
@@ -209,7 +232,8 @@ class IntakeController extends GetxController {
 
   String get waterLine {
     final left = waterGoal - waterToday;
-    if (left <= 0) return 'Goal reached today.';
+    if (left <= 0) return isToday ? 'Goal reached today.' : 'Goal reached that day.';
+    if (!isToday) return '${litres(left)} L short of the goal that day';
     final glasses = (left / 250).ceil();
     return 'About $glasses more ${glasses == 1 ? 'glass' : 'glasses'} to go';
   }
@@ -243,7 +267,7 @@ class IntakeController extends GetxController {
 
   // ---------------------------------------------------------------- entries
 
-  List<LogEntry> entriesFor(String kind) => tracker.today.entries
+  List<LogEntry> entriesFor(String kind) => dayLog.entries
       .where((e) => e.kind == kind)
       .toList()
       .reversed
@@ -276,13 +300,17 @@ class IntakeController extends GetxController {
     String message,
   ) async {
     Haptics.instance.lightImpact();
-    final now = DateTime.now();
+    // Past days get the entry at the current time of day on that date.
+    final clock = DateTime.now();
+    final d = day.value;
+    final at = isToday ? clock : DateTime(d.year, d.month, d.day, clock.hour, clock.minute);
     final id = kind == 'protein'
-        ? await tracker.addProtein(amount, now, label)
-        : await tracker.addWater(amount, now, label);
-    showUndoToast(message, () async {
+        ? await tracker.addProtein(amount, at, label)
+        : await tracker.addWater(amount, at, label);
+    final text = isToday ? message : '$message · ${Dates.short(d)}';
+    showUndoToast(text, () async {
       Haptics.instance.selectionClick();
-      await tracker.removeEntry(Dates.key(now), id);
+      await tracker.removeEntry(Dates.key(at), id);
     });
   }
 }

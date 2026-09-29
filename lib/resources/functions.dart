@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'colors.dart';
+import '../widgets/k_date_picker.dart';
 
 abstract class Functions {
   static Future<void> openBottomsheet({
@@ -60,11 +61,13 @@ abstract class Functions {
     DateTime? lastDate,
     DateTime? initialDate,
   }) async {
-    return await showDatePicker(
-      context: Get.context!,
+    final context = Get.context;
+    if (context == null) return null;
+    return showKDatePicker(
+      context: context,
       firstDate:
           firstDate ?? DateTime.now().subtract(const Duration(days: 100)),
-      initialDate: initialDate,
+      initialDate: initialDate ?? DateTime.now(),
       lastDate: lastDate ?? DateTime.now(),
     );
   }

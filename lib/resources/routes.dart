@@ -2,10 +2,14 @@ import 'package:get/get.dart';
 
 import '../features/check_in/check_in_binding.dart';
 import '../features/check_in/check_in_screen.dart';
+import '../features/day/day_binding.dart';
+import '../features/day/day_screen.dart';
 import '../features/dose_done/dose_done_binding.dart';
 import '../features/dose_done/dose_done_screen.dart';
 import '../features/home/home_binding.dart';
 import '../features/home/home_screen.dart';
+import '../features/guide/guide_binding.dart';
+import '../features/guide/guide_screen.dart';
 import '../features/intake/intake_binding.dart';
 import '../features/intake/intake_screen.dart';
 import '../features/log_dose/log_dose_binding.dart';
@@ -14,6 +18,8 @@ import '../features/offer/offer_binding.dart';
 import '../features/offer/offer_screen.dart';
 import '../features/onboarding/onboarding_binding.dart';
 import '../features/onboarding/onboarding_screen.dart';
+import '../features/pens/pens_binding.dart';
+import '../features/pens/pens_screen.dart';
 import '../features/plus/plus_binding.dart';
 import '../features/plus/plus_screen.dart';
 import '../features/report/report_preview_screen.dart';
@@ -42,7 +48,16 @@ class Routes {
   /// Pass 'protein' or 'water' as the argument.
   static const String addIntake = '/add-intake';
   static const String checkIn = '/check-in';
+
+  /// One day at a glance. Pass a DateTime (defaults to today).
+  static const String day = '/day';
   static const String reportPreview = '/report-preview';
+
+  /// Pens & cost (Plus).
+  static const String pens = '/pens';
+
+  /// Injection guide. Pass a GuideArgs when opened from Log dose.
+  static const String guide = '/guide';
 }
 
 class AppPages {
@@ -105,6 +120,22 @@ class AppPages {
       name: Routes.addIntake,
       page: () => const IntakeScreen(),
       binding: IntakeBinding(),
+    ),
+    GetPage<dynamic>(
+      name: Routes.day,
+      page: () => const DayScreen(),
+      binding: DayBinding(),
+    ),
+    GetPage<dynamic>(
+      name: Routes.pens,
+      page: () => const PensScreen(),
+      binding: PensBinding(),
+    ),
+    GetPage<dynamic>(
+      name: Routes.guide,
+      page: () => const GuideScreen(),
+      binding: GuideBinding(),
+      transition: Transition.downToUp,
     ),
     GetPage<dynamic>(
       name: Routes.checkIn,

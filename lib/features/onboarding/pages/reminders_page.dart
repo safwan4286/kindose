@@ -24,34 +24,34 @@ class RemindersPage extends GetView<OnboardingController> {
   Widget build(BuildContext context) {
     final k = context.k;
     final motion = !MediaQuery.disableAnimationsOf(context);
-    final m = controller.medicine;
-    final name = Catalog.medicineName(m.id, controller.customMedicine.value);
-    final mark = m.mark ?? '';
-    final dose = controller.doseMode.value == 'unsure'
-        ? ''
-        : ' ${Catalog.mgLabel(controller.strength.value)}';
     final time = Dates.timeOfDay(controller.shotMinutes.value);
     final tablet = controller.form.value == 'tablet';
-    final goal = controller.suggestedProtein;
+    final daily = controller.everyDays == 1;
     final site = Catalog.siteName(Catalog.nextSite(const []));
 
+    // The same words the real reminders use (ReminderService). They never
+    // name the medicine, so nothing private shows on a lock screen.
     final previews = [
-      _Preview(
-        tablet ? 'Time for your tablet' : "It's dose day",
-        tablet
-            ? '$name$mark$dose at $time.'
-            : '$name$mark$dose at $time. $site is next.',
-        time,
-      ),
-      _Preview(
-        'Protein check',
-        'About ${(goal * 0.58).round()} of $goal g so far. A protein snack would help.',
-        '4:30 PM',
-      ),
+      if (daily)
+        _Preview('Time for today’s dose', 'Tap to mark it as taken.', time)
+      else
+        _Preview(
+          "It's dose day",
+          tablet
+              ? 'Tap to log it when you’re done.'
+              : 'Tap to log it when you’re done. $site is next.',
+          time,
+        ),
+      if (!daily)
+        const _Preview(
+          'Still to log: your dose',
+          'Took it already? Tap to log it.',
+          '8:00 PM',
+        ),
       const _Preview(
-        'Water',
-        "Two more glasses to hit today's goal.",
-        '6:00 PM',
+        'Doctor visit on Monday',
+        'Your one-page report is ready. Tap to check it.',
+        '9:00 AM',
       ),
     ];
 
@@ -74,7 +74,7 @@ class RemindersPage extends GetView<OnboardingController> {
               ).enter(motion, delay: 80, dy: 0.12),
               SizedBox(height: 10.sp),
               Text(
-                'A nudge on dose day, plus gentle protein and water check-ins. You choose which ones, anytime.',
+                'A nudge on dose day, a follow-up if it isn’t logged, and a heads-up before doctor visits. Your medicine’s name never shows.',
                 textAlign: TextAlign.center,
                 style: AppText.bodyText.copyWith(
                   fontSize: 14.5.sp,

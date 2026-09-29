@@ -31,46 +31,48 @@ class KSheetFrame extends StatelessWidget {
           borderRadius: BorderRadius.vertical(top: Radius.circular(28.sp)),
         ),
         padding: EdgeInsets.fromLTRB(20.sp, 10.sp, 20.sp, 12.sp),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(
-                child: Container(
-                  width: 40.sp,
-                  height: 5.sp,
-                  decoration: BoxDecoration(
-                    color: k.border,
-                    borderRadius: BorderRadius.circular(3.sp),
+        child: KBottomPadding(
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40.sp,
+                    height: 5.sp,
+                    decoration: BoxDecoration(
+                      color: k.border,
+                      borderRadius: BorderRadius.circular(3.sp),
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(height: 16.sp),
-              if (icon != null) ...[
-                Align(alignment: Alignment.centerLeft, child: icon),
-                SizedBox(height: 12.sp),
-              ],
-              Semantics(
-                header: true,
-                child: Text(
-                  title,
-                  style: AppText.h2.copyWith(fontSize: 22.sp, color: k.text),
-                ),
-              ),
-              if (sub != null) ...[
-                SizedBox(height: 6.sp),
-                Text(
-                  sub!,
-                  style: AppText.bodyText.copyWith(
-                    fontSize: 14.sp,
-                    color: k.muted,
+                SizedBox(height: 16.sp),
+                if (icon != null) ...[
+                  Align(alignment: Alignment.centerLeft, child: icon),
+                  SizedBox(height: 12.sp),
+                ],
+                Semantics(
+                  header: true,
+                  child: Text(
+                    title,
+                    style: AppText.h2.copyWith(fontSize: 22.sp, color: k.text),
                   ),
                 ),
+                if (sub != null) ...[
+                  SizedBox(height: 6.sp),
+                  Text(
+                    sub!,
+                    style: AppText.bodyText.copyWith(
+                      fontSize: 14.sp,
+                      color: k.muted,
+                    ),
+                  ),
+                ],
+                SizedBox(height: 16.sp),
+                ...children,
               ],
-              SizedBox(height: 16.sp),
-              ...children,
-            ],
+            ),
           ),
         ),
       ),

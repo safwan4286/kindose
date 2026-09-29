@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../models/logs.dart';
 import '../../models/user_profile.dart';
@@ -13,7 +14,10 @@ import '../../services/notifications/notification_service.dart';
 import '../../services/tracker_service.dart';
 import '../../widgets/k_ruler.dart';
 import '../../widgets/toast.dart';
+import '../home/home_controller.dart';
 import '../home/weight_sheet.dart';
+import 'weekly_summary.dart';
+import '../../widgets/k_date_picker.dart';
 
 /// What the top card shows.
 enum DoseCardState {
@@ -100,6 +104,8 @@ class TodayController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    final hidden = Hive.box<dynamic>('settings').get(_weeklyKey);
+    if (hidden is String) weeklyHidden.value = hidden;
     _ticker = Timer.periodic(
       const Duration(seconds: 30),
       (_) => now.value = DateTime.now(),
@@ -123,6 +129,36 @@ class TodayController extends GetxController {
     tracker.todayOrder.length;
     tracker.todayHidden.length;
     tracker.nextDoseOverride.value;
+    weeklyHidden.value;
+  }
+
+  // ---------------------------------------------------------- weekly card
+
+  static const String _weeklyKey = 'weeklyHidden';
+
+  /// Monday key of the last weekly card the user hid.
+  final RxString weeklyHidden = ''.obs;
+
+  /// Last week in short, or null (not enough logged, or already hidden).
+  WeeklySummary? get weekly {
+    final s = WeeklySummary.build(tracker, now.value);
+    if (s == null || s.key == weeklyHidden.value) return null;
+    return s;
+  }
+
+  void dismissWeekly() {
+    final s = WeeklySummary.build(tracker, now.value);
+    if (s == null) return;
+    Haptics.instance.lightImpact();
+    weeklyHidden.value = s.key;
+    Hive.box<dynamic>('settings').put(_weeklyKey, s.key);
+  }
+
+  void openProgressFromWeekly() {
+    Haptics.instance.selectionClick();
+    if (Get.isRegistered<HomeController>()) {
+      Get.find<HomeController>().select(HomeTab.progress);
+    }
   }
 
   UserProfile? get profile => tracker.profile.value;
@@ -250,8 +286,23 @@ class TodayController extends GetxController {
     await Get.toNamed<void>(Routes.logDose);
   }
 
-  /// Daily tablet: one tap.
+  /// "Walk me through it" on the dose-day card, for people who said
+  /// injections make them nervous.
+  bool get showGuideLink =>
+      !isTablet && (profile?.focus.contains('nerves') ?? false);
+
+  Future<void> openGuide() async {
+    Haptics.instance.lightImpact();
+    await Get.toNamed<void>(Routes.guide);
+  }
+
+  /// One-tap "Taken" is for tablets only. Daily injections open Log dose,
+  /// so the injection spot is recorded and rotation keeps working.
   Future<void> markTaken() async {
+    if (!isTablet) {
+      await logDose();
+      return;
+    }
     if (busy.value) return;
     busy.value = true;
     try {
@@ -274,14 +325,15 @@ class TodayController extends GetxController {
     Haptics.instance.selectionClick();
     final today = Dates.dateOnly(now.value);
     final current = nextDoseAt;
-    final picked = await showDatePicker(
+    final picked = await showKDatePicker(
       context: context,
       initialDate: current == null || current.isBefore(today)
           ? today
           : Dates.dateOnly(current),
       firstDate: today,
       lastDate: today.add(const Duration(days: 21)),
-      helpText: 'Move this dose to',
+      title: 'Move this dose to',
+      note: 'Only the reminder moves. Check your leaflet or doctor if unsure.',
     );
     if (picked == null) return;
     await tracker.moveNextDose(picked);
@@ -322,6 +374,12 @@ class TodayController extends GetxController {
   bool get waterGoalHit => day.waterMl >= waterGoal;
 
   void openWater() => Get.toNamed<void>(Routes.addIntake, arguments: 'water');
+
+  /// Today's date line opens the day view (with its calendar).
+  void openDay() {
+    Haptics.instance.selectionClick();
+    Get.toNamed<void>(Routes.day);
+  }
   int get glassesFull => (day.waterMl / glassMl).floor();
 
   String get litres => _litres(day.waterMl);
@@ -560,14 +618,42 @@ class TodayController extends GetxController {
   // ------------------------------------------------------------ edit today
 
   /// Card ids in display order, without the hidden ones.
+  /// Until the user arranges Today themselves, cards that match their
+  /// goals from onboarding come first.
   List<String> get cardOrder {
     final saved = tracker.todayOrder
         .where((id) => TodayCard.all.any((c) => c.id == id))
         .toList();
+    final base = saved.isEmpty ? _goalOrder : saved;
     final missing = TodayCard.all
         .map((c) => c.id)
-        .where((id) => !saved.contains(id));
-    return [...saved, ...missing];
+        .where((id) => !base.contains(id));
+    return [...base, ...missing];
+  }
+
+  /// Onboarding goal → the Today card that helps with it.
+  static const Map<String, String> _goalCard = {
+    'muscle': 'protein',
+    'progress': 'weight',
+    'nausea': 'feel',
+    'noise': 'feel',
+  };
+
+  /// Goal cards first (in the order the goals were picked), then the rest
+  /// in the usual order. Water stays right after protein.
+  List<String> get _goalOrder {
+    final picked = <String>[];
+    for (final goal in profile?.focus ?? const <String>[]) {
+      final id = _goalCard[goal];
+      if (id == null || picked.contains(id)) continue;
+      picked.add(id);
+      if (id == 'protein') picked.add('water');
+    }
+    return [
+      ...picked,
+      for (final c in TodayCard.all)
+        if (!picked.contains(c.id)) c.id,
+    ];
   }
 
   List<String> get visibleCards =>

@@ -13,6 +13,7 @@ import '../../../widgets/k_widgets.dart';
 import '../../../widgets/press_scale.dart';
 import '../onboarding_controller.dart';
 import '../onboarding_screen.dart';
+import '../../../widgets/k_date_picker.dart';
 
 /// Question 5: the day of the last dose (already taking) or first dose
 /// (starting / restarting), plus the usual time. A live "Next dose" card
@@ -45,12 +46,12 @@ class WhenPage extends GetView<OnboardingController> {
   Future<void> _pickEarlierOrLater(BuildContext context) async {
     final today = Dates.dateOnly(DateTime.now());
     final past = controller.asksLastDose;
-    final picked = await showDatePicker(
+    final picked = await showKDatePicker(
       context: context,
       initialDate: controller.doseDate.value ?? today,
       firstDate: past ? today.subtract(const Duration(days: 180)) : today,
       lastDate: past ? today : today.add(const Duration(days: 365)),
-      helpText: past ? 'Last dose' : 'First dose',
+      title: past ? 'Your last dose' : 'Your first dose',
     );
     if (picked != null) controller.pickDoseDate(picked);
   }

@@ -102,8 +102,12 @@ class AppTheme {
           seedColor: AppColors.violet,
           brightness: brightness,
         ).copyWith(
-          primary: AppColors.violet,
-          onPrimary: AppColors.white,
+          // Ink in light mode, lime in dark: used by Material widgets such
+          // as the time picker, text cursor and progress indicators.
+          primary: brightness == Brightness.dark ? AppColors.lime : AppColors.ink,
+          onPrimary: brightness == Brightness.dark ? AppColors.ink : AppColors.lime,
+          primaryContainer: brightness == Brightness.dark ? AppColors.lime.withValues(alpha: 0.2) : AppColors.limeSoft,
+          onPrimaryContainer: k.text,
           secondary: AppColors.lime,
           onSecondary: AppColors.ink,
           surface: k.card,
@@ -144,10 +148,28 @@ class AppTheme {
         ),
       ),
       sliderTheme: SliderThemeData(
-        activeTrackColor: AppColors.violet,
+        activeTrackColor: k.selectedBorder,
         inactiveTrackColor: k.border,
-        thumbColor: AppColors.violet,
-        overlayColor: AppColors.violet.withValues(alpha: 0.12),
+        thumbColor: k.selectedBorder,
+        overlayColor: k.selectedBorder.withValues(alpha: 0.12),
+      ),
+      timePickerTheme: TimePickerThemeData(
+        backgroundColor: k.bg,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        hourMinuteShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        dayPeriodShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        dayPeriodBorderSide: BorderSide(color: k.border),
+        dialBackgroundColor: k.card,
+        dialHandColor: k.selectedBorder,
+        helpTextStyle: AppText.caps.copyWith(fontSize: 12, letterSpacing: 1.1, color: k.faint),
+        hourMinuteTextStyle: AppText.h1.copyWith(fontSize: 44),
+        cancelButtonStyle: TextButton.styleFrom(foregroundColor: k.muted, textStyle: AppText.title),
+        confirmButtonStyle: TextButton.styleFrom(foregroundColor: k.text, textStyle: AppText.title),
+      ),
+      textSelectionTheme: TextSelectionThemeData(
+        cursorColor: k.text,
+        selectionColor: AppColors.lime.withValues(alpha: 0.5),
+        selectionHandleColor: k.selectedBorder,
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,

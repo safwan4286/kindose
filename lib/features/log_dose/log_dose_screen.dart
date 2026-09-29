@@ -12,6 +12,7 @@ import '../../widgets/buttons.dart';
 import '../../widgets/entrance.dart';
 import '../../widgets/k_sheet.dart';
 import '../../widgets/k_widgets.dart';
+import '../../widgets/press_scale.dart';
 import '../../widgets/safe_bottom.dart';
 import '../../widgets/toast.dart';
 import 'log_dose_controller.dart';
@@ -52,7 +53,11 @@ class LogDoseScreen extends GetView<LogDoseController> {
               ),
             ),
             Expanded(
-              child: ListView(
+              // Reads the profile so switching medicine (pen ⇄ tablet)
+              // shows or hides the spot and "how it felt" sections.
+              child: Obx(() {
+                controller.tracker.profile.value;
+                return ListView(
                 padding: EdgeInsets.fromLTRB(20.sp, 16.sp, 20.sp, 24.sp),
                 children: [
                   Obx(
@@ -69,6 +74,10 @@ class LogDoseScreen extends GetView<LogDoseController> {
                   ).enter(motion),
                   SizedBox(height: 16.sp),
                   const _MedicineCard().enter(motion, delay: 60),
+                  if (!controller.isTablet && !controller.isEditing) ...[
+                    SizedBox(height: 10.sp),
+                    _GuideLink(onTap: controller.openGuide).enter(motion, delay: 80),
+                  ],
                   const _LateCard(),
                   _Label('When').enter(motion, delay: 110),
                   const _WhenRow().enter(motion, delay: 130),
@@ -87,7 +96,8 @@ class LogDoseScreen extends GetView<LogDoseController> {
                   SizedBox(height: 12.sp),
                   const _NoteField().enter(motion, delay: 290),
                 ],
-              ),
+              );
+              }),
             ),
             Padding(
               padding: EdgeInsets.fromLTRB(20.sp, 8.sp, 20.sp, 12.sp),
@@ -671,5 +681,50 @@ class _NoteField extends GetView<LogDoseController> {
         ),
       );
     });
+  }
+}
+
+/// "Nervous or first time? Walk me through it" → injection guide.
+class _GuideLink extends StatelessWidget {
+  const _GuideLink({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    return PressScale(
+      onTap: onTap,
+      semanticLabel: 'Walk me through it. Injection guide.',
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 14.sp, vertical: 12.sp),
+        decoration: BoxDecoration(color: k.card, borderRadius: BorderRadius.circular(18.sp)),
+        child: Row(
+          children: [
+            Container(
+              width: 36.sp,
+              height: 36.sp,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(color: AppColors.limeSoft, borderRadius: BorderRadius.circular(12.sp)),
+              child: PhosphorIcon(PhosphorIconsBold.syringe, size: 18.sp, color: AppColors.ink),
+            ),
+            SizedBox(width: 12.sp),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Walk me through it', style: AppText.title.copyWith(fontSize: 15.sp, color: k.text)),
+                  Text(
+                    'A calm, step-by-step guide',
+                    style: AppText.small.copyWith(fontSize: 12.5.sp, fontWeight: FontWeight.w600, color: k.muted),
+                  ),
+                ],
+              ),
+            ),
+            PhosphorIcon(PhosphorIconsBold.caretRight, size: 16.sp, color: k.faint),
+          ],
+        ),
+      ),
+    );
   }
 }

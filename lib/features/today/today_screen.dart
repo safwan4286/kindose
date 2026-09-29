@@ -12,6 +12,7 @@ import 'today_controller.dart';
 import 'widgets/dose_card.dart';
 import 'widgets/edit_today_sheet.dart';
 import 'widgets/today_cards.dart';
+import 'widgets/weekly_card.dart';
 
 /// Today tab: header, optional set-up list, the dose card, then the cards
 /// in the user's own order (Edit Today).
@@ -38,6 +39,7 @@ class TodayScreen extends GetView<TodayController> {
         controller.watch();
         if (controller.profile == null) return const SizedBox.shrink();
         final cards = controller.visibleCards;
+        final weekly = controller.weekly;
         var delay = 120;
         return ListView(
           physics: BouncingScrollPhysics(),
@@ -48,7 +50,20 @@ class TodayScreen extends GetView<TodayController> {
               SizedBox(height: 18.sp),
               const SetupCard().enter(motion, delay: 40, dy: 0.1),
             ],
-            SizedBox(height: controller.showSetup ? 12.sp : 18.sp),
+            // Once a week until "Got it"; shrinks away when hidden.
+            AnimatedSize(
+              duration: const Duration(milliseconds: 320),
+              curve: Curves.easeOutCubic,
+              alignment: Alignment.topCenter,
+              child: weekly == null
+                  ? const SizedBox(width: double.infinity)
+                  : Padding(
+                      padding: EdgeInsets.only(top: controller.showSetup ? 12.sp : 18.sp),
+                      child: WeeklyCard(key: ValueKey(weekly.key), summary: weekly)
+                          .enter(motion, delay: 40, dy: 0.1),
+                    ),
+            ),
+            SizedBox(height: controller.showSetup || weekly != null ? 12.sp : 18.sp),
             const DoseCard().enter(motion, delay: 80, dy: 0.1),
             for (final id in cards) ...[
               SizedBox(height: id == 'log' ? 20.sp : 12.sp),

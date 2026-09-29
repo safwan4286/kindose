@@ -18,6 +18,7 @@ import '../../widgets/safe_bottom.dart';
 import '../../widgets/toast.dart';
 import '../../widgets/trend_line.dart';
 import '../../widgets/weight_input.dart';
+import '../../widgets/k_date_picker.dart';
 
 /// Weigh-in sheet: date, ruler, change since last and since start, a small
 /// trend with the goal line, and a calm tip. Starts from the last weight
@@ -74,14 +75,13 @@ class _WeightSheetState extends State<WeightSheet> {
   }
 
   Future<void> _pickDay() async {
-    Haptics.instance.selectionClick();
     final now = DateTime.now();
-    final d = await showDatePicker(
+    final d = await showKDatePicker(
       context: context,
       initialDate: _day,
       firstDate: now.subtract(const Duration(days: 365)),
       lastDate: now,
-      helpText: 'Day of this weigh-in',
+      title: 'Day of this weigh-in',
     );
     if (d == null || !mounted) return;
     setState(() {

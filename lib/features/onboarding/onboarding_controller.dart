@@ -282,12 +282,27 @@ class OnboardingController extends GetxController {
 
   // ------------------------------------------------------------ navigation
 
+  /// Steps redone by "Edit" on the plan card; leaving them returns to the plan.
+  static const Set<OnboardingStep> _planEditSteps = {
+    OnboardingStep.medicine,
+    OnboardingStep.dose,
+    OnboardingStep.frequency,
+    OnboardingStep.schedule,
+  };
+
+  /// While editing from the plan, a move that would leave the edit steps
+  /// (forward past the schedule, or back past the medicine) goes straight
+  /// back to the plan instead.
+  bool _leaveEditToPlan(int to) {
+    if (!_returnToPlan) return false;
+    if (to >= 0 && to < steps.length && _planEditSteps.contains(steps[to])) return false;
+    _returnToPlan = false;
+    _go(steps.indexOf(OnboardingStep.plan));
+    return true;
+  }
+
   void next() {
-    if (_returnToPlan && current == OnboardingStep.schedule) {
-      _returnToPlan = false;
-      _go(steps.indexOf(OnboardingStep.plan));
-      return;
-    }
+    if (_leaveEditToPlan(page.value + 1)) return;
     if (page.value >= steps.length - 1) {
       finish();
       return;
@@ -305,6 +320,7 @@ class OnboardingController extends GetxController {
       popRoute();
       return;
     }
+    if (_leaveEditToPlan(page.value - 1)) return;
     var to = page.value - 1;
     // The "building" moment plays once; going back from the plan skips it.
     if (to > 0 && steps[to] == OnboardingStep.building) to--;
