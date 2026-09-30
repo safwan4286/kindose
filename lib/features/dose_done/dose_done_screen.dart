@@ -93,6 +93,12 @@ class DoseDoneScreen extends GetView<DoseDoneController> {
                               ),
                             ],
                           ).enter(motion, delay: 440),
+                          if (controller.showPen) ...[
+                            SizedBox(height: 10.sp),
+                            _PenRow(
+                              controller: controller,
+                            ).enter(motion, delay: 500),
+                          ],
                           if (reminder != null) ...[
                             SizedBox(height: 10.sp),
                             _InfoRow(
@@ -268,6 +274,101 @@ class _InfoRow extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// Pens & cost line: what's left in the pen, or a button to start a new
+/// one when this dose emptied it. Tap the row to open Pens & cost.
+class _PenRow extends StatelessWidget {
+  const _PenRow({required this.controller});
+
+  final DoseDoneController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final c = controller;
+      c.supply.packStartedAt.value;
+      c.supply.usedOffset.value;
+      c.supply.spare.value;
+      c.tracker.doses.length;
+      final empty = c.penEmpty;
+      return Semantics(
+        button: true,
+        label: '${c.penLine} Open pens and cost.',
+        child: GestureDetector(
+          onTap: c.openPens,
+          behavior: HitTestBehavior.opaque,
+          child: Container(
+            padding: EdgeInsets.fromLTRB(14.sp, 12.sp, 12.sp, 12.sp),
+            decoration: BoxDecoration(
+              color: AppColors.white.withValues(alpha: 0.07),
+              borderRadius: BorderRadius.circular(16.sp),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    PhosphorIcon(
+                      c.isTablet
+                          ? PhosphorIconsBold.pill
+                          : PhosphorIconsBold.syringe,
+                      size: 18.sp,
+                      color: AppColors.lime,
+                    ),
+                    SizedBox(width: 10.sp),
+                    Expanded(
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 250),
+                        child: Text(
+                          c.penLine,
+                          key: ValueKey<String>(c.penLine),
+                          style: AppText.small.copyWith(
+                            fontSize: 13.5.sp,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                    PhosphorIcon(
+                      PhosphorIconsBold.caretRight,
+                      size: 14.sp,
+                      color: AppColors.heroMuted,
+                    ),
+                  ],
+                ),
+                if (empty) ...[
+                  SizedBox(height: 10.sp),
+                  Semantics(
+                    button: true,
+                    label: c.newPackLabel,
+                    excludeSemantics: true,
+                    child: FilledButton(
+                      onPressed: c.startNewPack,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.lime.withValues(alpha: 0.16),
+                        foregroundColor: AppColors.lime,
+                        minimumSize: Size.fromHeight(40.sp),
+                        shape: const StadiumBorder(),
+                      ),
+                      child: Text(
+                        c.newPackLabel,
+                        style: AppText.title.copyWith(
+                          fontSize: 14.sp,
+                          color: AppColors.lime,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      );
+    });
   }
 }
 

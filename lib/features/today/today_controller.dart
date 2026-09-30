@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -11,12 +12,15 @@ import '../../resources/date_utils.dart';
 import '../../resources/routes.dart';
 import '../../services/haptics/haptics.dart';
 import '../../services/notifications/notification_service.dart';
+import '../../services/plus/plus_access.dart';
 import '../../services/tracker_service.dart';
 import '../../widgets/k_ruler.dart';
 import '../../widgets/toast.dart';
 import '../home/home_controller.dart';
 import '../home/weight_sheet.dart';
+import 'next_bite.dart';
 import 'weekly_summary.dart';
+import 'widgets/next_bite_card.dart';
 import '../../widgets/k_date_picker.dart';
 
 /// What the top card shows.
@@ -51,6 +55,7 @@ class TodayCard {
   final String label;
 
   static const List<TodayCard> all = [
+    TodayCard('bite', 'Next bite'),
     TodayCard('protein', 'Protein'),
     TodayCard('water', 'Water'),
     TodayCard('weight', 'Weight'),
@@ -130,6 +135,57 @@ class TodayController extends GetxController {
     tracker.todayHidden.length;
     tracker.nextDoseOverride.value;
     weeklyHidden.value;
+    biteAdded.length;
+    PlusAccess.active.value;
+  }
+
+  // ------------------------------------------------------------ next bite
+
+  /// "yyyy-MM-dd|ideaId" for ideas added from the card, so a fresh idea
+  /// takes their place for the rest of the day.
+  final RxSet<String> biteAdded = <String>{}.obs;
+
+  /// Plus shows 3 ideas; free shows 1. Open in debug builds for testing.
+  bool get biteUnlocked => PlusAccess.active.value || kDebugMode;
+
+  NextBite get nextBite {
+    final key = Dates.key(now.value);
+    final skip = {
+      for (final k in biteAdded)
+        if (k.startsWith('$key|')) k.substring(key.length + 1),
+    };
+    return NextBite.build(tracker, now.value, skip: skip);
+  }
+
+  Future<void> addBite(BiteIdea idea) async {
+    Haptics.instance.lightImpact();
+    final key = Dates.key(now.value);
+    final entryId = await tracker.addProtein(idea.grams, null, idea.label);
+    final tag = '$key|${idea.id}';
+    biteAdded.add(tag);
+    showUndoToast('Added ${idea.name} · ${idea.grams} g', () async {
+      await tracker.removeEntry(key, entryId);
+      biteAdded.remove(tag);
+    });
+  }
+
+  /// A removed entry that came from Next bite lets that idea come back.
+  void forgetBite(String? label) {
+    if (label == null) return;
+    final key = Dates.key(now.value);
+    for (final i in NextBite.pool) {
+      if (i.label == label) biteAdded.remove('$key|${i.id}');
+    }
+  }
+
+  void showBiteWhy(NextBite b) {
+    Haptics.instance.selectionClick();
+    showBiteWhySheet(b);
+  }
+
+  void openPlusFromBite() {
+    Haptics.instance.lightImpact();
+    Get.toNamed<void>(Routes.plus);
   }
 
   // ---------------------------------------------------------- weekly card
@@ -165,7 +221,7 @@ class TodayController extends GetxController {
   DayLog get day => tracker.dayLog(now.value);
   String get greeting => Dates.greeting(now.value);
   String get dateLine =>
-      '${Dates.weekdayName(now.value.weekday)}, ${now.value.day} ${Dates.monthShort(now.value.month)}'
+      '${Dates.weekdayName(now.value.weekday)}, ${Dates.short(now.value)}'
           .toUpperCase();
   int get streak => tracker.logStreak;
 
@@ -364,6 +420,7 @@ class TodayController extends GetxController {
   // ----------------------------------------------------------------- water
 
   int get waterGoal => profile?.waterGoalMl ?? 2500;
+
   /// Glasses shown: enough for the goal, and always one more empty "+"
   /// glass so days above the goal can be logged too (max 4 rows).
   int get glassCount {
@@ -380,6 +437,7 @@ class TodayController extends GetxController {
     Haptics.instance.selectionClick();
     Get.toNamed<void>(Routes.day);
   }
+
   int get glassesFull => (day.waterMl / glassMl).floor();
 
   String get litres => _litres(day.waterMl);
@@ -473,7 +531,10 @@ class TodayController extends GetxController {
     await tracker.setMood(4 - face);
   }
 
-  void openCheckIn() => Get.toNamed<void>(Routes.checkIn);
+  void openCheckIn() {
+    Haptics.instance.selectionClick();
+    Get.toNamed<void>(Routes.checkIn);
+  }
 
   // ------------------------------------------------------------------- tip
 
@@ -627,8 +688,9 @@ class TodayController extends GetxController {
     final base = saved.isEmpty ? _goalOrder : saved;
     final missing = TodayCard.all
         .map((c) => c.id)
-        .where((id) => !base.contains(id));
-    return [...base, ...missing];
+        .where((id) => !base.contains(id) && id != 'bite');
+    // Next bite is new: put it first for layouts saved before it existed.
+    return [if (!base.contains('bite')) 'bite', ...base, ...missing];
   }
 
   /// Onboarding goal → the Today card that helps with it.
@@ -649,15 +711,28 @@ class TodayController extends GetxController {
       picked.add(id);
       if (id == 'protein') picked.add('water');
     }
+    // Next bite always leads; it adapts to the day by itself.
     return [
+      'bite',
       ...picked,
       for (final c in TodayCard.all)
-        if (!picked.contains(c.id)) c.id,
+        if (!picked.contains(c.id) && c.id != 'bite') c.id,
     ];
   }
 
+  /// Hidden cards. Next bite already shows protein progress and quick
+  /// adds, so the Protein card starts hidden until the user saves their own
+  /// layout (it's still there in Edit Today).
+  Set<String> get hiddenCards {
+    final saved = tracker.todayOrder;
+    if (saved.isEmpty || !saved.contains('bite')) {
+      return {...tracker.todayHidden, 'protein'};
+    }
+    return tracker.todayHidden.toSet();
+  }
+
   List<String> get visibleCards =>
-      cardOrder.where((id) => !tracker.todayHidden.contains(id)).toList();
+      cardOrder.where((id) => !hiddenCards.contains(id)).toList();
 
   Future<void> saveLayout(List<String> order, Set<String> hidden) async {
     Haptics.instance.lightImpact();

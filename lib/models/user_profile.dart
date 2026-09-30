@@ -76,7 +76,7 @@ class UserProfile {
   /// 'sed', 'light', 'mod', 'active' or 'athlete'. Tunes protein and water.
   final String? activity;
 
-  /// 'veg', 'egg', 'nonveg', 'vegan' or 'jain'. [vegDiet] is kept in step
+  /// 'nonveg', 'pesc', 'veg' or 'vegan' (older saves: 'egg', 'jain'). [vegDiet] is kept in step
   /// for older screens.
   final String? diet;
   final bool useKg;

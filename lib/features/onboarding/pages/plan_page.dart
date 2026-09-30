@@ -668,7 +668,9 @@ class _DailyGoals extends StatelessWidget {
             value: '$protein',
             unit: 'g',
             title: 'Protein',
-            sub: '${perKg.toStringAsFixed(1)} g per kg',
+            sub: controller.useKg.value
+                ? '${perKg.toStringAsFixed(1)} g per kg'
+                : '${(perKg / Imperial.lbPerKg).toStringAsFixed(2)} g per lb',
             onEdit: () => _editProtein(context),
           ),
         ),

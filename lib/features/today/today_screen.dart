@@ -11,6 +11,7 @@ import '../home/home_screen.dart';
 import 'today_controller.dart';
 import 'widgets/dose_card.dart';
 import 'widgets/edit_today_sheet.dart';
+import 'widgets/next_bite_card.dart';
 import 'widgets/today_cards.dart';
 import 'widgets/weekly_card.dart';
 
@@ -20,6 +21,7 @@ class TodayScreen extends GetView<TodayController> {
   const TodayScreen({super.key});
 
   static Widget _card(String id) => switch (id) {
+    'bite' => const NextBiteCard(),
     'protein' => const ProteinCard(),
     'water' => const WaterCard(),
     'weight' => const WeightCard(),
@@ -58,12 +60,18 @@ class TodayScreen extends GetView<TodayController> {
               child: weekly == null
                   ? const SizedBox(width: double.infinity)
                   : Padding(
-                      padding: EdgeInsets.only(top: controller.showSetup ? 12.sp : 18.sp),
-                      child: WeeklyCard(key: ValueKey(weekly.key), summary: weekly)
-                          .enter(motion, delay: 40, dy: 0.1),
+                      padding: EdgeInsets.only(
+                        top: controller.showSetup ? 12.sp : 18.sp,
+                      ),
+                      child: WeeklyCard(
+                        key: ValueKey(weekly.key),
+                        summary: weekly,
+                      ).enter(motion, delay: 40, dy: 0.1),
                     ),
             ),
-            SizedBox(height: controller.showSetup || weekly != null ? 12.sp : 18.sp),
+            SizedBox(
+              height: controller.showSetup || weekly != null ? 12.sp : 18.sp,
+            ),
             const DoseCard().enter(motion, delay: 80, dy: 0.1),
             for (final id in cards) ...[
               SizedBox(height: id == 'log' ? 20.sp : 12.sp),

@@ -194,8 +194,16 @@ class TodayHeader extends GetView<TodayController> {
                           ),
                         ),
                         SizedBox(width: 6.sp),
-                        Icon(PhosphorIconsBold.calendarDots, size: 14.sp, color: k.muted),
-                        Icon(PhosphorIconsBold.caretRight, size: 11.sp, color: k.muted),
+                        Icon(
+                          PhosphorIconsBold.calendarDots,
+                          size: 14.sp,
+                          color: k.muted,
+                        ),
+                        Icon(
+                          PhosphorIconsBold.caretRight,
+                          size: 11.sp,
+                          color: k.muted,
+                        ),
                       ],
                     ),
                   ),
@@ -549,7 +557,8 @@ class WaterCard extends GetView<TodayController> {
         children: [
           Semantics(
             button: true,
-            label: 'Water ${controller.litres} of ${controller.waterGoalLitres} litres. Open water',
+            label:
+                'Water ${controller.litres} of ${controller.waterGoalLitres} litres. Open water',
             excludeSemantics: true,
             child: PressScale(
               onTap: controller.openWater,
@@ -588,7 +597,9 @@ class WaterCard extends GetView<TodayController> {
                       fontSize: 12.5.sp,
                       fontWeight: FontWeight.w800,
                       color: controller.waterGoalHit
-                          ? (k.selectedBorder == AppColors.lime ? AppColors.aqua : AppColors.aquaText)
+                          ? (k.selectedBorder == AppColors.lime
+                                ? AppColors.aqua
+                                : AppColors.aquaText)
                           : k.faint,
                     ),
                   ),
@@ -918,43 +929,47 @@ class FeelCard extends GetView<TodayController> {
               ],
             ],
           ),
-          AnimatedSize(
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeOutCubic,
-            child: selected == null
-                ? const SizedBox(width: double.infinity)
-                : Padding(
-                    padding: EdgeInsets.only(top: 6.sp),
-                    child: Semantics(
-                      button: true,
-                      label: 'Add side effects and notes',
-                      excludeSemantics: true,
-                      child: PressScale(
-                        onTap: controller.openCheckIn,
-                        child: SizedBox(
-                          height: 40.sp,
-                          child: Row(
-                            children: [
-                              Text(
-                                'Add side effects or a note',
-                                style: AppText.small.copyWith(
-                                  fontSize: 13.5.sp,
-                                  fontWeight: FontWeight.w800,
-                                  color: k.text,
-                                ),
-                              ),
-                              SizedBox(width: 4.sp),
-                              Icon(
-                                PhosphorIconsBold.caretRight,
-                                size: 14.sp,
-                                color: k.text,
-                              ),
-                            ],
-                          ),
+          // Always there: quiet grey before a face is picked, bold after,
+          // so someone who only wants to log a side effect can find it.
+          Padding(
+            padding: EdgeInsets.only(top: 6.sp),
+            child: Semantics(
+              button: true,
+              label: 'Add side effects or a note',
+              excludeSemantics: true,
+              child: PressScale(
+                onTap: controller.openCheckIn,
+                child: SizedBox(
+                  height: 40.sp,
+                  child: Row(
+                    children: [
+                      AnimatedDefaultTextStyle(
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeOutCubic,
+                        style: AppText.small.copyWith(
+                          fontSize: 13.5.sp,
+                          fontWeight: selected == null
+                              ? FontWeight.w700
+                              : FontWeight.w800,
+                          color: selected == null ? k.muted : k.text,
+                        ),
+                        child: Text(
+                          selected == null
+                              ? 'Side effects or a note'
+                              : 'Add side effects or a note',
                         ),
                       ),
-                    ),
+                      SizedBox(width: 4.sp),
+                      Icon(
+                        PhosphorIconsBold.caretRight,
+                        size: 14.sp,
+                        color: selected == null ? k.muted : k.text,
+                      ),
+                    ],
                   ),
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -1044,7 +1059,8 @@ class TodayLogCard extends GetView<TodayController> {
     int count(String kind) => rows.where((r) => r.kind == kind).length;
     final parts = <(String, Color)>[
       if (count('dose') > 0) ('Dose', AppColors.lime),
-      if (count('protein') > 0) ('${count('protein')} protein', AppColors.tangerine),
+      if (count('protein') > 0)
+        ('${count('protein')} protein', AppColors.tangerine),
       if (count('water') > 0) ('${count('water')} water', AppColors.aqua),
       if (count('weight') > 0) ('Weigh-in', k.muted),
     ];
@@ -1063,7 +1079,11 @@ class TodayLogCard extends GetView<TodayController> {
             children: [
               _IconTile(
                 color: k.cardAlt,
-                child: Icon(PhosphorIconsBold.listBullets, size: 20.sp, color: k.text),
+                child: Icon(
+                  PhosphorIconsBold.listBullets,
+                  size: 20.sp,
+                  color: k.text,
+                ),
               ),
               SizedBox(width: 12.sp),
               Expanded(
@@ -1071,12 +1091,23 @@ class TodayLogCard extends GetView<TodayController> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      rows.isEmpty ? "Today's log" : "Today's log · ${rows.length} ${rows.length == 1 ? 'entry' : 'entries'}",
-                      style: AppText.title.copyWith(fontSize: 15.sp, color: k.text),
+                      rows.isEmpty
+                          ? "Today's log"
+                          : "Today's log · ${rows.length} ${rows.length == 1 ? 'entry' : 'entries'}",
+                      style: AppText.title.copyWith(
+                        fontSize: 15.sp,
+                        color: k.text,
+                      ),
                     ),
                     SizedBox(height: 3.sp),
                     if (rows.isEmpty)
-                      Text(summary, style: AppText.small.copyWith(fontSize: 12.5.sp, color: k.muted))
+                      Text(
+                        summary,
+                        style: AppText.small.copyWith(
+                          fontSize: 12.5.sp,
+                          color: k.muted,
+                        ),
+                      )
                     else
                       Wrap(
                         spacing: 10.sp,
@@ -1089,12 +1120,19 @@ class TodayLogCard extends GetView<TodayController> {
                                 Container(
                                   width: 7.sp,
                                   height: 7.sp,
-                                  decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                                  decoration: BoxDecoration(
+                                    color: color,
+                                    shape: BoxShape.circle,
+                                  ),
                                 ),
                                 SizedBox(width: 5.sp),
                                 Text(
                                   label,
-                                  style: AppText.small.copyWith(fontSize: 12.5.sp, fontWeight: FontWeight.w700, color: k.muted),
+                                  style: AppText.small.copyWith(
+                                    fontSize: 12.5.sp,
+                                    fontWeight: FontWeight.w700,
+                                    color: k.muted,
+                                  ),
                                 ),
                               ],
                             ),

@@ -65,7 +65,7 @@ class Medicine {
 }
 
 /// Where a food's protein comes from, used to filter by diet.
-enum FoodSrc { plant, dairy, egg, meat }
+enum FoodSrc { plant, dairy, egg, meat, fish }
 
 class Food {
   const Food(
@@ -92,7 +92,7 @@ class Food {
   final String cat;
   final FoodSrc src;
 
-  /// Saved on log entries: "Paneer, 100 g".
+  /// Saved on log entries: "Greek yogurt, 1 cup, 170 g".
   String get label => portion.isEmpty ? name : '$name, $portion';
 }
 
@@ -378,46 +378,40 @@ class Catalog {
   static const List<Food> everydayFoods = [
     Food('egg', '2 eggs', 12, Img3d.egg),
     Food('chicken', 'Chicken, 100 g', 31, Img3d.chicken),
-    Food('dal', 'Dal, 1 bowl', 8, Img3d.dal),
-    Food('whey', 'Whey shake', 24, Img3d.whey),
     Food('curd', 'Greek yogurt', 17, Img3d.milk),
-    Food('paneer', 'Paneer, 100 g', 19, Img3d.paneer),
+    Food('whey', 'Protein shake', 24, Img3d.whey),
+    Food('cottage', 'Cottage cheese', 14, Img3d.cheese),
+    Food('tuna', 'Tuna, 1 can', 20, Img3d.canned),
   ];
 
   static const List<Food> vegFoods = [
-    Food('paneer', 'Paneer, 100 g', 19, Img3d.paneer),
-    Food('soya', 'Soya curry, 50 g', 26, Img3d.pot),
-    Food('dal', 'Dal, 1 bowl', 8, Img3d.dal),
-    Food('whey', 'Whey shake', 24, Img3d.whey),
     Food('curd', 'Greek yogurt', 17, Img3d.milk),
-    Food('rajma', 'Rajma rice', 12, Img3d.curryRice),
+    Food('egg', '2 eggs', 12, Img3d.egg),
+    Food('cottage', 'Cottage cheese', 14, Img3d.cheese),
+    Food('lentils', 'Lentils, 1/2 cup', 9, Img3d.beans),
+    Food('tofu', 'Tofu, 100 g', 12, Img3d.pot),
+    Food('whey', 'Protein shake', 24, Img3d.whey),
   ];
 
   /// Browse chips on the protein screen.
   static const List<(String, String)> foodCats = [
     ('all', 'All'),
     ('dairy', 'Dairy'),
-    ('dal', 'Dal & beans'),
-    ('soy', 'Soy & tofu'),
     ('egg', 'Eggs'),
-    ('meat', 'Meat & fish'),
+    ('meat', 'Meat'),
+    ('fish', 'Fish & seafood'),
+    ('beans', 'Beans & lentils'),
+    ('soy', 'Soy & tofu'),
     ('shake', 'Shakes & bars'),
     ('meal', 'Everyday'),
     ('snack', 'Snacks'),
   ];
 
   /// Protein food library. Typical amounts for the portion shown; labels
-  /// and recipes vary, which the screen says.
+  /// and recipes vary, which the screen says. Portions show both US cups /
+  /// ounces and metric where people use either.
   static const List<Food> foods = [
-    Food(
-      'paneer',
-      'Paneer',
-      19,
-      Img3d.paneer,
-      portion: '100 g',
-      cat: 'dairy',
-      src: FoodSrc.dairy,
-    ),
+    // Dairy
     Food(
       'curd',
       'Greek yogurt',
@@ -428,11 +422,20 @@ class Catalog {
       src: FoodSrc.dairy,
     ),
     Food(
-      'dahi',
-      'Curd (dahi)',
-      5,
+      'cottage',
+      'Cottage cheese',
+      14,
+      Img3d.cheese,
+      portion: '1/2 cup, 113 g',
+      cat: 'dairy',
+      src: FoodSrc.dairy,
+    ),
+    Food(
+      'skyr',
+      'Skyr',
+      15,
       Img3d.milk,
-      portion: '1 bowl, 150 g',
+      portion: '1 pot, 150 g',
       cat: 'dairy',
       src: FoodSrc.dairy,
     ),
@@ -441,61 +444,35 @@ class Catalog {
       'Milk',
       8,
       Img3d.milk,
-      portion: '1 glass, 250 ml',
+      portion: '1 cup, 240 ml',
       cat: 'dairy',
       src: FoodSrc.dairy,
     ),
     Food(
       'cheese',
-      'Cheese slice',
-      4,
-      Img3d.paneer,
-      portion: '1 slice',
+      'Cheese',
+      7,
+      Img3d.cheese,
+      portion: '1 oz, 28 g',
       cat: 'dairy',
       src: FoodSrc.dairy,
     ),
-    Food('dal', 'Dal', 8, Img3d.dal, portion: '1 bowl', cat: 'dal'),
     Food(
-      'rajma',
-      'Rajma or chole',
-      9,
-      Img3d.curryRice,
-      portion: '1 bowl',
-      cat: 'dal',
-    ),
-    Food(
-      'sprouts',
-      'Moong sprouts',
+      'stringcheese',
+      'String cheese',
       7,
-      Img3d.seedling,
-      portion: '1 bowl',
-      cat: 'dal',
+      Img3d.cheese,
+      portion: '1 stick',
+      cat: 'snack',
+      src: FoodSrc.dairy,
     ),
-    Food(
-      'chilla',
-      'Besan chilla',
-      10,
-      Img3d.pot,
-      portion: '2 pieces',
-      cat: 'dal',
-    ),
-    Food('chana', 'Roasted chana', 6, Img3d.dal, portion: '30 g', cat: 'snack'),
-    Food('soya', 'Soya chunks', 26, Img3d.pot, portion: '50 g dry', cat: 'soy'),
-    Food('tofu', 'Tofu', 12, Img3d.pot, portion: '100 g', cat: 'soy'),
-    Food(
-      'soymilk',
-      'Soy milk',
-      7,
-      Img3d.milk,
-      portion: '1 glass, 250 ml',
-      cat: 'soy',
-    ),
+    // Eggs
     Food(
       'egg',
       'Eggs',
       12,
       Img3d.egg,
-      portion: '2 whole',
+      portion: '2 large',
       cat: 'egg',
       src: FoodSrc.egg,
     ),
@@ -508,57 +485,141 @@ class Catalog {
       cat: 'egg',
       src: FoodSrc.egg,
     ),
+    // Meat
     Food(
       'chicken',
       'Chicken breast',
       31,
       Img3d.chicken,
-      portion: '100 g cooked',
+      portion: '100 g (3.5 oz) cooked',
       cat: 'meat',
       src: FoodSrc.meat,
     ),
     Food(
-      'chickencurry',
-      'Chicken curry',
-      20,
-      Img3d.chicken,
-      portion: '1 bowl',
+      'turkey',
+      'Turkey slices',
+      10,
+      Img3d.meat,
+      portion: '3 slices, 56 g',
       cat: 'meat',
       src: FoodSrc.meat,
     ),
     Food(
-      'fish',
-      'Fish',
+      'beef',
+      'Lean beef',
+      26,
+      Img3d.meat,
+      portion: '100 g (3.5 oz) cooked',
+      cat: 'meat',
+      src: FoodSrc.meat,
+    ),
+    Food(
+      'jerky',
+      'Beef jerky',
+      9,
+      Img3d.meat,
+      portion: '1 oz, 28 g',
+      cat: 'snack',
+      src: FoodSrc.meat,
+    ),
+    // Fish & seafood
+    Food(
+      'salmon',
+      'Salmon',
       22,
-      Img3d.pot,
-      portion: '100 g cooked',
-      cat: 'meat',
-      src: FoodSrc.meat,
+      Img3d.fish,
+      portion: '100 g (3.5 oz) cooked',
+      cat: 'fish',
+      src: FoodSrc.fish,
     ),
     Food(
-      'mutton',
-      'Mutton',
-      25,
-      Img3d.chicken,
-      portion: '100 g cooked',
-      cat: 'meat',
-      src: FoodSrc.meat,
+      'tuna',
+      'Tuna, canned',
+      20,
+      Img3d.canned,
+      portion: '1 small can, drained',
+      cat: 'fish',
+      src: FoodSrc.fish,
     ),
     Food(
-      'prawns',
-      'Prawns',
-      24,
-      Img3d.pot,
-      portion: '100 g cooked',
-      cat: 'meat',
-      src: FoodSrc.meat,
+      'whitefish',
+      'White fish',
+      20,
+      Img3d.fish,
+      portion: '100 g (3.5 oz) cooked',
+      cat: 'fish',
+      src: FoodSrc.fish,
     ),
+    Food(
+      'shrimp',
+      'Shrimp / prawns',
+      20,
+      Img3d.shrimp,
+      portion: '85 g (3 oz) cooked',
+      cat: 'fish',
+      src: FoodSrc.fish,
+    ),
+    // Beans & lentils
+    Food(
+      'lentils',
+      'Lentils',
+      9,
+      Img3d.beans,
+      portion: '1/2 cup cooked',
+      cat: 'beans',
+    ),
+    Food(
+      'chickpeas',
+      'Chickpeas',
+      7,
+      Img3d.beans,
+      portion: '1/2 cup',
+      cat: 'beans',
+    ),
+    Food(
+      'blackbeans',
+      'Black beans',
+      8,
+      Img3d.beans,
+      portion: '1/2 cup',
+      cat: 'beans',
+    ),
+    Food('hummus', 'Hummus', 5, Img3d.bowl, portion: '1/4 cup', cat: 'beans'),
+    // Soy & tofu
+    Food('tofu', 'Tofu, firm', 12, Img3d.pot, portion: '100 g', cat: 'soy'),
+    Food('tempeh', 'Tempeh', 16, Img3d.pot, portion: '85 g (3 oz)', cat: 'soy'),
+    Food(
+      'edamame',
+      'Edamame',
+      9,
+      Img3d.beans,
+      portion: '1/2 cup shelled',
+      cat: 'soy',
+    ),
+    Food(
+      'soymilk',
+      'Soy milk',
+      7,
+      Img3d.milk,
+      portion: '1 cup, 240 ml',
+      cat: 'soy',
+    ),
+    // Shakes & bars
     Food(
       'whey',
-      'Whey shake',
+      'Protein shake',
       24,
       Img3d.whey,
       portion: '1 scoop',
+      cat: 'shake',
+      src: FoodSrc.dairy,
+    ),
+    Food(
+      'rtd',
+      'Ready-to-drink shake',
+      30,
+      Img3d.whey,
+      portion: '1 bottle',
       cat: 'shake',
       src: FoodSrc.dairy,
     ),
@@ -579,30 +640,39 @@ class Catalog {
       cat: 'shake',
       src: FoodSrc.dairy,
     ),
-    Food('roti', 'Roti', 3, Img3d.curryRice, portion: '1 medium', cat: 'meal'),
+    // Everyday
     Food(
-      'rice',
-      'Rice',
-      4,
-      Img3d.curryRice,
+      'oats',
+      'Oatmeal',
+      5,
+      Img3d.bowl,
       portion: '1 cup cooked',
       cat: 'meal',
     ),
-    Food('idli', 'Idli', 4, Img3d.curryRice, portion: '2 pieces', cat: 'meal'),
-    Food('poha', 'Poha', 5, Img3d.curryRice, portion: '1 plate', cat: 'meal'),
     Food(
-      'peanuts',
-      'Peanuts',
-      7,
-      Img3d.seedling,
-      portion: '30 g',
-      cat: 'snack',
+      'bread',
+      'Wholegrain bread',
+      4,
+      Img3d.bread,
+      portion: '1 slice',
+      cat: 'meal',
     ),
+    Food('pasta', 'Pasta', 8, Img3d.bowl, portion: '1 cup cooked', cat: 'meal'),
+    Food(
+      'quinoa',
+      'Quinoa',
+      8,
+      Img3d.bowl,
+      portion: '1 cup cooked',
+      cat: 'meal',
+    ),
+    Food('rice', 'Rice', 4, Img3d.bowl, portion: '1 cup cooked', cat: 'meal'),
+    // Snacks
     Food(
       'pb',
       'Peanut butter',
       7,
-      Img3d.seedling,
+      Img3d.peanuts,
       portion: '2 tbsp',
       cat: 'snack',
     ),
@@ -610,18 +680,28 @@ class Catalog {
       'almonds',
       'Almonds',
       6,
-      Img3d.seedling,
-      portion: '30 g',
+      Img3d.peanuts,
+      portion: '1 oz, 28 g',
+      cat: 'snack',
+    ),
+    Food(
+      'peanuts',
+      'Peanuts',
+      7,
+      Img3d.peanuts,
+      portion: '1 oz, 28 g',
       cat: 'snack',
     ),
   ];
 
-  /// [foods] allowed for a diet ('veg', 'jain', 'egg', 'vegan', 'nonveg').
+  /// [foods] allowed for a diet: 'nonveg' (everything), 'pesc'
+  /// (pescatarian), 'veg' (vegetarian, with dairy and eggs), 'vegan'.
+  /// Older saved values: 'egg' and 'jain' are read as vegetarian.
   static List<Food> foodsFor(String? diet) => foods.where((f) {
     switch (diet) {
-      case 'veg' || 'jain':
-        return f.src == FoodSrc.plant || f.src == FoodSrc.dairy;
-      case 'egg':
+      case 'veg' || 'egg' || 'jain':
+        return f.src != FoodSrc.meat && f.src != FoodSrc.fish;
+      case 'pesc':
         return f.src != FoodSrc.meat;
       case 'vegan':
         return f.src == FoodSrc.plant;
@@ -629,6 +709,10 @@ class Catalog {
         return true;
     }
   }).toList();
+
+  /// True for diets without meat or fish.
+  static bool isMeatFree(String? diet) =>
+      diet == 'veg' || diet == 'vegan' || diet == 'egg' || diet == 'jain';
 
   /// Browse chips that have at least one food for this diet.
   static List<(String, String)> foodCatsFor(String? diet) {
@@ -638,8 +722,8 @@ class Catalog {
         .toList();
   }
 
-  /// The library food a saved label came from ("Paneer, 100 g" or the
-  /// Today chip name "Greek yogurt"), or null.
+  /// The library food a saved label came from ("Greek yogurt, 1 cup" or
+  /// the Today chip name "Greek yogurt"), or null.
   static Food? foodByLabel(String label) {
     for (final f in foods) {
       if (f.label == label || f.name == label || label.startsWith('${f.name},'))
@@ -651,48 +735,48 @@ class Catalog {
   static const List<Drink> waterSizes = [
     Drink('glass', 'Glass', 250),
     Drink('bottle', 'Bottle', 500),
-    Drink('litre', '1 litre', 1000),
+    Drink('litre', 'Large bottle', 1000),
   ];
 
   static const List<Drink> otherDrinks = [
-    Drink('tea', 'Tea', 150, dairy: true),
-    Drink('coffee', 'Coffee', 150),
-    Drink('milk', 'Milk', 200, dairy: true),
-    Drink('chaas', 'Buttermilk', 200, dairy: true),
-    Drink('coconut', 'Coconut water', 250),
-    Drink('nimbu', 'Nimbu pani', 250),
+    Drink('tea', 'Tea', 240, dairy: true),
+    Drink('coffee', 'Coffee', 240),
+    Drink('milk', 'Milk', 240, dairy: true),
+    Drink('sparkling', 'Sparkling water', 330),
+    Drink('electrolyte', 'Electrolyte drink', 500),
+    Drink('coconut', 'Coconut water', 330),
   ];
 
   /// One-tap protein foods for Today, matched to how the user eats
-  /// ('veg', 'egg', 'nonveg', 'vegan', 'jain'; empty = everyday list).
+  /// (see [foodsFor]; empty = everyday list).
   static List<Food> quickFoods(String? diet) => switch (diet) {
-    'veg' || 'jain' => const [
-      Food('paneer', 'Paneer, 100 g', 19, Img3d.paneer),
+    'veg' || 'egg' || 'jain' => const [
       Food('curd', 'Greek yogurt', 17, Img3d.milk),
-      Food('dal', 'Dal, 1 bowl', 8, Img3d.dal),
-      Food('soya', 'Soya chunks, 50 g', 26, Img3d.pot),
-      Food('whey', 'Whey shake', 24, Img3d.whey),
-    ],
-    'egg' => const [
       Food('egg', '2 eggs', 12, Img3d.egg),
-      Food('paneer', 'Paneer, 100 g', 19, Img3d.paneer),
+      Food('cottage', 'Cottage cheese', 14, Img3d.cheese),
+      Food('lentils', 'Lentils, 1/2 cup', 9, Img3d.beans),
+      Food('whey', 'Protein shake', 24, Img3d.whey),
+    ],
+    'pesc' => const [
+      Food('egg', '2 eggs', 12, Img3d.egg),
+      Food('salmon', 'Salmon, 100 g', 22, Img3d.fish),
       Food('curd', 'Greek yogurt', 17, Img3d.milk),
-      Food('dal', 'Dal, 1 bowl', 8, Img3d.dal),
-      Food('whey', 'Whey shake', 24, Img3d.whey),
+      Food('tuna', 'Tuna, 1 can', 20, Img3d.canned),
+      Food('whey', 'Protein shake', 24, Img3d.whey),
     ],
     'vegan' => const [
       Food('tofu', 'Tofu, 100 g', 12, Img3d.pot),
-      Food('soya', 'Soya chunks, 50 g', 26, Img3d.pot),
-      Food('dal', 'Dal, 1 bowl', 8, Img3d.dal),
+      Food('edamame', 'Edamame, 1/2 cup', 9, Img3d.beans),
+      Food('lentils', 'Lentils, 1/2 cup', 9, Img3d.beans),
       Food('plant', 'Plant protein shake', 20, Img3d.whey),
-      Food('peanut', 'Peanut butter, 2 tbsp', 7, Img3d.seedling),
+      Food('pb', 'Peanut butter, 2 tbsp', 7, Img3d.peanuts),
     ],
     _ => const [
       Food('egg', '2 eggs', 12, Img3d.egg),
       Food('chicken', 'Chicken, 100 g', 31, Img3d.chicken),
       Food('curd', 'Greek yogurt', 17, Img3d.milk),
-      Food('paneer', 'Paneer, 100 g', 19, Img3d.paneer),
-      Food('whey', 'Whey shake', 24, Img3d.whey),
+      Food('cottage', 'Cottage cheese', 14, Img3d.cheese),
+      Food('whey', 'Protein shake', 24, Img3d.whey),
     ],
   };
 

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
 import '../../models/logs.dart';
@@ -6,6 +7,8 @@ import '../../resources/catalog.dart';
 import '../../resources/date_utils.dart';
 import '../../resources/routes.dart';
 import '../../services/haptics/haptics.dart';
+import '../../services/plus/plus_access.dart';
+import '../../services/supply/supply_service.dart';
 import '../../services/tracker_service.dart';
 import '../../widgets/toast.dart';
 
@@ -97,6 +100,46 @@ class DoseDoneController extends GetxController {
     final next = tracker.nextDoseAt();
     if (p == null || !p.remindersOn || next == null) return null;
     return '${Dates.weekdayShort(next.weekday)} ${Dates.time(next)}';
+  }
+
+  // ------------------------------------------------------------ pen line
+
+  SupplyService get supply => Get.find<SupplyService>();
+
+  /// Shown once Pens & cost (Plus) is set up.
+  bool get showPen => (PlusAccess.active.value || kDebugMode) && supply.isSetUp;
+
+  String get _pack => switch (profile?.form) {
+    'vial' => 'vial',
+    'tablet' => 'pack',
+    _ => 'pen',
+  };
+
+  bool get penEmpty => supply.leftInPack == 0;
+
+  /// "2 doses left in this pen" / "That was the last dose in this pen."
+  String get penLine {
+    final left = supply.leftInPack;
+    final word = isTablet ? 'tablet' : 'dose';
+    if (left > 0)
+      return '$left ${left == 1 ? word : '${word}s'} left in this $_pack';
+    final spare = supply.spare.value;
+    return spare == 0
+        ? 'That was the last $word in this $_pack. No spare ${_pack}s at home.'
+        : 'That was the last $word in this $_pack.';
+  }
+
+  String get newPackLabel => 'Start a new $_pack';
+
+  Future<void> startNewPack() async {
+    Haptics.instance.mediumImpact();
+    await supply.startNewPack();
+    showToast('New $_pack started');
+  }
+
+  void openPens() {
+    Haptics.instance.selectionClick();
+    Get.offNamed<void>(Routes.pens);
   }
 
   void done() {

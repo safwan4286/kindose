@@ -11,7 +11,6 @@ import 'onboarding_controller.dart';
 import 'pages/activity_page.dart';
 import 'pages/birth_page.dart';
 import 'pages/building_page.dart';
-import 'pages/body_pages.dart';
 import 'pages/diet_page.dart';
 import 'pages/dose_page.dart';
 import 'pages/focus_page.dart';
@@ -63,10 +62,6 @@ class OnboardingScreen extends GetView<OnboardingController> {
         return const ActivityPage();
       case OnboardingStep.diet:
         return const DietPage();
-      case OnboardingStep.baseline:
-        return const BaselinePage();
-      case OnboardingStep.protein:
-        return const ProteinPage();
       case OnboardingStep.focus:
         return const FocusPage();
       case OnboardingStep.reminders:

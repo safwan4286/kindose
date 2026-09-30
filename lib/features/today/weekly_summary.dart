@@ -61,7 +61,8 @@ class WeeklySummary {
     var logged = 0;
     for (var i = 0; i < 7; i++) {
       final l = logs[i];
-      final any = l.proteinG > 0 ||
+      final any =
+          l.proteinG > 0 ||
           l.waterMl > 0 ||
           l.hasCheckIn ||
           t.doseOn(days[i]) != null ||
@@ -77,15 +78,20 @@ class WeeklySummary {
     final tiles = <WeeklyTile>[
       ?_weightTile(t, p, start, weights),
       ?_doseTile(t, p, days, doses),
-      WeeklyTile('PROTEIN GOAL', '$proteinDays of 7 days', null, strip: proteinHit),
+      WeeklyTile(
+        'PROTEIN GOAL',
+        '$proteinDays of 7 days',
+        null,
+        strip: proteinHit,
+      ),
       ?_feelTile(logs),
     ];
 
     final headline = logged == 7
         ? 'Seven days logged. Nicely kept.'
         : proteinDays >= 5
-            ? 'Protein was strong this week.'
-            : 'Here’s how your week went.';
+        ? 'Protein was strong this week.'
+        : 'Here’s how your week went.';
 
     return WeeklySummary(
       key: Dates.key(start),
@@ -93,35 +99,50 @@ class WeeklySummary {
       week: _weekOf(t, p, start),
       headline: headline,
       tiles: tiles,
-      waterLine: waterDays == 0 ? null : 'Water goal hit on $waterDays of 7 days.',
+      waterLine: waterDays == 0
+          ? null
+          : 'Water goal hit on $waterDays of 7 days.',
     );
   }
 
   static bool _inWeek(DateTime d, DateTime start) {
     final day = Dates.dateOnly(d);
-    return !day.isBefore(start) && day.isBefore(start.add(const Duration(days: 7)));
+    return !day.isBefore(start) &&
+        day.isBefore(start.add(const Duration(days: 7)));
   }
 
-  /// "21–27 Sep" or "28 Sep – 4 Oct".
+  /// "21–27 Sep" / "Sep 21–27", or "28 Sep – 4 Oct" across months.
   static String _range(DateTime start) {
     final end = start.add(const Duration(days: 6));
     return start.month == end.month
-        ? '${start.day}–${end.day} ${Dates.monthShort(end.month)}'
+        ? (Dates.monthFirst
+              ? '${Dates.monthShort(end.month)} ${start.day}–${end.day}'
+              : '${start.day}–${end.day} ${Dates.monthShort(end.month)}')
         : '${Dates.short(start)} – ${Dates.short(end)}';
   }
 
   static int? _weekOf(TrackerService t, UserProfile p, DateTime start) {
-    final began = p.treatmentStartedAt ?? (t.doses.isEmpty ? null : t.doses.last.takenAt);
-    if (began == null || began.isAfter(start.add(const Duration(days: 6)))) return null;
+    final began =
+        p.treatmentStartedAt ?? (t.doses.isEmpty ? null : t.doses.last.takenAt);
+    if (began == null || began.isAfter(start.add(const Duration(days: 6))))
+      return null;
     final days = Dates.daysBetween(began, start);
     return days < 0 ? 1 : days ~/ 7 + 1;
   }
 
   /// Week average against the week before. Needs weigh-ins in both.
-  static WeeklyTile? _weightTile(TrackerService t, UserProfile p, DateTime start, List<WeightEntry> week) {
-    final before = t.weights.where((w) => _inWeek(w.date, start.subtract(const Duration(days: 7)))).toList();
+  static WeeklyTile? _weightTile(
+    TrackerService t,
+    UserProfile p,
+    DateTime start,
+    List<WeightEntry> week,
+  ) {
+    final before = t.weights
+        .where((w) => _inWeek(w.date, start.subtract(const Duration(days: 7))))
+        .toList();
     if (week.isEmpty || before.isEmpty) return null;
-    double avg(List<WeightEntry> l) => l.fold(0.0, (a, w) => a + w.kg) / l.length;
+    double avg(List<WeightEntry> l) =>
+        l.fold(0.0, (a, w) => a + w.kg) / l.length;
     var diff = avg(week) - avg(before);
     if (!p.useKg) diff *= Imperial.lbPerKg;
     final unit = p.useKg ? 'kg' : 'lb';
@@ -132,7 +153,12 @@ class WeeklySummary {
     return WeeklyTile('WEIGHT', value, 'week average vs last');
   }
 
-  static WeeklyTile? _doseTile(TrackerService t, UserProfile p, List<DateTime> days, List<DoseLog> doses) {
+  static WeeklyTile? _doseTile(
+    TrackerService t,
+    UserProfile p,
+    List<DateTime> days,
+    List<DoseLog> doses,
+  ) {
     if (p.medicineId == Catalog.undecided) return null;
     if (p.isDaily) {
       final taken = days.where((d) => t.doseOn(d) != null).length;
@@ -140,12 +166,15 @@ class WeeklySummary {
     }
     if (doses.isEmpty) {
       // Doses every 2+ weeks may simply not fall in this week.
-      return p.everyDays <= 7 ? const WeeklyTile('DOSE', 'Not logged', 'No dose logged this week') : null;
+      return p.everyDays <= 7
+          ? const WeeklyTile('DOSE', 'Not logged', 'No dose logged this week')
+          : null;
     }
     final d = doses.first; // newest first
     final i = t.doses.indexOf(d);
     final prev = i >= 0 && i + 1 < t.doses.length ? t.doses[i + 1] : null;
-    final onTime = prev != null &&
+    final onTime =
+        prev != null &&
         (Dates.daysBetween(prev.takenAt, d.takenAt) - p.everyDays).abs() <= 1;
     final parts = [
       Dates.weekdayShort(d.takenAt.weekday),
@@ -176,7 +205,11 @@ class WeeklySummary {
 
     if (moods.isEmpty) {
       final n = logs.where((l) => l.hasCheckIn).length;
-      return WeeklyTile('HOW YOU FELT', '$n check-${n == 1 ? 'in' : 'ins'}', sub);
+      return WeeklyTile(
+        'HOW YOU FELT',
+        '$n check-${n == 1 ? 'in' : 'ins'}',
+        sub,
+      );
     }
     final counts = List<int>.filled(Catalog.moods.length, 0);
     for (final m in moods) {
@@ -186,6 +219,10 @@ class WeeklySummary {
     for (var i = 1; i < counts.length; i++) {
       if (counts[i] > counts[best]) best = i;
     }
-    return WeeklyTile('HOW YOU FELT', 'Mostly ${Catalog.moods[best].label.toLowerCase()}', sub);
+    return WeeklyTile(
+      'HOW YOU FELT',
+      'Mostly ${Catalog.moods[best].label.toLowerCase()}',
+      sub,
+    );
   }
 }

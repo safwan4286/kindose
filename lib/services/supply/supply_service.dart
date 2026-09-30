@@ -29,13 +29,13 @@ class Purchase {
   final String? note;
 
   Map<String, dynamic> toMap() => {
-        'id': id,
-        'date': date.millisecondsSinceEpoch,
-        'packs': packs,
-        'price': price,
-        'strengthMg': strengthMg,
-        'note': note,
-      };
+    'id': id,
+    'date': date.millisecondsSinceEpoch,
+    'packs': packs,
+    'price': price,
+    'strengthMg': strengthMg,
+    'note': note,
+  };
 
   static Purchase? fromMap(Map<dynamic, dynamic> m) {
     final id = m.str('id');
@@ -89,16 +89,22 @@ class SupplyService extends GetxService {
   void load() {
     dosesPerPack.value = (_s.get('supplyDosesPerPack') as int?) ?? 4;
     final start = _s.get('supplyStartedAt');
-    packStartedAt.value = start is int ? DateTime.fromMillisecondsSinceEpoch(start) : null;
+    packStartedAt.value = start is int
+        ? DateTime.fromMillisecondsSinceEpoch(start)
+        : null;
     usedOffset.value = (_s.get('supplyOffset') as int?) ?? 0;
     spare.value = (_s.get('supplySpare') as int?) ?? 0;
     refillReminder.value = _s.get('supplyRefillReminder') != false;
-    currency.value = (_s.get('supplyCurrency') as String?) ?? (Region.isIndia ? '₹' : r'$');
+    currency.value =
+        (_s.get('supplyCurrency') as String?) ?? Region.currencySymbol;
     final raw = _s.get('supplyPurchases');
-    purchases.assignAll([
-      if (raw is List)
-        for (final m in raw.whereType<Map<dynamic, dynamic>>()) ?Purchase.fromMap(m),
-    ]..sort((a, b) => b.date.compareTo(a.date)));
+    purchases.assignAll(
+      [
+        if (raw is List)
+          for (final m in raw.whereType<Map<dynamic, dynamic>>())
+            ?Purchase.fromMap(m),
+      ]..sort((a, b) => b.date.compareTo(a.date)),
+    );
   }
 
   bool get isSetUp => packStartedAt.value != null;
@@ -110,7 +116,9 @@ class SupplyService extends GetxService {
   int get usedInPack {
     final start = packStartedAt.value;
     if (start == null) return 0;
-    final logged = tracker.doses.where((d) => !d.takenAt.isBefore(start)).length;
+    final logged = tracker.doses
+        .where((d) => !d.takenAt.isBefore(start))
+        .length;
     return (logged + usedOffset.value).clamp(0, dosesPerPack.value);
   }
 
@@ -123,10 +131,12 @@ class SupplyService extends GetxService {
   DateTime? get nextPackNeededOn => _doseDateAfter(leftInPack);
 
   /// Date of the last dose in the current pen (null when it is empty).
-  DateTime? get packLastsUntil => leftInPack == 0 ? null : _doseDateAfter(leftInPack - 1);
+  DateTime? get packLastsUntil =>
+      leftInPack == 0 ? null : _doseDateAfter(leftInPack - 1);
 
   /// Date of the last dose the whole supply covers.
-  DateTime? get supplyLastsUntil => dosesLeft == 0 ? null : _doseDateAfter(dosesLeft - 1);
+  DateTime? get supplyLastsUntil =>
+      dosesLeft == 0 ? null : _doseDateAfter(dosesLeft - 1);
 
   /// The date of the dose [n] doses after the next one (0 = next dose).
   DateTime? _doseDateAfter(int n) {
@@ -147,7 +157,11 @@ class SupplyService extends GetxService {
 
   // -------------------------------------------------------------- actions
 
-  Future<void> setUp({required int dosesPerPack, required int usedAlready, required int spare}) async {
+  Future<void> setUp({
+    required int dosesPerPack,
+    required int usedAlready,
+    required int spare,
+  }) async {
     this.dosesPerPack.value = dosesPerPack.clamp(1, 60);
     packStartedAt.value = DateTime.now();
     usedOffset.value = usedAlready.clamp(0, dosesPerPack);
@@ -167,7 +181,9 @@ class SupplyService extends GetxService {
   Future<void> setLeftInPack(int left) async {
     final start = packStartedAt.value ?? DateTime.now();
     packStartedAt.value = start;
-    final logged = tracker.doses.where((d) => !d.takenAt.isBefore(start)).length;
+    final logged = tracker.doses
+        .where((d) => !d.takenAt.isBefore(start))
+        .length;
     final wantUsed = (dosesPerPack.value - left).clamp(0, dosesPerPack.value);
     usedOffset.value = wantUsed - logged;
     await _save();
@@ -218,6 +234,17 @@ class SupplyService extends GetxService {
     });
   }
 
+  /// Everything Pens & cost stores, for the JSON backup.
+  Map<String, dynamic> exportMap() => {
+    'dosesPerPack': dosesPerPack.value,
+    'packStartedAt': packStartedAt.value?.toIso8601String(),
+    'usedOffset': usedOffset.value,
+    'spare': spare.value,
+    'refillReminder': refillReminder.value,
+    'currency': currency.value,
+    'purchases': purchases.map((p) => p.toMap()).toList(),
+  };
+
   // ---------------------------------------------------------------- spend
 
   double spendIn(int year, int month) => purchases
@@ -235,7 +262,7 @@ class SupplyService extends GetxService {
 
   DateTime? get firstPurchase => purchases.isEmpty ? null : purchases.last.date;
 
-  /// "₹1,079" / "$23.50".
+  /// "$1,079" / "£23.50".
   String money(double v) {
     final whole = v.truncate();
     final cents = ((v - whole) * 100).round();

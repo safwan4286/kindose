@@ -19,7 +19,11 @@ import '../../../widgets/press_scale.dart';
 
 /// Result of the set-up sheet.
 class PackSetup {
-  const PackSetup({required this.perPack, required this.left, required this.spare});
+  const PackSetup({
+    required this.perPack,
+    required this.left,
+    required this.spare,
+  });
 
   final int perPack;
   final int left;
@@ -35,7 +39,16 @@ class PackSettings {
 }
 
 /// Currencies offered in settings. The saved one is added if missing.
-const List<String> _currencies = ['₹', r'$', '€', '£', 'A\$', 'C\$', 'AED'];
+const List<String> _currencies = [
+  r'$',
+  '£',
+  '€',
+  r'C$',
+  r'A$',
+  r'NZ$',
+  '₹',
+  'AED',
+];
 
 /// "How many doses in one pen, how many left, how many spare?"
 Future<PackSetup?> showPackSetupSheet({
@@ -46,7 +59,13 @@ Future<PackSetup?> showPackSetupSheet({
   int? left,
 }) {
   return Get.bottomSheet<PackSetup>(
-    _SetupSheet(pack: pack, dosesWord: dosesWord, perPack: perPack, left: left ?? perPack, spare: spare),
+    _SetupSheet(
+      pack: pack,
+      dosesWord: dosesWord,
+      perPack: perPack,
+      left: left ?? perPack,
+      spare: spare,
+    ),
     isScrollControlled: true,
   );
 }
@@ -59,7 +78,12 @@ Future<PackSettings?> showPackSettingsSheet({
   required String currency,
 }) {
   return Get.bottomSheet<PackSettings>(
-    _SettingsSheet(pack: pack, dosesWord: dosesWord, perPack: perPack, currency: currency),
+    _SettingsSheet(
+      pack: pack,
+      dosesWord: dosesWord,
+      perPack: perPack,
+      currency: currency,
+    ),
     isScrollControlled: true,
   );
 }
@@ -140,9 +164,9 @@ class _SetupSheetState extends State<_SetupSheet> {
         SizedBox(height: 18.sp),
         PillButton(
           label: 'Save',
-          onPressed: () => Navigator.of(context).pop(
-            PackSetup(perPack: _perPack, left: _left, spare: _spare),
-          ),
+          onPressed: () => Navigator.of(
+            context,
+          ).pop(PackSetup(perPack: _perPack, left: _left, spare: _spare)),
         ),
       ],
     );
@@ -175,7 +199,10 @@ class _SettingsSheetState extends State<_SettingsSheet> {
   @override
   Widget build(BuildContext context) {
     final k = context.k;
-    final options = [..._currencies, if (!_currencies.contains(widget.currency)) widget.currency];
+    final options = [
+      ..._currencies,
+      if (!_currencies.contains(widget.currency)) widget.currency,
+    ];
     return KSheetFrame(
       title: 'Settings',
       children: [
@@ -187,7 +214,10 @@ class _SettingsSheetState extends State<_SettingsSheet> {
           onChanged: (v) => setState(() => _perPack = v),
         ),
         SizedBox(height: 16.sp),
-        Text('Currency', style: AppText.title.copyWith(fontSize: 15.sp, color: k.text)),
+        Text(
+          'Currency',
+          style: AppText.title.copyWith(fontSize: 15.sp, color: k.text),
+        ),
         SizedBox(height: 8.sp),
         Wrap(
           spacing: 8.sp,
@@ -207,9 +237,9 @@ class _SettingsSheetState extends State<_SettingsSheet> {
         SizedBox(height: 18.sp),
         PillButton(
           label: 'Save',
-          onPressed: () => Navigator.of(context).pop(
-            PackSettings(perPack: _perPack, currency: _currency),
-          ),
+          onPressed: () => Navigator.of(
+            context,
+          ).pop(PackSettings(perPack: _perPack, currency: _currency)),
         ),
       ],
     );
@@ -219,7 +249,11 @@ class _SettingsSheetState extends State<_SettingsSheet> {
 // ---------------------------------------------------------------- purchase
 
 class _PurchaseSheet extends StatefulWidget {
-  const _PurchaseSheet({required this.pack, required this.currency, this.strengthMg});
+  const _PurchaseSheet({
+    required this.pack,
+    required this.currency,
+    this.strengthMg,
+  });
 
   final String pack;
   final String currency;
@@ -297,18 +331,36 @@ class _PurchaseSheetState extends State<_PurchaseSheet> {
             semanticLabel: 'Date, ${Dates.shortWithDay(_date)}. Tap to change.',
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 16.sp, vertical: 14.sp),
-              decoration: BoxDecoration(color: k.card, borderRadius: BorderRadius.circular(18.sp)),
+              decoration: BoxDecoration(
+                color: k.card,
+                borderRadius: BorderRadius.circular(18.sp),
+              ),
               child: Row(
                 children: [
                   Expanded(
-                    child: Text('Date', style: AppText.title.copyWith(fontSize: 15.sp, color: k.text)),
+                    child: Text(
+                      'Date',
+                      style: AppText.title.copyWith(
+                        fontSize: 15.sp,
+                        color: k.text,
+                      ),
+                    ),
                   ),
                   Text(
-                    Dates.sameDay(_date, DateTime.now()) ? 'Today' : Dates.shortWithDay(_date),
-                    style: AppText.bodyStrong.copyWith(fontSize: 14.5.sp, color: k.text),
+                    Dates.sameDay(_date, DateTime.now())
+                        ? 'Today'
+                        : Dates.shortWithDay(_date),
+                    style: AppText.bodyStrong.copyWith(
+                      fontSize: 14.5.sp,
+                      color: k.text,
+                    ),
                   ),
                   SizedBox(width: 8.sp),
-                  PhosphorIcon(PhosphorIconsBold.calendarBlank, size: 17.sp, color: k.muted),
+                  PhosphorIcon(
+                    PhosphorIconsBold.calendarBlank,
+                    size: 17.sp,
+                    color: k.muted,
+                  ),
                 ],
               ),
             ),
@@ -322,7 +374,10 @@ class _PurchaseSheetState extends State<_PurchaseSheet> {
             onChanged: (v) => setState(() => _packs = v),
           ),
           SizedBox(height: 14.sp),
-          Text('Total paid', style: AppText.title.copyWith(fontSize: 15.sp, color: k.text)),
+          Text(
+            'Total paid',
+            style: AppText.title.copyWith(fontSize: 15.sp, color: k.text),
+          ),
           SizedBox(height: 8.sp),
           Row(
             children: [
@@ -330,7 +385,10 @@ class _PurchaseSheetState extends State<_PurchaseSheet> {
                 height: 56.sp,
                 padding: EdgeInsets.symmetric(horizontal: 16.sp),
                 alignment: Alignment.center,
-                decoration: BoxDecoration(color: k.card, borderRadius: BorderRadius.circular(16.sp)),
+                decoration: BoxDecoration(
+                  color: k.card,
+                  borderRadius: BorderRadius.circular(16.sp),
+                ),
                 child: Text(
                   widget.currency,
                   style: AppText.h2.copyWith(fontSize: 20.sp, color: k.text),
@@ -343,8 +401,12 @@ class _PurchaseSheetState extends State<_PurchaseSheet> {
                   hint: '0',
                   large: true,
                   autofocus: true,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+                  ],
                   onChanged: (_) => setState(() {}),
                   textInputAction: TextInputAction.next,
                 ),
@@ -408,7 +470,10 @@ class StepperRow extends StatelessWidget {
       onDecrease: value > min ? () => _step(-1) : null,
       child: Container(
         padding: EdgeInsets.fromLTRB(16.sp, 10.sp, 10.sp, 10.sp),
-        decoration: BoxDecoration(color: k.card, borderRadius: BorderRadius.circular(18.sp)),
+        decoration: BoxDecoration(
+          color: k.card,
+          borderRadius: BorderRadius.circular(18.sp),
+        ),
         child: Row(
           children: [
             Expanded(
@@ -416,9 +481,21 @@ class StepperRow extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(label, style: AppText.title.copyWith(fontSize: 15.sp, color: k.text)),
+                    Text(
+                      label,
+                      style: AppText.title.copyWith(
+                        fontSize: 15.sp,
+                        color: k.text,
+                      ),
+                    ),
                     if (sub != null)
-                      Text(sub!, style: AppText.small.copyWith(fontSize: 12.5.sp, color: k.muted)),
+                      Text(
+                        sub!,
+                        style: AppText.small.copyWith(
+                          fontSize: 12.5.sp,
+                          color: k.muted,
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -468,24 +545,24 @@ class StepButtons extends StatelessWidget {
         if (!showValue)
           SizedBox(width: 6.sp)
         else
-        SizedBox(
-          width: 42.sp,
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 220),
-            transitionBuilder: (child, a) => ScaleTransition(
-              scale: Tween<double>(begin: 0.6, end: 1.0).animate(
-                CurvedAnimation(parent: a, curve: Curves.easeOutBack),
+          SizedBox(
+            width: 42.sp,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 220),
+              transitionBuilder: (child, a) => ScaleTransition(
+                scale: Tween<double>(begin: 0.6, end: 1.0).animate(
+                  CurvedAnimation(parent: a, curve: Curves.easeOutBack),
+                ),
+                child: FadeTransition(opacity: a, child: child),
               ),
-              child: FadeTransition(opacity: a, child: child),
-            ),
-            child: Text(
-              '$value',
-              key: ValueKey<int>(value),
-              textAlign: TextAlign.center,
-              style: AppText.h2.copyWith(fontSize: 20.sp, color: k.text),
+              child: Text(
+                '$value',
+                key: ValueKey<int>(value),
+                textAlign: TextAlign.center,
+                style: AppText.h2.copyWith(fontSize: 20.sp, color: k.text),
+              ),
             ),
           ),
-        ),
         CircleIconButton(
           icon: PhosphorIconsBold.plus,
           label: 'More',
@@ -498,4 +575,5 @@ class StepButtons extends StatelessWidget {
   }
 }
 
-String _cap(String s) => s.isEmpty ? s : '${s[0].toUpperCase()}${s.substring(1)}';
+String _cap(String s) =>
+    s.isEmpty ? s : '${s[0].toUpperCase()}${s.substring(1)}';

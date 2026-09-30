@@ -8,7 +8,7 @@
 PRODUCT_NAME = kindose
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.kindose
+PRODUCT_BUNDLE_IDENTIFIER = com.kindose.app
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 com.example. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 Kindose. All rights reserved.

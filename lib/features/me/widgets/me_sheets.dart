@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import '../../../resources/colors.dart';
 import '../../../resources/images.dart';
 import '../../../services/haptics/haptics.dart';
-import '../../../services/region/region.dart';
 import '../../../services/responsiveness/device_manager.dart';
 import '../../../services/theme/theme.dart';
 import '../../../widgets/buttons.dart';
@@ -14,7 +13,6 @@ import '../../../widgets/k_widgets.dart';
 enum ExportChoice { csv, json }
 
 /// "How I eat" picker. Returns the diet id, or null when dismissed.
-/// Jain is offered in India, or when it is already the saved choice.
 Future<String?> showDietSheet(String? current) {
   return Get.bottomSheet<String>(
     _DietSheet(current: current),
@@ -36,6 +34,26 @@ Future<bool?> showBackupSoonSheet() {
   return Get.bottomSheet<bool>(const _BackupSheet(), isScrollControlled: true);
 }
 
+/// A cloud backup was found. Returns true to replace this phone's data with
+/// it, false to keep this phone's data (it then becomes the cloud copy).
+Future<bool?> showRestoreSheet({
+  required String when,
+  required bool phoneHasData,
+}) {
+  return Get.bottomSheet<bool>(
+    _RestoreSheet(when: when, phoneHasData: phoneHasData),
+    isScrollControlled: true,
+  );
+}
+
+/// Last check before deleting the account. Returns true to delete.
+Future<bool?> showDeleteAccountSheet() {
+  return Get.bottomSheet<bool>(
+    const _DeleteAccountSheet(),
+    isScrollControlled: true,
+  );
+}
+
 /// Last check before wiping the phone. Returns true to delete.
 Future<bool?> showDeleteAllSheet() {
   return Get.bottomSheet<bool>(const _DeleteSheet(), isScrollControlled: true);
@@ -50,17 +68,15 @@ class _DietSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final k = context.k;
     final options = [
-      ('veg', 'Vegetarian', 'Dairy, no meat, fish or eggs', Img3d.paneer),
-      ('egg', 'Eggetarian', 'Vegetarian plus eggs', Img3d.egg),
       (
         'nonveg',
-        'Non-vegetarian',
-        'Eggs, chicken, fish and meat',
+        'I eat everything',
+        'Meat, fish, eggs and dairy',
         Img3d.chicken,
       ),
-      ('vegan', 'Vegan', 'No animal foods, including dairy', Img3d.seedling),
-      if (Region.isIndia || current == 'jain')
-        ('jain', 'Jain', 'No root vegetables, onion or garlic', Img3d.dal),
+      ('pesc', 'Pescatarian', 'Fish and seafood, no meat', Img3d.fish),
+      ('veg', 'Vegetarian', 'Eggs and dairy, no meat or fish', Img3d.egg),
+      ('vegan', 'Vegan', 'No animal foods at all', Img3d.seedling),
     ];
     return KSheetFrame(
       title: 'How do you eat?',
@@ -233,6 +249,76 @@ class _DeleteSheet extends StatelessWidget {
         SizedBox(height: 8.sp),
         SoftButton(
           label: 'Keep my data',
+          height: 50,
+          onPressed: () => Navigator.of(context).pop(false),
+        ),
+      ],
+    );
+  }
+}
+
+class _RestoreSheet extends StatelessWidget {
+  const _RestoreSheet({required this.when, required this.phoneHasData});
+
+  final String when;
+  final bool phoneHasData;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = context.k.selectedBorder == AppColors.lime;
+    return KSheetFrame(
+      icon: ThreeD(Img3d.clipboard, size: 48.sp),
+      title: 'Backup found',
+      sub: phoneHasData
+          ? 'Saved $when. Restoring replaces what is on this phone now. '
+                'Keep this phone instead, and it becomes your backup.'
+          : 'Saved $when. Bring your doses, weigh-ins and settings back to this phone.',
+      children: [
+        PillButton(
+          label: 'Restore my backup',
+          ink: !dark,
+          onPressed: () {
+            Haptics.instance.mediumImpact();
+            Navigator.of(context).pop(true);
+          },
+        ),
+        SizedBox(height: 8.sp),
+        SoftButton(
+          label: phoneHasData ? 'Keep this phone' : 'Start fresh',
+          height: 48,
+          onPressed: () => Navigator.of(context).pop(false),
+        ),
+      ],
+    );
+  }
+}
+
+class _DeleteAccountSheet extends StatelessWidget {
+  const _DeleteAccountSheet();
+
+  @override
+  Widget build(BuildContext context) {
+    return KSheetFrame(
+      icon: const KIconTile(
+        icon: Icons.person_remove_outlined,
+        bg: AppColors.dangerSoft,
+        fg: AppColors.danger,
+      ),
+      title: 'Delete your account?',
+      sub:
+          'Your account and its cloud backup are deleted for good. '
+          'What is on this phone stays until you delete it too.',
+      children: [
+        SoftButton(
+          label: 'Delete my account',
+          background: AppColors.danger,
+          foreground: AppColors.white,
+          height: 50,
+          onPressed: () => Navigator.of(context).pop(true),
+        ),
+        SizedBox(height: 8.sp),
+        SoftButton(
+          label: 'Keep my account',
           height: 50,
           onPressed: () => Navigator.of(context).pop(false),
         ),

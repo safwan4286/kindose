@@ -12,6 +12,7 @@ import '../../resources/app_links.dart';
 import '../../resources/catalog.dart';
 import '../../resources/date_utils.dart';
 import '../../resources/routes.dart';
+import '../../services/backend/backend_service.dart';
 import '../../services/haptics/haptics.dart';
 import '../../services/notifications/notification_service.dart';
 import '../../services/plus/plus_access.dart';
@@ -61,6 +62,9 @@ class MeController extends GetxController {
     supply.dosesPerPack.value;
     exporting.value;
     version.value;
+    backend.user.value;
+    backend.lastBackupAt.value;
+    backend.busy.value;
   }
 
   bool get isPlus => PlusAccess.active.value;
@@ -127,9 +131,11 @@ class MeController extends GetxController {
     };
   }
 
-  String get scheduleTime => Dates.timeOfDay(tracker.profile.value?.shotMinutes ?? 480);
+  String get scheduleTime =>
+      Dates.timeOfDay(tracker.profile.value?.shotMinutes ?? 480);
 
-  DateTime? get _next => hasMedicine ? tracker.nextDoseAt(DateTime.now()) : null;
+  DateTime? get _next =>
+      hasMedicine ? tracker.nextDoseAt(DateTime.now()) : null;
 
   /// "Tue, 6 Oct", or "Overdue".
   String get nextShort {
@@ -144,7 +150,10 @@ class MeController extends GetxController {
   String get nextSub {
     final next = _next;
     if (next == null) return '';
-    final days = Dates.daysBetween(Dates.dateOnly(DateTime.now()), Dates.dateOnly(next));
+    final days = Dates.daysBetween(
+      Dates.dateOnly(DateTime.now()),
+      Dates.dateOnly(next),
+    );
     if (days < 0) return 'Log it when taken';
     return switch (days) {
       0 => 'Today',
@@ -224,11 +233,13 @@ class MeController extends GetxController {
   }
 
   static const Map<String, String> dietNames = {
+    'nonveg': 'Everything',
+    'pesc': 'Pescatarian',
     'veg': 'Vegetarian',
-    'egg': 'Eggetarian',
-    'nonveg': 'Non-vegetarian',
     'vegan': 'Vegan',
-    'jain': 'Jain',
+    // Older saved values.
+    'egg': 'Vegetarian',
+    'jain': 'Vegetarian',
   };
 
   String get dietLabel => dietNames[tracker.profile.value?.diet] ?? 'Not set';
@@ -295,7 +306,7 @@ class MeController extends GetxController {
     final picked = await showDietSheet(p.diet);
     if (picked == null || picked == p.diet) return;
     await tracker.saveProfile(
-      p.copyWith(diet: picked, vegDiet: picked != 'egg' && picked != 'nonveg'),
+      p.copyWith(diet: picked, vegDiet: Catalog.isMeatFree(picked)),
     );
   }
 
@@ -349,10 +360,137 @@ class MeController extends GetxController {
 
   /// Cloud backup needs sign-in (Firebase), which is not built yet. Until
   /// then this offers a backup file the user can keep.
+  // ---------------------------------------------------------------- backup
+
+  BackendService get backend => Get.find<BackendService>();
+
+  bool get signedIn => backend.signedIn;
+  String get accountEmail => backend.email ?? 'your account';
+
+  /// "Backed up today, 9:41 PM" / "Not backed up yet".
+  String get backupLine {
+    final at = backend.lastBackupAt.value;
+    if (at == null) return 'Not backed up yet';
+    final day = Dates.relativeDay(at, DateTime.now());
+    return 'Backed up ${day == 'Today' || day == 'Tomorrow' ? day.toLowerCase() : day}, ${Dates.time(at)}';
+  }
+
+  /// Signed out: sign in with Google, then back up (or restore a backup
+  /// found in the cloud). Before the backend is ready: backup file.
   Future<void> backup() async {
     Haptics.instance.selectionClick();
-    final save = await showBackupSoonSheet();
-    if (save == true) await exportJson();
+    if (!backend.ready) {
+      final save = await showBackupSoonSheet();
+      if (save == true) await exportJson();
+      return;
+    }
+    if (signedIn) {
+      await backupNow();
+      return;
+    }
+    backend.autoPaused = true;
+    try {
+      final r = await backend.signInWithGoogle();
+      if (r != BackendResult.ok) {
+        _explain(r);
+        return;
+      }
+      final cloud = await _tryFetch();
+      if (cloud != null) {
+        final restore = await showRestoreSheet(
+          when: _when(cloud.updatedAt),
+          phoneHasData: true,
+        );
+        if (restore == true) {
+          final rr = await backend.restore(cloud);
+          if (rr == BackendResult.ok) {
+            showToast('Backup restored');
+          } else {
+            _explain(rr);
+          }
+          return;
+        }
+      }
+    } finally {
+      backend.autoPaused = false;
+    }
+    await backupNow();
+  }
+
+  Future<void> backupNow() async {
+    final r = await backend.backupNow();
+    if (r == BackendResult.ok) {
+      Haptics.instance.mediumImpact();
+      showToast('Backed up');
+    } else {
+      _explain(r);
+    }
+  }
+
+  Future<void> restoreBackup() async {
+    Haptics.instance.selectionClick();
+    final cloud = await _tryFetch();
+    if (cloud == null) {
+      showToast('No backup found for this account yet.');
+      return;
+    }
+    final ok = await showRestoreSheet(
+      when: _when(cloud.updatedAt),
+      phoneHasData: true,
+    );
+    if (ok != true) return;
+    final r = await backend.restore(cloud);
+    if (r == BackendResult.ok) {
+      showToast('Backup restored');
+    } else {
+      _explain(r);
+    }
+  }
+
+  Future<void> signOut() async {
+    Haptics.instance.selectionClick();
+    await backend.signOut();
+    showToast('Signed out. Your data stays on this phone.');
+  }
+
+  Future<void> deleteAccount() async {
+    Haptics.instance.mediumImpact();
+    final ok = await showDeleteAccountSheet();
+    if (ok != true) return;
+    final r = await backend.deleteAccount();
+    if (r == BackendResult.ok) {
+      Haptics.instance.heavyImpact();
+      showToast('Account deleted. Your data on this phone is still here.');
+    } else {
+      _explain(r);
+    }
+  }
+
+  Future<CloudBackup?> _tryFetch() async {
+    try {
+      return await backend.fetchBackup();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  String _when(DateTime at) {
+    final day = Dates.relativeDay(at, DateTime.now());
+    return '${day == 'Today' || day == 'Tomorrow' ? day.toLowerCase() : day} at ${Dates.time(at)}';
+  }
+
+  void _explain(BackendResult r) {
+    switch (r) {
+      case BackendResult.ok:
+      case BackendResult.cancelled:
+        return;
+      case BackendResult.offline:
+        showToast('You seem to be offline. Try again when connected.');
+      case BackendResult.notReady:
+        showToast('Sign-in is being set up. Your data is safe on this phone.');
+      case BackendResult.failed:
+        showToast('Something went wrong. Please try again.');
+    }
   }
 
   // ---------------------------------------------------------------- export
@@ -374,9 +512,10 @@ class MeController extends GetxController {
   Future<void> exportJson() async {
     const encoder = JsonEncoder.withIndent('  ');
     await _share({
-      'kindose-backup-${Dates.key(DateTime.now())}.json': encoder.convert(
-        tracker.exportAll(),
-      ),
+      'kindose-backup-${Dates.key(DateTime.now())}.json': encoder.convert({
+        ...tracker.exportAll(),
+        'supply': supply.exportMap(),
+      }),
     });
   }
 
@@ -438,10 +577,28 @@ class MeController extends GetxController {
       weights.writeln('${w.key},${w.kg.toStringAsFixed(2)}');
     }
 
+    final purchases = StringBuffer(
+      'date,count,strength_mg,price,currency,note\n',
+    );
+    for (final p in supply.purchases.reversed) {
+      purchases.writeln(
+        [
+          Dates.key(p.date),
+          p.packs,
+          p.strengthMg ?? '',
+          p.price.toStringAsFixed(2),
+          supply.currency.value,
+          p.note,
+        ].map(esc).join(','),
+      );
+    }
+
     await _share({
       'kindose-doses.csv': doses.toString(),
       'kindose-days.csv': days.toString(),
       'kindose-weights.csv': weights.toString(),
+      if (supply.purchases.isNotEmpty)
+        'kindose-purchases.csv': purchases.toString(),
     });
   }
 

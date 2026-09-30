@@ -1,0 +1,531 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+
+import '../../../resources/colors.dart';
+import '../../../resources/images.dart';
+import '../../../services/responsiveness/device_manager.dart';
+import '../../../services/theme/theme.dart';
+import '../../../widgets/k_sheet.dart';
+import '../../../widgets/k_widgets.dart';
+import '../../../widgets/press_scale.dart';
+import '../next_bite.dart';
+import '../today_controller.dart';
+
+/// "Next bite": what to eat now to close today's protein gap, sized to how
+/// much the user can eat today (dose cycle, appetite, nausea).
+class NextBiteCard extends GetView<TodayController> {
+  const NextBiteCard({super.key, this.compact = false});
+
+  /// On the Protein screen: no progress block or "Other ideas" (the screen
+  /// already shows both).
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) => Obx(() {
+    controller.watch();
+    return _build(context, controller.nextBite);
+  });
+
+  Widget _build(BuildContext context, NextBite b) {
+    final k = context.k;
+    final dark = k.selectedBorder == AppColors.lime;
+    final ink = dark ? AppColors.lime : AppColors.ink;
+    final unlocked = controller.biteUnlocked;
+    final shown = b.ideas.take(unlocked ? 3 : 1).toList();
+
+    return Container(
+      padding: EdgeInsets.all(18.sp),
+      decoration: BoxDecoration(
+        color: k.card,
+        borderRadius: BorderRadius.circular(24.sp),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 9.sp, vertical: 4.sp),
+                decoration: BoxDecoration(
+                  color: AppColors.lime,
+                  borderRadius: BorderRadius.circular(9.sp),
+                ),
+                child: Text(
+                  'NEXT BITE',
+                  style: AppText.caps.copyWith(
+                    fontSize: 11.sp,
+                    letterSpacing: 1,
+                    color: AppColors.ink,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              Semantics(
+                button: true,
+                label: 'Why these ideas?',
+                excludeSemantics: true,
+                child: PressScale(
+                  onTap: () => controller.showBiteWhy(b),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      vertical: 6.sp,
+                      horizontal: 2.sp,
+                    ),
+                    child: Text(
+                      'Why these?',
+                      style: AppText.small.copyWith(
+                        fontSize: 12.5.sp,
+                        fontWeight: FontWeight.w800,
+                        color: k.text,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 6.sp),
+          Text(
+            b.context,
+            style: AppText.small.copyWith(
+              fontSize: 13.sp,
+              fontWeight: FontWeight.w700,
+              color: k.muted,
+            ),
+          ),
+          if (!compact) ...[
+            SizedBox(height: 10.sp),
+            Semantics(
+              label: '${b.have} of ${b.goal} grams protein today',
+              excludeSemantics: true,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text(
+                    '${b.have} g',
+                    style: AppText.number(30.sp).copyWith(color: k.text),
+                  ),
+                  SizedBox(width: 6.sp),
+                  Text(
+                    'of ${b.goal} g protein',
+                    style: AppText.bodyStrong.copyWith(
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w800,
+                      color: k.muted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 8.sp),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4.sp),
+              child: SizedBox(
+                height: 8.sp,
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween<double>(
+                    end: b.goal == 0 ? 0 : (b.have / b.goal).clamp(0.0, 1.0),
+                  ),
+                  duration: const Duration(milliseconds: 450),
+                  curve: Curves.easeOutCubic,
+                  builder: (_, v, _) => LinearProgressIndicator(
+                    value: v,
+                    minHeight: 8.sp,
+                    backgroundColor: k.cardAlt,
+                    valueColor: AlwaysStoppedAnimation<Color>(ink),
+                  ),
+                ),
+              ),
+            ),
+          ],
+          SizedBox(height: compact ? 10.sp : 14.sp),
+          if (b.goalHit)
+            _GoalHit(goal: b.goal)
+          else ...[
+            Text(
+              b.lead,
+              style: AppText.title.copyWith(fontSize: 14.5.sp, color: k.text),
+            ),
+            SizedBox(height: 10.sp),
+            AnimatedSize(
+              duration: const Duration(milliseconds: 280),
+              curve: Curves.easeOutCubic,
+              alignment: Alignment.topCenter,
+              child: Column(
+                children: [
+                  for (final (n, i) in shown.indexed) ...[
+                    if (n > 0) SizedBox(height: 8.sp),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 280),
+                      transitionBuilder: (child, a) => FadeTransition(
+                        opacity: a,
+                        child: SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(0.08, 0),
+                            end: Offset.zero,
+                          ).animate(a),
+                          child: child,
+                        ),
+                      ),
+                      child: _IdeaRow(
+                        key: ValueKey<String>(i.id),
+                        idea: i,
+                        onAdd: () => controller.addBite(i),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            if (!unlocked) ...[
+              SizedBox(height: 8.sp),
+              _PlusRow(onTap: controller.openPlusFromBite),
+            ],
+            if (b.tip != null) ...[
+              SizedBox(height: 10.sp),
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(
+                  horizontal: 12.sp,
+                  vertical: 10.sp,
+                ),
+                decoration: BoxDecoration(
+                  color: dark
+                      ? AppColors.lime.withValues(alpha: 0.14)
+                      : AppColors.limeSoft,
+                  borderRadius: BorderRadius.circular(14.sp),
+                ),
+                child: Text(
+                  b.tip!,
+                  style: AppText.small.copyWith(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w700,
+                    color: dark ? AppColors.lime : AppColors.limeText,
+                  ),
+                ),
+              ),
+            ],
+          ],
+          SizedBox(height: 10.sp),
+          if (!compact)
+            Row(
+              children: [
+                _QuickChip(
+                  label: '+10 g',
+                  onTap: () => controller.addProtein(10),
+                ),
+                SizedBox(width: 8.sp),
+                _QuickChip(
+                  label: '+20 g',
+                  onTap: () => controller.addProtein(20),
+                ),
+                const Spacer(),
+                Semantics(
+                  button: true,
+                  label: 'Other protein ideas',
+                  excludeSemantics: true,
+                  child: PressScale(
+                    onTap: controller.openProtein,
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 10.sp),
+                      child: Row(
+                        children: [
+                          Text(
+                            'Other ideas',
+                            style: AppText.small.copyWith(
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.w800,
+                              color: k.text,
+                            ),
+                          ),
+                          SizedBox(width: 2.sp),
+                          PhosphorIcon(
+                            PhosphorIconsBold.caretRight,
+                            size: 13.sp,
+                            color: k.text,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          SizedBox(height: 6.sp),
+          Text(
+            'Ideas only, not medical advice',
+            style: AppText.small.copyWith(
+              fontSize: 11.5.sp,
+              fontWeight: FontWeight.w600,
+              color: k.faint,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// "+10 g" style quick add, same look as the old Protein card chips.
+class _QuickChip extends StatelessWidget {
+  const _QuickChip({required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    return Semantics(
+      button: true,
+      label: 'Add ${label.replaceAll('+', '')} protein',
+      excludeSemantics: true,
+      child: PressScale(
+        onTap: onTap,
+        child: Container(
+          height: 36.sp,
+          padding: EdgeInsets.symmetric(horizontal: 12.sp),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18.sp),
+            border: Border.all(color: k.border, width: 1.5),
+          ),
+          child: Text(
+            label,
+            style: AppText.bodyStrong.copyWith(
+              fontSize: 13.sp,
+              fontWeight: FontWeight.w800,
+              color: k.text,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _IdeaRow extends StatelessWidget {
+  const _IdeaRow({super.key, required this.idea, required this.onAdd});
+
+  final BiteIdea idea;
+  final VoidCallback onAdd;
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    final dark = k.selectedBorder == AppColors.lime;
+    return Semantics(
+      button: true,
+      label: 'Add ${idea.name}, ${idea.portion}, ${idea.grams} grams protein',
+      excludeSemantics: true,
+      child: PressScale(
+        onTap: onAdd,
+        child: Container(
+          padding: EdgeInsets.fromLTRB(10.sp, 10.sp, 10.sp, 10.sp),
+          decoration: BoxDecoration(
+            color: k.bg,
+            borderRadius: BorderRadius.circular(18.sp),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 40.sp,
+                height: 40.sp,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: k.card,
+                  borderRadius: BorderRadius.circular(13.sp),
+                ),
+                child: ThreeD(idea.icon, size: 26.sp),
+              ),
+              SizedBox(width: 12.sp),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      idea.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.title.copyWith(
+                        fontSize: 14.5.sp,
+                        color: k.text,
+                      ),
+                    ),
+                    Text(
+                      idea.portion,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.small.copyWith(
+                        fontSize: 12.5.sp,
+                        fontWeight: FontWeight.w600,
+                        color: k.muted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(width: 8.sp),
+              Text(
+                '${idea.grams} g',
+                style: AppText.number(17.sp).copyWith(color: k.text),
+              ),
+              SizedBox(width: 10.sp),
+              Container(
+                width: 36.sp,
+                height: 36.sp,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: dark ? AppColors.lime : AppColors.ink,
+                  shape: BoxShape.circle,
+                ),
+                child: PhosphorIcon(
+                  PhosphorIconsBold.plus,
+                  size: 16.sp,
+                  color: dark ? AppColors.ink : AppColors.lime,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PlusRow extends StatelessWidget {
+  const _PlusRow({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: 'More ideas and a low-appetite plan with Plus',
+      excludeSemantics: true,
+      child: PressScale(
+        onTap: onTap,
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 14.sp, vertical: 12.sp),
+          decoration: BoxDecoration(
+            color: AppColors.hero,
+            borderRadius: BorderRadius.circular(16.sp),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '2 more ideas + a plan for low-appetite days',
+                  style: AppText.small.copyWith(
+                    fontSize: 13.5.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.white,
+                  ),
+                ),
+              ),
+              SizedBox(width: 8.sp),
+              const PlusTag(onDark: true),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GoalHit extends StatelessWidget {
+  const _GoalHit({required this.goal});
+
+  final int goal;
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(14.sp),
+      decoration: BoxDecoration(
+        color: k.bg,
+        borderRadius: BorderRadius.circular(18.sp),
+      ),
+      child: Row(
+        children: [
+          ThreeD(Img3d.biceps, size: 32.sp),
+          SizedBox(width: 12.sp),
+          Expanded(
+            child: Text(
+              'Protein goal reached today. Nicely done.',
+              style: AppText.title.copyWith(fontSize: 14.5.sp, color: k.text),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// "Why these?" sheet.
+Future<void> showBiteWhySheet(NextBite b) {
+  return Get.bottomSheet<void>(_WhySheet(bite: b), isScrollControlled: true);
+}
+
+class _WhySheet extends StatelessWidget {
+  const _WhySheet({required this.bite});
+
+  final NextBite bite;
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    return KSheetFrame(
+      title: 'Why these ideas',
+      sub: 'Next bite picks small, protein-first foods that fit today.',
+      children: [
+        for (final r in bite.reasons)
+          Padding(
+            padding: EdgeInsets.only(bottom: 10.sp),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: EdgeInsets.only(top: 6.sp),
+                  child: Container(
+                    width: 7.sp,
+                    height: 7.sp,
+                    decoration: const BoxDecoration(
+                      color: AppColors.lime,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+                SizedBox(width: 10.sp),
+                Expanded(
+                  child: Text(
+                    r,
+                    style: AppText.bodyText.copyWith(
+                      fontSize: 14.5.sp,
+                      color: k.text,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        SizedBox(height: 6.sp),
+        Text(
+          'These are general food ideas with typical protein amounts, not medical or nutrition advice. '
+          'Your doctor or dietitian can adjust your goal. You can change it anytime in Me.',
+          style: AppText.small.copyWith(
+            fontSize: 12.5.sp,
+            height: 1.45,
+            color: k.muted,
+          ),
+        ),
+        SizedBox(height: 8.sp),
+      ],
+    );
+  }
+}

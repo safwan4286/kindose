@@ -8,6 +8,10 @@ import '../../resources/date_utils.dart';
 import '../../services/haptics/haptics.dart';
 import '../../services/plus/plus_access.dart';
 import '../common/day_nav.dart';
+import '../today/next_bite.dart';
+import '../today/today_controller.dart';
+import '../../resources/images.dart';
+import 'widgets/protein_sheets.dart';
 import '../../services/tracker_service.dart';
 import '../../widgets/ask_number.dart';
 import '../../widgets/toast.dart';
@@ -32,41 +36,55 @@ class IntakeController extends GetxController with DayNav {
     Portion('1', 1),
     Portion('1½', 1.5),
     Portion('2', 2),
+    Portion('3', 3),
   ];
 
   /// Route argument: 'protein' / 'water', or {'kind': ..., 'day': DateTime}.
-  static String _kindOf(Object? a) => (a is Map ? a['kind'] : a) == 'water' ? 'water' : 'protein';
+  static String _kindOf(Object? a) =>
+      (a is Map ? a['kind'] : a) == 'water' ? 'water' : 'protein';
 
   late final RxString tab = _kindOf(Get.arguments).obs;
   final RxString query = ''.obs;
   final RxString category = 'all'.obs;
 
-  /// Food row showing its portion chips, or '' when none is open.
-  final RxString openFood = ''.obs;
+  /// Servings chosen in the portion sheet.
   final RxDouble portion = 1.0.obs;
   final RxInt customGrams = 20.obs;
 
+  /// Protein screen section: 'sug' (Next bite + usual), 'mine', 'all'.
+  final RxString section = 'sug'.obs;
+
+  /// Today's protein list open inside the top card.
+  final RxBool logOpen = false.obs;
+
+  // Custom sheet: optional name and portion, save to My foods.
+  final TextEditingController nameCtrl = TextEditingController();
+  final TextEditingController portionCtrl = TextEditingController();
+  final RxBool saveCustom = true.obs;
+
+  /// Id of the saved food open in the custom sheet, '' when adding new.
+  final RxString editingId = ''.obs;
 
   @override
   void onInit() {
     super.onInit();
     final a = Get.arguments;
     if (a is Map) initDay(a['day']);
+    if (!isToday) section.value = 'all';
   }
 
   @override
   void onClose() {
     searchCtrl.dispose();
+    nameCtrl.dispose();
+    portionCtrl.dispose();
     super.onClose();
   }
 
   UserProfile? get profile => tracker.profile.value;
   bool get isProtein => tab.value == 'protein';
 
-  void setTab(String t) {
-    tab.value = t;
-    openFood.value = '';
-  }
+  void setTab(String t) => tab.value = t;
 
   /// Reads every Rx the screen depends on (call at the top of an Obx).
   void watch() {
@@ -77,9 +95,14 @@ class IntakeController extends GetxController with DayNav {
     tab.value;
     query.value;
     category.value;
-    openFood.value;
     portion.value;
     customGrams.value;
+    section.value;
+    logOpen.value;
+    saveCustom.value;
+    editingId.value;
+    tracker.myFoods.length;
+    _today?.biteAdded.length;
   }
 
   // -------------------------------------------------------------------- day
@@ -87,7 +110,10 @@ class IntakeController extends GetxController with DayNav {
   DayLog get dayLog => tracker.dayLog(day.value);
 
   @override
-  void onDayChanged() => openFood.value = '';
+  void onDayChanged() {
+    logOpen.value = false;
+    if (!isToday && section.value == 'sug') section.value = 'all';
+  }
 
   // ---------------------------------------------------------------- protein
 
@@ -99,7 +125,10 @@ class IntakeController extends GetxController with DayNav {
 
   String get proteinLine {
     final left = proteinLeft;
-    if (left == 0) return isToday ? 'Goal reached today. Nice work.' : 'Goal reached that day.';
+    if (left == 0)
+      return isToday
+          ? 'Goal reached today. Nice work.'
+          : 'Goal reached that day.';
     if (!isToday) return '$left g short of the goal that day';
     final meals = (left / 25).ceil();
     return '$left g to go · about $meals protein-first ${meals == 1 ? 'meal' : 'meals'}';
@@ -109,9 +138,8 @@ class IntakeController extends GetxController with DayNav {
 
   /// "VEGETARIAN" etc. for the browse title, or null for everyone.
   String? get dietName => switch (_diet) {
-    'veg' => 'Vegetarian',
-    'jain' => 'Jain',
-    'egg' => 'Eggetarian',
+    'veg' || 'egg' || 'jain' => 'Vegetarian',
+    'pesc' => 'Pescatarian',
     'vegan' => 'Vegan',
     _ => null,
   };
@@ -135,26 +163,70 @@ class IntakeController extends GetxController with DayNav {
     return out.take(3).toList();
   }
 
+  // ------------------------------------------------------------- sections
+
+  TodayController? get _today =>
+      Get.isRegistered<TodayController>() ? Get.find<TodayController>() : null;
+
+  /// Suggestions only make sense for today.
+  bool get hasSuggested => isToday && _today != null;
+
+  List<String> get sections => [if (hasSuggested) 'sug', 'mine', 'all'];
+
+  /// The section on screen (falls back when Suggested is not offered).
+  String get currentSection =>
+      sections.contains(section.value) ? section.value : 'all';
+
+  static String sectionName(String id) => switch (id) {
+    'sug' => 'Suggested',
+    'mine' => 'My foods',
+    _ => 'All foods',
+  };
+
+  void pickSection(String id) => section.value = id;
+
+  // ------------------------------------------------------------ next bite
+
+  NextBite? get bite => hasSuggested ? _today?.nextBite : null;
+  bool get biteUnlocked => _today?.biteUnlocked ?? false;
+
+  /// 3 ideas with Plus, 1 without.
+  List<BiteIdea> get biteIdeas =>
+      (bite?.ideas ?? const <BiteIdea>[]).take(biteUnlocked ? 3 : 1).toList();
+
+  Future<void> addIdea(BiteIdea idea) async => _today?.addBite(idea);
+
+  void showBiteWhy() {
+    final b = bite;
+    if (b != null) _today?.showBiteWhy(b);
+  }
+
+  void openPlus() => _today?.openPlusFromBite();
+
+  // ------------------------------------------------------------- browsing
+
   List<(String, String)> get categories => Catalog.foodCatsFor(_diet);
 
-  /// Search results, or the chosen category (without the usual foods).
-  List<Food> get browseFoods {
-    final list = Catalog.foodsFor(_diet);
+  /// Your saved foods first, then the library.
+  List<Food> get searchResults {
     final q = query.value.trim().toLowerCase();
-    if (q.isNotEmpty) {
-      return list
-          .where(
-            (f) =>
-                f.name.toLowerCase().contains(q) ||
-                f.portion.toLowerCase().contains(q),
-          )
-          .toList();
-    }
-    final usual = usualFoods.map((f) => f.id).toSet();
+    bool hit(Food f) =>
+        f.name.toLowerCase().contains(q) || f.portion.toLowerCase().contains(q);
+    return [
+      ...tracker.myFoods.where(hit),
+      ...Catalog.foodsFor(_diet).where(hit),
+    ];
+  }
+
+  /// All foods: one group per category, or just the chosen one.
+  List<(String, List<Food>)> get foodGroups {
+    final list = Catalog.foodsFor(_diet);
     final c = category.value;
-    return list
-        .where((f) => !usual.contains(f.id) && (c == 'all' || f.cat == c))
-        .toList();
+    return [
+      for (final (id, label) in categories)
+        if (id != 'all' && (c == 'all' || c == id))
+          (label, list.where((f) => f.cat == id).toList()),
+    ].where((g) => g.$2.isNotEmpty).toList();
   }
 
   void pickCategory(String id) {
@@ -163,27 +235,9 @@ class IntakeController extends GetxController with DayNav {
     category.value = id;
   }
 
-  void toggleFood(Food f) {
-    Haptics.instance.selectionClick();
-    portion.value = 1;
-    openFood.value = openFood.value == f.id ? '' : f.id;
-  }
-
-  void pickPortion(double times) {
-    Haptics.instance.selectionClick();
-    portion.value = times;
-  }
+  // -------------------------------------------------------- adding foods
 
   int gramsFor(Food f, double times) => (f.grams * times).round();
-
-  Future<void> addFood(Food f, [double times = 1]) async {
-    final grams = gramsFor(f, times);
-    final label = times == 1
-        ? f.label
-        : '${f.name}, ${_portionLabel(times)} × ${f.portion}';
-    openFood.value = '';
-    await _add('protein', grams, label, 'Added ${f.name} · $grams g');
-  }
 
   String _portionLabel(double times) => portions
       .firstWhere(
@@ -192,10 +246,116 @@ class IntakeController extends GetxController with DayNav {
       )
       .label;
 
-  void stepCustom(int by) {
-    Haptics.instance.selectionClick();
-    customGrams.value = (customGrams.value + by).clamp(1, 200);
+  /// Log label for [times] servings of [f].
+  String labelFor(Food f, double times) {
+    if (times == 1) return f.label;
+    final p = _portionLabel(times);
+    return f.portion.isEmpty
+        ? '${f.name} × $p'
+        : '${f.name}, $p × ${f.portion}';
   }
+
+  Future<void> addFood(Food f, [double times = 1]) async {
+    final grams = gramsFor(f, times);
+    await _add(
+      'protein',
+      grams,
+      labelFor(f, times),
+      'Added ${f.name} · $grams g',
+    );
+  }
+
+  /// Tap on a food row: choose ½ to 3 servings.
+  void openPortion(Food f) {
+    Haptics.instance.selectionClick();
+    portion.value = 1;
+    showPortionSheet(f);
+  }
+
+  void pickPortion(double times) {
+    Haptics.instance.selectionClick();
+    portion.value = times;
+  }
+
+  // ---------------------------------------------------- removing entries
+
+  List<LogEntry> get proteinEntries => entriesFor('protein');
+
+  /// Newest protein entry of the day, shown with Undo in the top card.
+  LogEntry? get lastProtein {
+    final list = proteinEntries;
+    return list.isEmpty ? null : list.first;
+  }
+
+  void toggleLog() {
+    Haptics.instance.selectionClick();
+    logOpen.toggle();
+  }
+
+  bool _isOf(LogEntry e, Food f) {
+    final l = e.label;
+    if (!e.isProtein || l == null) return false;
+    if (l == f.label) return true;
+    return f.portion.isEmpty
+        ? l.startsWith('${f.name} × ')
+        : l.startsWith('${f.name}, ') && l.endsWith('× ${f.portion}');
+  }
+
+  /// How many times [f] was logged on this day (any serving size).
+  int countOf(Food f) => proteinEntries.where((e) => _isOf(e, f)).length;
+
+  /// The "−" on a food row: removes its newest entry.
+  Future<void> removeOneOf(Food f) async {
+    final e = proteinEntries.firstWhereOrNull((e) => _isOf(e, f));
+    if (e != null) await removeWithUndo(e);
+  }
+
+  /// Removes [e] and offers Undo, which puts it back at the same time.
+  Future<void> removeWithUndo(LogEntry e) async {
+    await removeEntry(e);
+    if (isToday) _today?.forgetBite(e.label);
+    final title = entryTitle(e);
+    showUndoToast('Removed $title', () async {
+      Haptics.instance.selectionClick();
+      if (e.isProtein) {
+        await tracker.addProtein(e.amount, e.at, e.label);
+      } else {
+        await tracker.addWater(e.amount, e.at, e.label);
+      }
+    });
+  }
+
+  // --------------------------------------------------------- custom food
+
+  bool get editing => editingId.value.isNotEmpty;
+
+  /// "+ Custom", or "Add it as your own" with the search text as the name.
+  void openCustom({String name = ''}) {
+    Haptics.instance.selectionClick();
+    editingId.value = '';
+    nameCtrl.text = name;
+    portionCtrl.clear();
+    customGrams.value = 20;
+    saveCustom.value = true;
+    showCustomFoodSheet();
+  }
+
+  /// Long-press on a saved food.
+  void editMyFood(Food f) {
+    Haptics.instance.mediumImpact();
+    editingId.value = f.id;
+    nameCtrl.text = f.name;
+    portionCtrl.text = f.portion;
+    customGrams.value = f.grams;
+    showCustomFoodSheet();
+  }
+
+  void setCustom(int grams) {
+    Haptics.instance.selectionClick();
+    customGrams.value = grams.clamp(1, 200);
+  }
+
+  void stepCustom(int by) => setCustom(customGrams.value + by);
 
   Future<void> typeCustom(BuildContext context) async {
     final v = await askNumber(
@@ -210,12 +370,65 @@ class IntakeController extends GetxController with DayNav {
     if (v != null && !v.isNaN) customGrams.value = v.round();
   }
 
-  Future<void> addCustomProtein() => _add(
-    'protein',
-    customGrams.value,
-    null,
-    'Added ${customGrams.value} g protein',
-  );
+  void toggleSaveCustom() {
+    Haptics.instance.selectionClick();
+    saveCustom.toggle();
+  }
+
+  /// Why the sheet can't be submitted yet, or null.
+  String? get customProblem => editing && nameCtrl.text.trim().isEmpty
+      ? 'Give it a name to save it'
+      : null;
+
+  /// Adds the custom amount (and saves it when asked), or saves an edit.
+  /// The sheet closes itself first, so a double tap can't add twice.
+  Future<void> submitCustom() async {
+    final name = nameCtrl.text.trim();
+    final portionText = portionCtrl.text.trim();
+    final grams = customGrams.value;
+    if (editing) {
+      await tracker.saveMyFood(
+        Food(
+          editingId.value,
+          name,
+          grams,
+          Img3d.bowl,
+          portion: portionText,
+          cat: 'mine',
+        ),
+      );
+      Haptics.instance.lightImpact();
+      showToast('Saved $name');
+      return;
+    }
+    if (name.isNotEmpty && saveCustom.value) {
+      final id = 'my${DateTime.now().microsecondsSinceEpoch}';
+      await tracker.saveMyFood(
+        Food(id, name, grams, Img3d.bowl, portion: portionText, cat: 'mine'),
+      );
+    }
+    final label = name.isEmpty
+        ? null
+        : (portionText.isEmpty ? name : '$name, $portionText');
+    await _add(
+      'protein',
+      grams,
+      label,
+      name.isEmpty ? 'Added $grams g protein' : 'Added $name · $grams g',
+    );
+  }
+
+  /// "Delete" in the edit sheet. Undo saves it back.
+  Future<void> deleteEditing() async {
+    final f = tracker.myFoods.firstWhereOrNull((x) => x.id == editingId.value);
+    if (f == null) return;
+    await tracker.removeMyFood(f.id);
+    Haptics.instance.lightImpact();
+    showUndoToast('Deleted ${f.name}', () async {
+      Haptics.instance.selectionClick();
+      await tracker.saveMyFood(f);
+    });
+  }
 
   // ------------------------------------------------------------------ water
 
@@ -232,7 +445,8 @@ class IntakeController extends GetxController with DayNav {
 
   String get waterLine {
     final left = waterGoal - waterToday;
-    if (left <= 0) return isToday ? 'Goal reached today.' : 'Goal reached that day.';
+    if (left <= 0)
+      return isToday ? 'Goal reached today.' : 'Goal reached that day.';
     if (!isToday) return '${litres(left)} L short of the goal that day';
     final glasses = (left / 250).ceil();
     return 'About $glasses more ${glasses == 1 ? 'glass' : 'glasses'} to go';
@@ -267,11 +481,8 @@ class IntakeController extends GetxController with DayNav {
 
   // ---------------------------------------------------------------- entries
 
-  List<LogEntry> entriesFor(String kind) => dayLog.entries
-      .where((e) => e.kind == kind)
-      .toList()
-      .reversed
-      .toList();
+  List<LogEntry> entriesFor(String kind) =>
+      dayLog.entries.where((e) => e.kind == kind).toList().reversed.toList();
 
   String entryTitle(LogEntry e) {
     final l = e.label;
@@ -303,7 +514,9 @@ class IntakeController extends GetxController with DayNav {
     // Past days get the entry at the current time of day on that date.
     final clock = DateTime.now();
     final d = day.value;
-    final at = isToday ? clock : DateTime(d.year, d.month, d.day, clock.hour, clock.minute);
+    final at = isToday
+        ? clock
+        : DateTime(d.year, d.month, d.day, clock.hour, clock.minute);
     final id = kind == 'protein'
         ? await tracker.addProtein(amount, at, label)
         : await tracker.addWater(amount, at, label);

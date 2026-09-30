@@ -470,7 +470,7 @@ class _Phone extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '${Dates.weekdayName(now.weekday)}, ${now.day} ${Dates.monthShort(now.month)}',
+                            '${Dates.weekdayName(now.weekday)}, ${Dates.short(now)}',
                             style: AppText.tiny.copyWith(
                               fontSize: 8.sp,
                               color: _muted,

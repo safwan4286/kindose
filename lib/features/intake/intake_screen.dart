@@ -17,6 +17,8 @@ import '../../widgets/safe_bottom.dart';
 import '../../widgets/toast.dart';
 import 'intake_controller.dart';
 import 'widgets/water_drop.dart';
+import 'widgets/intake_parts.dart';
+import 'widgets/protein_tab.dart';
 
 /// Protein and water. One tap adds, every add can be undone.
 class IntakeScreen extends GetView<IntakeController> {
@@ -42,7 +44,10 @@ class IntakeScreen extends GetView<IntakeController> {
                       header: true,
                       child: Text(
                         controller.isProtein ? 'Protein' : 'Water',
-                        style: AppText.h2.copyWith(fontSize: 22.sp, color: k.text),
+                        style: AppText.h2.copyWith(
+                          fontSize: 22.sp,
+                          color: k.text,
+                        ),
                       ),
                     ),
                   ),
@@ -57,7 +62,7 @@ class IntakeScreen extends GetView<IntakeController> {
                   duration: const Duration(milliseconds: 220),
                   switchInCurve: Curves.easeOutCubic,
                   child: controller.isProtein
-                      ? const _ProteinTab(key: ValueKey('protein'))
+                      ? const ProteinTab(key: ValueKey('protein'))
                       : const _WaterTab(key: ValueKey('water')),
                 ),
               ),
@@ -71,70 +76,6 @@ class IntakeScreen extends GetView<IntakeController> {
 
 // ------------------------------------------------------------------ shared
 
-TextStyle _caps(BuildContext c) => AppText.caps.copyWith(
-  fontSize: 12.sp,
-  letterSpacing: 1.1,
-  color: c.k.muted,
-);
-
-class _Label extends StatelessWidget {
-  const _Label(this.text, {this.trailing});
-
-  final String text;
-  final String? trailing;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(top: 22.sp, bottom: 10.sp),
-      child: Row(
-        children: [
-          Expanded(
-            child: Semantics(
-              header: true,
-              child: Text(text.toUpperCase(), style: _caps(context)),
-            ),
-          ),
-          if (trailing != null)
-            Text(
-              trailing!,
-              style: AppText.small.copyWith(
-                fontSize: 12.5.sp,
-                color: context.k.faint,
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Card extends StatelessWidget {
-  const _Card({required this.children});
-
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    final k = context.k;
-    return Container(
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: k.card,
-        borderRadius: BorderRadius.circular(22.sp),
-      ),
-      child: Column(
-        children: [
-          for (var i = 0; i < children.length; i++) ...[
-            if (i > 0) Divider(height: 1, thickness: 1, color: k.border),
-            children[i],
-          ],
-        ],
-      ),
-    );
-  }
-}
-
 /// "Today" heading; the swipe hint shows only when there is something
 /// to swipe.
 class _TodayLabel extends GetView<IntakeController> {
@@ -146,7 +87,10 @@ class _TodayLabel extends GetView<IntakeController> {
   Widget build(BuildContext context) => Obx(() {
     controller.watch();
     final has = controller.entriesFor(kind).isNotEmpty;
-    return _Label(controller.dayTitle, trailing: has ? 'Swipe left to remove' : null);
+    return IntakeLabel(
+      controller.dayTitle,
+      trailing: has ? 'Swipe left to remove' : null,
+    );
   });
 }
 
@@ -193,7 +137,7 @@ class _EntryList extends GetView<IntakeController> {
         ? AppColors.tangerineText
         : AppColors.aquaText;
     final dark = k.selectedBorder == AppColors.lime;
-    return _Card(
+    return IntakeCard(
       children: [
         for (final e in entries)
           Dismissible(
@@ -273,591 +217,6 @@ class _EntryRow extends GetView<IntakeController> {
   }
 }
 
-// ----------------------------------------------------------------- protein
-
-class _ProteinTab extends GetView<IntakeController> {
-  const _ProteinTab({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final motion = !MediaQuery.disableAnimationsOf(context);
-    final k = context.k;
-    return Obx(() {
-      controller.watch();
-      final searching = controller.query.value.trim().isNotEmpty;
-      final browse = controller.browseFoods;
-      final diet = controller.dietName;
-      return ListView(
-        physics: BouncingScrollPhysics(),
-        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        padding: EdgeInsets.fromLTRB(20.sp, 8.sp, 20.sp, 40.sp),
-        children: [
-          const _ProteinHero().enter(motion),
-          SizedBox(height: 14.sp),
-          const _SearchField().enter(motion, delay: 60),
-          if (!searching) ...[
-            _Label(
-              'Your usual',
-              trailing: 'Tap + to add',
-            ).enter(motion, delay: 100),
-            _Card(
-              children: [
-                for (final f in controller.usualFoods)
-                  _FoodRow(food: f, strong: true),
-              ],
-            ).enter(motion, delay: 120),
-            _Label(diet == null ? 'Browse' : 'Browse · $diet'),
-            SizedBox(
-              height: 40.sp,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                clipBehavior: Clip.none,
-                children: [
-                  for (final (id, label) in controller.categories) ...[
-                    _CatChip(
-                      label: label,
-                      selected: controller.category.value == id,
-                      onTap: () => controller.pickCategory(id),
-                    ),
-                    SizedBox(width: 8.sp),
-                  ],
-                ],
-              ),
-            ),
-            SizedBox(height: 10.sp),
-          ] else
-            _Label('Results'),
-          if (browse.isEmpty)
-            Container(
-              padding: EdgeInsets.all(16.sp),
-              decoration: BoxDecoration(
-                color: k.card,
-                borderRadius: BorderRadius.circular(22.sp),
-              ),
-              child: Text(
-                'No match. Add it by grams below.',
-                style: AppText.small.copyWith(
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.w600,
-                  color: k.muted,
-                ),
-              ),
-            )
-          else
-            _Card(children: [for (final f in browse) _FoodRow(food: f)]),
-          SizedBox(height: 12.sp),
-          const _CustomProtein(),
-          const _TodayLabel(kind: 'protein'),
-          const _EntryList(kind: 'protein'),
-          SizedBox(height: 12.sp),
-          Text(
-            'Protein values are typical amounts for the portion shown. Labels and recipes vary.',
-            style: AppText.small.copyWith(
-              fontSize: 12.sp,
-              fontWeight: FontWeight.w600,
-              color: k.faint,
-            ),
-          ),
-        ],
-      );
-    });
-  }
-}
-
-class _ProteinHero extends GetView<IntakeController> {
-  const _ProteinHero();
-
-  @override
-  Widget build(BuildContext context) {
-    final k = context.k;
-    return Obx(() {
-      controller.watch();
-      final total = controller.proteinToday;
-      return Semantics(
-        label:
-            'Protein ${controller.dayTitle.toLowerCase()}: $total of ${controller.proteinGoal} grams. ${controller.proteinLine}',
-        excludeSemantics: true,
-        child: Container(
-          padding: EdgeInsets.all(18.sp),
-          decoration: BoxDecoration(
-            color: k.card,
-            borderRadius: BorderRadius.circular(24.sp),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'PROTEIN · ${controller.dayTitle.toUpperCase()}',
-                          style: _caps(context).copyWith(color: k.faint),
-                        ),
-                        SizedBox(height: 6.sp),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.baseline,
-                          textBaseline: TextBaseline.alphabetic,
-                          children: [
-                            TweenAnimationBuilder<double>(
-                              tween: Tween(end: total.toDouble()),
-                              duration: const Duration(milliseconds: 450),
-                              curve: Curves.easeOutCubic,
-                              builder: (_, v, _) => Text(
-                                '${v.round()}',
-                                style: AppText.number(
-                                  44.sp,
-                                ).copyWith(color: k.text),
-                              ),
-                            ),
-                            SizedBox(width: 6.sp),
-                            Text(
-                              'of ${controller.proteinGoal} g',
-                              style: AppText.title.copyWith(
-                                fontSize: 16.sp,
-                                color: k.muted,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  ThreeD(Img3d.biceps, size: 52.sp),
-                ],
-              ),
-              SizedBox(height: 14.sp),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(6.sp),
-                child: SizedBox(
-                  height: 12.sp,
-                  child: Stack(
-                    children: [
-                      Positioned.fill(child: ColoredBox(color: k.proteinTrack)),
-                      TweenAnimationBuilder<double>(
-                        tween: Tween(end: controller.proteinProgress),
-                        duration: const Duration(milliseconds: 500),
-                        curve: Curves.easeOutCubic,
-                        builder: (_, v, _) => FractionallySizedBox(
-                          widthFactor: v,
-                          heightFactor: 1,
-                          child: const DecoratedBox(
-                            decoration: BoxDecoration(
-                              color: AppColors.tangerine,
-                              borderRadius: BorderRadius.all(
-                                Radius.circular(6),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              SizedBox(height: 10.sp),
-              Text(
-                controller.proteinLine,
-                style: AppText.small.copyWith(
-                  fontSize: 13.5.sp,
-                  color: k.textSoft,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    });
-  }
-}
-
-class _SearchField extends GetView<IntakeController> {
-  const _SearchField();
-
-  @override
-  Widget build(BuildContext context) {
-    final k = context.k;
-    return Obx(() {
-      controller.watch();
-      return TextField(
-        controller: controller.searchCtrl,
-        onChanged: (v) => controller.query.value = v,
-        textInputAction: TextInputAction.search,
-        style: AppText.bodyStrong.copyWith(fontSize: 14.5.sp, color: k.text),
-        decoration: InputDecoration(
-          hintText: 'Search foods: paneer, dal…',
-          prefixIcon: Icon(Icons.search_rounded, size: 20.sp, color: k.muted),
-          suffixIcon: controller.query.value.isEmpty
-              ? null
-              : IconButton(
-                  tooltip: 'Clear search',
-                  icon: Icon(PhosphorIconsBold.x, size: 16.sp, color: k.muted),
-                  onPressed: () {
-                    controller.searchCtrl.clear();
-                    controller.query.value = '';
-                  },
-                ),
-        ),
-      );
-    });
-  }
-}
-
-class _CatChip extends StatelessWidget {
-  const _CatChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final k = context.k;
-    return Semantics(
-      button: true,
-      selected: selected,
-      label: label,
-      excludeSemantics: true,
-      child: PressScale(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 160),
-          height: 38.sp,
-          padding: EdgeInsets.symmetric(horizontal: 14.sp),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: selected ? k.text : k.card,
-            borderRadius: BorderRadius.circular(19.sp),
-          ),
-          child: Text(
-            label,
-            style: AppText.small.copyWith(
-              fontSize: 13.5.sp,
-              fontWeight: FontWeight.w800,
-              color: selected ? k.bg : k.textSoft,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// One food: tap + to add a serving, tap the row for ½ / 1 / 1½ / 2.
-class _FoodRow extends GetView<IntakeController> {
-  const _FoodRow({required this.food, this.strong = false});
-
-  final Food food;
-  final bool strong;
-
-  Color _tint(BuildContext context) {
-    final k = context.k;
-    if (k.selectedBorder == AppColors.lime) return k.cardAlt;
-    return switch (food.cat) {
-      'dairy' || 'shake' => AppColors.aquaSoft,
-      'dal' || 'meal' || 'meat' => AppColors.tangerineSoft,
-      'snack' || 'soy' => AppColors.limeSoft,
-      _ => AppColors.amberSoft,
-    };
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final k = context.k;
-    final open = controller.openFood.value == food.id;
-    final times = controller.portion.value;
-    final dark = k.selectedBorder == AppColors.lime;
-    return Container(
-      color: k.card,
-      child: Column(
-        children: [
-          Padding(
-            padding: EdgeInsets.fromLTRB(14.sp, 10.sp, 10.sp, 10.sp),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Semantics(
-                    button: true,
-                    expanded: open,
-                    label:
-                        '${food.name}, ${food.portion}, ${food.grams} grams protein. Choose portion',
-                    excludeSemantics: true,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(14.sp),
-                      onTap: () => controller.toggleFood(food),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: (strong ? 44 : 40).sp,
-                            height: (strong ? 44 : 40).sp,
-                            decoration: BoxDecoration(
-                              color: _tint(context),
-                              borderRadius: BorderRadius.circular(14.sp),
-                            ),
-                            alignment: Alignment.center,
-                            child: ThreeD(
-                              food.icon,
-                              size: (strong ? 30 : 26).sp,
-                            ),
-                          ),
-                          SizedBox(width: 12.sp),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  food.name,
-                                  style: AppText.title.copyWith(
-                                    fontSize: (strong ? 15 : 14.5).sp,
-                                    color: k.text,
-                                  ),
-                                ),
-                                Text.rich(
-                                  TextSpan(
-                                    children: [
-                                      TextSpan(text: '${food.portion} · '),
-                                      TextSpan(
-                                        text: strong
-                                            ? '${food.grams} g protein'
-                                            : '${food.grams} g',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w800,
-                                          color: strong && !dark
-                                              ? AppColors.tangerineText
-                                              : null,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  style: AppText.small.copyWith(
-                                    fontSize: 12.5.sp,
-                                    fontWeight: FontWeight.w600,
-                                    color: k.muted,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                _AddButton(
-                  strong: strong,
-                  label: 'Add ${food.name}, ${food.grams} grams',
-                  onTap: () => controller.addFood(food),
-                ),
-              ],
-            ),
-          ),
-          AnimatedSize(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeOutCubic,
-            alignment: Alignment.topCenter,
-            child: !open
-                ? const SizedBox(width: double.infinity)
-                : Padding(
-                    padding: EdgeInsets.fromLTRB(14.sp, 0, 10.sp, 12.sp),
-                    child: Row(
-                      children: [
-                        for (final p in IntakeController.portions) ...[
-                          Semantics(
-                            button: true,
-                            selected: p.times == times,
-                            label: '${p.label} serving',
-                            excludeSemantics: true,
-                            child: PressScale(
-                              onTap: () => controller.pickPortion(p.times),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 150),
-                                constraints: BoxConstraints(minWidth: 44.sp),
-                                height: 36.sp,
-                                alignment: Alignment.center,
-                                decoration: BoxDecoration(
-                                  color: k.bg,
-                                  borderRadius: BorderRadius.circular(18.sp),
-                                  border: Border.all(
-                                    color: p.times == times
-                                        ? k.selectedBorder
-                                        : k.bg,
-                                    width: 2,
-                                  ),
-                                ),
-                                child: Text(
-                                  p.label,
-                                  style: AppText.small.copyWith(
-                                    fontSize: 13.5.sp,
-                                    fontWeight: FontWeight.w800,
-                                    color: k.text,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: 6.sp),
-                        ],
-                        const Spacer(),
-                        PressScale(
-                          semanticLabel:
-                              'Add ${controller.gramsFor(food, times)} grams',
-                          onTap: () => controller.addFood(food, times),
-                          child: Container(
-                            height: 36.sp,
-                            padding: EdgeInsets.symmetric(horizontal: 14.sp),
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: AppColors.lime,
-                              borderRadius: BorderRadius.circular(18.sp),
-                            ),
-                            child: Text(
-                              'Add ${controller.gramsFor(food, times)} g',
-                              style: AppText.small.copyWith(
-                                fontSize: 13.5.sp,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.ink,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AddButton extends StatelessWidget {
-  const _AddButton({
-    required this.strong,
-    required this.label,
-    required this.onTap,
-  });
-
-  final bool strong;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final k = context.k;
-    final dark = k.selectedBorder == AppColors.lime;
-    final size = (strong ? 44 : 40).sp;
-    final bg = strong ? (dark ? AppColors.lime : AppColors.ink) : k.card;
-    final fg = strong ? (dark ? AppColors.ink : AppColors.lime) : k.text;
-    return PressScale(
-      pressedScale: 0.88,
-      semanticLabel: label,
-      onTap: onTap,
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          color: bg,
-          shape: BoxShape.circle,
-          border: strong ? null : Border.all(color: k.border, width: 1.5),
-        ),
-        alignment: Alignment.center,
-        child: Icon(
-          PhosphorIconsBold.plus,
-          size: (strong ? 18 : 16).sp,
-          color: fg,
-        ),
-      ),
-    );
-  }
-}
-
-class _CustomProtein extends GetView<IntakeController> {
-  const _CustomProtein();
-
-  @override
-  Widget build(BuildContext context) {
-    final k = context.k;
-    return Obx(() {
-      controller.watch();
-      return Container(
-        padding: EdgeInsets.fromLTRB(16.sp, 14.sp, 12.sp, 12.sp),
-        decoration: BoxDecoration(
-          color: k.card,
-          borderRadius: BorderRadius.circular(20.sp),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Know the grams?',
-              style: AppText.title.copyWith(fontSize: 14.5.sp, color: k.text),
-            ),
-            Text(
-              'From a food label or your dietitian',
-              style: AppText.small.copyWith(
-                fontSize: 12.5.sp,
-                fontWeight: FontWeight.w600,
-                color: k.muted,
-              ),
-            ),
-            SizedBox(height: 10.sp),
-            Row(
-              children: [
-                CircleIconButton(
-                  icon: PhosphorIconsBold.minus,
-                  label: '5 grams less',
-                  background: k.bg,
-                  onTap: controller.customGrams.value <= 1
-                      ? null
-                      : () => controller.stepCustom(-5),
-                ),
-                Expanded(
-                  child: Semantics(
-                    button: true,
-                    label: '${controller.customGrams.value} grams. Tap to type',
-                    excludeSemantics: true,
-                    child: GestureDetector(
-                      onTap: () => controller.typeCustom(context),
-                      child: Text(
-                        '${controller.customGrams.value} g',
-                        textAlign: TextAlign.center,
-                        style: AppText.number(24.sp).copyWith(color: k.text),
-                      ),
-                    ),
-                  ),
-                ),
-                CircleIconButton(
-                  icon: PhosphorIconsBold.plus,
-                  label: '5 grams more',
-                  background: k.bg,
-                  onTap: controller.customGrams.value >= 200
-                      ? null
-                      : () => controller.stepCustom(5),
-                ),
-                SizedBox(width: 10.sp),
-                SoftButton(
-                  label: 'Add',
-                  height: 44,
-                  background: k.text,
-                  foreground: k.bg,
-                  onPressed: controller.addCustomProtein,
-                ),
-              ],
-            ),
-          ],
-        ),
-      );
-    });
-  }
-}
-
 // ------------------------------------------------------------------- water
 
 class _WaterTab extends GetView<IntakeController> {
@@ -899,7 +258,7 @@ class _WaterTab extends GetView<IntakeController> {
                       children: [
                         Text(
                           'WATER · ${controller.dayTitle.toUpperCase()}',
-                          style: _caps(context).copyWith(color: k.faint),
+                          style: intakeCaps(context).copyWith(color: k.faint),
                         ),
                         SizedBox(height: 6.sp),
                         Wrap(
@@ -939,7 +298,7 @@ class _WaterTab extends GetView<IntakeController> {
               ),
             ),
           ).enter(motion),
-          const _Label('Add water', trailing: 'One tap adds it'),
+          const IntakeLabel('Add water', trailing: 'One tap adds it'),
           Row(
             children: [
               for (final (i, d) in Catalog.waterSizes.indexed) ...[
@@ -967,7 +326,7 @@ class _WaterTab extends GetView<IntakeController> {
               ),
             ],
           ).enter(motion, delay: 80),
-          // const _Label('Other drinks count too'),
+          // const IntakeLabel('Other drinks count too'),
           // Wrap(
           //   spacing: 8.sp,
           //   runSpacing: 8.sp,

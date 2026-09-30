@@ -7,6 +7,7 @@ import '../models/logs.dart';
 import '../models/user_profile.dart';
 import '../resources/catalog.dart';
 import '../resources/date_utils.dart';
+import '../resources/images.dart';
 
 /// Single source of truth for everything the user logs.
 ///
@@ -57,6 +58,10 @@ class TrackerService extends GetxService {
   /// Next dose moved to another day with "Move date". Cleared when a dose
   /// is logged.
   final Rxn<DateTime> nextDoseOverride = Rxn<DateTime>();
+
+  /// Foods the user saved from the Protein screen's custom sheet, newest
+  /// first. Kept in the settings box, so cloud backup includes them.
+  final RxList<Food> myFoods = <Food>[].obs;
 
   Future<TrackerService> init() async {
     await Hive.initFlutter();
@@ -125,7 +130,61 @@ class TrackerService extends GetxService {
     nextDoseOverride.value = moved is int
         ? DateTime.fromMillisecondsSinceEpoch(moved)
         : null;
+    final mine = _settings.get(_myFoodsKey);
+    myFoods.assignAll(
+      mine is List
+          ? mine
+                .whereType<Map<dynamic, dynamic>>()
+                .map(_myFoodFrom)
+                .whereType<Food>()
+          : const <Food>[],
+    );
   }
+
+  // --------------------------------------------------------------- my foods
+
+  static const String _myFoodsKey = 'myFoods';
+
+  static Food? _myFoodFrom(Map<dynamic, dynamic> m) {
+    final id = m['id'];
+    final name = m['name'];
+    final grams = m['grams'];
+    if (id is! String ||
+        name is! String ||
+        name.trim().isEmpty ||
+        grams is! int)
+      return null;
+    final portion = m['portion'];
+    return Food(
+      id,
+      name,
+      grams,
+      Img3d.bowl,
+      portion: portion is String ? portion : '',
+      cat: 'mine',
+    );
+  }
+
+  /// Adds [f], or replaces the saved food with the same id.
+  Future<void> saveMyFood(Food f) async {
+    final i = myFoods.indexWhere((x) => x.id == f.id);
+    if (i >= 0) {
+      myFoods[i] = f;
+    } else {
+      myFoods.insert(0, f);
+    }
+    await _saveMyFoods();
+  }
+
+  Future<void> removeMyFood(String id) async {
+    myFoods.removeWhere((x) => x.id == id);
+    await _saveMyFoods();
+  }
+
+  Future<void> _saveMyFoods() => _settings.put(_myFoodsKey, [
+    for (final f in myFoods)
+      {'id': f.id, 'name': f.name, 'portion': f.portion, 'grams': f.grams},
+  ]);
 
   Future<void> dismissSetup() async {
     setupDismissed.value = true;
@@ -539,6 +598,67 @@ class TrackerService extends GetxService {
     'days': days.values.map((d) => d.toMap()).toList(),
     'weights': weights.map((w) => w.toMap()).toList(),
   };
+
+  // ---------------------------------------------------------- cloud backup
+
+  static const int backupVersion = 1;
+
+  /// Every saved box as plain JSON, for the cloud backup. Includes the
+  /// settings box, so pens, reminders and Today layout come back too.
+  Map<String, dynamic> backupData() => {
+    'app': 'Kindose',
+    'v': backupVersion,
+    'savedAt': DateTime.now().toIso8601String(),
+    'boxes': {
+      _profileBox: _dump(_profile),
+      _dosesBox: _dump(_doses),
+      _daysBox: _dump(_days),
+      _weightsBox: _dump(_weights),
+      _settingsBox: _dump(_settings),
+    },
+  };
+
+  static Map<String, dynamic> _dump(Box<dynamic> box) => {
+    for (final k in box.keys) '$k': _plain(box.get(k)),
+  };
+
+  /// Hive maps may have non-String keys; JSON needs String keys.
+  static Object? _plain(Object? v) => switch (v) {
+    Map() => {for (final e in v.entries) '${e.key}': _plain(e.value)},
+    List() => [for (final x in v) _plain(x)],
+    DateTime() => v.millisecondsSinceEpoch,
+    _ => v,
+  };
+
+  /// Replaces everything on this phone with a [backupData] copy. Returns
+  /// false and changes nothing when it doesn't look like a Kindose backup.
+  Future<bool> restoreBackup(Map<String, dynamic> data) async {
+    final boxes = data['boxes'];
+    if (data['app'] != 'Kindose' || boxes is! Map) return false;
+    final profileBox = boxes[_profileBox];
+    final me = profileBox is Map ? profileBox[_meKey] : null;
+    if (me is! Map || UserProfile.fromMap(me) == null) return false;
+
+    final targets = <String, Box<dynamic>>{
+      _profileBox: _profile,
+      _dosesBox: _doses,
+      _daysBox: _days,
+      _weightsBox: _weights,
+      _settingsBox: _settings,
+    };
+    for (final e in targets.entries) {
+      final raw = boxes[e.key];
+      await e.value.clear();
+      if (raw is Map) {
+        await e.value.putAll({
+          for (final x in raw.entries) '${x.key}': x.value,
+        });
+      }
+    }
+    _load();
+    Get.changeThemeMode(themeMode.value);
+    return true;
+  }
 
   /// Permanently removes every record on this phone.
   Future<void> deleteAll() async {

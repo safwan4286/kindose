@@ -5,11 +5,14 @@ import '../../models/user_profile.dart';
 import '../../resources/catalog.dart';
 import '../../resources/date_utils.dart';
 import '../../resources/routes.dart';
+import '../../services/backend/backend_service.dart';
 import '../../services/haptics/haptics.dart';
+import '../../services/region/region.dart';
 import '../../services/notifications/notification_service.dart';
 import '../../services/tracker_service.dart';
 import '../../widgets/social_button.dart';
 import '../../widgets/toast.dart';
+import '../me/widgets/me_sheets.dart';
 
 enum OnboardingStep {
   welcome,
@@ -26,8 +29,6 @@ enum OnboardingStep {
   goal,
   activity,
   diet,
-  baseline,
-  protein,
   focus,
   reminders,
   building,
@@ -62,10 +63,6 @@ class OnboardingController extends GetxController {
     return [
       for (final s in OnboardingStep.values)
         if (s != OnboardingStep.welcome &&
-            // Replaced by the height / weight / goal questions.
-            s != OnboardingStep.baseline &&
-            // The protein goal is now worked out and shown on the plan.
-            s != OnboardingStep.protein &&
             !(starting && s == OnboardingStep.treatmentStart))
           s,
     ];
@@ -122,7 +119,8 @@ class OnboardingController extends GetxController {
   /// Null until picked.
   final Rxn<DateTime> doseDate = Rxn<DateTime>();
 
-  final RxBool useKg = true.obs;
+  /// Pounds by default in the US and UK (from the phone's region).
+  final RxBool useKg = (!Region.prefersPounds).obs;
   final RxDouble weightKg = 72.0.obs;
 
   /// False until the user moves the weight, so the default can follow the
@@ -138,7 +136,7 @@ class OnboardingController extends GetxController {
   /// 'sed', 'light', 'mod', 'active', 'athlete', or '' until answered.
   final RxString activity = ''.obs;
   final RxnDouble heightCm = RxnDouble();
-  final RxBool heightInCm = true.obs;
+  final RxBool heightInCm = (!Region.prefersFeet).obs;
 
   final RxInt proteinGoal = 100.obs;
   final RxBool proteinTouched = false.obs;
@@ -153,7 +151,7 @@ class OnboardingController extends GetxController {
   bool _returnToPlan = false;
   final RxBool veg = false.obs;
 
-  /// 'veg', 'egg', 'nonveg', 'vegan', 'jain', or '' until answered.
+  /// 'nonveg', 'pesc', 'veg' or 'vegan', or '' until answered.
   final RxString diet = ''.obs;
 
   /// Set on the reminders screen: true only when the system said yes.
@@ -295,7 +293,8 @@ class OnboardingController extends GetxController {
   /// back to the plan instead.
   bool _leaveEditToPlan(int to) {
     if (!_returnToPlan) return false;
-    if (to >= 0 && to < steps.length && _planEditSteps.contains(steps[to])) return false;
+    if (to >= 0 && to < steps.length && _planEditSteps.contains(steps[to]))
+      return false;
     _returnToPlan = false;
     _go(steps.indexOf(OnboardingStep.plan));
     return true;
@@ -306,10 +305,6 @@ class OnboardingController extends GetxController {
     if (page.value >= steps.length - 1) {
       finish();
       return;
-    }
-    if (steps[page.value + 1] == OnboardingStep.protein &&
-        !proteinTouched.value) {
-      proteinGoal.value = suggestedProtein;
     }
     _go(page.value + 1);
   }
@@ -628,12 +623,10 @@ class OnboardingController extends GetxController {
 
   // ------------------------------------------------------------------ diet
 
-  /// Diets with no meat, fish or eggs use the vegetarian food lists.
-  static const Set<String> _meatFree = {'veg', 'vegan', 'jain'};
-
   void pickDiet(String id) => _pickThenNext(OnboardingStep.diet, () {
     diet.value = id;
-    veg.value = _meatFree.contains(id);
+    // Diets without meat or fish use the vegetarian food lists.
+    veg.value = Catalog.isMeatFree(id);
     plateOff.clear();
   });
 
@@ -828,12 +821,64 @@ class OnboardingController extends GetxController {
   /// Which sign-in is running, for the button spinner. Null when idle.
   final Rxn<SocialProvider> signingIn = Rxn<SocialProvider>();
 
-  /// Firebase Auth isn't set up yet, so sign-in just explains that for now.
-  /// TODO(auth): call AuthService.signInWithApple/Google, then finish().
-  void signInWith(SocialProvider provider) {
+  /// Google sign-in (Supabase). If this account already has a backup
+  /// (new phone), offer to restore it; otherwise finish and the first
+  /// backup runs by itself. Apple sign-in comes with the Apple account.
+  Future<void> signInWith(SocialProvider provider) async {
     if (signingIn.value != null || current != OnboardingStep.save) return;
     Haptics.instance.lightImpact();
-    showToast('Sign-in is coming soon. Your data is safe on this phone.');
+    if (provider == SocialProvider.apple) {
+      showToast(
+        'Sign in with Apple is coming soon. Use Google or tap Not now.',
+      );
+      return;
+    }
+    final backend = Get.find<BackendService>();
+    signingIn.value = provider;
+    backend.autoPaused = true;
+    try {
+      final r = await backend.signInWithGoogle();
+      switch (r) {
+        case BackendResult.ok:
+          break;
+        case BackendResult.cancelled:
+          return;
+        case BackendResult.offline:
+          showToast(
+            'You seem to be offline. Tap Not now and sign in later in Me.',
+          );
+          return;
+        case BackendResult.notReady:
+        case BackendResult.failed:
+          showToast(
+            'Sign-in didn’t work this time. You can sign in later in Me.',
+          );
+          return;
+      }
+      CloudBackup? cloud;
+      try {
+        cloud = await backend.fetchBackup();
+      } catch (_) {}
+      if (cloud != null) {
+        final day = Dates.relativeDay(cloud.updatedAt, DateTime.now());
+        final restore = await showRestoreSheet(
+          when:
+              '${day == 'Today' ? 'today' : day} at ${Dates.time(cloud.updatedAt)}',
+          phoneHasData: false,
+        );
+        if (restore == true &&
+            await backend.restore(cloud) == BackendResult.ok) {
+          Haptics.instance.mediumImpact();
+          Get.offAllNamed<void>(Routes.home);
+          showToast('Welcome back. Your data is restored.');
+          return;
+        }
+      }
+    } finally {
+      signingIn.value = null;
+      backend.autoPaused = false;
+    }
+    await finish();
   }
 
   /// "Not now": keep everything on the phone and carry on to Plus.

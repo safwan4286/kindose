@@ -159,6 +159,13 @@ class MeScreen extends GetView<MeController> {
                   sub: 'Spreadsheet (CSV) or a full backup file',
                   onTap: c.exporting.value ? null : c.export,
                 ),
+                if (c.signedIn)
+                  _NavRow(
+                    label: 'Delete my account',
+                    sub: 'Removes your account and cloud backup',
+                    danger: true,
+                    onTap: c.deleteAccount,
+                  ),
                 _NavRow(
                   label: 'Delete all my data',
                   danger: true,
@@ -228,14 +235,25 @@ class _PlanCard extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 6.sp),
         child: Column(
           children: [
-            Text(label, style: AppText.caps.copyWith(fontSize: 10.5.sp, letterSpacing: 0.8, color: k.faint)),
+            Text(
+              label,
+              style: AppText.caps.copyWith(
+                fontSize: 10.5.sp,
+                letterSpacing: 0.8,
+                color: k.faint,
+              ),
+            ),
             SizedBox(height: 4.sp),
             FittedBox(
               fit: BoxFit.scaleDown,
               child: Text(
                 value,
                 maxLines: 1,
-                style: AppText.bodyStrong.copyWith(fontSize: 15.sp, fontWeight: FontWeight.w800, color: k.text),
+                style: AppText.bodyStrong.copyWith(
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.w800,
+                  color: k.text,
+                ),
               ),
             ),
             if (sub.isNotEmpty)
@@ -244,7 +262,11 @@ class _PlanCard extends StatelessWidget {
                 child: Text(
                   sub,
                   maxLines: 1,
-                  style: AppText.small.copyWith(fontSize: 12.sp, fontWeight: FontWeight.w700, color: k.muted),
+                  style: AppText.small.copyWith(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w700,
+                    color: k.muted,
+                  ),
                 ),
               ),
           ],
@@ -255,7 +277,10 @@ class _PlanCard extends StatelessWidget {
 
     return Container(
       padding: EdgeInsets.all(18.sp),
-      decoration: BoxDecoration(color: k.card, borderRadius: BorderRadius.circular(24.sp)),
+      decoration: BoxDecoration(
+        color: k.card,
+        borderRadius: BorderRadius.circular(24.sp),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -265,9 +290,14 @@ class _PlanCard extends StatelessWidget {
                 width: 50.sp,
                 height: 50.sp,
                 alignment: Alignment.center,
-                decoration: BoxDecoration(color: AppColors.lime, borderRadius: BorderRadius.circular(16.sp)),
+                decoration: BoxDecoration(
+                  color: AppColors.lime,
+                  borderRadius: BorderRadius.circular(16.sp),
+                ),
                 child: Icon(
-                  c.isTablet ? PhosphorIconsBold.pill : PhosphorIconsBold.syringe,
+                  c.isTablet
+                      ? PhosphorIconsBold.pill
+                      : PhosphorIconsBold.syringe,
                   size: 24.sp,
                   color: AppColors.ink,
                 ),
@@ -277,12 +307,23 @@ class _PlanCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(c.planCaption, style: AppText.caps.copyWith(fontSize: 11.5.sp, letterSpacing: 1, color: k.faint)),
+                    Text(
+                      c.planCaption,
+                      style: AppText.caps.copyWith(
+                        fontSize: 11.5.sp,
+                        letterSpacing: 1,
+                        color: k.faint,
+                      ),
+                    ),
                     SizedBox(height: 2.sp),
                     Text(
                       c.planTitle,
                       maxLines: 2,
-                      style: AppText.h2.copyWith(fontSize: 21.sp, letterSpacing: -0.4, color: k.text),
+                      style: AppText.h2.copyWith(
+                        fontSize: 21.sp,
+                        letterSpacing: -0.4,
+                        color: k.text,
+                      ),
                     ),
                   ],
                 ),
@@ -303,7 +344,10 @@ class _PlanCard extends StatelessWidget {
           if (c.hasMedicine)
             Container(
               padding: EdgeInsets.symmetric(vertical: 14.sp, horizontal: 6.sp),
-              decoration: BoxDecoration(color: k.bg, borderRadius: BorderRadius.circular(16.sp)),
+              decoration: BoxDecoration(
+                color: k.bg,
+                borderRadius: BorderRadius.circular(16.sp),
+              ),
               child: Row(
                 children: [
                   fact('FORM', c.formLabel, c.formSub),
@@ -315,7 +359,10 @@ class _PlanCard extends StatelessWidget {
               ),
             )
           else ...[
-            Text(c.planSub, style: AppText.small.copyWith(fontSize: 13.5.sp, color: k.muted)),
+            Text(
+              c.planSub,
+              style: AppText.small.copyWith(fontSize: 13.5.sp, color: k.muted),
+            ),
             SizedBox(height: 12.sp),
             PillButton(label: 'Add my medicine', onPressed: c.editPlan),
           ],
@@ -416,9 +463,29 @@ class _BackupCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 250),
+      child: controller.signedIn
+          ? _SignedInBackup(key: const ValueKey('in'), controller: controller)
+          : _SignedOutBackup(
+              key: const ValueKey('out'),
+              controller: controller,
+            ),
+    );
+  }
+}
+
+class _SignedOutBackup extends StatelessWidget {
+  const _SignedOutBackup({super.key, required this.controller});
+
+  final MeController controller;
+
+  @override
+  Widget build(BuildContext context) {
     final k = context.k;
     final dark = k.selectedBorder == AppColors.lime;
     final accent = dark ? AppColors.amberSoft : AppColors.amberText;
+    final busy = controller.backend.busy.value;
     return Container(
       padding: EdgeInsets.all(16.sp),
       decoration: BoxDecoration(
@@ -446,7 +513,7 @@ class _BackupCard extends StatelessWidget {
                     ),
                     SizedBox(height: 2.sp),
                     Text(
-                      'If you lose or change your phone, your history goes with it. Back up free with Google or Apple.',
+                      'If you lose or change your phone, your history goes with it. Back up free with Google.',
                       style: AppText.small.copyWith(
                         fontSize: 12.5.sp,
                         height: 1.45,
@@ -461,11 +528,114 @@ class _BackupCard extends StatelessWidget {
           ),
           SizedBox(height: 12.sp),
           SoftButton(
-            label: 'Back up my data',
+            label: busy ? 'Signing in…' : 'Back up my data',
             background: dark ? AppColors.lime : AppColors.ink,
             foreground: dark ? AppColors.ink : AppColors.white,
             height: 46,
-            onPressed: controller.backup,
+            onPressed: busy ? null : controller.backup,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SignedInBackup extends StatelessWidget {
+  const _SignedInBackup({super.key, required this.controller});
+
+  final MeController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    final dark = k.selectedBorder == AppColors.lime;
+    final busy = controller.backend.busy.value;
+    return Container(
+      padding: EdgeInsets.all(16.sp),
+      decoration: BoxDecoration(
+        color: k.card,
+        borderRadius: BorderRadius.circular(22.sp),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 36.sp,
+                height: 36.sp,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: dark
+                      ? AppColors.lime.withValues(alpha: 0.16)
+                      : AppColors.limeSoft,
+                  borderRadius: BorderRadius.circular(12.sp),
+                ),
+                child: Icon(
+                  Icons.cloud_done_rounded,
+                  size: 20.sp,
+                  color: dark ? AppColors.lime : AppColors.limeText,
+                ),
+              ),
+              SizedBox(width: 12.sp),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Semantics(
+                      liveRegion: true,
+                      child: Text(
+                        controller.backupLine,
+                        style: AppText.title.copyWith(
+                          fontSize: 15.sp,
+                          color: k.text,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 2.sp),
+                    Text(
+                      '${controller.accountEmail} · backs up by itself after changes',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.small.copyWith(
+                        fontSize: 12.5.sp,
+                        fontWeight: FontWeight.w600,
+                        color: k.muted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12.sp),
+          Row(
+            children: [
+              Expanded(
+                child: SoftButton(
+                  label: busy ? 'Backing up…' : 'Back up now',
+                  background: dark ? AppColors.lime : AppColors.ink,
+                  foreground: dark ? AppColors.ink : AppColors.white,
+                  height: 46,
+                  onPressed: busy ? null : controller.backupNow,
+                ),
+              ),
+              SizedBox(width: 8.sp),
+              SoftButton(
+                label: 'Restore',
+                background: k.cardAlt,
+                height: 46,
+                onPressed: busy ? null : controller.restoreBackup,
+              ),
+            ],
+          ),
+          SizedBox(height: 4.sp),
+          Center(
+            child: LinkButton(
+              label: 'Sign out',
+              onTap: busy ? null : controller.signOut,
+            ),
           ),
         ],
       ),

@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 
 import '../../../resources/colors.dart';
 import '../../../resources/images.dart';
-import '../../../services/region/region.dart';
 import '../../../services/responsiveness/device_manager.dart';
 import '../../../widgets/entrance.dart';
 import '../onboarding_controller.dart';
@@ -11,9 +10,7 @@ import '../onboarding_screen.dart';
 import '../widgets/choice_tile.dart';
 import '../widgets/step_footer.dart';
 
-/// Question 13: how you eat, so protein ideas fit. "Jain" is shown only on
-/// phones that look Indian (see [Region.isIndia]); anyone who already
-/// picked it keeps seeing it.
+/// Question 13: how you eat, so protein ideas fit.
 class DietPage extends GetView<OnboardingController> {
   const DietPage({super.key});
 
@@ -24,45 +21,36 @@ class DietPage extends GetView<OnboardingController> {
     final motion = !MediaQuery.disableAnimationsOf(context);
     Color tint(Color light, Color accent) =>
         dark ? accent.withValues(alpha: 0.16) : light;
-    final showJain = Region.isIndia || controller.diet.value == 'jain';
 
     final options = [
       (
-        'veg',
-        'Vegetarian',
-        'Dairy, no meat, fish or eggs',
-        Img3d.paneer,
-        k.cardAlt,
-      ),
-      (
-        'egg',
-        'Eggetarian',
-        'Vegetarian plus eggs',
-        Img3d.egg,
-        tint(const Color(0xFFFBEFD9), const Color(0xFFE0A23B)),
-      ),
-      (
         'nonveg',
-        'Non-vegetarian',
-        'Eggs, chicken, fish and meat',
+        'I eat everything',
+        'Meat, fish, eggs and dairy',
         Img3d.chicken,
         tint(AppColors.tangerineSoft, AppColors.tangerine),
       ),
       (
+        'pesc',
+        'Pescatarian',
+        'Fish and seafood, no meat',
+        Img3d.fish,
+        tint(AppColors.aquaSoft, AppColors.aqua),
+      ),
+      (
+        'veg',
+        'Vegetarian',
+        'Eggs and dairy, no meat or fish',
+        Img3d.egg,
+        tint(const Color(0xFFFBEFD9), const Color(0xFFE0A23B)),
+      ),
+      (
         'vegan',
         'Vegan',
-        'No animal foods, including dairy',
+        'No animal foods at all',
         Img3d.seedling,
         tint(const Color(0xFFF1F7D6), AppColors.lime),
       ),
-      if (showJain)
-        (
-          'jain',
-          'Jain',
-          'No root vegetables, onion or garlic',
-          Img3d.dal,
-          tint(AppColors.aquaSoft, AppColors.aqua),
-        ),
     ];
 
     return StepScaffold(

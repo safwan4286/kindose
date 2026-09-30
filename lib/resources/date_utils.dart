@@ -1,3 +1,5 @@
+import '../services/region/region.dart';
+
 /// Small date helpers so we don't need the intl package yet.
 /// All values are shown in the phone's local time.
 class Dates {
@@ -58,16 +60,23 @@ class Dates {
   static int daysBetween(DateTime from, DateTime to) =>
       (dateOnly(to).difference(dateOnly(from)).inHours / 24).round();
 
-  /// "Thursday, 25 September"
+  /// Month before day ("Sep 25") on US phones, day first elsewhere.
+  static bool get monthFirst => Region.country == 'US';
+
+  /// "25 Sep" or "Sep 25".
+  static String dayMonth(int day, String month) =>
+      monthFirst ? '$month $day' : '$day $month';
+
+  /// "Thursday, 25 September" / "Thursday, September 25"
   static String long(DateTime d) =>
-      '${weekdayName(d.weekday)}, ${d.day} ${months[d.month - 1]}';
+      '${weekdayName(d.weekday)}, ${dayMonth(d.day, months[d.month - 1])}';
 
-  /// "25 Sep"
-  static String short(DateTime d) => '${d.day} ${monthShort(d.month)}';
+  /// "25 Sep" / "Sep 25"
+  static String short(DateTime d) => dayMonth(d.day, monthShort(d.month));
 
-  /// "Thu, 25 Sep"
+  /// "Thu, 25 Sep" / "Thu, Sep 25"
   static String shortWithDay(DateTime d) =>
-      '${weekdayShort(d.weekday)}, ${d.day} ${monthShort(d.month)}';
+      '${weekdayShort(d.weekday)}, ${short(d)}';
 
   /// "9:00 AM" from minutes after midnight.
   static String timeOfDay(int minutes) {
