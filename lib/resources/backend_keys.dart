@@ -17,6 +17,13 @@ class BackendKeys {
   static const String googleIosClientId =
       '742604804840-uacmtnmgr2firv2bb5d5ahv3ed35e394.apps.googleusercontent.com';
 
+  // RevenueCat public SDK keys (safe in the app, like the publishable key).
+  // The Test Store key is used in debug builds only; release builds use
+  // the platform keys and must never ship with the test key.
+  static const String revenueCatTestKey = 'test_LkxKkxiyeybNCSlgrHzEexEyfxZ';
+  static const String revenueCatAppleKey = ''; // appl_… (after App Store setup)
+  static const String revenueCatGoogleKey = ''; // goog_… (after Play setup)
+
   static bool get hasSupabase =>
       supabaseUrl.isNotEmpty && supabasePublishableKey.isNotEmpty;
 

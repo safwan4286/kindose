@@ -1,5 +1,7 @@
 import 'package:get/get.dart';
 
+import '../services/plus/access_service.dart';
+
 import '../features/check_in/check_in_binding.dart';
 import '../features/check_in/check_in_screen.dart';
 import '../features/day/day_binding.dart';
@@ -109,6 +111,7 @@ class AppPages {
       name: Routes.logDose,
       page: () => const LogDoseScreen(),
       binding: LogDoseBinding(),
+      middlewares: [PlusGate()],
     ),
     GetPage<dynamic>(
       name: Routes.doseDone,
@@ -120,16 +123,19 @@ class AppPages {
       name: Routes.addIntake,
       page: () => const IntakeScreen(),
       binding: IntakeBinding(),
+      middlewares: [PlusGate()],
     ),
     GetPage<dynamic>(
       name: Routes.day,
       page: () => const DayScreen(),
       binding: DayBinding(),
+      middlewares: [PlusGate()],
     ),
     GetPage<dynamic>(
       name: Routes.pens,
       page: () => const PensScreen(),
       binding: PensBinding(),
+      middlewares: [PlusGate()],
     ),
     GetPage<dynamic>(
       name: Routes.guide,
@@ -141,10 +147,12 @@ class AppPages {
       name: Routes.checkIn,
       page: () => const CheckInScreen(),
       binding: CheckInBinding(),
+      middlewares: [PlusGate()],
     ),
     GetPage<dynamic>(
       name: Routes.reportPreview,
       page: () => const ReportPreviewScreen(),
+      middlewares: [PlusGate()],
     ),
   ];
 }

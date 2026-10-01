@@ -45,11 +45,17 @@ class GuideScreen extends GetView<GuideController> {
                       transitionBuilder: (child, a) => FadeTransition(
                         opacity: a,
                         child: SlideTransition(
-                          position: Tween<Offset>(begin: const Offset(0, 0.04), end: Offset.zero).animate(a),
+                          position: Tween<Offset>(
+                            begin: const Offset(0, 0.04),
+                            end: Offset.zero,
+                          ).animate(a),
                           child: child,
                         ),
                       ),
-                      child: _StepBody(key: ValueKey<int>(s), controller: controller),
+                      child: _StepBody(
+                        key: ValueKey<int>(s),
+                        controller: controller,
+                      ),
                     ),
                   ),
                   const _LeafletNote(),
@@ -72,7 +78,10 @@ class GuideScreen extends GetView<GuideController> {
                               ),
                       ),
                       Expanded(
-                        child: PillButton(label: controller.cta, onPressed: controller.next),
+                        child: PillButton(
+                          label: controller.cta,
+                          onPressed: controller.next,
+                        ),
                       ),
                     ],
                   ),
@@ -98,7 +107,11 @@ class _TopBar extends StatelessWidget {
     final dark = k.selectedBorder == AppColors.lime;
     return Row(
       children: [
-        CircleIconButton(icon: PhosphorIconsBold.x, label: 'Close guide', onTap: onClose),
+        CircleIconButton(
+          icon: PhosphorIconsBold.x,
+          label: 'Close guide',
+          onTap: onClose,
+        ),
         SizedBox(width: 12.sp),
         Expanded(
           child: Semantics(
@@ -114,7 +127,9 @@ class _TopBar extends StatelessWidget {
                       curve: Curves.easeOutCubic,
                       height: 5.sp,
                       decoration: BoxDecoration(
-                        color: i <= step ? (dark ? AppColors.lime : AppColors.ink) : k.border,
+                        color: i <= step
+                            ? (dark ? AppColors.lime : AppColors.ink)
+                            : k.border,
                         borderRadius: BorderRadius.circular(3.sp),
                       ),
                     ),
@@ -128,7 +143,11 @@ class _TopBar extends StatelessWidget {
         ExcludeSemantics(
           child: Text(
             '${step + 1} of ${GuideController.stepCount}',
-            style: AppText.small.copyWith(fontSize: 12.5.sp, fontWeight: FontWeight.w800, color: k.muted),
+            style: AppText.small.copyWith(
+              fontSize: 12.5.sp,
+              fontWeight: FontWeight.w800,
+              color: k.muted,
+            ),
           ),
         ),
       ],
@@ -164,12 +183,24 @@ class _StepBody extends StatelessWidget {
               SizedBox(height: 6.sp),
               Semantics(
                 header: true,
-                child: Text(c.title, style: AppText.h1.copyWith(fontSize: 30.sp, height: 1.08, color: k.text)),
+                child: Text(
+                  c.title,
+                  style: AppText.h1.copyWith(
+                    fontSize: 30.sp,
+                    height: 1.08,
+                    color: k.text,
+                  ),
+                ),
               ),
               SizedBox(height: 8.sp),
               Text(
                 c.body,
-                style: AppText.bodyText.copyWith(fontSize: 15.sp, height: 1.45, fontWeight: FontWeight.w600, color: k.muted),
+                style: AppText.bodyText.copyWith(
+                  fontSize: 15.sp,
+                  height: 1.45,
+                  fontWeight: FontWeight.w600,
+                  color: k.muted,
+                ),
               ),
               SizedBox(height: 20.sp),
               Center(child: visual),
@@ -208,11 +239,17 @@ class _Checklist extends StatelessWidget {
                 onTap: () => controller.toggleCheck(i),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  padding: EdgeInsets.symmetric(horizontal: 16.sp, vertical: 14.sp),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.sp,
+                    vertical: 14.sp,
+                  ),
                   decoration: BoxDecoration(
                     color: k.card,
                     borderRadius: BorderRadius.circular(18.sp),
-                    border: Border.all(color: controller.checks[i] ? on : k.card, width: 2),
+                    border: Border.all(
+                      color: controller.checks[i] ? on : k.card,
+                      width: 2,
+                    ),
                   ),
                   child: Row(
                     children: [
@@ -224,18 +261,31 @@ class _Checklist extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: controller.checks[i] ? on : k.card,
                           borderRadius: BorderRadius.circular(8.sp),
-                          border: Border.all(color: controller.checks[i] ? on : k.border, width: 2),
+                          border: Border.all(
+                            color: controller.checks[i] ? on : k.border,
+                            width: 2,
+                          ),
                         ),
                         child: AnimatedScale(
                           scale: controller.checks[i] ? 1 : 0,
                           duration: const Duration(milliseconds: 220),
                           curve: Curves.easeOutBack,
-                          child: PhosphorIcon(PhosphorIconsBold.check, size: 15.sp, color: tick),
+                          child: PhosphorIcon(
+                            PhosphorIconsBold.check,
+                            size: 15.sp,
+                            color: tick,
+                          ),
                         ),
                       ),
                       SizedBox(width: 12.sp),
                       Expanded(
-                        child: Text(t, style: AppText.title.copyWith(fontSize: 15.sp, color: k.text)),
+                        child: Text(
+                          t,
+                          style: AppText.title.copyWith(
+                            fontSize: 15.sp,
+                            color: k.text,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -269,7 +319,10 @@ class _Spot extends StatelessWidget {
         SizedBox(height: 14.sp),
         Container(
           padding: EdgeInsets.symmetric(horizontal: 14.sp, vertical: 10.sp),
-          decoration: BoxDecoration(color: k.card, borderRadius: BorderRadius.circular(16.sp)),
+          decoration: BoxDecoration(
+            color: k.card,
+            borderRadius: BorderRadius.circular(16.sp),
+          ),
           child: Text(
             'Suggested: ${controller.nextSiteName}',
             style: AppText.title.copyWith(fontSize: 14.sp, color: k.text),
@@ -289,8 +342,12 @@ class _Breathe extends StatefulWidget {
   State<_Breathe> createState() => _BreatheState();
 }
 
-class _BreatheState extends State<_Breathe> with SingleTickerProviderStateMixin {
-  late final AnimationController _a = AnimationController(vsync: this, duration: const Duration(seconds: 8));
+class _BreatheState extends State<_Breathe>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _a = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 8),
+  );
   String _phase = 'Breathe in…';
 
   @override
@@ -311,7 +368,9 @@ class _BreatheState extends State<_Breathe> with SingleTickerProviderStateMixin 
 
   void _onTick() {
     final t = _a.value;
-    final phase = t < 0.45 ? 'Breathe in…' : (t < 0.55 ? 'Hold' : 'Breathe out…');
+    final phase = t < 0.45
+        ? 'Breathe in…'
+        : (t < 0.55 ? 'Hold' : 'Breathe out…');
     if (phase != _phase) {
       Haptics.instance.selectionClick();
       setState(() => _phase = phase);
@@ -349,7 +408,10 @@ class _BreatheState extends State<_Breathe> with SingleTickerProviderStateMixin 
                   child: Container(
                     decoration: const BoxDecoration(
                       shape: BoxShape.circle,
-                      gradient: RadialGradient(colors: [Color(0xFFE9F9A8), AppColors.lime], stops: [0, 0.7]),
+                      gradient: RadialGradient(
+                        colors: [Color(0xFFE9F9A8), AppColors.lime],
+                        stops: [0, 0.7],
+                      ),
                     ),
                   ),
                 ),
@@ -361,7 +423,10 @@ class _BreatheState extends State<_Breathe> with SingleTickerProviderStateMixin 
                   child: Text(
                     _phase,
                     key: ValueKey<String>(_phase),
-                    style: AppText.h2.copyWith(fontSize: 24.sp, color: AppColors.ink),
+                    style: AppText.h2.copyWith(
+                      fontSize: 24.sp,
+                      color: AppColors.ink,
+                    ),
                   ),
                 ),
               ),
@@ -371,7 +436,11 @@ class _BreatheState extends State<_Breathe> with SingleTickerProviderStateMixin 
         SizedBox(height: 18.sp),
         Text(
           'In for 4 · hold · out for 4',
-          style: AppText.small.copyWith(fontSize: 13.5.sp, fontWeight: FontWeight.w700, color: k.muted),
+          style: AppText.small.copyWith(
+            fontSize: 13.5.sp,
+            fontWeight: FontWeight.w700,
+            color: k.muted,
+          ),
         ),
       ],
     );
@@ -408,28 +477,51 @@ class _HoldTimer extends StatelessWidget {
                 alignment: Alignment.center,
                 children: [
                   TweenAnimationBuilder<double>(
-                    tween: Tween<double>(end: c.running.value || done ? progress : 0),
+                    tween: Tween<double>(
+                      end: c.running.value || done ? progress : 0,
+                    ),
                     duration: const Duration(milliseconds: 950),
                     curve: Curves.linear,
                     builder: (_, v, _) => CustomPaint(
                       size: Size.square(size),
-                      painter: _RingPainter(value: v, track: k.border, color: ring, width: 10.sp),
+                      painter: _RingPainter(
+                        value: v,
+                        track: k.border,
+                        color: ring,
+                        width: 10.sp,
+                      ),
                     ),
                   ),
                   Container(
                     width: size - 40.sp,
                     height: size - 40.sp,
-                    decoration: BoxDecoration(color: k.card, shape: BoxShape.circle),
+                    decoration: BoxDecoration(
+                      color: k.card,
+                      shape: BoxShape.circle,
+                    ),
                     alignment: Alignment.center,
                     child: done
-                        ? PhosphorIcon(PhosphorIconsBold.check, size: 56.sp, color: k.text)
+                        ? PhosphorIcon(
+                            PhosphorIconsBold.check,
+                            size: 56.sp,
+                            color: k.text,
+                          )
                         : Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text('$left', style: AppText.number(56.sp).copyWith(color: k.text, height: 1)),
+                              Text(
+                                '$left',
+                                style: AppText.number(
+                                  56.sp,
+                                ).copyWith(color: k.text, height: 1),
+                              ),
                               Text(
                                 'seconds',
-                                style: AppText.small.copyWith(fontSize: 13.sp, fontWeight: FontWeight.w700, color: k.muted),
+                                style: AppText.small.copyWith(
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: k.muted,
+                                ),
                               ),
                             ],
                           ),
@@ -446,13 +538,27 @@ class _HoldTimer extends StatelessWidget {
             children: [
               PressScale(
                 onTap: c.toggleTimer,
-                semanticLabel: c.running.value ? 'Stop timer' : 'Start hold timer',
+                semanticLabel: c.running.value
+                    ? 'Stop timer'
+                    : 'Start hold timer',
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16.sp, vertical: 10.sp),
-                  decoration: BoxDecoration(color: AppColors.ink, borderRadius: BorderRadius.circular(18.sp)),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.sp,
+                    vertical: 10.sp,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.ink,
+                    borderRadius: BorderRadius.circular(18.sp),
+                  ),
                   child: Text(
-                    c.running.value ? 'Stop' : (done ? 'Start again' : 'Start hold timer'),
-                    style: AppText.small.copyWith(fontSize: 13.5.sp, fontWeight: FontWeight.w800, color: AppColors.lime),
+                    c.running.value
+                        ? 'Stop'
+                        : (done ? 'Start again' : 'Start hold timer'),
+                    style: AppText.small.copyWith(
+                      fontSize: 13.5.sp,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.lime,
+                    ),
                   ),
                 ),
               ),
@@ -471,7 +577,12 @@ class _HoldTimer extends StatelessWidget {
 }
 
 class _RingPainter extends CustomPainter {
-  _RingPainter({required this.value, required this.track, required this.color, required this.width});
+  _RingPainter({
+    required this.value,
+    required this.track,
+    required this.color,
+    required this.width,
+  });
 
   final double value;
   final Color track;
@@ -493,12 +604,21 @@ class _RingPainter extends CustomPainter {
       ..strokeWidth = width
       ..strokeCap = StrokeCap.round
       ..color = color;
-    canvas.drawArc(r, -math.pi / 2, math.pi * 2 * value.clamp(0, 1), false, arc);
+    canvas.drawArc(
+      r,
+      -math.pi / 2,
+      math.pi * 2 * value.clamp(0, 1),
+      false,
+      arc,
+    );
   }
 
   @override
   bool shouldRepaint(_RingPainter old) =>
-      old.value != value || old.color != color || old.track != track || old.width != width;
+      old.value != value ||
+      old.color != color ||
+      old.track != track ||
+      old.width != width;
 }
 
 class _After extends StatelessWidget {
@@ -513,7 +633,10 @@ class _After extends StatelessWidget {
           if (i > 0) SizedBox(height: 10.sp),
           Container(
             padding: EdgeInsets.symmetric(horizontal: 16.sp, vertical: 14.sp),
-            decoration: BoxDecoration(color: k.card, borderRadius: BorderRadius.circular(18.sp)),
+            decoration: BoxDecoration(
+              color: k.card,
+              borderRadius: BorderRadius.circular(18.sp),
+            ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -521,10 +644,17 @@ class _After extends StatelessWidget {
                   width: 28.sp,
                   height: 28.sp,
                   alignment: Alignment.center,
-                  decoration: BoxDecoration(color: AppColors.limeSoft, borderRadius: BorderRadius.circular(9.sp)),
+                  decoration: BoxDecoration(
+                    color: AppColors.limeSoft,
+                    borderRadius: BorderRadius.circular(9.sp),
+                  ),
                   child: Text(
                     '${i + 1}',
-                    style: AppText.small.copyWith(fontSize: 13.sp, fontWeight: FontWeight.w800, color: AppColors.ink),
+                    style: AppText.small.copyWith(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.ink,
+                    ),
                   ),
                 ),
                 SizedBox(width: 12.sp),
@@ -532,8 +662,21 @@ class _After extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(a.$1, style: AppText.title.copyWith(fontSize: 15.sp, color: k.text)),
-                      Text(a.$2, style: AppText.small.copyWith(fontSize: 13.sp, fontWeight: FontWeight.w600, color: k.muted)),
+                      Text(
+                        a.$1,
+                        style: AppText.title.copyWith(
+                          fontSize: 15.sp,
+                          color: k.text,
+                        ),
+                      ),
+                      Text(
+                        a.$2,
+                        style: AppText.small.copyWith(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w600,
+                          color: k.muted,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -555,7 +698,9 @@ class _LeafletNote extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 14.sp, vertical: 10.sp),
       decoration: BoxDecoration(
-        color: dark ? AppColors.amberText.withValues(alpha: 0.25) : AppColors.amberWash,
+        color: dark
+            ? AppColors.amberText.withValues(alpha: 0.25)
+            : AppColors.amberWash,
         borderRadius: BorderRadius.circular(14.sp),
       ),
       child: Text(

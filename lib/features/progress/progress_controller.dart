@@ -68,7 +68,7 @@ class ProgressController extends GetxController {
     tracker.profile.value;
     range.value;
     selected.value;
-    PlusAccess.active.value;
+    PlusAccess.unlocked;
   }
 
   UserProfile? get profile => tracker.profile.value;
@@ -82,7 +82,7 @@ class ProgressController extends GetxController {
 
   /// Longer ranges need Plus.
   bool get locked =>
-      range.value != ProgressRange.month && !PlusAccess.active.value;
+      range.value != ProgressRange.month && !PlusAccess.unlocked;
 
   void openPlus() {
     Haptics.instance.selectionClick();
@@ -431,5 +431,5 @@ class ProgressController extends GetxController {
         : 'Day $best after your dose is usually your hardest.';
   }
 
-  bool get isPlus => PlusAccess.active.value;
+  bool get isPlus => PlusAccess.unlocked;
 }

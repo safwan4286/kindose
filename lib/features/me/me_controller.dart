@@ -15,7 +15,9 @@ import '../../resources/routes.dart';
 import '../../services/backend/backend_service.dart';
 import '../../services/haptics/haptics.dart';
 import '../../services/notifications/notification_service.dart';
+import '../../services/plus/access_service.dart';
 import '../../services/plus/plus_access.dart';
+import '../../services/purchases/purchase_service.dart';
 import '../../services/supply/supply_service.dart';
 import '../../services/tracker_service.dart';
 import '../../widgets/mood_row.dart';
@@ -56,6 +58,10 @@ class MeController extends GetxController {
     tracker.doses.length;
     tracker.nextDoseOverride.value;
     PlusAccess.active.value;
+    PlusAccess.freeWeek.value;
+    access.endsAt.value;
+    access.started.value;
+    _purchases?.info.value;
     supply.packStartedAt.value;
     supply.usedOffset.value;
     supply.spare.value;
@@ -68,6 +74,57 @@ class MeController extends GetxController {
   }
 
   bool get isPlus => PlusAccess.active.value;
+
+  // ------------------------------------------------------------ plan card
+
+  AccessService get access => Get.find<AccessService>();
+
+  PurchaseService? get _purchases =>
+      Get.isRegistered<PurchaseService>() ? Get.find<PurchaseService>() : null;
+
+  /// "Yearly · Renews Oct 1, 2027" from the store, when known.
+  String get _plusLine {
+    final e = _purchases?.plus;
+    if (e == null) return 'Thank you for supporting Kindose';
+    final kind = e.productIdentifier.contains('month') ? 'Monthly' : 'Yearly';
+    final exp = DateTime.tryParse(e.expirationDate ?? '')?.toLocal();
+    if (exp == null) return kind;
+    return '$kind · ${e.willRenew ? 'Renews' : 'Ends'} ${Dates.short(exp)}';
+  }
+
+  /// 'plus', 'free' (week running or not started) or 'ended'.
+  String get planState => isPlus ? 'plus' : (access.locked ? 'ended' : 'free');
+
+  String get planTitle => switch (planState) {
+    'plus' => 'Kindose Plus is on',
+    'ended' => 'Free week ended',
+    _ => access.started.value
+        ? 'Free until ${Dates.shortWithDay(access.endsAt.value)}'
+        : 'Your free week',
+  };
+
+  String get planSub {
+    switch (planState) {
+      case 'plus':
+        return _plusLine;
+      case 'ended':
+        return 'Your data is safe. Get Plus to keep logging.';
+    }
+    if (!access.started.value) return 'Starts with your first dose';
+    final d = access.daysLeft;
+    return '$d ${d == 1 ? 'day' : 'days'} left · everything is open';
+  }
+
+  String get planButton => switch (planState) {
+    'plus' => 'Manage',
+    'ended' => 'Get Plus',
+    _ => 'See plans',
+  };
+
+  // Debug builds only: try the free week states without waiting.
+  Future<void> debugRestartWeek() => access.debugRestart();
+  Future<void> debugEndWeek() => access.debugEnd();
+  Future<void> debugRealDates() => access.debugClear();
   bool get useKg => tracker.profile.value?.useKg ?? true;
   ThemeMode get themeMode => tracker.themeMode.value;
 
@@ -89,27 +146,27 @@ class MeController extends GetxController {
     return 'YOUR PLAN · WEEK ${Dates.daysBetween(start, now) ~/ 7 + 1}';
   }
 
-  String get planTitle {
-    final p = tracker.profile.value;
-    if (p == null || !hasMedicine) return 'Add your medicine';
-    final dose = p.strengthMg > 0 ? ' ${Catalog.mgLabel(p.strengthMg)}' : '';
-    return '${Catalog.medicineName(p.medicineId, p.customMedicine)}$dose';
-  }
-
-  String get planSub {
-    final p = tracker.profile.value;
-    if (p == null || !hasMedicine)
-      return 'So we can remind you and track your doses.';
-    final time = Dates.timeOfDay(p.shotMinutes);
-    final day = Dates.weekdayName(p.shotWeekday);
-    final when = switch (p.everyDays) {
-      1 => 'Every day at $time',
-      7 => '${day}s at $time',
-      14 => 'Every other $day at $time',
-      _ => 'Every ${p.everyDays} days at $time',
-    };
-    return '${Catalog.formLabel(p.form)} · $when';
-  }
+  // String get planTitle {
+  //   final p = tracker.profile.value;
+  //   if (p == null || !hasMedicine) return 'Add your medicine';
+  //   final dose = p.strengthMg > 0 ? ' ${Catalog.mgLabel(p.strengthMg)}' : '';
+  //   return '${Catalog.medicineName(p.medicineId, p.customMedicine)}$dose';
+  // }
+  //
+  // String get planSub {
+  //   final p = tracker.profile.value;
+  //   if (p == null || !hasMedicine)
+  //     return 'So we can remind you and track your doses.';
+  //   final time = Dates.timeOfDay(p.shotMinutes);
+  //   final day = Dates.weekdayName(p.shotWeekday);
+  //   final when = switch (p.everyDays) {
+  //     1 => 'Every day at $time',
+  //     7 => '${day}s at $time',
+  //     14 => 'Every other $day at $time',
+  //     _ => 'Every ${p.everyDays} days at $time',
+  //   };
+  //   return '${Catalog.formLabel(p.form)} · $when';
+  // }
 
   String get formLabel {
     final p = tracker.profile.value;
@@ -180,9 +237,22 @@ class MeController extends GetxController {
     Get.toNamed<void>(Routes.editPlan);
   }
 
-  void openPlus() {
+  /// Paywall, or for Plus users the store's subscription page (change
+  /// plan, cancel). RevenueCat's Customer Center needs a paid RevenueCat
+  /// plan, so the store page is used instead.
+  Future<void> openPlus() async {
     Haptics.instance.selectionClick();
-    Get.toNamed<void>(Routes.plus);
+    if (!isPlus) {
+      await Get.toNamed<void>(Routes.plus);
+      return;
+    }
+    final url = _purchases?.managementUrl;
+    if (url != null) {
+      try {
+        if (await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication)) return;
+      } catch (_) {}
+    }
+    showToast('Manage Plus in your App Store or Google Play subscriptions.');
   }
 
   // ------------------------------------------------------------- treatment

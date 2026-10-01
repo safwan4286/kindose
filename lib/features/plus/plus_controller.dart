@@ -1,10 +1,16 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 
+import '../../resources/date_utils.dart';
 import '../../resources/images.dart';
 import '../../resources/routes.dart';
 import '../../services/haptics/haptics.dart';
 import '../../services/offers/offer_service.dart';
+import '../../services/plus/access_service.dart';
+import '../../services/purchases/purchase_service.dart';
 import '../offer/offer_controller.dart';
 import '../../services/tracker_service.dart';
 import '../../widgets/toast.dart';
@@ -41,23 +47,24 @@ class PlusPerk {
   final Set<String> focus;
 }
 
-/// Paywall UI only. Purchases are not connected in this build. They will
-/// go through RevenueCat later, with store prices instead of these labels.
+/// Paywall. No store trial: everyone gets a free week in the app first
+/// (AccessService). Purchases go through RevenueCat ([PurchaseService]);
+/// plan prices come from the store, [fallbackPlans] only until they load.
 class PlusController extends GetxController {
-  static const List<PlusPlan> plans = [
+  static const List<PlusPlan> fallbackPlans = [
     PlusPlan(
       'year',
       'Yearly',
-      '7 days free · \$3.33 a month',
-      '\$39.99',
+      '\$4.17 a month',
+      '\$49.99',
       'a year',
-      badge: 'SAVE 52%',
+      badge: 'SAVE 72%',
     ),
     PlusPlan(
       'month',
       'Monthly',
-      'No trial · cancel anytime',
-      '\$6.99',
+      'Cancel anytime',
+      '\$14.99',
       'a month',
     ),
   ];
@@ -66,28 +73,28 @@ class PlusController extends GetxController {
     // Only perks that work at launch (store rule). Backup is free with
     // sign-in; "Snap a meal" comes back here in v1.1.
     PlusPerk(
+      Img3d.syringe,
+      'Dose log and spot rotation',
+      'Every dose, spot and how it felt',
+      {'remember', 'nerves'},
+    ),
+    PlusPerk(
+      Img3d.biceps,
+      'Protein coach',
+      'Next bite ideas for low-appetite days',
+      {'muscle', 'nausea', 'noise'},
+    ),
+    PlusPerk(
       Img3d.chartDown,
-      'Full history and all charts',
-      'Every weigh-in and dose since day one',
-      {'progress', 'muscle'},
-    ),
-    PlusPerk(
-      Img3d.nauseated,
-      'Side-effect patterns',
-      'See which day after your dose is usually hardest',
-      {'nausea', 'noise'},
-    ),
-    PlusPerk(
-      Img3d.clipboard,
-      'Doctor report with charts',
-      'Weight, doses and symptoms as a PDF',
+      'Progress and doctor report',
+      'Charts since day one and a PDF for your visit',
       {'progress'},
     ),
     PlusPerk(
       Img3d.moneyBag,
-      'Pen and cost tracker',
+      'Pens and cost',
       'Doses left, refill nudge, monthly spend',
-      {'cost', 'remember'},
+      {'cost'},
     ),
   ];
 
@@ -133,12 +140,57 @@ class PlusController extends GetxController {
 
   bool get isYearly => selected.value == 'year';
 
-  String get cta =>
-      isYearly ? 'Start my free week' : 'Subscribe for \$6.99 a month';
+  PurchaseService? get _purchases =>
+      Get.isRegistered<PurchaseService>() ? Get.find<PurchaseService>() : null;
+
+  /// Yearly + monthly with store prices, or [fallbackPlans].
+  List<PlusPlan> get plans {
+    final ps = _purchases;
+    final y = ps?.package('year')?.storeProduct;
+    final m = ps?.package('month')?.storeProduct;
+    if (y == null || m == null) return fallbackPlans;
+    final save = m.price > 0 ? ((1 - y.price / (m.price * 12)) * 100).round() : 0;
+    return [
+      PlusPlan(
+        'year',
+        'Yearly',
+        '${PurchaseService.monthlyOf(y.priceString, y.price)} a month',
+        y.priceString,
+        'a year',
+        badge: save > 0 ? 'SAVE $save%' : null,
+      ),
+      PlusPlan('month', 'Monthly', 'Cancel anytime', m.priceString, 'a month'),
+    ];
+  }
+
+  PlusPlan get _plan =>
+      plans.firstWhere((p) => p.id == selected.value, orElse: () => plans.first);
+
+  /// True while a purchase or restore runs.
+  bool get busy => _purchases?.busy.value ?? false;
+
+  String get cta => 'Get Plus · ${_plan.price} / ${isYearly ? 'year' : 'month'}';
 
   String get fine => isYearly
-      ? '7 days free, then \$39.99/year. Cancel anytime.'
-      : 'Billed monthly. Cancel anytime.';
+      ? 'Billed now. Renews yearly until you cancel.'
+      : 'Billed now. Renews monthly until you cancel.';
+
+  AccessService get _access => Get.find<AccessService>();
+
+  /// The free-week line in the hero.
+  String get freeLine {
+    if (_access.locked) return 'Your free week has ended.\nYour data is safe. Pick a plan to keep logging.';
+    if (!_access.started.value) {
+      return 'Your first week is free. No card needed.\nIt starts with your first dose.';
+    }
+    return 'Your first week is free. No card needed.\nFree until ${Dates.shortWithDay(_access.endsAt.value)}';
+  }
+
+  /// The text button under the plans (it closes the paywall).
+  String get secondary {
+    if (fromOnboarding) return 'Start my free week';
+    return _access.locked ? 'Not now' : 'Keep my free week';
+  }
 
   void pick(String id) {
     if (selected.value == id) return;
@@ -146,18 +198,56 @@ class PlusController extends GetxController {
     selected.value = id;
   }
 
-  /// TODO(purchases): RevenueCat purchase, then schedule the day-5
-  /// "trial ends soon" reminder promised on the trial timeline.
-  void subscribe() {
+  Future<void> subscribe() async {
+    final ps = _purchases;
+    final pkg = ps?.package(selected.value);
+    if (ps == null || !ps.ready || pkg == null) {
+      showToast("Plans aren't available right now. Check your connection and try again.");
+      if (ps != null) unawaited(ps.loadOfferings());
+      return;
+    }
     Haptics.instance.lightImpact();
-    showToast(
-      'Subscriptions are not connected yet. Everything free works fully.',
-    );
+    switch (await ps.buy(pkg)) {
+      case PurchaseOutcome.success:
+        Haptics.instance.mediumImpact();
+        showToast('Welcome to Kindose Plus');
+        _leave();
+      case PurchaseOutcome.pending:
+        showToast('Your payment is pending. Plus turns on as soon as it goes through.');
+      case PurchaseOutcome.failed:
+        showToast("The purchase didn't go through. Please try again.");
+      case PurchaseOutcome.unavailable:
+        showToast("Purchases aren't available right now.");
+      case PurchaseOutcome.cancelled:
+        break;
+    }
   }
 
-  void restore() {
+  Future<void> restore() async {
     Haptics.instance.selectionClick();
-    showToast('Nothing to restore yet.');
+    final ps = _purchases;
+    if (ps == null || !ps.ready) {
+      showToast("Purchases aren't available right now.");
+      return;
+    }
+    final back = await ps.restore();
+    if (back == true) {
+      showToast('Kindose Plus restored');
+      _leave();
+    } else if (back == false) {
+      showToast('No Plus purchase found for this store account.');
+    } else {
+      showToast("Couldn't restore right now. Please try again.");
+    }
+  }
+
+  /// After a purchase or restore: straight on, no offer.
+  void _leave() {
+    if (fromOnboarding) {
+      Get.offAllNamed<void>(Routes.home);
+    } else {
+      popRoute();
+    }
   }
 
   bool _closing = false;
@@ -168,9 +258,18 @@ class PlusController extends GetxController {
     if (_closing) return;
     _closing = true;
     Haptics.instance.selectionClick();
-    final showOffer = await Get.find<OfferService>().onPaywallClosed(fromOnboarding: fromOnboarding);
+    // Only offer what can really be bought (debug builds always show it,
+    // so the screen can be checked before the offer product exists).
+    final offers = Get.find<OfferService>();
+    final canOffer = kDebugMode ||
+        _purchases?.package('year', offeringId: offers.config.value.offeringId) != null;
+    final showOffer = canOffer &&
+        await offers.onPaywallClosed(fromOnboarding: fromOnboarding);
     if (showOffer) {
-      Get.offNamed<void>(Routes.offer, arguments: OfferArgs(fromOnboarding: fromOnboarding));
+      Get.offNamed<void>(
+        Routes.offer,
+        arguments: OfferArgs(fromOnboarding: fromOnboarding),
+      );
     } else if (fromOnboarding) {
       Get.offAllNamed<void>(Routes.home);
     } else {

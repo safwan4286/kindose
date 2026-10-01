@@ -12,6 +12,7 @@ import '../../resources/date_utils.dart';
 import '../../resources/routes.dart';
 import '../../services/haptics/haptics.dart';
 import '../../services/notifications/notification_service.dart';
+import '../../services/plus/access_service.dart';
 import '../../services/plus/plus_access.dart';
 import '../../services/tracker_service.dart';
 import '../../widgets/k_ruler.dart';
@@ -125,6 +126,8 @@ class TodayController extends GetxController {
 
   /// Touch every reactive source the screen depends on (call inside Obx).
   void watch() {
+    access.endsAt.value;
+    access.started.value;
     now.value;
     tracker.profile.value;
     tracker.doses.length;
@@ -136,7 +139,7 @@ class TodayController extends GetxController {
     tracker.nextDoseOverride.value;
     weeklyHidden.value;
     biteAdded.length;
-    PlusAccess.active.value;
+    PlusAccess.unlocked;
   }
 
   // ------------------------------------------------------------ next bite
@@ -146,7 +149,7 @@ class TodayController extends GetxController {
   final RxSet<String> biteAdded = <String>{}.obs;
 
   /// Plus shows 3 ideas; free shows 1. Open in debug builds for testing.
-  bool get biteUnlocked => PlusAccess.active.value || kDebugMode;
+  bool get biteUnlocked => PlusAccess.unlocked || kDebugMode;
 
   NextBite get nextBite {
     final key = Dates.key(now.value);
@@ -355,6 +358,7 @@ class TodayController extends GetxController {
   /// One-tap "Taken" is for tablets only. Daily injections open Log dose,
   /// so the injection spot is recorded and rotation keeps working.
   Future<void> markTaken() async {
+    if (!AccessService.allow()) return;
     if (!isTablet) {
       await logDose();
       return;
@@ -655,7 +659,17 @@ class TodayController extends GetxController {
   ];
 
   bool get showSetup =>
-      !tracker.setupDismissed.value && setupItems.any((i) => !i.done);
+      !locked && !tracker.setupDismissed.value && setupItems.any((i) => !i.done);
+
+  // ------------------------------------------------------------ free week
+
+  AccessService get access => Get.find<AccessService>();
+
+  /// Free week over and no Plus: Today shows only the dose basics.
+  bool get locked => access.locked;
+
+  bool get showFreeStrip =>
+      access.inFreeWeek && access.started.value && access.config.value.gatingOn;
   int get setupDone => setupItems.where((i) => i.done).length;
 
   Future<void> dismissSetup() async {

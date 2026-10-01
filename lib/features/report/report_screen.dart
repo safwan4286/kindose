@@ -309,7 +309,10 @@ class _PreviewCard extends StatelessWidget {
                     opacity: controller.weight.value ? 1 : 0.08,
                     child: Padding(
                       padding: EdgeInsets.only(top: 5.sp),
-                      child: CustomPaint(size: Size(78.sp, 26.sp), painter: const _MiniLine()),
+                      child: CustomPaint(
+                        size: Size(78.sp, 26.sp),
+                        painter: const _MiniLine(),
+                      ),
                     ),
                   ),
                   AnimatedOpacity(
@@ -382,21 +385,33 @@ class _PreviewCard extends StatelessWidget {
 class _MiniLine extends CustomPainter {
   const _MiniLine();
 
-  static const List<double> _pts = [0.22, 0.28, 0.34, 0.42, 0.5, 0.56, 0.62, 0.66];
+  static const List<double> _pts = [
+    0.22,
+    0.28,
+    0.34,
+    0.42,
+    0.5,
+    0.56,
+    0.62,
+    0.66,
+  ];
 
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width;
     final h = size.height;
-    final panel = RRect.fromRectAndRadius(Offset.zero & size, const Radius.circular(3));
+    final panel = RRect.fromRectAndRadius(
+      Offset.zero & size,
+      const Radius.circular(3),
+    );
     canvas.drawRRect(panel, Paint()..color = const Color(0xFFF6F5F1));
 
     const padX = 4.0;
     const padY = 4.0;
     Offset at(int i) => Offset(
-          padX + (w - padX * 2) * i / (_pts.length - 1),
-          padY + (h - padY * 2) * _pts[i],
-        );
+      padX + (w - padX * 2) * i / (_pts.length - 1),
+      padY + (h - padY * 2) * _pts[i],
+    );
 
     // Dashed goal line near the bottom.
     final goalY = padY + (h - padY * 2) * 0.86;
@@ -419,7 +434,10 @@ class _MiniLine extends CustomPainter {
       ..lineTo(at(_pts.length - 1).dx, h - padY)
       ..lineTo(at(0).dx, h - padY)
       ..close();
-    canvas.drawPath(fill, Paint()..color = AppColors.lime.withValues(alpha: 0.35));
+    canvas.drawPath(
+      fill,
+      Paint()..color = AppColors.lime.withValues(alpha: 0.35),
+    );
     canvas.drawPath(
       line,
       Paint()

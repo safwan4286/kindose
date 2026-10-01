@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../resources/backend_keys.dart';
 import '../app_info.dart';
+import '../plus/access_service.dart';
 import '../offers/offer_service.dart';
 import '../supply/supply_service.dart';
 import '../tracker_service.dart';
@@ -367,6 +368,9 @@ class BackendService extends GetxService {
       final rows = await _db.from('app_config').select('key, value');
       _log('Config loaded: ${rows.map((r) => r['key']).join(', ')}');
       for (final r in rows) {
+        if (r['key'] == 'access' && Get.isRegistered<AccessService>()) {
+          Get.find<AccessService>().applyRemote(r['value']);
+        }
         if (r['key'] == 'paywall_offer' && Get.isRegistered<OfferService>()) {
           final value = r['value'];
           if (value is Map && value.isNotEmpty) {

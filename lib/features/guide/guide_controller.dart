@@ -75,7 +75,13 @@ class GuideController extends GetxController {
   String get nextSiteId => tracker.nextSiteId;
   String get nextSiteName => Catalog.siteName(nextSiteId);
 
-  String get caps => const ['GET READY', 'PICK YOUR SPOT', 'BREATHE', 'INJECT', 'AFTER'][step.value];
+  String get caps => const [
+    'GET READY',
+    'PICK YOUR SPOT',
+    'BREATHE',
+    'INJECT',
+    'AFTER',
+  ][step.value];
 
   String get title => switch (step.value) {
     0 => 'Take a moment to set up',

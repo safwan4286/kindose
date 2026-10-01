@@ -22,8 +22,9 @@ class DaySwitcher extends StatelessWidget {
     final k = context.k;
     return Obx(() {
       nav.day.value;
-      PlusAccess.active.value;
-      Widget arrow(IconData icon, String label, VoidCallback? onTap) => CircleIconButton(
+      PlusAccess.unlocked;
+      Widget arrow(IconData icon, String label, VoidCallback? onTap) =>
+          CircleIconButton(
             icon: icon,
             label: label,
             size: 36.sp,
@@ -33,7 +34,11 @@ class DaySwitcher extends StatelessWidget {
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          arrow(PhosphorIconsBold.caretLeft, 'Previous day', nav.canGoBack ? nav.previousDay : null),
+          arrow(
+            PhosphorIconsBold.caretLeft,
+            'Previous day',
+            nav.canGoBack ? nav.previousDay : null,
+          ),
           Semantics(
             button: true,
             label: 'Day: ${nav.dayTitle}. Pick a day',
@@ -47,12 +52,20 @@ class DaySwitcher extends StatelessWidget {
                 child: Text(
                   nav.dayTitle,
                   maxLines: 1,
-                  style: AppText.small.copyWith(fontSize: 13.5.sp, fontWeight: FontWeight.w800, color: k.text),
+                  style: AppText.small.copyWith(
+                    fontSize: 13.5.sp,
+                    fontWeight: FontWeight.w800,
+                    color: k.text,
+                  ),
                 ),
               ),
             ),
           ),
-          arrow(PhosphorIconsBold.caretRight, 'Next day', nav.canGoForward ? nav.nextDay : null),
+          arrow(
+            PhosphorIconsBold.caretRight,
+            'Next day',
+            nav.canGoForward ? nav.nextDay : null,
+          ),
         ],
       );
     });
@@ -89,15 +102,27 @@ class PastDayBanner extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      Icon(PhosphorIconsBold.calendarDots, size: 16.sp, color: fg),
+                      Icon(
+                        PhosphorIconsBold.calendarDots,
+                        size: 16.sp,
+                        color: fg,
+                      ),
                       SizedBox(width: 8.sp),
                       Expanded(
                         child: Text(
                           '$verb ${nav.dayTitle == 'Yesterday' ? 'yesterday' : nav.dayTitle}',
-                          style: AppText.small.copyWith(fontSize: 13.sp, fontWeight: FontWeight.w700, color: fg),
+                          style: AppText.small.copyWith(
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.w700,
+                            color: fg,
+                          ),
                         ),
                       ),
-                      LinkButton(label: 'Back to today', onTap: nav.backToToday, color: k.text),
+                      LinkButton(
+                        label: 'Back to today',
+                        onTap: nav.backToToday,
+                        color: k.text,
+                      ),
                     ],
                   ),
                 ),

@@ -5,7 +5,9 @@ import 'package:get/get.dart';
 import 'package:kindose/widgets/safe_bottom.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
+import '../../resources/app_links.dart';
 import '../../resources/colors.dart';
+import '../../resources/images.dart';
 import '../../services/responsiveness/device_manager.dart';
 import '../../services/theme/system_ui.dart';
 import '../../services/theme/theme.dart';
@@ -14,7 +16,6 @@ import '../../widgets/drop_mark.dart';
 import '../../widgets/entrance.dart';
 import '../../widgets/k_widgets.dart';
 import '../../widgets/press_scale.dart';
-import '../legal/legal_sheet.dart';
 import 'plus_controller.dart';
 
 /// Kindose Plus paywall (v2, Calm Paper). Free stays free; close is always
@@ -44,17 +45,16 @@ class PlusScreen extends GetView<PlusController> {
                   controller: controller.scrollController,
                   padding: EdgeInsets.zero,
                   children: [
-                    _Hero(onClose: controller.close, motion: motion),
+                    Obx(() => _Hero(onClose: controller.close, motion: motion, line: controller.freeLine)),
                     Padding(
                       padding: EdgeInsets.fromLTRB(20.sp, 20.sp, 20.sp, 16.sp),
                       child: Obx(() {
-                        final yearly = controller.isYearly;
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             const SectionLabel('CHOOSE YOUR PLAN'),
                             SizedBox(height: 15.sp),
-                            for (final p in PlusController.plans) ...[
+                            for (final p in controller.plans) ...[
                               _PlanTile(
                                 plan: p,
                                 selected: controller.selected.value == p.id,
@@ -62,22 +62,10 @@ class PlusScreen extends GetView<PlusController> {
                               ),
                               SizedBox(height: 12.sp),
                             ],
-                            AnimatedSize(
-                              duration: const Duration(milliseconds: 280),
-                              curve: Curves.easeOutCubic,
-                              alignment: Alignment.topCenter,
-                              child: yearly
-                                  ? Padding(
-                                padding: EdgeInsets.only(top: 10.sp),
-                                child: const _TrialTimeline(),
-                              )
-                                  : const SizedBox(width: double.infinity),
-                            ),
                             SizedBox(height: 10.sp),
                             _Perks(
                               controller: controller,
                             ).enter(motion, delay: 220, dy: 0.12),
-
                           ],
                         );
                       }),
@@ -106,6 +94,7 @@ class PlusScreen extends GetView<PlusController> {
                         children: [
                           PillButton(
                             label: controller.cta,
+                            busy: controller.busy,
                             onPressed: controller.subscribe,
                           ),
                           SizedBox(height: 8.sp),
@@ -124,9 +113,14 @@ class PlusScreen extends GetView<PlusController> {
                           ),
                           SizedBox(height: 2.sp),
                           _FooterLinks(
-                            onTerms: showLegalSheet,
-                            onPrivacy: showLegalSheet,
+                            onTerms: () => AppLinks.open(AppLinks.termsUrl),
+                            onPrivacy: () => AppLinks.open(AppLinks.privacyUrl),
                             onRestore: controller.restore,
+                          ),
+                          LinkButton(
+                            label: controller.secondary,
+                            color: k.text,
+                            onTap: controller.close,
                           ),
                         ],
                       ),
@@ -145,10 +139,13 @@ class PlusScreen extends GetView<PlusController> {
 // ---------------------------------------------------------------------- hero
 
 class _Hero extends StatelessWidget {
-  const _Hero({required this.onClose, required this.motion});
+  const _Hero({required this.onClose, required this.motion, required this.line});
 
   final VoidCallback onClose;
   final bool motion;
+
+  /// Free-week status under the title.
+  final String line;
 
   @override
   Widget build(BuildContext context) {
@@ -254,7 +251,7 @@ class _Hero extends StatelessWidget {
           Semantics(
             header: true,
             child: Text(
-              'Get more from\nevery dose',
+              'Stay on track,\ndose after dose',
               style: AppText.h1.copyWith(
                 fontSize: 30.sp,
                 height: 1.08,
@@ -263,12 +260,28 @@ class _Hero extends StatelessWidget {
             ),
           ).enter(motion, delay: 100, dy: 0.12),
           SizedBox(height: 10.sp),
-          Text(
-            'Your plan, doses, reminders and daily goals stay free. Plus adds the extras.',
-            style: AppText.bodyText.copyWith(
-              fontSize: 15.sp,
-              height: 1.45,
-              color: AppColors.heroMuted,
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 12.sp, vertical: 10.sp),
+            decoration: BoxDecoration(
+              color: AppColors.white.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(16.sp),
+            ),
+            child: Row(
+              children: [
+                ThreeD(Img3d.sparkles, size: 26.sp),
+                SizedBox(width: 10.sp),
+                Expanded(
+                  child: Text(
+                    line,
+                    style: AppText.small.copyWith(
+                      fontSize: 13.5.sp,
+                      height: 1.4,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.white,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ).enter(motion, delay: 150, dy: 0.12),
         ],
@@ -389,93 +402,15 @@ class _Perks extends StatelessWidget {
   }
 }
 
-// ------------------------------------------------------------ trial timeline
-
-class _TrialTimeline extends StatelessWidget {
-  const _TrialTimeline();
-
-  @override
-  Widget build(BuildContext context) {
-    final k = context.k;
-    final dark = k.selectedBorder == AppColors.lime;
-    final steps = [
-      ('1', 'Today', 'Everything in Plus unlocks', AppColors.lime, AppColors.ink),
-      ('5', 'Day 5', 'We remind you the trial is ending', dark ? k.text : AppColors.ink, dark ? k.bg : AppColors.lime),
-      ('7', 'Day 7', '\$39.99 for the year. Cancel before and pay nothing', k.cardAlt, k.text),
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const SectionLabel('HOW THE FREE WEEK WORKS'),
-        SizedBox(height: 10.sp),
-        Container(
-          padding: EdgeInsets.fromLTRB(16.sp, 16.sp, 16.sp, 2.sp),
-          decoration: BoxDecoration(color: k.card, borderRadius: BorderRadius.circular(22.sp)),
-          child: Column(
-            children: [
-              for (var i = 0; i < steps.length; i++)
-                IntrinsicHeight(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Column(
-                        children: [
-                          Container(
-                            width: 30.sp,
-                            height: 30.sp,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(color: steps[i].$4, shape: BoxShape.circle),
-                            child: Text(
-                              steps[i].$1,
-                              style: AppText.small.copyWith(fontSize: 13.sp, fontWeight: FontWeight.w800, color: steps[i].$5),
-                            ),
-                          ),
-                          // Line down to the next step.
-                          if (i < steps.length - 1)
-                            Expanded(child: Container(width: 2, color: k.border)),
-                        ],
-                      ),
-                      SizedBox(width: 12.sp),
-                      Expanded(
-                        child: Padding(
-                          padding: EdgeInsets.only(top: 3.sp, bottom: 14.sp),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                steps[i].$2,
-                                style: AppText.bodyStrong.copyWith(
-                                  fontSize: 15.sp,
-                                  fontWeight: FontWeight.w800,
-                                  color: k.text,
-                                ),
-                              ),
-                              SizedBox(height: 1.sp),
-                              Text(
-                                steps[i].$3,
-                                style: AppText.small.copyWith(fontSize: 13.sp, color: k.muted),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 // ------------------------------------------------------------ footer links
 
 /// "Terms · Privacy · Restore" under the button, as the stores expect.
 class _FooterLinks extends StatelessWidget {
-  const _FooterLinks({required this.onTerms, required this.onPrivacy, required this.onRestore});
+  const _FooterLinks({
+    required this.onTerms,
+    required this.onPrivacy,
+    required this.onRestore,
+  });
 
   final VoidCallback onTerms;
   final VoidCallback onPrivacy;
@@ -484,20 +419,24 @@ class _FooterLinks extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final k = context.k;
-    final style = AppText.small.copyWith(fontSize: 12.sp, fontWeight: FontWeight.w700, color: k.faint);
+    final style = AppText.small.copyWith(
+      fontSize: 12.sp,
+      fontWeight: FontWeight.w700,
+      color: k.faint,
+    );
     Widget link(String label, VoidCallback onTap) => Semantics(
-          button: true,
-          label: label,
-          excludeSemantics: true,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(8.sp),
-            onTap: onTap,
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 6.sp, vertical: 8.sp),
-              child: Text(label, style: style),
-            ),
-          ),
-        );
+      button: true,
+      label: label,
+      excludeSemantics: true,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8.sp),
+        onTap: onTap,
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 6.sp, vertical: 8.sp),
+          child: Text(label, style: style),
+        ),
+      ),
+    );
     Widget dot() => ExcludeSemantics(child: Text('·', style: style));
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,

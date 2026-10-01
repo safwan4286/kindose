@@ -5,12 +5,15 @@ import 'package:get/get.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 import '../../resources/colors.dart';
+import '../../resources/images.dart';
+import '../../services/plus/plus_access.dart';
 import '../../services/responsiveness/device_manager.dart';
 import '../../widgets/press_scale.dart';
 import '../me/me_screen.dart';
 import '../progress/progress_screen.dart';
 import '../report/report_screen.dart';
 import '../today/today_screen.dart';
+import '../today/widgets/free_week.dart';
 import 'home_controller.dart';
 
 /// Tab shell with the floating pill navigation from the design.
@@ -27,11 +30,24 @@ class HomeScreen extends GetView<HomeController> {
               index: controller.tab.value.index,
               child: IndexedStack(
                 index: controller.tab.value.index,
-                children: const [
-                  TodayScreen(),
-                  ProgressScreen(),
-                  ReportScreen(),
-                  MeScreen(),
+                children: [
+                  const TodayScreen(),
+                  // After the free week these two tabs ask for Plus.
+                  PlusAccess.unlocked
+                      ? const ProgressScreen()
+                      : const LockedTab(
+                          title: 'Your progress is waiting',
+                          sub: 'Charts, trends and how you felt since day one, with Plus.',
+                          icon: Img3d.chartUp,
+                        ),
+                  PlusAccess.unlocked
+                      ? const ReportScreen()
+                      : const LockedTab(
+                          title: 'Your doctor report',
+                          sub: 'Doses, weight and side effects as a PDF for your next visit, with Plus.',
+                          icon: Img3d.clipboard,
+                        ),
+                  const MeScreen(),
                 ],
               ),
             ),
@@ -51,7 +67,8 @@ class HomeScreen extends GetView<HomeController> {
 const double _navHeight = 68;
 
 /// Bottom padding every tab adds so its content can scroll above the nav.
-double get kNavClearance => _navHeight + math.max(12.0, DeviceManager.instance.bottomBarHeight) + 40;
+double get kNavClearance =>
+    _navHeight + math.max(12.0, DeviceManager.instance.bottomBarHeight) + 40;
 
 /// Quick fade + lift when the tab changes. Keeps the [IndexedStack]
 /// (and each tab's scroll position) alive.
@@ -65,13 +82,17 @@ class _TabFade extends StatefulWidget {
   State<_TabFade> createState() => _TabFadeState();
 }
 
-class _TabFadeState extends State<_TabFade> with SingleTickerProviderStateMixin {
+class _TabFadeState extends State<_TabFade>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _c = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 240),
     value: 1,
   );
-  late final Animation<double> _curve = CurvedAnimation(parent: _c, curve: Curves.easeOutCubic);
+  late final Animation<double> _curve = CurvedAnimation(
+    parent: _c,
+    curve: Curves.easeOutCubic,
+  );
 
   @override
   void didUpdateWidget(_TabFade old) {
@@ -92,7 +113,10 @@ class _TabFadeState extends State<_TabFade> with SingleTickerProviderStateMixin 
     return FadeTransition(
       opacity: Tween<double>(begin: 0.4, end: 1).animate(_curve),
       child: SlideTransition(
-        position: Tween<Offset>(begin: const Offset(0, 0.012), end: Offset.zero).animate(_curve),
+        position: Tween<Offset>(
+          begin: const Offset(0, 0.012),
+          end: Offset.zero,
+        ).animate(_curve),
         child: widget.child,
       ),
     );
@@ -117,7 +141,9 @@ class _FloatingNav extends StatelessWidget {
           borderRadius: BorderRadius.circular(34),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: k.bg == KColors.dark.bg ? 0.5 : 0.14),
+              color: Colors.black.withValues(
+                alpha: k.bg == KColors.dark.bg ? 0.5 : 0.14,
+              ),
               blurRadius: 30,
               offset: const Offset(0, 12),
             ),
@@ -126,18 +152,21 @@ class _FloatingNav extends StatelessWidget {
         child: Obx(() {
           final t = controller.tab.value;
           Widget item(HomeTab tab, IconData icon, String label) => _NavItem(
-                icon: icon,
-                label: label,
-                active: t == tab,
-                onTap: () => controller.tapTab(tab),
-              );
+            icon: icon,
+            label: label,
+            active: t == tab,
+            onTap: () => controller.tapTab(tab),
+          );
           return Row(
             children: [
               item(HomeTab.today, PhosphorIconsBold.house, 'Today'),
               item(HomeTab.progress, PhosphorIconsBold.chartLineUp, 'Progress'),
               Expanded(
                 child: Center(
-                  child: _LogButton(open: controller.logOpen.value, onTap: controller.openLogSheet),
+                  child: _LogButton(
+                    open: controller.logOpen.value,
+                    onTap: controller.openLogSheet,
+                  ),
                 ),
               ),
               item(HomeTab.report, PhosphorIconsBold.fileText, 'Doctor report'),
@@ -185,7 +214,9 @@ class _NavItem extends StatelessWidget {
                 width: 46,
                 height: 46,
                 decoration: BoxDecoration(
-                  color: active ? k.navActiveBg : k.navActiveBg.withValues(alpha: 0),
+                  color: active
+                      ? k.navActiveBg
+                      : k.navActiveBg.withValues(alpha: 0),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
@@ -195,10 +226,14 @@ class _NavItem extends StatelessWidget {
                     builder: (_, c, _) => TweenAnimationBuilder<double>(
                       // Re-keyed on change so the newly picked icon pops in.
                       key: ValueKey(active),
-                      tween: Tween<double>(begin: active && motion ? 0.75 : 1.0, end: 1.0),
+                      tween: Tween<double>(
+                        begin: active && motion ? 0.75 : 1.0,
+                        end: 1.0,
+                      ),
                       duration: const Duration(milliseconds: 360),
                       curve: Curves.easeOutBack,
-                      builder: (_, scale, child) => Transform.scale(scale: scale, child: child),
+                      builder: (_, scale, child) =>
+                          Transform.scale(scale: scale, child: child),
                       child: Icon(icon, size: 24, color: c),
                     ),
                   ),
@@ -245,7 +280,11 @@ class _LogButton extends StatelessWidget {
                   turns: open ? 0.125 : 0,
                   duration: Duration(milliseconds: motion ? 260 : 0),
                   curve: Curves.easeOutBack,
-                  child: PhosphorIcon(PhosphorIconsBold.plus, size: 26, color: k.fabIcon),
+                  child: PhosphorIcon(
+                    PhosphorIconsBold.plus,
+                    size: 26,
+                    color: k.fabIcon,
+                  ),
                 ),
               ),
             ),

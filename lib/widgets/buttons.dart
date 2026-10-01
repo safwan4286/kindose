@@ -103,7 +103,10 @@ class PillButton extends StatelessWidget {
                           ? SizedBox(
                               width: 16.sp,
                               height: 16.sp,
-                              child: CircularProgressIndicator(strokeWidth: 2.2, color: accent),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.2,
+                                color: accent,
+                              ),
                             )
                           : PhosphorIcon(icon!, size: 19.sp, color: accent),
                     ),

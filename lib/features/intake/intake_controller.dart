@@ -91,7 +91,7 @@ class IntakeController extends GetxController with DayNav {
     tracker.days.length;
     tracker.today;
     day.value;
-    PlusAccess.active.value;
+    PlusAccess.unlocked;
     tab.value;
     query.value;
     category.value;

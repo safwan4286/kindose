@@ -17,6 +17,8 @@ import 'resources/routes.dart';
 import 'services/backend/backend_service.dart';
 import 'services/notifications/reminder_service.dart';
 import 'services/offers/offer_service.dart';
+import 'services/plus/access_service.dart';
+import 'services/purchases/purchase_service.dart';
 import 'services/supply/supply_service.dart';
 import 'services/tracker_service.dart';
 import 'services/theme/system_ui.dart';
@@ -72,6 +74,8 @@ Future<void> main() async {
     () => TrackerService().init(),
     permanent: true,
   );
+  // Free week + who can use what (before anything that checks Plus).
+  Get.put<AccessService>(AccessService().init(), permanent: true);
   // Pens & cost: counts doses left from the dose log. Before reminders,
   // which also plan the refill reminder.
   Get.put<SupplyService>(SupplyService(), permanent: true);
@@ -83,6 +87,12 @@ Future<void> main() async {
   // without it; this only adds a copy in the cloud.
   await BackendService.initSupabase();
   Get.put<BackendService>(BackendService(), permanent: true);
+  // Kindose Plus (RevenueCat). Sets PlusAccess.active from the
+  // kindose_plus entitlement; follows the signed-in account.
+  await Get.putAsync<PurchaseService>(
+    () => PurchaseService().init(),
+    permanent: true,
+  );
 
   runApp(
     KindoseApp(initialRoute: Routes.splash, themeMode: tracker.themeMode.value),

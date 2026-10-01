@@ -662,6 +662,9 @@ class TrackerService extends GetxService {
 
   /// Permanently removes every record on this phone.
   Future<void> deleteAll() async {
+    // The free-week dates stay, so deleting data doesn't restart the week.
+    const keep = ['installedAt', 'freeStartAt', 'clockSeen', 'accessConfig'];
+    final kept = {for (final k in keep) k: _settings.get(k)};
     await Future.wait([
       _profile.clear(),
       _doses.clear(),
@@ -669,6 +672,10 @@ class TrackerService extends GetxService {
       _weights.clear(),
       _settings.clear(),
     ]);
+    for (final e in kept.entries) {
+      if (e.value != null) await _settings.put(e.key, e.value);
+    }
+    myFoods.clear();
     profile.value = null;
     doses.clear();
     days.clear();

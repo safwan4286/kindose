@@ -23,7 +23,9 @@ DateTime? _shownAt;
 void showToast(String message) {
   final now = DateTime.now();
   final shownAt = _shownAt;
-  if (message == _shownMessage && shownAt != null && now.difference(shownAt) < _toastDuration) {
+  if (message == _shownMessage &&
+      shownAt != null &&
+      now.difference(shownAt) < _toastDuration) {
     return;
   }
   _shownMessage = message;

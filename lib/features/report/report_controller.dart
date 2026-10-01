@@ -75,10 +75,10 @@ class ReportController extends GetxController {
     nutrition.value;
     notes.value;
     includeName.value;
-    PlusAccess.active.value;
+    PlusAccess.unlocked;
   }
 
-  bool get isPlus => PlusAccess.active.value;
+  bool get isPlus => PlusAccess.unlocked;
 
   // ------------------------------------------------------------ appointment
 
@@ -294,7 +294,7 @@ class ReportController extends GetxController {
 
   /// Share the PDF (Plus). Free users are taken to the Plus screen.
   static Future<void> share(ReportData data, RxBool busy) async {
-    if (!PlusAccess.active.value) {
+    if (!PlusAccess.unlocked) {
       Haptics.instance.selectionClick();
       await Get.toNamed<void>(Routes.plus);
       return;

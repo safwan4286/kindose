@@ -1,22 +1,24 @@
 /// Everything about the paywall discount offer that should be changeable
-/// without an app update. Today it comes from [OfferConfig.defaults];
-/// later the same JSON comes from the backend (Firebase Remote Config
-/// key `paywall_offer`), parsed with [OfferConfig.fromJson].
+/// without an app update. Supabase `app_config` key `paywall_offer`
+/// (parsed with [OfferConfig.fromJson]); [OfferConfig.defaults] until it
+/// loads. The price itself is a store product in the RevenueCat offering
+/// [offeringId]; the price strings here are only a fallback.
 ///
 /// Example backend JSON (every key optional, missing keys use defaults):
 /// ```json
 /// {
 ///   "enabled": true,
-///   "product_id": "plus_yearly_offer40",
-///   "discount_percent": 40,
-///   "offer_price": "$23.99",
-///   "regular_price": "$39.99",
-///   "per_month": "$2.00/mo",
-///   "price_note": "for your first year, then $39.99/year",
+///   "offering_id": "offer_30",
+///   "product_id": "kindose_plus_yearly_offer",
+///   "discount_percent": 30,
+///   "offer_price": "$34.99",
+///   "regular_price": "$49.99",
+///   "per_month": "$2.92/mo",
+///   "price_note": "for your first year, then $49.99/year",
 ///   "title": "A welcome offer\nfor your first year",
 ///   "subtitle": "One time only. You won't see this offer again.",
-///   "fine_print": "$23.99 today for 12 months, then $39.99/year. Cancel anytime.",
-///   "cta": "Get 40% off",
+///   "fine_print": "$34.99 today for 12 months, then $49.99/year. Cancel anytime.",
+///   "cta": "Get 30% off",
 ///   "perks": ["All-time charts and history", "Side-effect patterns", "Share your doctor report"],
 ///   "max_shows": 1,
 ///   "cooldown_days": 30,
@@ -28,6 +30,7 @@
 class OfferConfig {
   const OfferConfig({
     required this.enabled,
+    required this.offeringId,
     required this.productId,
     required this.discountPercent,
     required this.offerPrice,
@@ -48,6 +51,9 @@ class OfferConfig {
 
   /// Master switch. False = paywall close just closes.
   final bool enabled;
+
+  /// RevenueCat offering that holds the discounted product.
+  final String offeringId;
 
   /// Store product / offer to buy (RevenueCat). Real prices will come
   /// from the store for this product; the price strings below are the
@@ -87,17 +93,22 @@ class OfferConfig {
 
   static const OfferConfig defaults = OfferConfig(
     enabled: true,
-    productId: 'plus_yearly_offer40',
-    discountPercent: 40,
-    offerPrice: r'$23.99',
-    regularPrice: r'$39.99',
-    perMonth: r'$2.00/mo',
-    priceNote: r'for your first year, then $39.99/year',
+    offeringId: 'offer_30',
+    productId: 'kindose_plus_yearly_offer',
+    discountPercent: 30,
+    offerPrice: r'$34.99',
+    regularPrice: r'$49.99',
+    perMonth: r'$2.92/mo',
+    priceNote: r'for your first year, then $49.99/year',
     title: 'A welcome offer\nfor your first year',
     subtitle: "One time only. You won't see this offer again.",
-    finePrint: r'$23.99 today for 12 months, then $39.99/year. Cancel anytime.',
-    cta: 'Get 40% off',
-    perks: ['All-time charts and history', 'Side-effect patterns', 'Share your doctor report'],
+    finePrint: r'$34.99 today for 12 months, then $49.99/year. Cancel anytime.',
+    cta: 'Get 30% off',
+    perks: [
+      'Dose log and spot rotation',
+      'Protein coach',
+      'Progress and doctor report',
+    ],
     maxShows: 1,
     cooldownDays: 30,
     minPaywallCloses: 1,
@@ -123,8 +134,14 @@ class OfferConfig {
     final perks = j['perks'];
     return OfferConfig(
       enabled: pick('enabled', d.enabled),
+      offeringId: pick('offering_id', d.offeringId),
       productId: pick('product_id', d.productId),
-      discountPercent: pickInt('discount_percent', d.discountPercent, min: 1, max: 90),
+      discountPercent: pickInt(
+        'discount_percent',
+        d.discountPercent,
+        min: 1,
+        max: 90,
+      ),
       offerPrice: pick('offer_price', d.offerPrice),
       regularPrice: pick('regular_price', d.regularPrice),
       perMonth: pick('per_month', d.perMonth),
@@ -133,10 +150,17 @@ class OfferConfig {
       subtitle: pick('subtitle', d.subtitle),
       finePrint: pick('fine_print', d.finePrint),
       cta: pick('cta', d.cta),
-      perks: perks is List ? perks.whereType<String>().take(5).toList() : d.perks,
+      perks: perks is List
+          ? perks.whereType<String>().take(5).toList()
+          : d.perks,
       maxShows: pickInt('max_shows', d.maxShows),
       cooldownDays: pickInt('cooldown_days', d.cooldownDays, max: 3650),
-      minPaywallCloses: pickInt('min_paywall_closes', d.minPaywallCloses, min: 1, max: 100),
+      minPaywallCloses: pickInt(
+        'min_paywall_closes',
+        d.minPaywallCloses,
+        min: 1,
+        max: 100,
+      ),
       showInOnboarding: pick('show_in_onboarding', d.showInOnboarding),
       showInApp: pick('show_in_app', d.showInApp),
     );

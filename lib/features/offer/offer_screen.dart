@@ -50,24 +50,37 @@ class OfferScreen extends GetView<OfferController> {
                   physics: BouncingScrollPhysics(),
                   padding: EdgeInsets.fromLTRB(20.sp, 4.sp, 20.sp, 16.sp),
                   children: [
-                    Center(child: _Badge(percent: c.discountPercent, motion: motion)),
+                    Center(
+                      child: _Badge(percent: c.discountPercent, motion: motion),
+                    ),
                     SizedBox(height: 22.sp),
                     Semantics(
                       header: true,
                       child: Text(
                         c.title,
                         textAlign: TextAlign.center,
-                        style: AppText.h1.copyWith(fontSize: 30.sp, height: 1.08, letterSpacing: -1, color: k.text),
+                        style: AppText.h1.copyWith(
+                          fontSize: 30.sp,
+                          height: 1.08,
+                          letterSpacing: -1,
+                          color: k.text,
+                        ),
                       ),
                     ).enter(motion, delay: 120),
                     SizedBox(height: 8.sp),
                     Text(
                       controller.subtitle,
                       textAlign: TextAlign.center,
-                      style: AppText.bodyStrong.copyWith(fontSize: 14.5.sp, fontWeight: FontWeight.w600, color: k.muted),
+                      style: AppText.bodyStrong.copyWith(
+                        fontSize: 14.5.sp,
+                        fontWeight: FontWeight.w600,
+                        color: k.muted,
+                      ),
                     ).enter(motion, delay: 160),
                     SizedBox(height: 20.sp),
-                    _PriceCard(controller: controller).enter(motion, delay: 200),
+                    _PriceCard(
+                      controller: controller,
+                    ).enter(motion, delay: 200),
                   ],
                 ),
               ),
@@ -76,13 +89,23 @@ class OfferScreen extends GetView<OfferController> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Obx(() => PillButton(label: c.cta, busy: controller.busy.value, onPressed: controller.claim)),
+                    Obx(
+                      () => PillButton(
+                        label: c.cta,
+                        busy: controller.busy.value,
+                        onPressed: controller.claim,
+                      ),
+                    ),
                     SizedBox(height: 8.sp),
                     KBottomPadding(
                       child: Text(
                         c.finePrint,
                         textAlign: TextAlign.center,
-                        style: AppText.small.copyWith(fontSize: 12.5.sp, height: 1.4, color: k.muted),
+                        style: AppText.small.copyWith(
+                          fontSize: 12.5.sp,
+                          height: 1.4,
+                          color: k.muted,
+                        ),
                       ),
                     ),
                     // LinkButton(label: 'No thanks', onTap: controller.close, color: k.muted),
@@ -118,7 +141,11 @@ class _Badge extends StatelessWidget {
             color: AppColors.lime,
             borderRadius: BorderRadius.circular(36.sp),
             boxShadow: [
-              BoxShadow(color: AppColors.ink.withValues(alpha: 0.14), blurRadius: 30.sp, offset: Offset(0, 16.sp)),
+              BoxShadow(
+                color: AppColors.ink.withValues(alpha: 0.14),
+                blurRadius: 30.sp,
+                offset: Offset(0, 16.sp),
+              ),
             ],
           ),
           child: Column(
@@ -127,10 +154,22 @@ class _Badge extends StatelessWidget {
               FittedBox(
                 child: Text(
                   '$percent%',
-                  style: AppText.h1.copyWith(fontSize: 46.sp, height: 1, letterSpacing: -2, color: AppColors.ink),
+                  style: AppText.h1.copyWith(
+                    fontSize: 46.sp,
+                    height: 1,
+                    letterSpacing: -2,
+                    color: AppColors.ink,
+                  ),
                 ),
               ),
-              Text('OFF', style: AppText.small.copyWith(fontSize: 14.sp, fontWeight: FontWeight.w800, color: AppColors.ink)),
+              Text(
+                'OFF',
+                style: AppText.small.copyWith(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.ink,
+                ),
+              ),
             ],
           ),
         ),
@@ -169,42 +208,90 @@ class _PriceCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Label + per-month tag on their own line, so the big price
+          // always has the full width and never breaks ("$34." / "99").
           Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Flexible(
-                child: Text(
-                  c.offerPrice,
-                  style: AppText.h1.copyWith(fontSize: 34.sp, height: 1.1, letterSpacing: -1, color: k.text),
-                ),
-              ),
-              SizedBox(width: 10.sp),
               Text(
-                c.regularPrice,
-                semanticsLabel: 'was ${c.regularPrice}',
-                style: AppText.bodyStrong.copyWith(
-                  fontSize: 16.sp,
+                'FIRST YEAR',
+                style: AppText.caps.copyWith(
+                  fontSize: 11.5.sp,
+                  letterSpacing: 1,
                   color: k.faint,
-                  decoration: TextDecoration.lineThrough,
-                  decorationColor: k.faint,
                 ),
               ),
               const Spacer(),
-              if (c.perMonth.isNotEmpty)
+              if (controller.perMonth.isNotEmpty)
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8.sp, vertical: 3.sp),
-                  decoration: BoxDecoration(color: AppColors.lime, borderRadius: BorderRadius.circular(8.sp)),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.sp,
+                    vertical: 4.sp,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.lime,
+                    borderRadius: BorderRadius.circular(10.sp),
+                  ),
                   child: Text(
-                    c.perMonth.toUpperCase(),
-                    style: AppText.tiny.copyWith(fontSize: 11.5.sp, fontWeight: FontWeight.w800, color: AppColors.ink),
+                    'Just ${controller.perMonth}',
+                    style: AppText.small.copyWith(
+                      fontSize: 12.5.sp,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.ink,
+                    ),
                   ),
                 ),
             ],
           ),
-          SizedBox(height: 2.sp),
+          SizedBox(height: 6.sp),
+          Semantics(
+            label: '${controller.offerPrice}, was ${controller.regularPrice}',
+            excludeSemantics: true,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      controller.offerPrice,
+                      maxLines: 1,
+                      softWrap: false,
+                      style: AppText.h1.copyWith(
+                        fontSize: 40.sp,
+                        height: 1.05,
+                        letterSpacing: -1.2,
+                        color: k.text,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 10.sp),
+                Padding(
+                  padding: EdgeInsets.only(bottom: 6.sp),
+                  child: Text(
+                    controller.regularPrice,
+                    maxLines: 1,
+                    softWrap: false,
+                    style: AppText.bodyStrong.copyWith(
+                      fontSize: 18.sp,
+                      color: k.faint,
+                      decoration: TextDecoration.lineThrough,
+                      decorationColor: k.faint,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 4.sp),
           Text(
             c.priceNote,
-            style: AppText.small.copyWith(fontSize: 13.sp, fontWeight: FontWeight.w700, color: k.muted),
+            style: AppText.small.copyWith(
+              fontSize: 13.sp,
+              fontWeight: FontWeight.w700,
+              color: k.muted,
+            ),
           ),
           if (c.perks.isNotEmpty) ...[
             SizedBox(height: 12.sp),
@@ -215,10 +302,22 @@ class _PriceCard extends StatelessWidget {
                 padding: EdgeInsets.only(bottom: 8.sp),
                 child: Row(
                   children: [
-                    Icon(PhosphorIconsBold.check, size: 17.sp, color: k.selectedBorder == AppColors.lime ? AppColors.lime : AppColors.limeText),
+                    Icon(
+                      PhosphorIconsBold.check,
+                      size: 17.sp,
+                      color: k.selectedBorder == AppColors.lime
+                          ? AppColors.lime
+                          : AppColors.limeText,
+                    ),
                     SizedBox(width: 10.sp),
                     Expanded(
-                      child: Text(perk, style: AppText.bodyStrong.copyWith(fontSize: 14.sp, color: k.text)),
+                      child: Text(
+                        perk,
+                        style: AppText.bodyStrong.copyWith(
+                          fontSize: 14.sp,
+                          color: k.text,
+                        ),
+                      ),
                     ),
                   ],
                 ),

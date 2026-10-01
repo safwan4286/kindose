@@ -55,7 +55,8 @@ const Object _locked = Object();
 
 DateTime _d(DateTime d) => DateTime(d.year, d.month, d.day);
 String _short(String month) => month.length > 3 ? month.substring(0, 3) : month;
-bool _same(DateTime a, DateTime b) => a.year == b.year && a.month == b.month && a.day == b.day;
+bool _same(DateTime a, DateTime b) =>
+    a.year == b.year && a.month == b.month && a.day == b.day;
 
 class _KDatePicker extends StatefulWidget {
   const _KDatePicker({
@@ -90,26 +91,36 @@ class _KDatePickerState extends State<_KDatePicker> {
   late bool _months = widget.startWithMonths;
   int _dir = 1;
 
-  DateTime _clamp(DateTime d) => d.isBefore(_first) ? _first : (d.isAfter(_last) ? _last : d);
+  DateTime _clamp(DateTime d) =>
+      d.isBefore(_first) ? _first : (d.isAfter(_last) ? _last : d);
 
   bool get _canPrev => _months
       ? _month.year > _first.year
-      : DateTime(_month.year, _month.month).isAfter(DateTime(_first.year, _first.month));
+      : DateTime(
+          _month.year,
+          _month.month,
+        ).isAfter(DateTime(_first.year, _first.month));
   bool get _canNext => _months
       ? _month.year < _last.year
-      : DateTime(_month.year, _month.month).isBefore(DateTime(_last.year, _last.month));
+      : DateTime(
+          _month.year,
+          _month.month,
+        ).isBefore(DateTime(_last.year, _last.month));
 
   void _step(int by) {
     if ((by < 0 && !_canPrev) || (by > 0 && !_canNext)) return;
     Haptics.instance.selectionClick();
     setState(() {
       _dir = by;
-      _month = _months ? DateTime(_month.year + by, _month.month) : DateTime(_month.year, _month.month + by);
+      _month = _months
+          ? DateTime(_month.year + by, _month.month)
+          : DateTime(_month.year, _month.month + by);
     });
   }
 
   void _pick(DateTime d) {
-    final locked = widget.lockedBefore != null && d.isBefore(_d(widget.lockedBefore!));
+    final locked =
+        widget.lockedBefore != null && d.isBefore(_d(widget.lockedBefore!));
     Haptics.instance.selectionClick();
     Navigator.of(context).pop(locked ? _locked : d);
   }
@@ -143,15 +154,24 @@ class _KDatePickerState extends State<_KDatePicker> {
                     children: [
                       Flexible(
                         child: Text(
-                          _months ? '${_month.year}' : loc.formatMonthYear(_month),
-                          style: AppText.h2.copyWith(fontSize: 20.sp, color: k.text),
+                          _months
+                              ? '${_month.year}'
+                              : loc.formatMonthYear(_month),
+                          style: AppText.h2.copyWith(
+                            fontSize: 20.sp,
+                            color: k.text,
+                          ),
                         ),
                       ),
                       SizedBox(width: 4.sp),
                       AnimatedRotation(
                         turns: _months ? 0.5 : 0,
                         duration: const Duration(milliseconds: 200),
-                        child: Icon(PhosphorIconsBold.caretDown, size: 16.sp, color: k.muted),
+                        child: Icon(
+                          PhosphorIconsBold.caretDown,
+                          size: 16.sp,
+                          color: k.muted,
+                        ),
                       ),
                     ],
                   ),
@@ -185,19 +205,27 @@ class _KDatePickerState extends State<_KDatePicker> {
           },
           child: Container(
             padding: EdgeInsets.fromLTRB(8.sp, 12.sp, 8.sp, 8.sp),
-            decoration: BoxDecoration(color: k.card, borderRadius: BorderRadius.circular(24.sp)),
+            decoration: BoxDecoration(
+              color: k.card,
+              borderRadius: BorderRadius.circular(24.sp),
+            ),
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 240),
               switchInCurve: Curves.easeOutCubic,
               transitionBuilder: (child, a) => FadeTransition(
                 opacity: a,
                 child: SlideTransition(
-                  position: Tween<Offset>(begin: Offset(0.08 * _dir, 0), end: Offset.zero).animate(a),
+                  position: Tween<Offset>(
+                    begin: Offset(0.08 * _dir, 0),
+                    end: Offset.zero,
+                  ).animate(a),
                   child: child,
                 ),
               ),
               child: KeyedSubtree(
-                key: ValueKey('${_months ? 'y' : 'm'}${_month.year}-${_months ? 0 : _month.month}'),
+                key: ValueKey(
+                  '${_months ? 'y' : 'm'}${_month.year}-${_months ? 0 : _month.month}',
+                ),
                 child: _months ? _monthGrid(context) : _dayGrid(context, today),
               ),
             ),
@@ -208,9 +236,14 @@ class _KDatePickerState extends State<_KDatePicker> {
           Row(
             children: [
               _QuickChip(label: 'Today', onTap: () => _pick(today)),
-              if (!today.subtract(const Duration(days: 1)).isBefore(_first)) ...[
+              if (!today
+                  .subtract(const Duration(days: 1))
+                  .isBefore(_first)) ...[
                 SizedBox(width: 8.sp),
-                _QuickChip(label: 'Yesterday', onTap: () => _pick(today.subtract(const Duration(days: 1)))),
+                _QuickChip(
+                  label: 'Yesterday',
+                  onTap: () => _pick(today.subtract(const Duration(days: 1))),
+                ),
               ],
             ],
           ),
@@ -227,8 +260,12 @@ class _KDatePickerState extends State<_KDatePicker> {
     final first = DateTime(_month.year, _month.month);
     final lead = (first.weekday % 7 - firstDow + 7) % 7;
     final days = DateUtils.getDaysInMonth(_month.year, _month.month);
-    final labels = [for (var i = 0; i < 7; i++) loc.narrowWeekdays[(firstDow + i) % 7]];
-    final locked = widget.lockedBefore == null ? null : _d(widget.lockedBefore!);
+    final labels = [
+      for (var i = 0; i < 7; i++) loc.narrowWeekdays[(firstDow + i) % 7],
+    ];
+    final locked = widget.lockedBefore == null
+        ? null
+        : _d(widget.lockedBefore!);
 
     Widget cell(int index) {
       final n = index - lead + 1;
@@ -239,16 +276,19 @@ class _KDatePickerState extends State<_KDatePicker> {
       final isSel = _same(d, _selected);
       final isToday = _same(d, today);
       final dot = inRange && !isLocked && (widget.marked?.call(d) ?? false);
-      final bg = isSel ? (dark ? AppColors.lime : AppColors.ink) : Colors.transparent;
+      final bg = isSel
+          ? (dark ? AppColors.lime : AppColors.ink)
+          : Colors.transparent;
       final fg = isSel
           ? (dark ? AppColors.ink : AppColors.lime)
           : !inRange || isLocked
-              ? k.faint.withValues(alpha: 0.6)
-              : k.text;
+          ? k.faint.withValues(alpha: 0.6)
+          : k.text;
       return Semantics(
         button: inRange,
         selected: isSel,
-        label: '${loc.formatFullDate(d)}${isLocked ? ', Plus' : ''}${dot ? ', has logs' : ''}',
+        label:
+            '${loc.formatFullDate(d)}${isLocked ? ', Plus' : ''}${dot ? ', has logs' : ''}',
         excludeSemantics: true,
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
@@ -260,7 +300,9 @@ class _KDatePickerState extends State<_KDatePicker> {
               decoration: BoxDecoration(
                 color: bg,
                 shape: BoxShape.circle,
-                border: isToday && !isSel ? Border.all(color: k.text, width: 1.5) : null,
+                border: isToday && !isSel
+                    ? Border.all(color: k.text, width: 1.5)
+                    : null,
               ),
               child: Stack(
                 alignment: Alignment.center,
@@ -269,7 +311,9 @@ class _KDatePickerState extends State<_KDatePicker> {
                     '$n',
                     style: AppText.bodyStrong.copyWith(
                       fontSize: 15.sp,
-                      fontWeight: isSel || isToday ? FontWeight.w800 : FontWeight.w600,
+                      fontWeight: isSel || isToday
+                          ? FontWeight.w800
+                          : FontWeight.w600,
                       color: fg,
                     ),
                   ),
@@ -277,12 +321,20 @@ class _KDatePickerState extends State<_KDatePicker> {
                     Positioned(
                       bottom: 4.sp,
                       child: isLocked
-                          ? Icon(PhosphorIconsFill.lockSimple, size: 8.sp, color: k.faint)
+                          ? Icon(
+                              PhosphorIconsFill.lockSimple,
+                              size: 8.sp,
+                              color: k.faint,
+                            )
                           : Container(
                               width: 4.sp,
                               height: 4.sp,
                               decoration: BoxDecoration(
-                                color: isSel ? fg : (dark ? AppColors.lime : AppColors.tangerine),
+                                color: isSel
+                                    ? fg
+                                    : (dark
+                                          ? AppColors.lime
+                                          : AppColors.tangerine),
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -303,7 +355,14 @@ class _KDatePickerState extends State<_KDatePicker> {
             for (final l in labels)
               Expanded(
                 child: Center(
-                  child: Text(l, style: AppText.caps.copyWith(fontSize: 11.sp, letterSpacing: 0.6, color: k.faint)),
+                  child: Text(
+                    l,
+                    style: AppText.caps.copyWith(
+                      fontSize: 11.sp,
+                      letterSpacing: 0.6,
+                      color: k.faint,
+                    ),
+                  ),
                 ),
               ),
           ],
@@ -313,7 +372,11 @@ class _KDatePickerState extends State<_KDatePicker> {
         for (var r = 0; r < 6; r++)
           SizedBox(
             height: 44.sp,
-            child: Row(children: [for (var c = 0; c < 7; c++) Expanded(child: cell(r * 7 + c))]),
+            child: Row(
+              children: [
+                for (var c = 0; c < 7; c++) Expanded(child: cell(r * 7 + c)),
+              ],
+            ),
           ),
       ],
     );
@@ -337,9 +400,13 @@ class _KDatePickerState extends State<_KDatePicker> {
             Builder(
               builder: (_) {
                 final start = DateTime(_month.year, m);
-                final end = DateTime(_month.year, m + 1).subtract(const Duration(days: 1));
+                final end = DateTime(
+                  _month.year,
+                  m + 1,
+                ).subtract(const Duration(days: 1));
                 final ok = !end.isBefore(_first) && !start.isAfter(_last);
-                final sel = _selected.year == _month.year && _selected.month == m;
+                final sel =
+                    _selected.year == _month.year && _selected.month == m;
                 return Semantics(
                   button: ok,
                   selected: sel,
@@ -358,7 +425,9 @@ class _KDatePickerState extends State<_KDatePicker> {
                     child: Container(
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: sel ? (dark ? AppColors.lime : AppColors.ink) : k.cardAlt.withValues(alpha: ok ? 1 : 0.4),
+                        color: sel
+                            ? (dark ? AppColors.lime : AppColors.ink)
+                            : k.cardAlt.withValues(alpha: ok ? 1 : 0.4),
                         borderRadius: BorderRadius.circular(16.sp),
                       ),
                       child: Text(
@@ -366,7 +435,9 @@ class _KDatePickerState extends State<_KDatePicker> {
                         style: AppText.bodyStrong.copyWith(
                           fontSize: 15.sp,
                           fontWeight: FontWeight.w800,
-                          color: sel ? (dark ? AppColors.ink : AppColors.lime) : (ok ? k.text : k.faint),
+                          color: sel
+                              ? (dark ? AppColors.ink : AppColors.lime)
+                              : (ok ? k.text : k.faint),
                         ),
                       ),
                     ),
@@ -401,7 +472,14 @@ class _QuickChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(19.sp),
           border: Border.all(color: k.border, width: 1.5),
         ),
-        child: Text(label, style: AppText.small.copyWith(fontSize: 13.5.sp, fontWeight: FontWeight.w800, color: k.text)),
+        child: Text(
+          label,
+          style: AppText.small.copyWith(
+            fontSize: 13.5.sp,
+            fontWeight: FontWeight.w800,
+            color: k.text,
+          ),
+        ),
       ),
     );
   }

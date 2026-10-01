@@ -8,6 +8,7 @@ import '../../resources/catalog.dart';
 import '../../resources/date_utils.dart';
 import '../../resources/routes.dart';
 import '../../features/home/home_controller.dart';
+import '../plus/access_service.dart';
 import '../plus/plus_access.dart';
 import '../supply/supply_service.dart';
 import '../tracker_service.dart';
@@ -36,15 +37,18 @@ class ReminderService extends GetxService {
   static const int _dailyCount = 7;
   static const int _visitId = 120;
   static const int _refillId = 130;
+  static const int _freeWeekId = 140;
   static const String logDosePayload = 'log_dose';
   static const String reportPayload = 'report';
   static const String pensPayload = 'pens';
+  static const String plusPayload = 'plus';
 
   static List<int> get _allIds => [
     _doseId,
     _followUpId,
     _visitId,
     _refillId,
+    _freeWeekId,
     for (var i = 0; i < _dailyCount; i++) _dailyFirstId + i,
   ];
 
@@ -67,6 +71,11 @@ class ReminderService extends GetxService {
       supply.spare,
       supply.refillReminder,
       PlusAccess.active,
+      PlusAccess.freeWeek,
+      if (Get.isRegistered<AccessService>()) ...[
+        Get.find<AccessService>().endsAt,
+        Get.find<AccessService>().config,
+      ],
     ], (_) => _queue());
     unawaited(_notes.init().then((_) => sync()));
   }
@@ -92,6 +101,10 @@ class ReminderService extends GetxService {
   }
 
   void _open(String payload) {
+    if (payload == plusPayload) {
+      if (Get.currentRoute != Routes.plus) Get.toNamed<void>(Routes.plus);
+      return;
+    }
     if (payload == pensPayload) {
       if (Get.currentRoute != Routes.pens) Get.toNamed<void>(Routes.pens);
       return;
@@ -114,6 +127,7 @@ class ReminderService extends GetxService {
     if (p == null) return;
     if (tracker.visitReminderOn.value) await _planVisit();
     await _planRefill();
+    if (p.remindersOn) await _planFreeWeek();
     if (!p.remindersOn || p.medicineId == Catalog.undecided) return;
     if (p.isDaily) {
       await _planDaily(p);
@@ -209,7 +223,7 @@ class ReminderService extends GetxService {
   /// the latest dose. Past times are skipped, so it shows once.
   Future<void> _planRefill() async {
     // Debug builds too, like the Pens screen, so it can be tested.
-    final plus = PlusAccess.active.value || kDebugMode;
+    final plus = PlusAccess.unlocked || kDebugMode;
     if (!plus || !supply.refillReminder.value) return;
     if (!supply.runningLow) return;
     final last = tracker.lastDose?.takenAt ?? DateTime.now();
@@ -223,6 +237,25 @@ class ReminderService extends GetxService {
           ? 'Your supply at home looks empty. Tap to update it.'
           : 'You have $left ${left == 1 ? 'dose' : 'doses'} left at home.',
       payload: pensPayload,
+    );
+  }
+
+  /// One heads-up at 10 AM the day before the free week ends, so the
+  /// paywall is never a surprise. Only for people who allowed reminders,
+  /// never once Plus is on. Past times are skipped by scheduleAt.
+  Future<void> _planFreeWeek() async {
+    if (!Get.isRegistered<AccessService>()) return;
+    final a = Get.find<AccessService>();
+    if (PlusAccess.active.value || !a.config.value.gatingOn || !a.started.value) return;
+    final end = a.endsAt.value;
+    final when = Dates.dateOnly(end).subtract(const Duration(days: 1)).add(const Duration(hours: 10));
+    if (!when.isBefore(end)) return;
+    await _notes.scheduleAt(
+      id: _freeWeekId,
+      when: when,
+      title: 'Your free week ends tomorrow',
+      body: 'Everything stays open until then, and your data is always safe. Tap to see Plus.',
+      payload: plusPayload,
     );
   }
 

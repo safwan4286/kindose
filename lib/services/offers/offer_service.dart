@@ -51,7 +51,8 @@ class OfferService extends GetxService {
     if (closes < c.minPaywallCloses) return false;
     if (c.maxShows > 0 && _shows >= c.maxShows) return false;
     final last = _lastShown;
-    if (last != null && DateTime.now().difference(last).inDays < c.cooldownDays) return false;
+    if (last != null && DateTime.now().difference(last).inDays < c.cooldownDays)
+      return false;
 
     await _settings.put(_showsKey, _shows + 1);
     await _settings.put(_lastShownKey, DateTime.now().millisecondsSinceEpoch);

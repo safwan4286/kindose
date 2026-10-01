@@ -31,7 +31,7 @@ class _EditTodaySheet extends StatefulWidget {
 class _EditTodaySheetState extends State<_EditTodaySheet> {
   final TodayController _c = Get.find<TodayController>();
   late final List<String> _order = _c.cardOrder;
-  late final Set<String> _hidden = {..._c.tracker.todayHidden};
+  late final Set<String> _hidden = {..._c.hiddenCards};
 
   String _label(String id) => TodayCard.all.firstWhere((c) => c.id == id).label;
 
@@ -141,7 +141,9 @@ class _EditTodaySheetState extends State<_EditTodaySheet> {
                                 },
                                 child: Padding(
                                   padding: EdgeInsets.all(6.sp),
-                                  child: KSwitch(value: !_hidden.contains(_order[i])),
+                                  child: KSwitch(
+                                    value: !_hidden.contains(_order[i]),
+                                  ),
                                 ),
                               ),
                             ),

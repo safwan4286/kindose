@@ -21,7 +21,12 @@ class WeightPage extends GetView<OnboardingController> {
     return StepScaffold(
       title: "What's your current weight?",
       subtitle: 'Your starting point. Only you see it.',
-      cta: KBottomPadding(child: PillButton(label: 'Continue', onPressed: controller.confirmWeight)),
+      cta: KBottomPadding(
+        child: PillButton(
+          label: 'Continue',
+          onPressed: controller.confirmWeight,
+        ),
+      ),
       children: [
         Obx(
           () => WeightInput(

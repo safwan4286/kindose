@@ -1,8 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 import '../../resources/colors.dart';
+import '../../resources/images.dart';
 import '../../services/responsiveness/device_manager.dart';
 import '../../services/theme/theme.dart';
 import '../../widgets/buttons.dart';
@@ -41,6 +43,7 @@ class MeScreen extends GetView<MeController> {
             _PlanCard(controller: c).enter(motion),
             SizedBox(height: 12.sp),
             _PlusCard(controller: c).enter(motion, delay: 60),
+            if (kDebugMode) _DebugAccess(controller: c),
             _label(context, 'Treatment'),
             _Group(
               children: [
@@ -380,11 +383,11 @@ class _PlusCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final k = context.k;
-    final plus = controller.isPlus;
+    final state = controller.planState;
+    final ended = state == 'ended';
+    final plus = state == 'plus';
     return PressScale(
-      semanticLabel: plus
-          ? 'Kindose Plus is on. Manage'
-          : 'Kindose Plus. Try it free',
+      semanticLabel: '${controller.planTitle}. ${controller.planSub}. ${controller.planButton}',
       onTap: controller.openPlus,
       child: ExcludeSemantics(
         child: Container(
@@ -392,29 +395,30 @@ class _PlusCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppColors.hero,
             borderRadius: BorderRadius.circular(22.sp),
-            border: k.selectedBorder == AppColors.lime
-                ? Border.all(color: k.border)
-                : null,
+            border: ended
+                ? Border.all(color: AppColors.lime, width: 2)
+                : (k.selectedBorder == AppColors.lime ? Border.all(color: k.border) : null),
           ),
           child: Row(
             children: [
-              DropMark(size: 40.sp),
+              if (ended)
+                ThreeD(Img3d.locked, size: 40.sp)
+              else
+                DropMark(size: 40.sp),
               SizedBox(width: 12.sp),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      plus ? 'Kindose Plus is on' : 'Kindose Plus',
+                      controller.planTitle,
                       style: AppText.title.copyWith(
                         fontSize: 16.sp,
                         color: AppColors.white,
                       ),
                     ),
                     Text(
-                      plus
-                          ? 'Thank you for supporting Kindose'
-                          : 'Full history, patterns, share your report',
+                      controller.planSub,
                       style: AppText.small.copyWith(
                         fontSize: 12.5.sp,
                         fontWeight: FontWeight.w600,
@@ -440,7 +444,7 @@ class _PlusCard extends StatelessWidget {
                       : null,
                 ),
                 child: Text(
-                  plus ? 'Manage' : 'Try free',
+                  controller.planButton,
                   style: AppText.small.copyWith(
                     fontSize: 13.5.sp,
                     fontWeight: FontWeight.w800,
@@ -451,6 +455,46 @@ class _PlusCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Debug builds only: jump between free-week states while testing.
+class _DebugAccess extends StatelessWidget {
+  const _DebugAccess({required this.controller});
+
+  final MeController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    Widget chip(String label, Future<void> Function() onTap) => Padding(
+      padding: EdgeInsets.only(right: 8.sp, bottom: 8.sp),
+      child: PressScale(
+        semanticLabel: label,
+        onTap: onTap,
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 12.sp, vertical: 8.sp),
+          decoration: BoxDecoration(
+            color: k.cardAlt,
+            borderRadius: BorderRadius.circular(14.sp),
+          ),
+          child: Text(
+            label,
+            style: AppText.small.copyWith(fontSize: 12.5.sp, fontWeight: FontWeight.w800, color: k.text),
+          ),
+        ),
+      ),
+    );
+    return Padding(
+      padding: EdgeInsets.only(top: 10.sp),
+      child: Wrap(
+        children: [
+          chip('Debug: restart free week', controller.debugRestartWeek),
+          chip('End free week', controller.debugEndWeek),
+          chip('Real dates', controller.debugRealDates),
+        ],
       ),
     );
   }

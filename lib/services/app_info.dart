@@ -37,9 +37,11 @@ class AppInfo {
   void _getBuildType() {
     String packageName = package.packageName;
 
-    if (packageName == PackageNames.androidDev || packageName == PackageNames.iosDev) {
+    if (packageName == PackageNames.androidDev ||
+        packageName == PackageNames.iosDev) {
       _buildType = BuildType.TESTING;
-    } else if (packageName == PackageNames.androidLive || packageName == PackageNames.iosLive) {
+    } else if (packageName == PackageNames.androidLive ||
+        packageName == PackageNames.iosLive) {
       _buildType = BuildType.LIVE;
     } else {
       _buildType = BuildType.UNKNOWN;

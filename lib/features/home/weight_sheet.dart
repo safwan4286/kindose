@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
+import '../../services/plus/access_service.dart';
 import '../../models/logs.dart';
 import '../../resources/colors.dart';
 import '../../resources/date_utils.dart';
@@ -23,9 +24,10 @@ import '../../widgets/k_date_picker.dart';
 /// Weigh-in sheet: date, ruler, change since last and since start, a small
 /// trend with the goal line, and a calm tip. Starts from the last weight
 /// so most people nudge it once or twice and save.
-Future<void> showWeightSheet() {
+Future<void> showWeightSheet() async {
+  if (!AccessService.allow()) return;
   Haptics.instance.lightImpact();
-  return Get.bottomSheet<void>(const WeightSheet(), isScrollControlled: true);
+  await Get.bottomSheet<void>(const WeightSheet(), isScrollControlled: true);
 }
 
 class WeightSheet extends StatefulWidget {

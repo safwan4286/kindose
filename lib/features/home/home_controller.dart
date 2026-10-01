@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 
 import '../../services/haptics/haptics.dart';
 import '../../services/notifications/reminder_service.dart';
+import '../../services/plus/access_service.dart';
 
 import 'log_sheet.dart';
 
@@ -34,6 +35,7 @@ class HomeController extends GetxController {
 
   Future<void> openLogSheet() async {
     if (logOpen.value) return;
+    if (!AccessService.allow()) return;
     logOpen.value = true;
     try {
       await showLogSheet();

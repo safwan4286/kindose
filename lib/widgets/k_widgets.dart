@@ -165,10 +165,16 @@ class KSwitch extends StatelessWidget {
           width: h - pad * 2,
           height: h - pad * 2,
           decoration: BoxDecoration(
-            color: value ? (dark ? AppColors.ink : AppColors.lime) : AppColors.white,
+            color: value
+                ? (dark ? AppColors.ink : AppColors.lime)
+                : AppColors.white,
             shape: BoxShape.circle,
             boxShadow: [
-              BoxShadow(color: AppColors.ink.withValues(alpha: 0.18), blurRadius: 3, offset: const Offset(0, 1)),
+              BoxShadow(
+                color: AppColors.ink.withValues(alpha: 0.18),
+                blurRadius: 3,
+                offset: const Offset(0, 1),
+              ),
             ],
           ),
         ),
@@ -213,11 +219,17 @@ class SwitchRow extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(label, style: AppText.title.copyWith(fontSize: 15.sp)),
+                      Text(
+                        label,
+                        style: AppText.title.copyWith(fontSize: 15.sp),
+                      ),
                       if (sub != null)
                         Text(
                           sub!,
-                          style: AppText.small.copyWith(fontSize: 13.sp, color: context.k.muted),
+                          style: AppText.small.copyWith(
+                            fontSize: 13.sp,
+                            color: context.k.muted,
+                          ),
                         ),
                     ],
                   ),

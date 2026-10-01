@@ -54,13 +54,21 @@ class PensScreen extends GetView<PensController> {
                 header: true,
                 child: Text(
                   c.title,
-                  style: AppText.h1.copyWith(fontSize: 30.sp, height: 1.08, color: k.text),
+                  style: AppText.h1.copyWith(
+                    fontSize: 30.sp,
+                    height: 1.08,
+                    color: k.text,
+                  ),
                 ),
               ),
               SizedBox(height: 6.sp),
               Text(
                 'Counts down by itself each time you log a ${c.doseWord}.',
-                style: AppText.bodyText.copyWith(fontSize: 14.sp, fontWeight: FontWeight.w600, color: k.muted),
+                style: AppText.bodyText.copyWith(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w600,
+                  color: k.muted,
+                ),
               ),
               SizedBox(height: 16.sp),
               if (!c.unlocked)
@@ -71,7 +79,10 @@ class PensScreen extends GetView<PensController> {
                 _SpareCard(controller: c).enter(motion, delay: 60),
                 SizedBox(height: 10.sp),
                 _Card(
-                  padding: EdgeInsets.symmetric(horizontal: 16.sp, vertical: 6.sp),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.sp,
+                    vertical: 6.sp,
+                  ),
                   child: SwitchRow(
                     label: 'Refill reminder',
                     sub: c.refillSub,
@@ -88,7 +99,11 @@ class PensScreen extends GetView<PensController> {
                 Text(
                   'Only for your own records. Kindose doesn’t sell or order medicine.',
                   textAlign: TextAlign.center,
-                  style: AppText.small.copyWith(fontSize: 12.sp, height: 1.4, color: k.faint),
+                  style: AppText.small.copyWith(
+                    fontSize: 12.sp,
+                    height: 1.4,
+                    color: k.faint,
+                  ),
                 ),
               ],
             ],
@@ -114,7 +129,10 @@ class _Card extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: padding ?? EdgeInsets.all(16.sp),
-      decoration: BoxDecoration(color: context.k.card, borderRadius: BorderRadius.circular(22.sp)),
+      decoration: BoxDecoration(
+        color: context.k.card,
+        borderRadius: BorderRadius.circular(22.sp),
+      ),
       child: child,
     );
   }
@@ -135,7 +153,10 @@ class _CurrentPack extends StatelessWidget {
     final muted = AppColors.heroMuted;
     return Container(
       padding: EdgeInsets.all(18.sp),
-      decoration: BoxDecoration(color: AppColors.hero, borderRadius: BorderRadius.circular(24.sp)),
+      decoration: BoxDecoration(
+        color: AppColors.hero,
+        borderRadius: BorderRadius.circular(24.sp),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -152,7 +173,11 @@ class _CurrentPack extends StatelessWidget {
                   textAlign: TextAlign.right,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppText.small.copyWith(fontSize: 13.sp, fontWeight: FontWeight.w700, color: muted),
+                  style: AppText.small.copyWith(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w700,
+                    color: muted,
+                  ),
                 ),
               ),
             ],
@@ -161,7 +186,11 @@ class _CurrentPack extends StatelessWidget {
           if (!setUp) ...[
             Text(
               'Set up your ${c.pack}',
-              style: AppText.h1.copyWith(fontSize: 26.sp, height: 1.1, color: AppColors.white),
+              style: AppText.h1.copyWith(
+                fontSize: 26.sp,
+                height: 1.1,
+                color: AppColors.white,
+              ),
             ),
             SizedBox(height: 6.sp),
             Text(
@@ -183,12 +212,18 @@ class _CurrentPack extends StatelessWidget {
                       children: [
                         Text(
                           c.leftLine,
-                          style: AppText.number(34.sp).copyWith(color: AppColors.white, height: 1),
+                          style: AppText.number(
+                            34.sp,
+                          ).copyWith(color: AppColors.white, height: 1),
                         ),
                         SizedBox(height: 4.sp),
                         Text(
                           c.ofLine,
-                          style: AppText.small.copyWith(fontSize: 13.5.sp, fontWeight: FontWeight.w700, color: muted),
+                          style: AppText.small.copyWith(
+                            fontSize: 13.5.sp,
+                            fontWeight: FontWeight.w700,
+                            color: muted,
+                          ),
                         ),
                       ],
                     ),
@@ -202,14 +237,21 @@ class _CurrentPack extends StatelessWidget {
               child: Container(
                 key: ValueKey<String>(c.refillLine),
                 width: double.infinity,
-                padding: EdgeInsets.symmetric(horizontal: 12.sp, vertical: 10.sp),
+                padding: EdgeInsets.symmetric(
+                  horizontal: 12.sp,
+                  vertical: 10.sp,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.lime.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(14.sp),
                 ),
                 child: Text(
                   c.refillLine,
-                  style: AppText.small.copyWith(fontSize: 13.5.sp, fontWeight: FontWeight.w800, color: AppColors.lime),
+                  style: AppText.small.copyWith(
+                    fontSize: 13.5.sp,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.lime,
+                  ),
                 ),
               ),
             ),
@@ -226,7 +268,10 @@ class _CurrentPack extends StatelessWidget {
                   ),
                 ),
                 SizedBox(width: 8.sp),
-                _OutlinePill(label: 'Fix count', onTap: () => c.fixCount(context)),
+                _OutlinePill(
+                  label: 'Fix count',
+                  onTap: () => c.fixCount(context),
+                ),
               ],
             ),
           ],
@@ -266,7 +311,10 @@ class _DoseMeter extends StatelessWidget {
           heightFactor: total == 0 ? 0 : left / total,
           widthFactor: 1,
           child: Container(
-            decoration: BoxDecoration(color: AppColors.lime, borderRadius: BorderRadius.circular(8.sp)),
+            decoration: BoxDecoration(
+              color: AppColors.lime,
+              borderRadius: BorderRadius.circular(8.sp),
+            ),
           ),
         ),
       );
@@ -286,7 +334,10 @@ class _DoseMeter extends StatelessWidget {
               decoration: BoxDecoration(
                 color: i < used ? empty : AppColors.lime,
                 borderRadius: BorderRadius.circular(10.sp),
-                border: Border.all(color: i < used ? emptyEdge : AppColors.lime, width: 2),
+                border: Border.all(
+                  color: i < used ? emptyEdge : AppColors.lime,
+                  width: 2,
+                ),
               ),
             ),
           ],
@@ -313,9 +364,18 @@ class _OutlinePill extends StatelessWidget {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(23.sp),
-          border: Border.all(color: AppColors.white.withValues(alpha: 0.2), width: 1.5),
+          border: Border.all(
+            color: AppColors.white.withValues(alpha: 0.2),
+            width: 1.5,
+          ),
         ),
-        child: Text(label, style: AppText.button.copyWith(fontSize: 15.sp, color: AppColors.white)),
+        child: Text(
+          label,
+          style: AppText.button.copyWith(
+            fontSize: 15.sp,
+            color: AppColors.white,
+          ),
+        ),
       ),
     );
   }
@@ -340,10 +400,14 @@ class _SpareCard extends StatelessWidget {
             width: 48.sp,
             height: 48.sp,
             alignment: Alignment.center,
-            decoration: BoxDecoration(color: AppColors.limeSoft, borderRadius: BorderRadius.circular(16.sp)),
+            decoration: BoxDecoration(
+              color: AppColors.limeSoft,
+              borderRadius: BorderRadius.circular(16.sp),
+            ),
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 220),
-              transitionBuilder: (child, a) => ScaleTransition(scale: a, child: child),
+              transitionBuilder: (child, a) =>
+                  ScaleTransition(scale: a, child: child),
               child: Text(
                 '$n',
                 key: ValueKey<int>(n),
@@ -356,8 +420,18 @@ class _SpareCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(c.spareTitle, style: AppText.title.copyWith(fontSize: 15.sp, color: k.text)),
-                Text(c.spareSub, style: AppText.small.copyWith(fontSize: 13.sp, fontWeight: FontWeight.w600, color: k.muted)),
+                Text(
+                  c.spareTitle,
+                  style: AppText.title.copyWith(fontSize: 15.sp, color: k.text),
+                ),
+                Text(
+                  c.spareSub,
+                  style: AppText.small.copyWith(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w600,
+                    color: k.muted,
+                  ),
+                ),
               ],
             ),
           ),
@@ -400,18 +474,29 @@ class _SpendCard extends StatelessWidget {
                 child: FittedBox(
                   alignment: Alignment.centerLeft,
                   fit: BoxFit.scaleDown,
-                  child: Text(c.thisMonth, style: AppText.number(30.sp).copyWith(color: k.text)),
+                  child: Text(
+                    c.thisMonth,
+                    style: AppText.number(30.sp).copyWith(color: k.text),
+                  ),
                 ),
               ),
               Text(
                 c.monthName,
-                style: AppText.small.copyWith(fontSize: 13.sp, fontWeight: FontWeight.w700, color: k.muted),
+                style: AppText.small.copyWith(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w700,
+                  color: k.muted,
+                ),
               ),
             ],
           ),
           Text(
             c.spendSub,
-            style: AppText.small.copyWith(fontSize: 13.sp, fontWeight: FontWeight.w700, color: k.muted),
+            style: AppText.small.copyWith(
+              fontSize: 13.sp,
+              fontWeight: FontWeight.w700,
+              color: k.muted,
+            ),
           ),
           SizedBox(height: 14.sp),
           SizedBox(
@@ -429,13 +514,18 @@ class _SpendCard extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           TweenAnimationBuilder<double>(
-                            tween: Tween<double>(begin: 0, end: top == 0 ? 0 : m.$2 / top),
+                            tween: Tween<double>(
+                              begin: 0,
+                              end: top == 0 ? 0 : m.$2 / top,
+                            ),
                             duration: Duration(milliseconds: 500 + i * 80),
                             curve: Curves.easeOutCubic,
                             builder: (_, f, _) => Container(
                               height: math.max(6.sp, barMax * f),
                               decoration: BoxDecoration(
-                                color: m.$3 ? (dark ? AppColors.lime : AppColors.ink) : k.border,
+                                color: m.$3
+                                    ? (dark ? AppColors.lime : AppColors.ink)
+                                    : k.border,
                                 borderRadius: BorderRadius.vertical(
                                   top: Radius.circular(8.sp),
                                   bottom: Radius.circular(4.sp),
@@ -449,7 +539,11 @@ class _SpendCard extends StatelessWidget {
                             child: FittedBox(
                               child: Text(
                                 m.$1,
-                                style: AppText.tiny.copyWith(fontSize: 11.sp, fontWeight: FontWeight.w800, color: k.faint),
+                                style: AppText.tiny.copyWith(
+                                  fontSize: 11.sp,
+                                  fontWeight: FontWeight.w800,
+                                  color: k.faint,
+                                ),
                               ),
                             ),
                           ),
@@ -489,9 +583,19 @@ class _PurchasesHeader extends StatelessWidget {
               padding: EdgeInsets.symmetric(horizontal: 6.sp, vertical: 12.sp),
               child: Row(
                 children: [
-                  PhosphorIcon(PhosphorIconsBold.plus, size: 14.sp, color: k.text),
+                  PhosphorIcon(
+                    PhosphorIconsBold.plus,
+                    size: 14.sp,
+                    color: k.text,
+                  ),
                   SizedBox(width: 4.sp),
-                  Text('Add', style: AppText.caps.copyWith(fontSize: 12.5.sp, color: k.text)),
+                  Text(
+                    'Add',
+                    style: AppText.caps.copyWith(
+                      fontSize: 12.5.sp,
+                      color: k.text,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -555,9 +659,17 @@ class _Purchases extends StatelessWidget {
                       color: AppColors.dangerSoft,
                       alignment: Alignment.centerRight,
                       padding: EdgeInsets.only(right: 20.sp),
-                      child: PhosphorIcon(PhosphorIconsBold.trash, size: 20.sp, color: AppColors.danger),
+                      child: PhosphorIcon(
+                        PhosphorIconsBold.trash,
+                        size: 20.sp,
+                        color: AppColors.danger,
+                      ),
                     ),
-                    child: _PurchaseRow(controller: c, purchase: p, divider: i > 0),
+                    child: _PurchaseRow(
+                      controller: c,
+                      purchase: p,
+                      divider: i > 0,
+                    ),
                   ),
               ],
             ),
@@ -574,7 +686,11 @@ class _Purchases extends StatelessWidget {
 }
 
 class _PurchaseRow extends StatelessWidget {
-  const _PurchaseRow({required this.controller, required this.purchase, required this.divider});
+  const _PurchaseRow({
+    required this.controller,
+    required this.purchase,
+    required this.divider,
+  });
 
   final PensController controller;
   final Purchase purchase;
@@ -587,7 +703,9 @@ class _PurchaseRow extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16.sp, vertical: 13.sp),
       decoration: BoxDecoration(
-        border: divider ? Border(top: BorderSide(color: k.border.withValues(alpha: 0.6))) : null,
+        border: divider
+            ? Border(top: BorderSide(color: k.border.withValues(alpha: 0.6)))
+            : null,
       ),
       child: Row(
         children: [
@@ -595,12 +713,22 @@ class _PurchaseRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(c.purchaseTitle(purchase), style: AppText.title.copyWith(fontSize: 14.5.sp, color: k.text)),
+                Text(
+                  c.purchaseTitle(purchase),
+                  style: AppText.title.copyWith(
+                    fontSize: 14.5.sp,
+                    color: k.text,
+                  ),
+                ),
                 Text(
                   c.purchaseSub(purchase),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppText.small.copyWith(fontSize: 12.5.sp, fontWeight: FontWeight.w600, color: k.muted),
+                  style: AppText.small.copyWith(
+                    fontSize: 12.5.sp,
+                    fontWeight: FontWeight.w600,
+                    color: k.muted,
+                  ),
                 ),
               ],
             ),
@@ -635,11 +763,21 @@ class _Locked extends StatelessWidget {
             width: 48.sp,
             height: 48.sp,
             alignment: Alignment.center,
-            decoration: BoxDecoration(color: AppColors.limeSoft, borderRadius: BorderRadius.circular(16.sp)),
-            child: PhosphorIcon(PhosphorIconsBold.lockSimple, size: 22.sp, color: AppColors.ink),
+            decoration: BoxDecoration(
+              color: AppColors.limeSoft,
+              borderRadius: BorderRadius.circular(16.sp),
+            ),
+            child: PhosphorIcon(
+              PhosphorIconsBold.lockSimple,
+              size: 22.sp,
+              color: AppColors.ink,
+            ),
           ),
           SizedBox(height: 12.sp),
-          Text('Part of Kindose Plus', style: AppText.h2.copyWith(fontSize: 20.sp, color: k.text)),
+          Text(
+            'Part of Kindose Plus',
+            style: AppText.h2.copyWith(fontSize: 20.sp, color: k.text),
+          ),
           SizedBox(height: 6.sp),
           Text(
             'Know how many ${controller.dosesWord} are left, get a refill reminder before you run out, and see what you spend.',

@@ -354,7 +354,12 @@ class _DoseDay extends GetView<TodayController> {
     Widget fact(String label, String value) => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: _caps(AppColors.heroMuted).copyWith(fontSize: 11.sp, letterSpacing: 1)),
+        Text(
+          label,
+          style: _caps(
+            AppColors.heroMuted,
+          ).copyWith(fontSize: 11.sp, letterSpacing: 1),
+        ),
         SizedBox(height: 2.sp),
         Text(
           value,
@@ -380,14 +385,19 @@ class _DoseDay extends GetView<TodayController> {
             Row(
               children: [
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10.sp, vertical: 4.sp),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.sp,
+                    vertical: 4.sp,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.lime,
                     borderRadius: BorderRadius.circular(9.sp),
                   ),
                   child: Text(
                     'DOSE DAY',
-                    style: _caps(AppColors.ink).copyWith(fontSize: 11.5.sp, letterSpacing: 1),
+                    style: _caps(
+                      AppColors.ink,
+                    ).copyWith(fontSize: 11.5.sp, letterSpacing: 1),
                   ),
                 ),
                 SizedBox(width: 8.sp),
@@ -409,7 +419,10 @@ class _DoseDay extends GetView<TodayController> {
                     children: [
                       Semantics(
                         header: true,
-                        child: Text('Today', style: _big(AppColors.white, size: 38)),
+                        child: Text(
+                          'Today',
+                          style: _big(AppColors.white, size: 38),
+                        ),
                       ),
                       SizedBox(height: 4.sp),
                       Text(
@@ -449,22 +462,22 @@ class _DoseDay extends GetView<TodayController> {
             SizedBox(
               width: double.infinity,
               child: Wrap(
-              alignment: WrapAlignment.center,
-              spacing: 18.sp,
-              children: [
-                if (controller.showGuideLink)
+                alignment: WrapAlignment.center,
+                spacing: 18.sp,
+                children: [
+                  if (controller.showGuideLink)
+                    _TextLink(
+                      'Walk me through it',
+                      controller.openGuide,
+                      color: AppColors.lime,
+                    ),
                   _TextLink(
-                    'Walk me through it',
-                    controller.openGuide,
-                    color: AppColors.lime,
+                    'Taking it another day?',
+                    () => controller.moveDate(context),
+                    color: AppColors.heroMuted,
                   ),
-                _TextLink(
-                  'Taking it another day?',
-                  () => controller.moveDate(context),
-                  color: AppColors.heroMuted,
-                ),
-              ],
-            ),
+                ],
+              ),
             ),
           ],
         ),
@@ -580,7 +593,9 @@ class _TakenToday extends GetView<TodayController> {
   Widget _build(BuildContext context) {
     final dose = controller.doseToday;
     final time = dose == null ? '' : controller.timeOf(dose.takenAt);
-    final site = dose == null || dose.site.isEmpty ? '' : controller.siteName(dose.site);
+    final site = dose == null || dose.site.isEmpty
+        ? ''
+        : controller.siteName(dose.site);
     final when = [time, site].where((s) => s.isNotEmpty).join(' · ');
     final next = controller.nextDoseWhen.split(' · ').first;
     return _InkCard(
@@ -589,22 +604,38 @@ class _TakenToday extends GetView<TodayController> {
           Container(
             width: 48.sp,
             height: 48.sp,
-            decoration: const BoxDecoration(color: AppColors.lime, shape: BoxShape.circle),
-            child: Icon(PhosphorIconsBold.check, size: 24.sp, color: AppColors.ink),
+            decoration: const BoxDecoration(
+              color: AppColors.lime,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              PhosphorIconsBold.check,
+              size: 24.sp,
+              color: AppColors.ink,
+            ),
           ),
           SizedBox(width: 14.sp),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Dose logged', style: AppText.h1.copyWith(fontSize: 22.sp, color: AppColors.white)),
+                Text(
+                  'Dose logged',
+                  style: AppText.h1.copyWith(
+                    fontSize: 22.sp,
+                    color: AppColors.white,
+                  ),
+                ),
                 if (when.isNotEmpty) ...[
                   SizedBox(height: 2.sp),
                   Text(
                     when,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppText.small.copyWith(fontSize: 13.sp, color: AppColors.heroMuted),
+                    style: AppText.small.copyWith(
+                      fontSize: 13.sp,
+                      color: AppColors.heroMuted,
+                    ),
                   ),
                 ],
                 if (next.isNotEmpty) ...[
@@ -636,11 +667,18 @@ class _TakenToday extends GetView<TodayController> {
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(18.sp),
-                  border: Border.all(color: AppColors.white.withValues(alpha: 0.2), width: 1.5),
+                  border: Border.all(
+                    color: AppColors.white.withValues(alpha: 0.2),
+                    width: 1.5,
+                  ),
                 ),
                 child: Text(
                   'Undo',
-                  style: AppText.small.copyWith(fontSize: 13.sp, fontWeight: FontWeight.w800, color: AppColors.white),
+                  style: AppText.small.copyWith(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.white,
+                  ),
                 ),
               ),
             ),

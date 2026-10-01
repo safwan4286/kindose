@@ -82,7 +82,10 @@ class LogDoseController extends GetxController {
   /// Injection guide on top; its last step comes back here.
   void openGuide() {
     Haptics.instance.lightImpact();
-    Get.toNamed<void>(Routes.guide, arguments: const GuideArgs(fromLogDose: true));
+    Get.toNamed<void>(
+      Routes.guide,
+      arguments: const GuideArgs(fromLogDose: true),
+    );
   }
 
   String get medicineName {

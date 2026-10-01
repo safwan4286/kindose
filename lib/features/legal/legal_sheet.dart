@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../resources/app_links.dart';
 import '../../resources/colors.dart';
 import '../../services/responsiveness/device_manager.dart';
 import '../../services/theme/theme.dart';
@@ -44,7 +45,30 @@ class LegalSheet extends StatelessWidget {
                 shrinkWrap: true,
                 padding: EdgeInsets.fromLTRB(20.sp, 16.sp, 20.sp, 12.sp),
                 children: [
-                  Text('Terms & privacy', style: AppText.h2.copyWith(fontSize: 24.sp)),
+                  Text(
+                    'Terms & privacy',
+                    style: AppText.h2.copyWith(fontSize: 24.sp),
+                  ),
+                  SizedBox(height: 10.sp),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SoftButton(
+                          label: 'Privacy Policy',
+                          height: 44,
+                          onPressed: () => AppLinks.open(AppLinks.privacyUrl),
+                        ),
+                      ),
+                      SizedBox(width: 8.sp),
+                      Expanded(
+                        child: SoftButton(
+                          label: 'Terms of Use',
+                          height: 44,
+                          onPressed: () => AppLinks.open(AppLinks.termsUrl),
+                        ),
+                      ),
+                    ],
+                  ),
                   SizedBox(height: 14.sp),
                   const _Block(
                     title: 'Not medical advice',
@@ -121,7 +145,10 @@ class _Block extends StatelessWidget {
             SizedBox(height: 4.sp),
             Text(
               body,
-              style: AppText.bodyText.copyWith(fontSize: 14.sp, color: context.k.muted),
+              style: AppText.bodyText.copyWith(
+                fontSize: 14.sp,
+                color: context.k.muted,
+              ),
             ),
           ],
         ),

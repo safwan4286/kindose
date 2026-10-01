@@ -26,10 +26,11 @@ mixin DayNav on GetxController {
 
   DateTime get today => Dates.dateOnly(DateTime.now());
   bool get isToday => Dates.sameDay(day.value, today);
-  bool get isPlusUser => PlusAccess.active.value;
+  bool get isPlusUser => PlusAccess.unlocked;
 
   /// Oldest day free users can open (4 weeks including today).
-  DateTime get freeFirstDay => today.subtract(const Duration(days: PlusAccess.freeHistoryDays - 1));
+  DateTime get freeFirstDay =>
+      today.subtract(const Duration(days: PlusAccess.freeHistoryDays - 1));
 
   /// Oldest day that can be opened at all.
   DateTime get firstDay {
@@ -48,7 +49,8 @@ mixin DayNav on GetxController {
   /// "Today", "Yesterday" or "Mon, 28 Sep".
   String get dayTitle {
     if (isToday) return 'Today';
-    if (Dates.sameDay(day.value, today.subtract(const Duration(days: 1)))) return 'Yesterday';
+    if (Dates.sameDay(day.value, today.subtract(const Duration(days: 1))))
+      return 'Yesterday';
     return Dates.shortWithDay(day.value);
   }
 
@@ -91,14 +93,20 @@ mixin DayNav on GetxController {
   Future<void> pickDay(BuildContext context) async {
     // Free users see older days with a lock; tapping one opens Plus.
     final p = _navProfile;
-    final start = Dates.dateOnly(p?.treatmentStartedAt ?? p?.startedAt ?? freeFirstDay);
-    final earliest = isPlusUser ? firstDay : (start.isBefore(freeFirstDay) ? start : freeFirstDay);
+    final start = Dates.dateOnly(
+      p?.treatmentStartedAt ?? p?.startedAt ?? freeFirstDay,
+    );
+    final earliest = isPlusUser
+        ? firstDay
+        : (start.isBefore(freeFirstDay) ? start : freeFirstDay);
     final picked = await showKDatePicker(
       context: context,
       initialDate: day.value,
       firstDate: earliest,
       lastDate: today,
-      note: isPlusUser ? null : 'Last 4 weeks are free. Older days come with Plus.',
+      note: isPlusUser
+          ? null
+          : 'Last 4 weeks are free. Older days come with Plus.',
       marked: hasLogOn,
       lockedBefore: isPlusUser ? null : freeFirstDay,
       onLockedTap: () {
@@ -113,7 +121,8 @@ mixin DayNav on GetxController {
   bool hasLogOn(DateTime d) {
     final t = Get.find<TrackerService>();
     final log = t.days[Dates.key(d)];
-    if (log != null && (log.proteinG > 0 || log.waterMl > 0 || log.hasCheckIn)) return true;
+    if (log != null && (log.proteinG > 0 || log.waterMl > 0 || log.hasCheckIn))
+      return true;
     if (t.doseOn(d) != null) return true;
     return t.weights.any((w) => Dates.sameDay(w.date, d));
   }

@@ -204,7 +204,8 @@ class BodySpotPreview extends StatefulWidget {
   State<BodySpotPreview> createState() => _BodySpotPreviewState();
 }
 
-class _BodySpotPreviewState extends State<BodySpotPreview> with SingleTickerProviderStateMixin {
+class _BodySpotPreviewState extends State<BodySpotPreview>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _pulse = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 1600),
@@ -268,7 +269,9 @@ class _BodySpotPreviewState extends State<BodySpotPreview> with SingleTickerProv
                         height: dot + (ring - dot) * t,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: widget.dotColor.withValues(alpha: 0.35 * (1 - t)),
+                          color: widget.dotColor.withValues(
+                            alpha: 0.35 * (1 - t),
+                          ),
                         ),
                       ),
                     );
@@ -281,7 +284,10 @@ class _BodySpotPreviewState extends State<BodySpotPreview> with SingleTickerProv
                 width: dot,
                 height: dot,
                 child: DecoratedBox(
-                  decoration: BoxDecoration(shape: BoxShape.circle, color: widget.dotColor),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: widget.dotColor,
+                  ),
                 ),
               ),
             ],

@@ -22,7 +22,7 @@ class PensController extends GetxController {
 
   /// Plus feature. Also open in debug builds, so it can be tested before
   /// RevenueCat is connected.
-  bool get unlocked => PlusAccess.active.value || kDebugMode;
+  bool get unlocked => PlusAccess.unlocked || kDebugMode;
 
   /// Read inside an Obx so every value the screen shows is watched.
   void watch() {
@@ -36,7 +36,7 @@ class PensController extends GetxController {
     tracker.doses.length;
     tracker.profile.value;
     tracker.nextDoseOverride.value;
-    PlusAccess.active.value;
+    PlusAccess.unlocked;
   }
 
   @override
@@ -75,7 +75,8 @@ class PensController extends GetxController {
   int get _defaultPerPack => isTablet ? 30 : 4;
 
   String get leftLine => '${supply.leftInPack} left';
-  String get ofLine => 'of ${supply.dosesPerPack.value} $dosesWord in this $pack';
+  String get ofLine =>
+      'of ${supply.dosesPerPack.value} $dosesWord in this $pack';
 
   /// Lime line on the current pen card.
   String get refillLine {
@@ -141,7 +142,9 @@ class PensController extends GetxController {
     Haptics.instance.mediumImpact();
     final hadSpare = supply.spare.value > 0;
     await supply.startNewPack();
-    showToast(hadSpare ? 'New $pack started · 1 spare used' : 'New $pack started');
+    showToast(
+      hadSpare ? 'New $pack started · 1 spare used' : 'New $pack started',
+    );
   }
 
   Future<void> fixCount(BuildContext context) async {
@@ -184,13 +187,18 @@ class PensController extends GetxController {
     if (p == null) return;
     Haptics.instance.mediumImpact();
     await supply.addPurchase(p);
-    showToast('Added · ${p.packs} spare ${p.packs == 1 ? pack : packs} at home');
+    showToast(
+      'Added · ${p.packs} spare ${p.packs == 1 ? pack : packs} at home',
+    );
   }
 
   Future<void> removePurchase(Purchase p) async {
     Haptics.instance.mediumImpact();
     await supply.removePurchase(p.id);
-    showUndoToast('Purchase removed', () => supply.addPurchase(p, addToSpare: false));
+    showUndoToast(
+      'Purchase removed',
+      () => supply.addPurchase(p, addToSpare: false),
+    );
   }
 
   Future<void> openSettings() async {
@@ -225,16 +233,20 @@ class PensController extends GetxController {
     final first = supply.firstPurchase;
     final parts = <String>[
       if (per != null) 'About ${supply.money(per.roundToDouble())} a $doseWord',
-      if (first != null) '${supply.money(supply.totalSpend)} since ${Dates.monthShort(first.month)}',
+      if (first != null)
+        '${supply.money(supply.totalSpend)} since ${Dates.monthShort(first.month)}',
     ];
-    return parts.isEmpty ? 'Add a purchase to see what you spend.' : parts.join(' · ');
+    return parts.isEmpty
+        ? 'Add a purchase to see what you spend.'
+        : parts.join(' · ');
   }
 
   /// Last 4 months, oldest first: (label, total, isThisMonth).
   List<(String, double, bool)> get months {
     final now = DateTime.now();
     return [
-      for (var i = 3; i >= 0; i--) _month(DateTime(now.year, now.month - i), i == 0),
+      for (var i = 3; i >= 0; i--)
+        _month(DateTime(now.year, now.month - i), i == 0),
     ];
   }
 
@@ -255,5 +267,6 @@ class PensController extends GetxController {
     return note == null ? day : '$day · $note';
   }
 
-  String _cap(String s) => s.isEmpty ? s : '${s[0].toUpperCase()}${s.substring(1)}';
+  String _cap(String s) =>
+      s.isEmpty ? s : '${s[0].toUpperCase()}${s.substring(1)}';
 }

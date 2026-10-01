@@ -96,7 +96,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen> {
                 padding: EdgeInsets.fromLTRB(20.sp, 8.sp, 20.sp, 12.sp),
                 child: Obx(
                   () => PillButton(
-                    label: PlusAccess.active.value
+                    label: PlusAccess.unlocked
                         ? 'Share PDF'
                         : 'Share PDF · Plus',
                     icon: PhosphorIconsBold.shareNetwork,

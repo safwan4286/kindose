@@ -1,4 +1,3 @@
-
 import '../../resources/common_methods.dart';
 import '../../resources/functions.dart';
 import '../../widgets/global_loader.dart';

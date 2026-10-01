@@ -104,9 +104,15 @@ class AppTheme {
         ).copyWith(
           // Ink in light mode, lime in dark: used by Material widgets such
           // as the time picker, text cursor and progress indicators.
-          primary: brightness == Brightness.dark ? AppColors.lime : AppColors.ink,
-          onPrimary: brightness == Brightness.dark ? AppColors.ink : AppColors.lime,
-          primaryContainer: brightness == Brightness.dark ? AppColors.lime.withValues(alpha: 0.2) : AppColors.limeSoft,
+          primary: brightness == Brightness.dark
+              ? AppColors.lime
+              : AppColors.ink,
+          onPrimary: brightness == Brightness.dark
+              ? AppColors.ink
+              : AppColors.lime,
+          primaryContainer: brightness == Brightness.dark
+              ? AppColors.lime.withValues(alpha: 0.2)
+              : AppColors.limeSoft,
           onPrimaryContainer: k.text,
           secondary: AppColors.lime,
           onSecondary: AppColors.ink,
@@ -156,15 +162,29 @@ class AppTheme {
       timePickerTheme: TimePickerThemeData(
         backgroundColor: k.bg,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-        hourMinuteShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        dayPeriodShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        hourMinuteShape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+        ),
+        dayPeriodShape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
         dayPeriodBorderSide: BorderSide(color: k.border),
         dialBackgroundColor: k.card,
         dialHandColor: k.selectedBorder,
-        helpTextStyle: AppText.caps.copyWith(fontSize: 12, letterSpacing: 1.1, color: k.faint),
+        helpTextStyle: AppText.caps.copyWith(
+          fontSize: 12,
+          letterSpacing: 1.1,
+          color: k.faint,
+        ),
         hourMinuteTextStyle: AppText.h1.copyWith(fontSize: 44),
-        cancelButtonStyle: TextButton.styleFrom(foregroundColor: k.muted, textStyle: AppText.title),
-        confirmButtonStyle: TextButton.styleFrom(foregroundColor: k.text, textStyle: AppText.title),
+        cancelButtonStyle: TextButton.styleFrom(
+          foregroundColor: k.muted,
+          textStyle: AppText.title,
+        ),
+        confirmButtonStyle: TextButton.styleFrom(
+          foregroundColor: k.text,
+          textStyle: AppText.title,
+        ),
       ),
       textSelectionTheme: TextSelectionThemeData(
         cursorColor: k.text,

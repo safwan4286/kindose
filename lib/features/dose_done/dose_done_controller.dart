@@ -107,7 +107,7 @@ class DoseDoneController extends GetxController {
   SupplyService get supply => Get.find<SupplyService>();
 
   /// Shown once Pens & cost (Plus) is set up.
-  bool get showPen => (PlusAccess.active.value || kDebugMode) && supply.isSetUp;
+  bool get showPen => (PlusAccess.unlocked || kDebugMode) && supply.isSetUp;
 
   String get _pack => switch (profile?.form) {
     'vial' => 'vial',

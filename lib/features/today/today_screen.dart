@@ -11,6 +11,7 @@ import '../home/home_screen.dart';
 import 'today_controller.dart';
 import 'widgets/dose_card.dart';
 import 'widgets/edit_today_sheet.dart';
+import 'widgets/free_week.dart';
 import 'widgets/next_bite_card.dart';
 import 'widgets/today_cards.dart';
 import 'widgets/weekly_card.dart';
@@ -41,13 +42,18 @@ class TodayScreen extends GetView<TodayController> {
         controller.watch();
         if (controller.profile == null) return const SizedBox.shrink();
         final cards = controller.visibleCards;
-        final weekly = controller.weekly;
+        final locked = controller.locked;
+        final weekly = locked ? null : controller.weekly;
         var delay = 120;
         return ListView(
           physics: BouncingScrollPhysics(),
           padding: EdgeInsets.fromLTRB(20.sp, 12.sp, 20.sp, kNavClearance),
           children: [
             const TodayHeader().enter(motion, dy: 0.1),
+            if (controller.showFreeStrip) ...[
+              SizedBox(height: 14.sp),
+              const FreeWeekStrip().enter(motion, delay: 30, dy: 0.1),
+            ],
             if (controller.showSetup) ...[
               SizedBox(height: 18.sp),
               const SetupCard().enter(motion, delay: 40, dy: 0.1),
@@ -73,15 +79,19 @@ class TodayScreen extends GetView<TodayController> {
               height: controller.showSetup || weekly != null ? 12.sp : 18.sp,
             ),
             const DoseCard().enter(motion, delay: 80, dy: 0.1),
+            if (locked) ...[
+              SizedBox(height: 12.sp),
+              const WeekEndedCard().enter(motion, delay: 120, dy: 0.1),
+            ],
             for (final id in cards) ...[
               SizedBox(height: id == 'log' ? 20.sp : 12.sp),
               KeyedSubtree(
                 key: ValueKey(id),
-                child: _card(id),
+                child: locked ? LockedCard(child: _card(id)) : _card(id),
               ).enter(motion, delay: delay += 60, dy: 0.1),
             ],
             SizedBox(height: 16.sp),
-            Center(
+            if (!locked) Center(
               child: Semantics(
                 button: true,
                 label: 'Edit Today',

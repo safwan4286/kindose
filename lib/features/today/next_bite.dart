@@ -42,7 +42,8 @@ class BiteIdea {
   final Set<MealSlot> slots;
 
   /// Saved on the log entry, like the food library: "Greek yogurt, 1/2 cup".
-  String get label => '$name, $portion';
+  /// Tips like "· sip slowly" stay on the card, not in the log.
+  String get label => '$name, ${portion.split(' · ').first}';
 }
 
 /// What the card shows right now.

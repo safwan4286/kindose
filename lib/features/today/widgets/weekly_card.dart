@@ -34,7 +34,10 @@ class WeeklyCard extends GetView<TodayController> {
         decoration: BoxDecoration(
           color: k.card,
           borderRadius: BorderRadius.circular(24.sp),
-          border: Border.all(color: dark ? AppColors.lime : AppColors.ink, width: 2),
+          border: Border.all(
+            color: dark ? AppColors.lime : AppColors.ink,
+            width: 2,
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -42,11 +45,21 @@ class WeeklyCard extends GetView<TodayController> {
             Row(
               children: [
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 9.sp, vertical: 4.sp),
-                  decoration: BoxDecoration(color: AppColors.lime, borderRadius: BorderRadius.circular(9.sp)),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 9.sp,
+                    vertical: 4.sp,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.lime,
+                    borderRadius: BorderRadius.circular(9.sp),
+                  ),
                   child: Text(
                     'YOUR WEEK',
-                    style: AppText.caps.copyWith(fontSize: 11.sp, letterSpacing: 1, color: AppColors.ink),
+                    style: AppText.caps.copyWith(
+                      fontSize: 11.sp,
+                      letterSpacing: 1,
+                      color: AppColors.ink,
+                    ),
                   ),
                 ),
                 SizedBox(width: 8.sp),
@@ -55,7 +68,11 @@ class WeeklyCard extends GetView<TodayController> {
                     s.week == null ? s.range : '${s.range} · week ${s.week}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppText.small.copyWith(fontSize: 13.sp, fontWeight: FontWeight.w700, color: k.muted),
+                    style: AppText.small.copyWith(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w700,
+                      color: k.muted,
+                    ),
                   ),
                 ),
                 CircleIconButton(
@@ -70,7 +87,11 @@ class WeeklyCard extends GetView<TodayController> {
             SizedBox(height: 12.sp),
             Text(
               s.headline,
-              style: AppText.h2.copyWith(fontSize: 22.sp, height: 1.12, color: k.text),
+              style: AppText.h2.copyWith(
+                fontSize: 22.sp,
+                height: 1.12,
+                color: k.text,
+              ),
             ),
             SizedBox(height: 14.sp),
             for (final (i, row) in rows.indexed) ...[
@@ -82,7 +103,9 @@ class WeeklyCard extends GetView<TodayController> {
                     Expanded(child: _Tile(tile: row[0])),
                     SizedBox(width: 8.sp),
                     Expanded(
-                      child: row.length > 1 ? _Tile(tile: row[1]) : const SizedBox.shrink(),
+                      child: row.length > 1
+                          ? _Tile(tile: row[1])
+                          : const SizedBox.shrink(),
                     ),
                   ],
                 ),
@@ -92,9 +115,14 @@ class WeeklyCard extends GetView<TodayController> {
               SizedBox(height: 10.sp),
               Container(
                 width: double.infinity,
-                padding: EdgeInsets.symmetric(horizontal: 12.sp, vertical: 10.sp),
+                padding: EdgeInsets.symmetric(
+                  horizontal: 12.sp,
+                  vertical: 10.sp,
+                ),
                 decoration: BoxDecoration(
-                  color: dark ? AppColors.lime.withValues(alpha: 0.14) : AppColors.limeSoft,
+                  color: dark
+                      ? AppColors.lime.withValues(alpha: 0.14)
+                      : AppColors.limeSoft,
                   borderRadius: BorderRadius.circular(14.sp),
                 ),
                 child: Text(
@@ -146,27 +174,45 @@ class _Tile extends StatelessWidget {
     final dark = k.selectedBorder == AppColors.lime;
     final strip = tile.strip;
     return Semantics(
-      label: '${tile.caps.toLowerCase()}: ${tile.value}${tile.sub == null ? '' : ', ${tile.sub}'}',
+      label:
+          '${tile.caps.toLowerCase()}: ${tile.value}${tile.sub == null ? '' : ', ${tile.sub}'}',
       excludeSemantics: true,
       child: Container(
         padding: EdgeInsets.all(12.sp),
-        decoration: BoxDecoration(color: k.bg, borderRadius: BorderRadius.circular(16.sp)),
+        decoration: BoxDecoration(
+          color: k.bg,
+          borderRadius: BorderRadius.circular(16.sp),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(tile.caps, style: AppText.caps.copyWith(fontSize: 11.sp, letterSpacing: 1, color: k.faint)),
+            Text(
+              tile.caps,
+              style: AppText.caps.copyWith(
+                fontSize: 11.sp,
+                letterSpacing: 1,
+                color: k.faint,
+              ),
+            ),
             SizedBox(height: 4.sp),
             FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
-              child: Text(tile.value, style: AppText.h2.copyWith(fontSize: 20.sp, color: k.text)),
+              child: Text(
+                tile.value,
+                style: AppText.h2.copyWith(fontSize: 20.sp, color: k.text),
+              ),
             ),
             if (tile.sub != null)
               Text(
                 tile.sub!,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: AppText.small.copyWith(fontSize: 12.sp, fontWeight: FontWeight.w700, color: k.muted),
+                style: AppText.small.copyWith(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w700,
+                  color: k.muted,
+                ),
               ),
             if (strip != null) ...[
               SizedBox(height: 8.sp),
@@ -184,7 +230,9 @@ class _Tile extends StatelessWidget {
                           child: Container(
                             height: 8.sp,
                             decoration: BoxDecoration(
-                              color: hit ? (dark ? AppColors.lime : AppColors.ink) : k.border,
+                              color: hit
+                                  ? (dark ? AppColors.lime : AppColors.ink)
+                                  : k.border,
                               borderRadius: BorderRadius.circular(4.sp),
                             ),
                           ),

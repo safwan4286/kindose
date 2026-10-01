@@ -685,18 +685,18 @@ class _BarsCard extends StatelessWidget {
                                   child: FittedBox(
                                     fit: BoxFit.scaleDown,
                                     child: Text(
-                                  Dates.sameDay(b.date, today)
-                                      ? 'Tdy'
-                                      : Dates.weekdayShort(
-                                          b.date.weekday,
-                                        ).substring(0, 1),
-                                  style: AppText.tiny.copyWith(
-                                    fontSize: 11.sp,
-                                    fontWeight: FontWeight.w800,
-                                    color: Dates.sameDay(b.date, today)
-                                        ? k.text
-                                        : k.faint,
-                                  ),
+                                      Dates.sameDay(b.date, today)
+                                          ? 'Tdy'
+                                          : Dates.weekdayShort(
+                                              b.date.weekday,
+                                            ).substring(0, 1),
+                                      style: AppText.tiny.copyWith(
+                                        fontSize: 11.sp,
+                                        fontWeight: FontWeight.w800,
+                                        color: Dates.sameDay(b.date, today)
+                                            ? k.text
+                                            : k.faint,
+                                      ),
                                     ),
                                   ),
                                 ),
