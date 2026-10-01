@@ -55,8 +55,60 @@ Future<bool?> showDeleteAccountSheet() {
 }
 
 /// Last check before wiping the phone. Returns true to delete.
-Future<bool?> showDeleteAllSheet() {
-  return Get.bottomSheet<bool>(const _DeleteSheet(), isScrollControlled: true);
+Future<bool?> showDeleteAllSheet({bool signedIn = false}) {
+  return Get.bottomSheet<bool>(
+    _DeleteSheet(signedIn: signedIn),
+    isScrollControlled: true,
+  );
+}
+
+/// Before signing out. [synced] false = the latest changes couldn't be
+/// backed up. Returns true to sign out.
+Future<bool?> showSignOutSheet({required bool synced, required String email}) {
+  return Get.bottomSheet<bool>(
+    _SignOutSheet(synced: synced, email: email),
+    isScrollControlled: true,
+  );
+}
+
+class _SignOutSheet extends StatelessWidget {
+  const _SignOutSheet({required this.synced, required this.email});
+
+  final bool synced;
+  final String email;
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    return KSheetFrame(
+      icon: KIconTile(
+        icon: synced ? Icons.logout_rounded : Icons.cloud_off_rounded,
+        bg: synced ? k.cardAlt : AppColors.dangerSoft,
+        fg: synced ? k.text : AppColors.danger,
+      ),
+      title: 'Sign out?',
+      sub: synced
+          ? 'Everything is backed up to $email. Signing out removes it from '
+                'this phone. Sign in again any time to get it back.'
+          : "Your latest changes couldn't be backed up (no internet). If you "
+                'sign out now, they are lost. Connect and try again, or sign out anyway.',
+      children: [
+        SoftButton(
+          label: synced ? 'Sign out' : 'Sign out anyway',
+          background: synced ? k.text : AppColors.danger,
+          foreground: synced ? k.bg : AppColors.white,
+          height: 50,
+          onPressed: () => Navigator.of(context).pop(true),
+        ),
+        SizedBox(height: 8.sp),
+        SoftButton(
+          label: 'Stay signed in',
+          height: 50,
+          onPressed: () => Navigator.of(context).pop(false),
+        ),
+      ],
+    );
+  }
 }
 
 class _DietSheet extends StatelessWidget {
@@ -224,7 +276,9 @@ class _BackupSheet extends StatelessWidget {
 }
 
 class _DeleteSheet extends StatelessWidget {
-  const _DeleteSheet();
+  const _DeleteSheet({required this.signedIn});
+
+  final bool signedIn;
 
   @override
   Widget build(BuildContext context) {
@@ -235,9 +289,11 @@ class _DeleteSheet extends StatelessWidget {
         fg: AppColors.danger,
       ),
       title: 'Delete all my data?',
-      sub:
-          'Every dose, weigh-in, check-in and setting is removed from this phone. '
-          'This cannot be undone. Export first if you want a copy.',
+      sub: signedIn
+          ? 'Every dose, weigh-in, check-in and setting is removed from this phone, '
+                'and you are signed out. Your cloud backup stays until you delete your account.'
+          : 'Every dose, weigh-in, check-in and setting is removed from this phone. '
+                'This cannot be undone. Export first if you want a copy.',
       children: [
         SoftButton(
           label: 'Delete everything',
@@ -272,7 +328,8 @@ class _RestoreSheet extends StatelessWidget {
       sub: phoneHasData
           ? 'Saved $when. Restoring replaces what is on this phone now. '
                 'Keep this phone instead, and it becomes your backup.'
-          : 'Saved $when. Bring your doses, weigh-ins and settings back to this phone.',
+          : 'Saved $when. Bring your doses, weigh-ins and settings back to this phone. '
+                'Start fresh replaces this backup with your new plan.',
       children: [
         PillButton(
           label: 'Restore my backup',
@@ -306,8 +363,9 @@ class _DeleteAccountSheet extends StatelessWidget {
       ),
       title: 'Delete your account?',
       sub:
-          'Your account and its cloud backup are deleted for good. '
-          'What is on this phone stays until you delete it too.',
+          'Your account, its cloud backup and everything on this phone are '
+          'deleted for good. Export first if you want a copy. A Plus '
+          'subscription is cancelled in your App Store or Google Play settings.',
       children: [
         SoftButton(
           label: 'Delete my account',

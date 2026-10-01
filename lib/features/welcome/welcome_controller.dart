@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 
 import '../../resources/routes.dart';
+import '../../widgets/no_internet_sheet.dart';
 import '../../services/backend/backend_service.dart';
 import '../../services/haptics/haptics.dart';
 import '../../widgets/toast.dart';
@@ -35,7 +36,7 @@ class WelcomeController extends GetxController {
         case BackendResult.cancelled:
           return;
         case BackendResult.offline:
-          showToast('You seem to be offline. Try again when connected.');
+          await showNoInternetSheet(what: 'Signing in');
           return;
         case BackendResult.notReady:
           showToast('Sign-in is being set up. Tap Get started for now.');
@@ -44,11 +45,17 @@ class WelcomeController extends GetxController {
           showToast('Sign-in didn’t work this time. Please try again.');
           return;
       }
-      CloudBackup? cloud;
-      try {
-        cloud = await backend.fetchBackup();
-      } catch (_) {}
+      final check = await backend.checkBackup();
+      if (!check.ok) {
+        // Couldn't look: don't start a new plan that could replace a backup.
+        await backend.signOut();
+        await showNoInternetSheet(what: 'Getting your backup');
+        return;
+      }
+      final cloud = check.backup;
       if (cloud == null) {
+        // New account: the plan they set up now is theirs.
+        await backend.claimLocal();
         showToast('No backup yet for this account. Let’s set things up.');
         Get.toNamed<void>(Routes.onboarding);
         return;
@@ -58,6 +65,7 @@ class WelcomeController extends GetxController {
         Get.offAllNamed<void>(Routes.home);
         showToast('Welcome back. Your data is restored.');
       } else {
+        await backend.signOut();
         showToast('Couldn’t restore the backup. Please try again.');
       }
     } finally {

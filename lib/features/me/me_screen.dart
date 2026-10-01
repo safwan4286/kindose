@@ -152,7 +152,7 @@ class MeScreen extends GetView<MeController> {
                 ),
               ],
             ).enter(motion, delay: 170),
-            _label(context, 'Backup'),
+            _label(context, c.signedIn ? 'Account & backup' : 'Backup'),
             _BackupCard(controller: c).enter(motion, delay: 200),
             _label(context, 'Your data'),
             _Group(
@@ -603,6 +603,61 @@ class _SignedInBackup extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Who is signed in.
+          Semantics(
+            label: '${controller.accountVia}: ${controller.accountEmail}',
+            excludeSemantics: true,
+            child: Row(
+              children: [
+                Container(
+                  width: 36.sp,
+                  height: 36.sp,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: dark ? AppColors.lime : AppColors.ink,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    controller.accountInitial,
+                    style: AppText.title.copyWith(
+                      fontSize: 16.sp,
+                      color: dark ? AppColors.ink : AppColors.lime,
+                    ),
+                  ),
+                ),
+                SizedBox(width: 12.sp),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        controller.accountVia.toUpperCase(),
+                        style: AppText.caps.copyWith(
+                          fontSize: 10.5.sp,
+                          letterSpacing: 0.9,
+                          color: k.faint,
+                        ),
+                      ),
+                      SizedBox(height: 1.sp),
+                      Text(
+                        controller.accountEmail,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppText.title.copyWith(
+                          fontSize: 15.sp,
+                          color: k.text,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 12.sp),
+            child: Divider(height: 1, thickness: 1, color: k.border),
+          ),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -639,7 +694,7 @@ class _SignedInBackup extends StatelessWidget {
                     ),
                     SizedBox(height: 2.sp),
                     Text(
-                      '${controller.accountEmail} · backs up by itself after changes',
+                      'Backs up by itself after changes',
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: AppText.small.copyWith(

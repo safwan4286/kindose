@@ -21,6 +21,7 @@ import '../../services/purchases/purchase_service.dart';
 import '../../services/supply/supply_service.dart';
 import '../../services/tracker_service.dart';
 import '../../widgets/mood_row.dart';
+import '../../widgets/no_internet_sheet.dart';
 import '../../widgets/toast.dart';
 import '../legal/legal_sheet.dart';
 import 'widgets/me_sheets.dart';
@@ -71,6 +72,7 @@ class MeController extends GetxController {
     backend.user.value;
     backend.lastBackupAt.value;
     backend.busy.value;
+    backend.pending.value;
   }
 
   bool get isPlus => PlusAccess.active.value;
@@ -437,8 +439,24 @@ class MeController extends GetxController {
   bool get signedIn => backend.signedIn;
   String get accountEmail => backend.email ?? 'your account';
 
+  /// "Signed in with Google" / "Signed in with Apple".
+  String get accountVia => switch (backend.provider) {
+    'apple' => 'Signed in with Apple',
+    'google' => 'Signed in with Google',
+    _ => 'Signed in',
+  };
+
+  /// First letter for the account circle.
+  String get accountInitial {
+    final e = backend.email;
+    return e == null || e.isEmpty ? '?' : e[0].toUpperCase();
+  }
+
   /// "Backed up today, 9:41 PM" / "Not backed up yet".
   String get backupLine {
+    if (backend.pending.value && !backend.busy.value) {
+      return 'Changes waiting to back up';
+    }
     final at = backend.lastBackupAt.value;
     if (at == null) return 'Not backed up yet';
     final day = Dates.relativeDay(at, DateTime.now());
@@ -465,12 +483,24 @@ class MeController extends GetxController {
         _explain(r);
         return;
       }
-      final cloud = await _tryFetch();
+      final check = await backend.checkBackup();
+      if (!check.ok) {
+        // Never guess "no backup": that could overwrite a real one.
+        await backend.signOut();
+        await showNoInternetSheet(what: 'Checking your backup');
+        return;
+      }
+      final cloud = check.backup;
       if (cloud != null) {
         final restore = await showRestoreSheet(
           when: _when(cloud.updatedAt),
           phoneHasData: true,
         );
+        if (restore == null) {
+          // Closed without choosing: nothing changes.
+          await backend.signOut();
+          return;
+        }
         if (restore == true) {
           final rr = await backend.restore(cloud);
           if (rr == BackendResult.ok) {
@@ -481,6 +511,8 @@ class MeController extends GetxController {
           return;
         }
       }
+      // No backup yet, or "Keep this phone": the phone's data is theirs.
+      await backend.claimLocal();
     } finally {
       backend.autoPaused = false;
     }
@@ -499,7 +531,12 @@ class MeController extends GetxController {
 
   Future<void> restoreBackup() async {
     Haptics.instance.selectionClick();
-    final cloud = await _tryFetch();
+    final check = await backend.checkBackup();
+    if (!check.ok) {
+      await showNoInternetSheet(what: 'Restoring');
+      return;
+    }
+    final cloud = check.backup;
     if (cloud == null) {
       showToast('No backup found for this account yet.');
       return;
@@ -517,10 +554,18 @@ class MeController extends GetxController {
     }
   }
 
+  /// Last backup, then sign out and clear the phone (their data waits in
+  /// the cloud). Warns first when the latest changes couldn't upload.
   Future<void> signOut() async {
     Haptics.instance.selectionClick();
-    await backend.signOut();
-    showToast('Signed out. Your data stays on this phone.');
+    final email = accountEmail;
+    final synced = await backend.flushBeforeSignOut();
+    final ok = await showSignOutSheet(synced: synced, email: email);
+    if (ok != true) return;
+    Haptics.instance.mediumImpact();
+    await backend.signOutAndClear();
+    Get.offAllNamed<void>(Routes.welcome);
+    showToast('Signed out. Sign in again to get your data back.');
   }
 
   Future<void> deleteAccount() async {
@@ -530,17 +575,10 @@ class MeController extends GetxController {
     final r = await backend.deleteAccount();
     if (r == BackendResult.ok) {
       Haptics.instance.heavyImpact();
-      showToast('Account deleted. Your data on this phone is still here.');
+      Get.offAllNamed<void>(Routes.welcome);
+      showToast('Account deleted.');
     } else {
       _explain(r);
-    }
-  }
-
-  Future<CloudBackup?> _tryFetch() async {
-    try {
-      return await backend.fetchBackup();
-    } catch (_) {
-      return null;
     }
   }
 
@@ -555,7 +593,7 @@ class MeController extends GetxController {
       case BackendResult.cancelled:
         return;
       case BackendResult.offline:
-        showToast('You seem to be offline. Try again when connected.');
+        showNoInternetSheet();
       case BackendResult.notReady:
         showToast('Sign-in is being set up. Your data is safe on this phone.');
       case BackendResult.failed:
@@ -705,10 +743,16 @@ class MeController extends GetxController {
 
   Future<void> confirmDeleteAll() async {
     Haptics.instance.mediumImpact();
-    final ok = await showDeleteAllSheet();
+    final ok = await showDeleteAllSheet(signedIn: signedIn);
     if (ok != true) return;
     Haptics.instance.heavyImpact();
-    await tracker.deleteAll();
+    // Signed in: sign out too, so an empty phone is never tied to the
+    // account (the cloud backup stays).
+    if (signedIn) {
+      await backend.signOutAndClear();
+    } else {
+      await tracker.deleteAll();
+    }
     Get.offAllNamed<void>(Routes.welcome);
   }
 

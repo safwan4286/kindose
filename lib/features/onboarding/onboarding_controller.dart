@@ -5,6 +5,7 @@ import '../../models/user_profile.dart';
 import '../../resources/catalog.dart';
 import '../../resources/date_utils.dart';
 import '../../resources/routes.dart';
+import '../../widgets/no_internet_sheet.dart';
 import '../../services/backend/backend_service.dart';
 import '../../services/haptics/haptics.dart';
 import '../../services/region/region.dart';
@@ -844,9 +845,7 @@ class OnboardingController extends GetxController {
         case BackendResult.cancelled:
           return;
         case BackendResult.offline:
-          showToast(
-            'You seem to be offline. Tap Not now and sign in later in Me.',
-          );
+          await showNoInternetSheet(what: 'Signing in');
           return;
         case BackendResult.notReady:
         case BackendResult.failed:
@@ -855,10 +854,13 @@ class OnboardingController extends GetxController {
           );
           return;
       }
-      CloudBackup? cloud;
-      try {
-        cloud = await backend.fetchBackup();
-      } catch (_) {}
+      final check = await backend.checkBackup();
+      if (!check.ok) {
+        await backend.signOut();
+        await showNoInternetSheet(what: 'Checking for a backup');
+        return;
+      }
+      final cloud = check.backup;
       if (cloud != null) {
         final day = Dates.relativeDay(cloud.updatedAt, DateTime.now());
         final restore = await showRestoreSheet(
@@ -866,14 +868,25 @@ class OnboardingController extends GetxController {
               '${day == 'Today' ? 'today' : day} at ${Dates.time(cloud.updatedAt)}',
           phoneHasData: false,
         );
-        if (restore == true &&
-            await backend.restore(cloud) == BackendResult.ok) {
-          Haptics.instance.mediumImpact();
-          Get.offAllNamed<void>(Routes.home);
-          showToast('Welcome back. Your data is restored.');
+        if (restore == null) {
+          // Closed without choosing: stay here, signed out.
+          await backend.signOut();
+          return;
+        }
+        if (restore == true) {
+          if (await backend.restore(cloud) == BackendResult.ok) {
+            Haptics.instance.mediumImpact();
+            Get.offAllNamed<void>(Routes.home);
+            showToast('Welcome back. Your data is restored.');
+          } else {
+            await backend.signOut();
+            showToast('Couldn’t restore the backup. Please try again.');
+          }
           return;
         }
       }
+      // New account, or "Start fresh": the plan made now is theirs.
+      await backend.claimLocal();
     } finally {
       signingIn.value = null;
       backend.autoPaused = false;

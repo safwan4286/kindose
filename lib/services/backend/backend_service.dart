@@ -2,9 +2,11 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../resources/backend_keys.dart';
@@ -63,6 +65,52 @@ class BackendService extends GetxService {
   /// an automatic backup can't overwrite the cloud copy first.
   bool autoPaused = false;
 
+  // ---------------------------------------------------- data ownership
+  //
+  // The phone's data belongs to one account (or to nobody: a guest).
+  // * Automatic backup only uploads when it belongs to the signed-in
+  //   account, so one account's data can never land in another's backup.
+  // * Sign out and delete account clear the phone.
+  // * Signing in decides: restore the account's backup, or claim the
+  //   phone's guest data.
+
+  static const String _ownerKey = 'dataOwner';
+  static const String _pendingKey = 'syncPending';
+
+  Box<dynamic> get _settings => Hive.box<dynamic>('settings');
+
+  /// Changes on this phone that aren't in the cloud yet (offline, or the
+  /// quiet time hasn't passed).
+  final RxBool pending = false.obs;
+
+  StreamSubscription<List<ConnectivityResult>>? _netSub;
+
+  /// Account id the phone's data belongs to, or null for a guest.
+  String? get dataOwner {
+    final v = _settings.get(_ownerKey);
+    return v is String ? v : null;
+  }
+
+  bool get hasLocalData => tracker.profile.value != null;
+
+  /// Signed in and the phone's data is this account's.
+  bool get ownsLocal => user.value != null && dataOwner == user.value!.id;
+
+  /// The phone's data now belongs to the signed-in account.
+  Future<void> claimLocal() async {
+    final id = user.value?.id;
+    if (id == null) return;
+    await _settings.put(_ownerKey, id);
+    _log('Phone data now belongs to ${_mask(email)}');
+  }
+
+  Future<void> _setPending(bool v) async {
+    pending.value = v;
+    try {
+      await _settings.put(_pendingKey, v);
+    } catch (_) {}
+  }
+
   /// Quiet time after the last change before an automatic backup.
   static const Duration _autoDelay = Duration(seconds: 20);
 
@@ -87,6 +135,12 @@ class BackendService extends GetxService {
   bool get signedIn => user.value != null;
   String? get email => user.value?.email;
 
+  /// 'google' or 'apple' (how the user signed in), or null.
+  String? get provider {
+    final p = user.value?.appMetadata['provider'];
+    return p is String ? p : null;
+  }
+
   SupabaseClient get _db => Supabase.instance.client;
 
   @override
@@ -94,6 +148,13 @@ class BackendService extends GetxService {
     super.onInit();
     if (!ready) return;
     user.value = _db.auth.currentUser;
+    pending.value = _settings.get(_pendingKey) == true;
+    // Phones from before ownership existed: a signed-in user's data with
+    // no owner yet is theirs.
+    if (signedIn && dataOwner == null) unawaited(claimLocal());
+    if (signedIn && !ownsLocal) {
+      _log('Phone data belongs to another account; automatic backup is off');
+    }
     _log(
       signedIn
           ? 'Start: signed in as ${_mask(email)} (id ${user.value?.id})'
@@ -108,6 +169,12 @@ class BackendService extends GetxService {
     });
     unawaited(loadConfig());
     if (signedIn) unawaited(_startupBackup());
+
+    // Back online with changes waiting: back them up.
+    _netSub = Connectivity().onConnectivityChanged.listen((r) {
+      final online = r.any((c) => c != ConnectivityResult.none);
+      if (online && pending.value) unawaited(_autoBackup());
+    });
 
     // "Backs up by itself": any change to the log schedules a quiet backup.
     final supply = Get.isRegistered<SupplyService>()
@@ -127,6 +194,7 @@ class BackendService extends GetxService {
   @override
   void onClose() {
     _authSub?.cancel();
+    _netSub?.cancel();
     _changes?.dispose();
     _autoTimer?.cancel();
     super.onClose();
@@ -143,17 +211,14 @@ class BackendService extends GetxService {
   // ----------------------------------------------------------- auto backup
 
   void _scheduleAuto() {
-    if (autoPaused || !signedIn || tracker.profile.value == null) return;
+    if (autoPaused || !ownsLocal || !hasLocalData) return;
+    if (!pending.value) unawaited(_setPending(true));
     _autoTimer?.cancel();
     _autoTimer = Timer(_autoDelay, _autoBackup);
   }
 
   Future<void> _autoBackup() async {
-    if (autoPaused ||
-        _autoRunning ||
-        busy.value ||
-        !signedIn ||
-        tracker.profile.value == null) {
+    if (autoPaused || _autoRunning || busy.value || !ownsLocal || !hasLocalData) {
       return;
     }
     _autoRunning = true;
@@ -171,7 +236,8 @@ class BackendService extends GetxService {
   Future<void> _startupBackup() async {
     await refreshBackupInfo();
     final last = lastBackupAt.value;
-    if (last == null ||
+    if (pending.value ||
+        last == null ||
         DateTime.now().difference(last) > const Duration(days: 1)) {
       await _autoBackup();
     }
@@ -282,7 +348,8 @@ class BackendService extends GetxService {
 
   Future<void> _upload() async {
     final id = user.value?.id;
-    if (id == null || tracker.profile.value == null) return;
+    if (id == null || !hasLocalData) return;
+    if (!ownsLocal) throw StateError('Phone data belongs to another account');
     final data = tracker.backupData();
     await _db.from('backups').upsert({
       'user_id': id,
@@ -291,6 +358,7 @@ class BackendService extends GetxService {
       'platform': Platform.operatingSystem,
       'size_bytes': utf8.encode(jsonEncode(data)).length,
     });
+    await _setPending(false);
     await refreshBackupInfo();
     _log(
       'Backup saved ✓ ${(utf8.encode(jsonEncode(data)).length / 1024).toStringAsFixed(1)} KB · '
@@ -298,7 +366,18 @@ class BackendService extends GetxService {
     );
   }
 
-  /// The cloud copy, or null when there is none.
+  /// Looks for this account's backup. `ok` is false when it couldn't be
+  /// checked (offline or an error), so "no backup" is never assumed then.
+  Future<({CloudBackup? backup, bool ok})> checkBackup() async {
+    try {
+      return (backup: await fetchBackup(), ok: true);
+    } catch (e) {
+      _log('Backup check failed: $e');
+      return (backup: null, ok: false);
+    }
+  }
+
+  /// The cloud copy, or null when there is none. Throws when offline.
   Future<CloudBackup?> fetchBackup() async {
     final id = user.value?.id;
     if (!ready || id == null) return null;
@@ -323,6 +402,10 @@ class BackendService extends GetxService {
     try {
       final ok = await tracker.restoreBackup(backup.data);
       if (!ok) return BackendResult.failed;
+      // The restored settings may name another owner (or none): the data
+      // is now this account's, and nothing is waiting to upload.
+      await claimLocal();
+      await _setPending(false);
       if (Get.isRegistered<SupplyService>()) Get.find<SupplyService>().load();
       _log(
         'Restored ✓ backup from ${backup.updatedAt} · ${tracker.doses.length} doses',
@@ -336,10 +419,44 @@ class BackendService extends GetxService {
     }
   }
 
+  // -------------------------------------------------------------- sign out
+
+  /// Before signing out: put the latest changes in the cloud. True when
+  /// nothing would be lost (backed up, or nothing to back up).
+  Future<bool> flushBeforeSignOut() async {
+    if (!ownsLocal || !hasLocalData) return true;
+    if (busy.value) return false;
+    busy.value = true;
+    try {
+      await _upload();
+      return true;
+    } catch (e) {
+      _log('Last backup before sign-out failed: $e');
+      return false;
+    } finally {
+      busy.value = false;
+    }
+  }
+
+  /// Signs out everywhere and clears the phone. The account's data stays
+  /// in its cloud backup and comes back when they sign in again.
+  Future<void> signOutAndClear() async {
+    await signOut();
+    await _clearPhone();
+  }
+
+  Future<void> _clearPhone() async {
+    _autoTimer?.cancel();
+    await tracker.deleteAll();
+    pending.value = false;
+    if (Get.isRegistered<SupplyService>()) Get.find<SupplyService>().load();
+    _log('Phone cleared');
+  }
+
   // ---------------------------------------------------------------- delete
 
-  /// Deletes the account and its cloud backup. The phone's data is left to
-  /// the caller (Me → Delete all my data clears it).
+  /// Deletes the account and its cloud backup, signs out and clears the
+  /// phone.
   Future<BackendResult> deleteAccount() async {
     if (!ready || !signedIn) return BackendResult.notReady;
     if (busy.value) return BackendResult.failed;
@@ -349,6 +466,7 @@ class BackendService extends GetxService {
       _log('Delete account: status ${res.status}');
       if (res.status != 200) return BackendResult.failed;
       await signOut();
+      await _clearPhone();
       return BackendResult.ok;
     } catch (e) {
       _log('Delete account failed: $e');
