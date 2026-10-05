@@ -42,7 +42,8 @@ class OfferController extends GetxController {
       Get.isRegistered<PurchaseService>() ? Get.find<PurchaseService>() : null;
 
   /// The yearly package of the offer offering (`offer_30`).
-  Package? get _offer => _purchases?.package('year', offeringId: config.offeringId);
+  Package? get _offer =>
+      _purchases?.package('year', offeringId: config.offeringId);
 
   /// Store prices when loaded; the config strings until then.
   String get offerPrice {
@@ -52,7 +53,8 @@ class OfferController extends GetxController {
   }
 
   String get regularPrice =>
-      _purchases?.package('year')?.storeProduct.priceString ?? config.regularPrice;
+      _purchases?.package('year')?.storeProduct.priceString ??
+      config.regularPrice;
 
   String get perMonth {
     final p = _offer?.storeProduct;
@@ -77,7 +79,9 @@ class OfferController extends GetxController {
           showToast('Welcome to Kindose Plus');
           close();
         case PurchaseOutcome.pending:
-          showToast('Your payment is pending. Plus turns on as soon as it goes through.');
+          showToast(
+            'Your payment is pending. Plus turns on as soon as it goes through.',
+          );
         case PurchaseOutcome.failed:
           showToast("The purchase didn't go through. Please try again.");
         case PurchaseOutcome.unavailable:

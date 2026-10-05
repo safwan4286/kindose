@@ -7,7 +7,9 @@ import '../../models/user_profile.dart';
 import '../../resources/bmi.dart';
 import '../../resources/catalog.dart';
 import '../../resources/date_utils.dart';
+import '../../resources/feel_pattern.dart';
 import '../../resources/routes.dart';
+import '../../resources/water_units.dart';
 import '../../services/haptics/haptics.dart';
 import '../../services/plus/plus_access.dart';
 import '../../services/tracker_service.dart';
@@ -81,8 +83,7 @@ class ProgressController extends GetxController {
   }
 
   /// Longer ranges need Plus.
-  bool get locked =>
-      range.value != ProgressRange.month && !PlusAccess.unlocked;
+  bool get locked => range.value != ProgressRange.month && !PlusAccess.unlocked;
 
   void openPlus() {
     Haptics.instance.selectionClick();
@@ -331,21 +332,14 @@ class ProgressController extends GetxController {
     final hit = bars.where((b) => b.hit).length;
     final avg = logged.fold<double>(0, (s, b) => s + b.value) / logged.length;
     final avgLabel = water
-        ? '${(avg / 1000).toStringAsFixed(1)} L'
+        ? Water.totalWithUnit(avg.round())
         : '${avg.round()} g';
     return 'Goal reached $hit of 7 days · avg $avgLabel';
   }
 
   // ------------------------------------------------------------ how you felt
 
-  static int dayLevel(DayLog log) {
-    if (!log.hasCheckIn) return -1;
-    var l = log.symptoms.contains('nausea') ? (log.nausea ?? 0) + 1 : 0;
-    for (final id in Catalog.checkInEffects) {
-      l = math.max(l, log.levelOf(id));
-    }
-    return l.clamp(0, 3);
-  }
+  static int dayLevel(DayLog log) => FeelPattern.dayLevel(log);
 
   /// 4 weeks, Monday first, ending with the current week.
   List<FeelCell> get feelCells {
@@ -392,43 +386,13 @@ class ProgressController extends GetxController {
   /// "Day 1 after your dose is usually your hardest", or null when there
   /// isn't enough data (3+ dose weeks with check-ins).
   String? get patternLine {
-    if (isDaily || tracker.doses.length < 3) return null;
-    final sums = List<double>.filled(7, 0);
-    final counts = List<int>.filled(7, 0);
-    final weeks = <String>{};
-    for (final log in tracker.days.values) {
-      final level = dayLevel(log);
-      if (level < 0) continue;
-      DoseLog? before;
-      for (final dose in tracker.doses) {
-        if (!Dates.dateOnly(dose.takenAt).isAfter(log.date)) {
-          before = dose;
-          break;
-        }
-      }
-      if (before == null) continue;
-      final off = Dates.daysBetween(before.takenAt, log.date);
-      if (off < 0 || off > 6) continue;
-      sums[off] += level;
-      counts[off]++;
-      weeks.add(before.id);
-    }
-    if (weeks.length < 3) return null;
-    var best = -1;
-    var bestAvg = 0.0;
-    for (var i = 0; i < 7; i++) {
-      if (counts[i] == 0) continue;
-      final a = sums[i] / counts[i];
-      if (a > bestAvg) {
-        bestAvg = a;
-        best = i;
-      }
-    }
-    if (best < 0 || bestAvg < 0.5)
-      return 'No hard day stands out. Your weeks look steady.';
-    return best == 0
+    if (isDaily || tracker.doses.length < FeelPattern.minWeeks) return null;
+    final day = FeelPattern.hardestDay(tracker.days.values, tracker.doses);
+    if (day == null) return null;
+    if (day < 0) return 'No hard day stands out. Your weeks look steady.';
+    return day == 0
         ? 'Dose day is usually your hardest.'
-        : 'Day $best after your dose is usually your hardest.';
+        : 'Day $day after your dose is usually your hardest.';
   }
 
   bool get isPlus => PlusAccess.unlocked;

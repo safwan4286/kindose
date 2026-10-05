@@ -27,13 +27,10 @@ class _NoInternetSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final k = context.k;
     return KSheetFrame(
-      icon: KIconTile(
-        icon: Icons.wifi_off_rounded,
-        bg: k.cardAlt,
-        fg: k.text,
-      ),
+      icon: KIconTile(icon: Icons.wifi_off_rounded, bg: k.cardAlt, fg: k.text),
       title: "You're offline",
-      sub: '$what needs the internet. Check your Wi-Fi or mobile data and try again. '
+      sub:
+          '$what needs the internet. Check your Wi-Fi or mobile data and try again. '
           'Anything you log still saves on this phone.',
       children: [
         SoftButton(

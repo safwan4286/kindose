@@ -15,8 +15,10 @@ import 'package:kindose/services/theme/theme.dart';
 
 import 'resources/routes.dart';
 import 'services/backend/backend_service.dart';
+import 'services/notifications/notif_prefs.dart';
 import 'services/notifications/reminder_service.dart';
 import 'services/offers/offer_service.dart';
+import 'services/app_status/app_status_service.dart';
 import 'services/plus/access_service.dart';
 import 'services/purchases/purchase_service.dart';
 import 'services/supply/supply_service.dart';
@@ -74,11 +76,15 @@ Future<void> main() async {
     () => TrackerService().init(),
     permanent: true,
   );
+  // Force update + backend banner (last config cached for offline starts).
+  Get.put<AppStatusService>(AppStatusService().init(), permanent: true);
   // Free week + who can use what (before anything that checks Plus).
   Get.put<AccessService>(AccessService().init(), permanent: true);
   // Pens & cost: counts doses left from the dose log. Before reminders,
   // which also plan the refill reminder.
   Get.put<SupplyService>(SupplyService(), permanent: true);
+  // Per-reminder choices from Me → Notifications. Before reminders.
+  Get.put<NotifPrefs>(NotifPrefs().init(), permanent: true);
   // Plans dose reminders from the schedule and re-plans on every change.
   Get.put<ReminderService>(ReminderService(), permanent: true);
   // Discount offer rules (backend-driven later via Remote Config).

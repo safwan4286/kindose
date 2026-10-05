@@ -11,8 +11,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../resources/backend_keys.dart';
 import '../app_info.dart';
+import '../app_status/app_status_service.dart';
 import '../plus/access_service.dart';
 import '../offers/offer_service.dart';
+import '../notifications/notif_prefs.dart';
 import '../supply/supply_service.dart';
 import '../tracker_service.dart';
 
@@ -40,6 +42,16 @@ class CloudBackup {
 
   final Map<String, dynamic> data;
   final DateTime updatedAt;
+
+  int _count(String box) {
+    final boxes = data['boxes'];
+    final b = boxes is Map ? boxes[box] : null;
+    return b is Map ? b.length : 0;
+  }
+
+  /// For "We found your data": how many doses and weigh-ins it holds.
+  int get doses => _count('doses');
+  int get weighIns => _count('weights');
 }
 
 /// Sign-in (Google, via Supabase Auth), cloud backup / restore, account
@@ -218,7 +230,11 @@ class BackendService extends GetxService {
   }
 
   Future<void> _autoBackup() async {
-    if (autoPaused || _autoRunning || busy.value || !ownsLocal || !hasLocalData) {
+    if (autoPaused ||
+        _autoRunning ||
+        busy.value ||
+        !ownsLocal ||
+        !hasLocalData) {
       return;
     }
     _autoRunning = true;
@@ -407,6 +423,7 @@ class BackendService extends GetxService {
       await claimLocal();
       await _setPending(false);
       if (Get.isRegistered<SupplyService>()) Get.find<SupplyService>().load();
+      if (Get.isRegistered<NotifPrefs>()) Get.find<NotifPrefs>().load();
       _log(
         'Restored ✓ backup from ${backup.updatedAt} · ${tracker.doses.length} doses',
       );
@@ -450,6 +467,7 @@ class BackendService extends GetxService {
     await tracker.deleteAll();
     pending.value = false;
     if (Get.isRegistered<SupplyService>()) Get.find<SupplyService>().load();
+    if (Get.isRegistered<NotifPrefs>()) Get.find<NotifPrefs>().load();
     _log('Phone cleared');
   }
 
@@ -486,6 +504,9 @@ class BackendService extends GetxService {
       final rows = await _db.from('app_config').select('key, value');
       _log('Config loaded: ${rows.map((r) => r['key']).join(', ')}');
       for (final r in rows) {
+        if (r['key'] == 'app' && Get.isRegistered<AppStatusService>()) {
+          Get.find<AppStatusService>().applyRemote(r['value']);
+        }
         if (r['key'] == 'access' && Get.isRegistered<AccessService>()) {
           Get.find<AccessService>().applyRemote(r['value']);
         }

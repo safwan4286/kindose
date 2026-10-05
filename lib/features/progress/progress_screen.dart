@@ -7,6 +7,7 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../../resources/colors.dart';
 import '../../resources/date_utils.dart';
 import '../../resources/images.dart';
+import '../../resources/water_units.dart';
 import '../../services/responsiveness/device_manager.dart';
 import '../../services/theme/theme.dart';
 import '../../widgets/entrance.dart';
@@ -70,14 +71,14 @@ class ProgressScreen extends GetView<ProgressController> {
             _BarsCard(
               title: 'Water · last 7 days',
               goalLabel:
-                  'Goal ${((controller.profile?.waterGoalMl ?? 2500) / 1000).toStringAsFixed(1)} L',
+                  'Goal ${Water.totalWithUnit(controller.profile?.waterGoalMl ?? 2500)}',
               headline: controller.barsHeadline(
                 controller.waterBars,
                 water: true,
               ),
               bars: controller.waterBars,
               color: AppColors.aqua,
-              valueLabel: (v) => '${(v / 1000).toStringAsFixed(1)} L',
+              valueLabel: (v) => Water.totalWithUnit(v.round()),
             ).enter(motion, delay: 170),
             SizedBox(height: 12.sp),
             _FeelCard(controller: controller).enter(motion, delay: 200),
@@ -409,7 +410,7 @@ class _LockOverlay extends StatelessWidget {
               ),
               SizedBox(height: 10.sp),
               PressScale(
-                semanticLabel: 'Try Plus free',
+                semanticLabel: 'See Plus',
                 onTap: onTap,
                 child: Container(
                   height: 38.sp,
@@ -420,7 +421,7 @@ class _LockOverlay extends StatelessWidget {
                     borderRadius: BorderRadius.circular(19.sp),
                   ),
                   child: Text(
-                    'Try Plus free',
+                    'See Plus',
                     style: AppText.small.copyWith(
                       fontSize: 13.5.sp,
                       fontWeight: FontWeight.w800,

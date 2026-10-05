@@ -19,6 +19,9 @@ class Region {
   static bool get prefersPounds =>
       const {'US', 'GB', 'LR', 'MM'}.contains(country);
 
+  /// Water in fluid ounces by default (US only; the UK uses ml).
+  static bool get prefersOunces => country == 'US';
+
   /// Height in feet and inches by default.
   static bool get prefersFeet => const {'US', 'GB'}.contains(country);
 

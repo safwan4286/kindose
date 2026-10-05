@@ -37,14 +37,16 @@ class HomeScreen extends GetView<HomeController> {
                       ? const ProgressScreen()
                       : const LockedTab(
                           title: 'Your progress is waiting',
-                          sub: 'Charts, trends and how you felt since day one, with Plus.',
+                          sub:
+                              'Charts, trends and how you felt since day one, with Plus.',
                           icon: Img3d.chartUp,
                         ),
                   PlusAccess.unlocked
                       ? const ReportScreen()
                       : const LockedTab(
                           title: 'Your doctor report',
-                          sub: 'Doses, weight and side effects as a PDF for your next visit, with Plus.',
+                          sub:
+                              'Doses, weight and side effects as a PDF for your next visit, with Plus.',
                           icon: Img3d.clipboard,
                         ),
                   const MeScreen(),

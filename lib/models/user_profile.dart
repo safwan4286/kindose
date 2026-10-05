@@ -1,3 +1,4 @@
+import '../services/region/region.dart';
 import 'map_read.dart';
 
 /// Everything the user told us during onboarding. Stored as one record.
@@ -28,6 +29,7 @@ class UserProfile {
     required this.vegDiet,
     required this.focus,
     required this.remindersOn,
+    this.useOz = false,
     required this.startedAt,
   });
 
@@ -80,6 +82,9 @@ class UserProfile {
   /// for older screens.
   final String? diet;
   final bool useKg;
+
+  /// Water in US fluid ounces instead of litres / ml. Stored in ml always.
+  final bool useOz;
   final double startWeightKg;
   final double? goalWeightKg;
   final double? heightCm;
@@ -115,6 +120,7 @@ class UserProfile {
     bool? vegDiet,
     int? waterGoalMl,
     bool? remindersOn,
+    bool? useOz,
   }) {
     return UserProfile(
       stage: stage,
@@ -144,6 +150,7 @@ class UserProfile {
       vegDiet: vegDiet ?? this.vegDiet,
       focus: focus,
       remindersOn: remindersOn ?? this.remindersOn,
+      useOz: useOz ?? this.useOz,
       startedAt: startedAt,
     );
   }
@@ -174,6 +181,7 @@ class UserProfile {
     'vegDiet': vegDiet,
     'focus': focus,
     'remindersOn': remindersOn,
+    'useOz': useOz,
     'startedAt': startedAt.millisecondsSinceEpoch,
   };
 
@@ -207,6 +215,7 @@ class UserProfile {
       vegDiet: m.boolean('vegDiet'),
       focus: m.strList('focus'),
       remindersOn: m.boolean('remindersOn'),
+      useOz: m.boolean('useOz', Region.prefersOunces),
       startedAt: m.date('startedAt') ?? DateTime.now(),
     );
   }

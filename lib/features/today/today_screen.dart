@@ -10,6 +10,7 @@ import '../../widgets/press_scale.dart';
 import '../home/home_screen.dart';
 import 'today_controller.dart';
 import 'widgets/dose_card.dart';
+import 'widgets/app_banner_card.dart';
 import 'widgets/edit_today_sheet.dart';
 import 'widgets/free_week.dart';
 import 'widgets/next_bite_card.dart';
@@ -50,6 +51,7 @@ class TodayScreen extends GetView<TodayController> {
           padding: EdgeInsets.fromLTRB(20.sp, 12.sp, 20.sp, kNavClearance),
           children: [
             const TodayHeader().enter(motion, dy: 0.1),
+            const AppBannerCard(),
             if (controller.showFreeStrip) ...[
               SizedBox(height: 14.sp),
               const FreeWeekStrip().enter(motion, delay: 30, dy: 0.1),
@@ -91,43 +93,44 @@ class TodayScreen extends GetView<TodayController> {
               ).enter(motion, delay: delay += 60, dy: 0.1),
             ],
             SizedBox(height: 16.sp),
-            if (!locked) Center(
-              child: Semantics(
-                button: true,
-                label: 'Edit Today',
-                excludeSemantics: true,
-                child: PressScale(
-                  onTap: showEditTodaySheet,
-                  child: Container(
-                    height: 44.sp,
-                    padding: EdgeInsets.symmetric(horizontal: 18.sp),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(22.sp),
-                      border: Border.all(color: k.border, width: 1.5),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          PhosphorIconsBold.arrowsDownUp,
-                          size: 18.sp,
-                          color: k.text,
-                        ),
-                        SizedBox(width: 8.sp),
-                        Text(
-                          'Edit Today',
-                          style: AppText.bodyStrong.copyWith(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w800,
+            if (!locked)
+              Center(
+                child: Semantics(
+                  button: true,
+                  label: 'Edit Today',
+                  excludeSemantics: true,
+                  child: PressScale(
+                    onTap: showEditTodaySheet,
+                    child: Container(
+                      height: 44.sp,
+                      padding: EdgeInsets.symmetric(horizontal: 18.sp),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(22.sp),
+                        border: Border.all(color: k.border, width: 1.5),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            PhosphorIconsBold.arrowsDownUp,
+                            size: 18.sp,
                             color: k.text,
                           ),
-                        ),
-                      ],
+                          SizedBox(width: 8.sp),
+                          Text(
+                            'Edit Today',
+                            style: AppText.bodyStrong.copyWith(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w800,
+                              color: k.text,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
           ],
         );
       }),

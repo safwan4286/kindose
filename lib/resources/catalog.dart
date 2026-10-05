@@ -98,12 +98,22 @@ class Food {
 
 /// A drink for the water screen. Every millilitre counts toward water.
 class Drink {
-  const Drink(this.id, this.label, this.ml, {this.dairy = false});
+  const Drink(this.id, this.label, this.ml, {this.dairy = false, this.oz});
 
   final String id;
   final String label;
   final int ml;
   final bool dairy;
+
+  /// US size in fluid ounces, used instead of [ml] for people who see
+  /// water in fl oz (a glass is 8 fl oz there, not 250 ml).
+  final double? oz;
+
+  /// Millilitres to log for this person.
+  int mlFor(bool useOz) {
+    final o = oz;
+    return useOz && o != null ? (o * 29.5735).round() : ml;
+  }
 }
 
 class InjectionSite {
@@ -733,18 +743,18 @@ class Catalog {
   }
 
   static const List<Drink> waterSizes = [
-    Drink('glass', 'Glass', 250),
-    Drink('bottle', 'Bottle', 500),
-    Drink('litre', 'Large bottle', 1000),
+    Drink('glass', 'Glass', 250, oz: 8),
+    Drink('bottle', 'Bottle', 500, oz: 16.9),
+    Drink('litre', 'Large bottle', 1000, oz: 32),
   ];
 
   static const List<Drink> otherDrinks = [
-    Drink('tea', 'Tea', 240, dairy: true),
-    Drink('coffee', 'Coffee', 240),
-    Drink('milk', 'Milk', 240, dairy: true),
-    Drink('sparkling', 'Sparkling water', 330),
-    Drink('electrolyte', 'Electrolyte drink', 500),
-    Drink('coconut', 'Coconut water', 330),
+    Drink('tea', 'Tea', 240, dairy: true, oz: 8),
+    Drink('coffee', 'Coffee', 240, oz: 8),
+    Drink('milk', 'Milk', 240, dairy: true, oz: 8),
+    Drink('sparkling', 'Sparkling water', 330, oz: 12),
+    Drink('electrolyte', 'Electrolyte drink', 500, oz: 16.9),
+    Drink('coconut', 'Coconut water', 330, oz: 11),
   ];
 
   /// One-tap protein foods for Today, matched to how the user eats

@@ -6,6 +6,7 @@ import '../../models/logs.dart';
 import '../../resources/catalog.dart';
 import '../../resources/colors.dart';
 import '../../resources/images.dart';
+import '../../resources/water_units.dart';
 import '../../services/responsiveness/device_manager.dart';
 import '../../services/theme/theme.dart';
 import '../../widgets/buttons.dart';
@@ -170,11 +171,13 @@ class _EntryRow extends GetView<IntakeController> {
   @override
   Widget build(BuildContext context) {
     final k = context.k;
-    final unit = entry.isProtein ? 'g' : 'ml';
+    final amount = entry.isProtein
+        ? '${entry.amount} g'
+        : Water.amount(entry.amount);
     final title = controller.entryTitle(entry);
     return Semantics(
       label:
-          '${controller.timeOf(entry.at)}, $title, ${entry.amount} $unit. Swipe left to remove.',
+          '${controller.timeOf(entry.at)}, $title, $amount. Swipe left to remove.',
       excludeSemantics: true,
       child: Container(
         color: k.card,
@@ -204,7 +207,7 @@ class _EntryRow extends GetView<IntakeController> {
             ),
             SizedBox(width: 8.sp),
             Text(
-              '+${entry.amount} $unit',
+              '+$amount',
               style: AppText.title.copyWith(
                 fontSize: 14.5.sp,
                 color: valueColor,
@@ -236,7 +239,7 @@ class _WaterTab extends GetView<IntakeController> {
         children: [
           Semantics(
             label:
-                'Water ${controller.dayTitle.toLowerCase()}: ${controller.litres(controller.waterToday)} of ${controller.litres(controller.waterGoal)} litres. ${controller.waterLine}',
+                'Water ${controller.dayTitle.toLowerCase()}: ${controller.litres(controller.waterToday)} of ${controller.litres(controller.waterGoal)} ${Water.unitWords}. ${controller.waterLine}',
             excludeSemantics: true,
             child: Container(
               padding: EdgeInsets.fromLTRB(18.sp, 20.sp, 18.sp, 20.sp),
@@ -274,7 +277,7 @@ class _WaterTab extends GetView<IntakeController> {
                             Padding(
                               padding: EdgeInsets.only(bottom: 3.sp),
                               child: Text(
-                                'of ${controller.litres(controller.waterGoal)} L',
+                                'of ${controller.litres(controller.waterGoal)} ${Water.unit}',
                                 style: AppText.title.copyWith(
                                   fontSize: 15.sp,
                                   color: k.muted,
@@ -309,7 +312,7 @@ class _WaterTab extends GetView<IntakeController> {
                     level: i,
                     bg: tileBg,
                     semantic:
-                        'Add ${d.label.toLowerCase()}, ${d.ml} millilitres',
+                        'Add ${d.label.toLowerCase()}, ${Water.amount(d.mlFor(Water.oz))}',
                     onTap: () => controller.addDrink(d),
                   ),
                 ),

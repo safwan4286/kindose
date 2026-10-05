@@ -10,6 +10,7 @@ import '../../models/user_profile.dart';
 import '../../resources/catalog.dart';
 import '../../resources/date_utils.dart';
 import '../../resources/routes.dart';
+import '../../resources/water_units.dart';
 import '../../services/haptics/haptics.dart';
 import '../../services/notifications/notification_service.dart';
 import '../../services/plus/access_service.dart';
@@ -105,7 +106,8 @@ class TodayController extends GetxController {
   final RxBool busy = false.obs;
   Timer? _ticker;
 
-  static const int glassMl = 250;
+  /// 250 ml, or 8 fl oz for people who see water in ounces.
+  int get glassMl => Water.glassMl;
 
   @override
   void onInit() {
@@ -444,15 +446,9 @@ class TodayController extends GetxController {
 
   int get glassesFull => (day.waterMl / glassMl).floor();
 
-  String get litres => _litres(day.waterMl);
-  String get waterGoalLitres => _litres(waterGoal);
-
-  static String _litres(int ml) {
-    final l = ml / 1000;
-    if (l == l.roundToDouble()) return l.toStringAsFixed(0);
-    final s = l.toStringAsFixed(2);
-    return s.endsWith('0') ? s.substring(0, s.length - 1) : s;
-  }
+  /// Number only ("1.25" or "42"); the unit is [Water.unit].
+  String get litres => Water.total(day.waterMl);
+  String get waterGoalLitres => Water.total(waterGoal);
 
   /// Tap an empty glass to fill up to it; tap the last full one to empty it.
   void tapGlass(int i) {
@@ -591,7 +587,7 @@ class TodayController extends GetxController {
           title: e.isProtein
               ? 'Protein${e.label == null ? '' : ' · ${e.label}'}'
               : 'Water',
-          value: e.isProtein ? '+${e.amount} g' : '+${e.amount} ml',
+          value: e.isProtein ? '+${e.amount} g' : '+${Water.amount(e.amount)}',
           kind: e.kind,
           entryId: e.id,
         ),
@@ -659,7 +655,9 @@ class TodayController extends GetxController {
   ];
 
   bool get showSetup =>
-      !locked && !tracker.setupDismissed.value && setupItems.any((i) => !i.done);
+      !locked &&
+      !tracker.setupDismissed.value &&
+      setupItems.any((i) => !i.done);
 
   // ------------------------------------------------------------ free week
 

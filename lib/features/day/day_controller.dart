@@ -7,6 +7,7 @@ import '../../resources/colors.dart';
 import '../../resources/date_utils.dart';
 import '../../resources/images.dart';
 import '../../resources/routes.dart';
+import '../../resources/water_units.dart';
 import '../../services/haptics/haptics.dart';
 import '../../services/plus/plus_access.dart';
 import '../../services/tracker_service.dart';
@@ -91,10 +92,8 @@ class DayController extends GetxController with DayNav {
   List<LogEntry> entries(String kind) =>
       log.entries.where((e) => e.kind == kind).toList();
 
-  String litres(int ml) {
-    final s = (ml / 1000).toStringAsFixed(2);
-    return s.replaceAll(RegExp(r'\.?0+$'), '');
-  }
+  /// Number only ("1.25" or "42"); the unit is [Water.unit].
+  String litres(int ml) => Water.total(ml);
 
   String entryTitle(LogEntry e) {
     final l = e.label;
@@ -156,7 +155,9 @@ class DayController extends GetxController with DayNav {
       if (label == i.label || label.startsWith('${i.name},')) return i.icon;
     }
     for (final f in tracker.myFoods) {
-      if (label == f.name || label.startsWith('${f.name},') || label.startsWith('${f.name} ×')) {
+      if (label == f.name ||
+          label.startsWith('${f.name},') ||
+          label.startsWith('${f.name} ×')) {
         return f.icon;
       }
     }
@@ -164,10 +165,21 @@ class DayController extends GetxController with DayNav {
   }
 
   static Color tintFor(String icon) => switch (icon) {
-    Img3d.milk || Img3d.whey || Img3d.fish || Img3d.canned || Img3d.shrimp || Img3d.droplet =>
-      AppColors.aquaSoft,
-    Img3d.chicken || Img3d.meat || Img3d.beans || Img3d.pot || Img3d.bowl => AppColors.tangerineSoft,
-    Img3d.peanuts || Img3d.salad || Img3d.bread || Img3d.seedling => AppColors.limeSoft,
+    Img3d.milk ||
+    Img3d.whey ||
+    Img3d.fish ||
+    Img3d.canned ||
+    Img3d.shrimp ||
+    Img3d.droplet => AppColors.aquaSoft,
+    Img3d.chicken ||
+    Img3d.meat ||
+    Img3d.beans ||
+    Img3d.pot ||
+    Img3d.bowl => AppColors.tangerineSoft,
+    Img3d.peanuts ||
+    Img3d.salad ||
+    Img3d.bread ||
+    Img3d.seedling => AppColors.limeSoft,
     _ => AppColors.amberSoft,
   };
 
@@ -177,7 +189,8 @@ class DayController extends GetxController with DayNav {
     final n = proteinList.length;
     final foods = n == 0 ? '' : ' · $n ${n == 1 ? 'food' : 'foods'}';
     if (total == proteinGoal) return 'Right on your goal$foods';
-    if (total > proteinGoal) return '${total - proteinGoal} g over your goal$foods';
+    if (total > proteinGoal)
+      return '${total - proteinGoal} g over your goal$foods';
     return '${proteinGoal - total} g short of your goal$foods';
   }
 
@@ -194,12 +207,17 @@ class DayController extends GetxController with DayNav {
         evening += e.amount;
       }
     }
-    return [('Morning', morning), ('Afternoon', afternoon), ('Evening', evening)];
+    return [
+      ('Morning', morning),
+      ('Afternoon', afternoon),
+      ('Evening', evening),
+    ];
   }
 
   // ----------------------------------------------------------- water detail
 
-  static const int glassMl = 250;
+  /// 250 ml, or 8 fl oz for people who see water in ounces.
+  int get glassMl => Water.glassMl;
 
   int get glassesGoal => (waterGoal / glassMl).ceil().clamp(1, 12);
   int get glassesDone => (log.waterMl / glassMl).floor().clamp(0, glassesGoal);
@@ -211,10 +229,17 @@ class DayController extends GetxController with DayNav {
     return '$glassesDone of $glassesGoal glasses · about $g more to go';
   }
 
-  static const Set<String> _plainWater = {'Glass', 'Bottle', 'Large bottle', 'Water'};
+  static const Set<String> _plainWater = {
+    'Glass',
+    'Bottle',
+    'Large bottle',
+    'Water',
+  };
 
   String drinkName(String? label) =>
-      label == null || label.isEmpty || _plainWater.contains(label) ? 'Water' : label;
+      label == null || label.isEmpty || _plainWater.contains(label)
+      ? 'Water'
+      : label;
 
   /// Same drink and amount back to back = one row. Newest first.
   List<DrinkGroup> get waterGroups {
@@ -226,8 +251,11 @@ class DayController extends GetxController with DayNav {
         last.entries.add(e);
       } else {
         out.add(
-          DrinkGroup(name, name == 'Milk' ? Img3d.milk : Img3d.droplet, e.amount)
-            ..entries.add(e),
+          DrinkGroup(
+            name,
+            name == 'Milk' ? Img3d.milk : Img3d.droplet,
+            e.amount,
+          )..entries.add(e),
         );
       }
     }

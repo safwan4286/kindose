@@ -39,10 +39,13 @@ class FreeWeekStrip extends StatelessWidget {
       };
       final bg = soon ? AppColors.lime : AppColors.hero;
       final fg = soon ? AppColors.ink : AppColors.white;
-      final sub = soon ? AppColors.ink.withValues(alpha: 0.7) : AppColors.heroMuted;
+      final sub = soon
+          ? AppColors.ink.withValues(alpha: 0.7)
+          : AppColors.heroMuted;
       return Semantics(
         button: true,
-        label: '$title. Everything is open until ${Dates.shortWithDay(access.endsAt.value)}. See Plus',
+        label:
+            '$title. Everything is open until ${Dates.shortWithDay(access.endsAt.value)}. See Plus',
         excludeSemantics: true,
         child: PressScale(
           onTap: _openPlus,
@@ -61,11 +64,17 @@ class FreeWeekStrip extends StatelessWidget {
                     Expanded(
                       child: Text(
                         title,
-                        style: AppText.title.copyWith(fontSize: 14.5.sp, color: fg),
+                        style: AppText.title.copyWith(
+                          fontSize: 14.5.sp,
+                          color: fg,
+                        ),
                       ),
                     ),
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 12.sp, vertical: 6.sp),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12.sp,
+                        vertical: 6.sp,
+                      ),
                       decoration: BoxDecoration(
                         color: soon ? AppColors.ink : AppColors.lime,
                         borderRadius: BorderRadius.circular(14.sp),
@@ -88,7 +97,9 @@ class FreeWeekStrip extends StatelessWidget {
                     height: 6.sp,
                     child: Stack(
                       children: [
-                        Positioned.fill(child: ColoredBox(color: fg.withValues(alpha: 0.15))),
+                        Positioned.fill(
+                          child: ColoredBox(color: fg.withValues(alpha: 0.15)),
+                        ),
                         TweenAnimationBuilder<double>(
                           tween: Tween(end: access.progress),
                           duration: const Duration(milliseconds: 500),
@@ -96,7 +107,9 @@ class FreeWeekStrip extends StatelessWidget {
                           builder: (_, v, _) => FractionallySizedBox(
                             widthFactor: v,
                             heightFactor: 1,
-                            child: ColoredBox(color: soon ? AppColors.ink : AppColors.lime),
+                            child: ColoredBox(
+                              color: soon ? AppColors.ink : AppColors.lime,
+                            ),
                           ),
                         ),
                       ],
@@ -219,7 +232,12 @@ class LockedCard extends StatelessWidget {
 
 /// Progress and Report tabs after the free week.
 class LockedTab extends StatelessWidget {
-  const LockedTab({super.key, required this.title, required this.sub, required this.icon});
+  const LockedTab({
+    super.key,
+    required this.title,
+    required this.sub,
+    required this.icon,
+  });
 
   final String title;
   final String sub;
@@ -250,7 +268,11 @@ class LockedTab extends StatelessWidget {
               Text(
                 sub,
                 textAlign: TextAlign.center,
-                style: AppText.bodyText.copyWith(fontSize: 15.sp, height: 1.45, color: k.muted),
+                style: AppText.bodyText.copyWith(
+                  fontSize: 15.sp,
+                  height: 1.45,
+                  color: k.muted,
+                ),
               ),
               SizedBox(height: 22.sp),
               PressScale(
@@ -273,7 +295,10 @@ class LockedTab extends StatelessWidget {
               SizedBox(height: 10.sp),
               Text(
                 'Your data is safe. Nothing is deleted.',
-                style: AppText.small.copyWith(fontSize: 12.5.sp, color: k.faint),
+                style: AppText.small.copyWith(
+                  fontSize: 12.5.sp,
+                  color: k.faint,
+                ),
               ),
             ],
           ),

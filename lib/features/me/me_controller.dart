@@ -12,9 +12,10 @@ import '../../resources/app_links.dart';
 import '../../resources/catalog.dart';
 import '../../resources/date_utils.dart';
 import '../../resources/routes.dart';
+import '../../resources/water_units.dart';
 import '../../services/backend/backend_service.dart';
 import '../../services/haptics/haptics.dart';
-import '../../services/notifications/notification_service.dart';
+import '../../services/notifications/notif_prefs.dart';
 import '../../services/plus/access_service.dart';
 import '../../services/plus/plus_access.dart';
 import '../../services/purchases/purchase_service.dart';
@@ -100,9 +101,10 @@ class MeController extends GetxController {
   String get planTitle => switch (planState) {
     'plus' => 'Kindose Plus is on',
     'ended' => 'Free week ended',
-    _ => access.started.value
-        ? 'Free until ${Dates.shortWithDay(access.endsAt.value)}'
-        : 'Your free week',
+    _ =>
+      access.started.value
+          ? 'Free until ${Dates.shortWithDay(access.endsAt.value)}'
+          : 'Your free week',
   };
 
   String get planSub {
@@ -251,7 +253,11 @@ class MeController extends GetxController {
     final url = _purchases?.managementUrl;
     if (url != null) {
       try {
-        if (await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication)) return;
+        if (await launchUrl(
+          Uri.parse(url),
+          mode: LaunchMode.externalApplication,
+        ))
+          return;
       } catch (_) {}
     }
     showToast('Manage Plus in your App Store or Google Play subscriptions.');
@@ -301,7 +307,7 @@ class MeController extends GetxController {
 
   String get waterLabel {
     final ml = tracker.profile.value?.waterGoalMl ?? 0;
-    return '${(ml / 1000).toStringAsFixed(1)} L a day';
+    return '${Water.totalWithUnit(ml)} a day';
   }
 
   static const Map<String, String> dietNames = {
@@ -359,16 +365,21 @@ class MeController extends GetxController {
   Future<void> editWaterGoal(BuildContext context) async {
     final p = tracker.profile.value;
     if (p == null) return;
+    final oz = p.useOz;
     final v = await askNumber(
       context,
       title: 'Daily water goal',
-      unit: 'L',
-      initial: p.waterGoalMl / 1000,
-      min: 1,
-      max: 6,
+      unit: oz ? 'fl oz' : 'L',
+      initial: oz
+          ? Water.toOz(p.waterGoalMl).roundToDouble()
+          : p.waterGoalMl / 1000,
+      min: oz ? 34 : 1,
+      max: oz ? 203 : 6,
+      decimals: oz ? 0 : 1,
     );
     if (v == null || v.isNaN) return;
-    await tracker.saveProfile(p.copyWith(waterGoalMl: (v * 1000).round()));
+    final ml = oz ? Water.fromOz(v) : (v * 1000).round();
+    await tracker.saveProfile(p.copyWith(waterGoalMl: ml));
   }
 
   Future<void> editDiet() async {
@@ -387,35 +398,28 @@ class MeController extends GetxController {
   bool get doseReminders => tracker.profile.value?.remindersOn ?? false;
   bool get visitReminders => tracker.visitReminderOn.value;
 
-  Future<void> setDoseReminders(bool on) async {
-    final p = tracker.profile.value;
-    if (p == null) return;
-    if (on && !await _allowNotifications()) return;
-    Haptics.instance.selectionClick();
-    await tracker.saveProfile(p.copyWith(remindersOn: on));
+  NotifPrefs get _notifPrefs => Get.find<NotifPrefs>();
+
+  /// "4 on · Quiet 10:00 PM – 7:00 AM" under the Notifications row.
+  String get notificationsSummary {
+    final n = _notifPrefs;
+    n.version.value;
+    final unlocked = PlusAccess.unlocked;
+    final on = [
+      doseReminders,
+      visitReminders,
+      unlocked && n.waterOn.value,
+      unlocked && n.proteinOn.value,
+      unlocked && supply.refillReminder.value,
+    ].where((v) => v).length;
+    final count = on == 0 ? 'All off' : '$on on';
+    if (!n.quietOn.value) return count;
+    return '$count · Quiet ${Dates.timeOfDay(n.quietStart.value)} – ${Dates.timeOfDay(n.quietEnd.value)}';
   }
 
-  Future<void> setVisitReminders(bool on) async {
-    if (on && !await _allowNotifications()) return;
+  void openNotifications() {
     Haptics.instance.selectionClick();
-    await tracker.setVisitReminderOn(on);
-  }
-
-  /// Protein & water nudges are a Plus feature and are not built yet.
-  void foodNudges() {
-    if (!isPlus) {
-      openPlus();
-      return;
-    }
-    Haptics.instance.selectionClick();
-    showToast('Protein & water nudges are coming in the next update.');
-  }
-
-  Future<bool> _allowNotifications() async {
-    final granted = await NotificationService.instance.requestPermission();
-    if (!granted)
-      showToast('Allow notifications for Kindose in your phone settings.');
-    return granted;
+    Get.toNamed<void>(Routes.notifications);
   }
 
   // ------------------------------------------------------------ units/theme
@@ -424,6 +428,14 @@ class MeController extends GetxController {
     final p = tracker.profile.value;
     if (p == null || p.useKg == v) return;
     await tracker.saveProfile(p.copyWith(useKg: v));
+  }
+
+  bool get useOz => tracker.profile.value?.useOz ?? false;
+
+  Future<void> setUseOz(bool v) async {
+    final p = tracker.profile.value;
+    if (p == null || p.useOz == v) return;
+    await tracker.saveProfile(p.copyWith(useOz: v));
   }
 
   Future<void> setTheme(ThemeMode mode) => tracker.setThemeMode(mode);
@@ -437,6 +449,9 @@ class MeController extends GetxController {
   BackendService get backend => Get.find<BackendService>();
 
   bool get signedIn => backend.signedIn;
+
+  /// Changes on the phone that aren't in the account yet.
+  bool get syncWaiting => backend.pending.value;
   String get accountEmail => backend.email ?? 'your account';
 
   /// "Signed in with Google" / "Signed in with Apple".
@@ -454,13 +469,14 @@ class MeController extends GetxController {
 
   /// "Backed up today, 9:41 PM" / "Not backed up yet".
   String get backupLine {
-    if (backend.pending.value && !backend.busy.value) {
-      return 'Changes waiting to back up';
-    }
+    if (backend.busy.value) return 'Syncing…';
+    if (backend.pending.value) return 'Changes waiting to sync';
     final at = backend.lastBackupAt.value;
-    if (at == null) return 'Not backed up yet';
+    if (at == null) return 'Not synced yet';
+    final mins = DateTime.now().difference(at).inMinutes;
+    if (mins < 2) return 'All synced · just now';
     final day = Dates.relativeDay(at, DateTime.now());
-    return 'Backed up ${day == 'Today' || day == 'Tomorrow' ? day.toLowerCase() : day}, ${Dates.time(at)}';
+    return 'All synced · ${day == 'Today' || day == 'Tomorrow' ? day.toLowerCase() : day}, ${Dates.time(at)}';
   }
 
   /// Signed out: sign in with Google, then back up (or restore a backup
@@ -492,9 +508,11 @@ class MeController extends GetxController {
       }
       final cloud = check.backup;
       if (cloud != null) {
-        final restore = await showRestoreSheet(
-          when: _when(cloud.updatedAt),
-          phoneHasData: true,
+        final restore = await showWelcomeBackSheet(
+          backup: cloud,
+          otherLabel: "Keep this phone's data",
+          otherNote:
+              "This phone's data replaces what is saved in your account.",
         );
         if (restore == null) {
           // Closed without choosing: nothing changes.
@@ -523,7 +541,7 @@ class MeController extends GetxController {
     final r = await backend.backupNow();
     if (r == BackendResult.ok) {
       Haptics.instance.mediumImpact();
-      showToast('Backed up');
+      showToast('All synced');
     } else {
       _explain(r);
     }
@@ -752,6 +770,7 @@ class MeController extends GetxController {
       await backend.signOutAndClear();
     } else {
       await tracker.deleteAll();
+      Get.find<NotifPrefs>().load();
     }
     Get.offAllNamed<void>(Routes.welcome);
   }

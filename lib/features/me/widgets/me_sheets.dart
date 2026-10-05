@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../resources/colors.dart';
+import '../../../resources/date_utils.dart';
+import '../../../services/backend/backend_service.dart';
 import '../../../resources/images.dart';
 import '../../../services/haptics/haptics.dart';
 import '../../../services/responsiveness/device_manager.dart';
@@ -44,6 +46,104 @@ Future<bool?> showRestoreSheet({
     _RestoreSheet(when: when, phoneHasData: phoneHasData),
     isScrollControlled: true,
   );
+}
+
+/// The account already has data. Returns true = use the saved data,
+/// false = the other choice ([otherLabel]), null = closed.
+Future<bool?> showWelcomeBackSheet({
+  required CloudBackup backup,
+  required String otherLabel,
+  required String otherNote,
+}) {
+  return Get.bottomSheet<bool>(
+    _WelcomeBackSheet(
+      backup: backup,
+      otherLabel: otherLabel,
+      otherNote: otherNote,
+    ),
+    isScrollControlled: true,
+  );
+}
+
+class _WelcomeBackSheet extends StatelessWidget {
+  const _WelcomeBackSheet({
+    required this.backup,
+    required this.otherLabel,
+    required this.otherNote,
+  });
+
+  final CloudBackup backup;
+  final String otherLabel;
+  final String otherNote;
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    final dark = k.selectedBorder == AppColors.lime;
+    Widget stat(String value, String label) => Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(value, style: AppText.number(18.sp).copyWith(color: k.text)),
+          Text(
+            label,
+            style: AppText.small.copyWith(
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w700,
+              color: k.muted,
+            ),
+          ),
+        ],
+      ),
+    );
+    return KSheetFrame(
+      icon: ThreeD(Img3d.great, size: 48.sp),
+      title: 'Welcome back',
+      sub: 'We found your Kindose data in this account.',
+      children: [
+        Semantics(
+          label:
+              '${backup.doses} doses, ${backup.weighIns} weigh-ins, last synced ${Dates.short(backup.updatedAt)}',
+          excludeSemantics: true,
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 14.sp, vertical: 12.sp),
+            decoration: BoxDecoration(
+              color: k.card,
+              borderRadius: BorderRadius.circular(16.sp),
+            ),
+            child: Row(
+              children: [
+                stat('${backup.doses}', 'doses'),
+                stat('${backup.weighIns}', 'weigh-ins'),
+                stat(Dates.short(backup.updatedAt), 'last synced'),
+              ],
+            ),
+          ),
+        ),
+        SizedBox(height: 16.sp),
+        PillButton(
+          label: 'Use my saved data',
+          ink: !dark,
+          onPressed: () {
+            Haptics.instance.mediumImpact();
+            Navigator.of(context).pop(true);
+          },
+        ),
+        SizedBox(height: 8.sp),
+        SoftButton(
+          label: otherLabel,
+          height: 50,
+          onPressed: () => Navigator.of(context).pop(false),
+        ),
+        SizedBox(height: 8.sp),
+        Text(
+          otherNote,
+          textAlign: TextAlign.center,
+          style: AppText.small.copyWith(fontSize: 12.sp, color: k.faint),
+        ),
+      ],
+    );
+  }
 }
 
 /// Last check before deleting the account. Returns true to delete.

@@ -10,6 +10,7 @@ import '../../resources/routes.dart';
 import '../../features/home/home_controller.dart';
 import '../plus/access_service.dart';
 import '../plus/plus_access.dart';
+import 'notif_prefs.dart';
 import '../supply/supply_service.dart';
 import '../tracker_service.dart';
 import 'notification_service.dart';
@@ -38,10 +39,18 @@ class ReminderService extends GetxService {
   static const int _visitId = 120;
   static const int _refillId = 130;
   static const int _freeWeekId = 140;
+  static const int _waterFirstId = 150;
+  static const int _waterMax = 30;
+  static const int _proteinFirstId = 180;
+  static const int _proteinMax = 6;
   static const String logDosePayload = 'log_dose';
   static const String reportPayload = 'report';
   static const String pensPayload = 'pens';
   static const String plusPayload = 'plus';
+  static const String waterPayload = 'water';
+  static const String proteinPayload = 'protein';
+
+  NotifPrefs get _prefs => Get.find<NotifPrefs>();
 
   static List<int> get _allIds => [
     _doseId,
@@ -49,6 +58,8 @@ class ReminderService extends GetxService {
     _visitId,
     _refillId,
     _freeWeekId,
+    for (var i = 0; i < _waterMax; i++) _waterFirstId + i,
+    for (var i = 0; i < _proteinMax; i++) _proteinFirstId + i,
     for (var i = 0; i < _dailyCount; i++) _dailyFirstId + i,
   ];
 
@@ -72,6 +83,8 @@ class ReminderService extends GetxService {
       supply.refillReminder,
       PlusAccess.active,
       PlusAccess.freeWeek,
+      tracker.days,
+      _prefs.version,
       if (Get.isRegistered<AccessService>()) ...[
         Get.find<AccessService>().endsAt,
         Get.find<AccessService>().config,
@@ -101,6 +114,12 @@ class ReminderService extends GetxService {
   }
 
   void _open(String payload) {
+    if (payload == waterPayload || payload == proteinPayload) {
+      if (Get.currentRoute != Routes.addIntake) {
+        Get.toNamed<void>(Routes.addIntake, arguments: payload);
+      }
+      return;
+    }
     if (payload == plusPayload) {
       if (Get.currentRoute != Routes.plus) Get.toNamed<void>(Routes.plus);
       return;
@@ -127,7 +146,9 @@ class ReminderService extends GetxService {
     if (p == null) return;
     if (tracker.visitReminderOn.value) await _planVisit();
     await _planRefill();
-    if (p.remindersOn) await _planFreeWeek();
+    if (_prefs.offersOn.value) await _planFreeWeek();
+    await _planWater(p);
+    await _planProtein(p);
     if (!p.remindersOn || p.medicineId == Catalog.undecided) return;
     if (p.isDaily) {
       await _planDaily(p);
@@ -155,7 +176,8 @@ class ReminderService extends GetxService {
       // Evening follow-up on the same day, only if the usual time is
       // well before it. Replaced on the next sync once the dose is logged.
       final evening = DateTime(next.year, next.month, next.day, 20);
-      if (evening.difference(next) >= const Duration(hours: 3)) {
+      if (_prefs.followUpOn.value &&
+          evening.difference(next) >= const Duration(hours: 3)) {
         await _notes.scheduleAt(
           id: _followUpId,
           when: evening,
@@ -171,6 +193,7 @@ class ReminderService extends GetxService {
     // Due earlier today and not logged yet: keep the evening follow-up.
     final evening = DateTime(now.year, now.month, now.day, 20);
     if (Dates.sameDay(next, now) && evening.isAfter(now)) {
+      if (!_prefs.followUpOn.value) return;
       await _notes.scheduleAt(
         id: _followUpId,
         when: evening,
@@ -184,6 +207,7 @@ class ReminderService extends GetxService {
 
     // Overdue and not logged: one calm nudge the next morning, only while
     // it is at most 3 days late.
+    if (!_prefs.missedOn.value) return;
     final lateDays = Dates.daysBetween(next, now);
     if (lateDays > 3) return;
     final tomorrow = Dates.dateOnly(
@@ -200,14 +224,17 @@ class ReminderService extends GetxService {
     );
   }
 
-  /// 3 days before the next appointment, 9 AM: the report is ready.
+  /// 1, 3 or 7 days (Notifications) before the next appointment, 9 AM:
+  /// the report is ready.
   Future<void> _planVisit() async {
     final appt = tracker.nextAppointment.value;
     if (appt == null) return;
     final day = Dates.dateOnly(appt);
-    final when = day
-        .subtract(const Duration(days: 3))
-        .add(const Duration(hours: 9));
+    final when = _prefs.outsideQuiet(
+      day
+          .subtract(Duration(days: _prefs.visitDays.value))
+          .add(const Duration(hours: 9)),
+    );
     await _notes.scheduleAt(
       id: _visitId,
       when: when,
@@ -227,7 +254,9 @@ class ReminderService extends GetxService {
     if (!plus || !supply.refillReminder.value) return;
     if (!supply.runningLow) return;
     final last = tracker.lastDose?.takenAt ?? DateTime.now();
-    final when = Dates.dateOnly(last).add(const Duration(days: 1, hours: 10));
+    final when = _prefs.outsideQuiet(
+      Dates.dateOnly(last).add(const Duration(days: 1, hours: 10)),
+    );
     final left = supply.dosesLeft;
     await _notes.scheduleAt(
       id: _refillId,
@@ -246,17 +275,107 @@ class ReminderService extends GetxService {
   Future<void> _planFreeWeek() async {
     if (!Get.isRegistered<AccessService>()) return;
     final a = Get.find<AccessService>();
-    if (PlusAccess.active.value || !a.config.value.gatingOn || !a.started.value) return;
+    if (PlusAccess.active.value || !a.config.value.gatingOn || !a.started.value)
+      return;
     final end = a.endsAt.value;
-    final when = Dates.dateOnly(end).subtract(const Duration(days: 1)).add(const Duration(hours: 10));
+    final when = _prefs.outsideQuiet(
+      Dates.dateOnly(end).subtract(const Duration(days: 1)).add(const Duration(hours: 10)),
+    );
     if (!when.isBefore(end)) return;
     await _notes.scheduleAt(
       id: _freeWeekId,
       when: when,
       title: 'Your free week ends tomorrow',
-      body: 'Everything stays open until then, and your data is always safe. Tap to see Plus.',
+      body:
+          'Everything stays open until then, and your data is always safe. Tap to see Plus.',
       payload: plusPayload,
     );
+  }
+
+  /// Plus, or the end of the free week (null when reminders may run on).
+  /// Habit reminders stop when the free week does.
+  DateTime? get _freeUntil {
+    if (PlusAccess.active.value || kDebugMode) return null;
+    if (!Get.isRegistered<AccessService>()) return null;
+    final a = Get.find<AccessService>();
+    if (!a.config.value.gatingOn) return null;
+    return a.endsAt.value;
+  }
+
+  bool get _habitsOpen => PlusAccess.unlocked || kDebugMode;
+
+  static const List<String> _waterLines = [
+    'A glass of water now helps with nausea and energy.',
+    'Small sips count. Tap to add a glass.',
+    'Water keeps things moving on your medicine. Tap to log it.',
+    'Quick check: had some water lately?',
+  ];
+
+  /// Every 2 or 3 hours inside the chosen window, today and the next two
+  /// days. Today is skipped once the water goal is met. Quiet hours win.
+  Future<void> _planWater(UserProfile p) async {
+    if (!_prefs.waterOn.value || !_habitsOpen) return;
+    final now = DateTime.now();
+    final until = _freeUntil;
+    final goalMet = tracker.today.waterMl >= p.waterGoalMl;
+    final step = Duration(hours: _prefs.waterEvery.value);
+    final start = _prefs.waterStart.value;
+    final end = _prefs.waterEnd.value;
+    if (end <= start) return;
+    var n = 0;
+    for (var d = 0; d < 3 && n < _waterMax; d++) {
+      if (d == 0 && goalMet) continue;
+      final day = Dates.dateOnly(now).add(Duration(days: d));
+      var when = day.add(Duration(minutes: start));
+      final last = day.add(Duration(minutes: end));
+      while (!when.isAfter(last) && n < _waterMax) {
+        final m = when.hour * 60 + when.minute;
+        final ok = when.isAfter(now) &&
+            !_prefs.isQuiet(m) &&
+            (until == null || when.isBefore(until));
+        if (ok) {
+          await _notes.scheduleAt(
+            id: _waterFirstId + n,
+            when: when,
+            title: 'Time for some water',
+            body: _waterLines[n % _waterLines.length],
+            payload: waterPayload,
+          );
+          n++;
+        }
+        when = when.add(step);
+      }
+    }
+  }
+
+  /// 12:30 PM and 3:30 PM, today and the next two days. Today is skipped
+  /// once the protein goal is met.
+  Future<void> _planProtein(UserProfile p) async {
+    if (!_prefs.proteinOn.value || !_habitsOpen) return;
+    final now = DateTime.now();
+    final until = _freeUntil;
+    final goalMet = tracker.today.proteinG >= p.proteinGoalG;
+    const times = [12 * 60 + 30, 15 * 60 + 30];
+    var n = 0;
+    for (var d = 0; d < 3 && n < _proteinMax; d++) {
+      if (d == 0 && goalMet) continue;
+      final day = Dates.dateOnly(now).add(Duration(days: d));
+      for (final t in times) {
+        final when = day.add(Duration(minutes: t));
+        if (!when.isAfter(now) || _prefs.isQuiet(t)) continue;
+        if (until != null && !when.isBefore(until)) continue;
+        await _notes.scheduleAt(
+          id: _proteinFirstId + n,
+          when: when,
+          title: t < 14 * 60 ? 'Protein with lunch?' : 'Protein check',
+          body: t < 14 * 60
+              ? 'Protein first helps protect muscle. Tap to log your lunch.'
+              : 'A protein snack keeps you on track for today. Tap to log it.',
+          payload: proteinPayload,
+        );
+        n++;
+      }
+    }
   }
 
   Future<void> _planDaily(UserProfile p) async {

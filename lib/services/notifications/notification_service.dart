@@ -108,6 +108,30 @@ class NotificationService {
     }
   }
 
+  /// Whether the phone currently lets Kindose show notifications. Null
+  /// when it can't be told (then the screen assumes they're allowed).
+  Future<bool?> areEnabled() async {
+    try {
+      await init();
+      if (Platform.isAndroid) {
+        final android = _plugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >();
+        return await android?.areNotificationsEnabled();
+      }
+      if (Platform.isIOS) {
+        final ios = _plugin
+            .resolvePlatformSpecificImplementation<
+              IOSFlutterLocalNotificationsPlugin
+            >();
+        final p = await ios?.checkPermissions();
+        return p?.isEnabled;
+      }
+    } catch (_) {}
+    return null;
+  }
+
   /// One-shot reminder at [when] (device local time). Past times are skipped.
   ///
   /// Uses inexact delivery on Android (may arrive a few minutes late) so the

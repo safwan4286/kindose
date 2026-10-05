@@ -9,6 +9,7 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../../resources/colors.dart';
 import '../../resources/date_utils.dart';
 import '../../resources/images.dart';
+import '../../resources/water_units.dart';
 import '../../services/responsiveness/device_manager.dart';
 import '../../services/theme/theme.dart';
 import '../../widgets/buttons.dart';
@@ -632,11 +633,11 @@ class _MiniWater extends StatelessWidget {
             TextSpan(
               children: [
                 TextSpan(
-                  text: '1.8 ',
+                  text: Water.oz ? '61 ' : '1.8 ',
                   style: AppText.number(15.sp).copyWith(color: AppColors.ink),
                 ),
                 TextSpan(
-                  text: '/ 2.5 L',
+                  text: Water.oz ? '/ 85 fl oz' : '/ 2.5 L',
                   style: AppText.tiny.copyWith(
                     fontSize: 8.sp,
                     color: const Color(0xFF6B6A76),

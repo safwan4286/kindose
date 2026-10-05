@@ -7,6 +7,7 @@ import '../../../resources/catalog.dart';
 import '../../../resources/colors.dart';
 import '../../../resources/date_utils.dart';
 import '../../../resources/images.dart';
+import '../../../resources/water_units.dart';
 import '../../../services/haptics/haptics.dart';
 import '../../../services/responsiveness/device_manager.dart';
 import '../../../services/theme/theme.dart';
@@ -631,16 +632,20 @@ class _DailyGoals extends StatelessWidget {
 
   Future<void> _editWater(BuildContext context) async {
     Haptics.instance.selectionClick();
+    final oz = controller.useOz.value;
     final v = await askNumber(
       context,
       title: 'Daily water',
-      unit: 'L',
-      initial: controller.waterShownMl / 1000,
-      min: 1,
-      max: 5,
-      decimals: 2,
+      unit: oz ? 'fl oz' : 'L',
+      initial: oz
+          ? Water.toOz(controller.waterShownMl).roundToDouble()
+          : controller.waterShownMl / 1000,
+      min: oz ? 34 : 1,
+      max: oz ? 169 : 5,
+      decimals: oz ? 0 : 2,
     );
-    if (v != null) controller.setWaterGoal(v);
+    if (v == null) return;
+    oz ? controller.setWaterGoalOz(v) : controller.setWaterGoal(v);
   }
 
   @override
@@ -652,10 +657,8 @@ class _DailyGoals extends StatelessWidget {
 
     final perKg = protein / controller.weightKg.value;
     final ml = waterMl;
-    final litres = ml / 1000;
-    final litreText = litres == litres.roundToDouble()
-        ? litres.toStringAsFixed(0)
-        : litres.toStringAsFixed(2).replaceAll(RegExp(r'0$'), '');
+    final oz = controller.useOz.value;
+    final waterText = oz ? '${Water.toOz(ml).round()}' : Water.litres(ml);
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -683,10 +686,10 @@ class _DailyGoals extends StatelessWidget {
               dimension: 34.sp,
               child: const CustomPaint(painter: _WaterDropPainter()),
             ),
-            value: litreText,
-            unit: 'L',
+            value: waterText,
+            unit: oz ? 'fl oz' : 'L',
             title: 'Water',
-            sub: 'About ${(ml / 250).round()} glasses',
+            sub: 'About ${(ml / (oz ? Water.fromOz(8) : 250)).round()} glasses',
             onEdit: () => _editWater(context),
           ),
         ),

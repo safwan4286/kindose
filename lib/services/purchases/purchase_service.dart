@@ -124,7 +124,9 @@ class PurchaseService extends GetxService {
     final all = offerings.value;
     final o = offeringId == null ? all?.current : all?.getOffering(offeringId);
     if (o == null) return null;
-    return plan == 'year' ? (o.annual ?? _first(o, PackageType.annual)) : (o.monthly ?? _first(o, PackageType.monthly));
+    return plan == 'year'
+        ? (o.annual ?? _first(o, PackageType.annual))
+        : (o.monthly ?? _first(o, PackageType.monthly));
   }
 
   static Package? _first(Offering o, PackageType type) {
@@ -143,7 +145,9 @@ class PurchaseService extends GetxService {
     try {
       final r = await Purchases.purchase(PurchaseParams.package(p));
       _apply(r.customerInfo);
-      return PlusAccess.active.value ? PurchaseOutcome.success : PurchaseOutcome.pending;
+      return PlusAccess.active.value
+          ? PurchaseOutcome.success
+          : PurchaseOutcome.pending;
     } on PlatformException catch (e) {
       final code = PurchasesErrorHelper.getErrorCode(e);
       _log('Purchase error: $code');

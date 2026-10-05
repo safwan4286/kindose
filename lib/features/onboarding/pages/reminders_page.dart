@@ -95,6 +95,12 @@ class RemindersPage extends GetView<OnboardingController> {
                   ],
                 ),
               ),
+              // SizedBox(height: 22.sp),
+              // _ExtraNudges(controller: controller).enter(
+              //   motion,
+              //   delay: 260 + previews.length * 150,
+              //   dy: 0.2,
+              // ),
             ],
           ),
         ),
@@ -121,6 +127,62 @@ class RemindersPage extends GetView<OnboardingController> {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Optional water and protein nudges, off by default. They need the same
+/// permission, so they are saved only with "Turn on reminders".
+class _ExtraNudges extends StatelessWidget {
+  const _ExtraNudges({required this.controller});
+
+  final OnboardingController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    return Obx(
+      () => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.only(left: 4.sp, bottom: 8.sp),
+            child: SectionLabel('Also remind me', color: k.faint),
+          ),
+          KGroup(
+            padded: true,
+            children: [
+              SwitchRow(
+                label: 'Drink water',
+                sub: 'Every 2 hours, 9 AM – 8 PM',
+                leading: ThreeD(Img3d.droplet, size: 30.sp),
+                value: controller.wantWater.value,
+                onChanged: (_) => controller.toggleWater(),
+                padding: EdgeInsets.symmetric(vertical: 12.sp),
+              ),
+              SwitchRow(
+                label: 'Eat protein',
+                sub: 'At lunch and mid-afternoon',
+                leading: ThreeD(Img3d.biceps, size: 30.sp),
+                value: controller.wantProtein.value,
+                onChanged: (_) => controller.toggleProtein(),
+                padding: EdgeInsets.symmetric(vertical: 12.sp),
+              ),
+            ],
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(4.sp, 8.sp, 4.sp, 0),
+            child: Text(
+              'Open in your free week, then part of Kindose Plus. Change any reminder later in Me › Notifications.',
+              style: AppText.small.copyWith(
+                fontSize: 12.sp,
+                height: 1.4,
+                color: k.faint,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

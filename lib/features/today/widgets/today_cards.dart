@@ -5,6 +5,7 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../../../resources/catalog.dart';
 import '../../../resources/colors.dart';
 import '../../../resources/images.dart';
+import '../../../resources/water_units.dart';
 import '../../../services/haptics/haptics.dart';
 import '../../../services/responsiveness/device_manager.dart';
 import '../../../services/theme/theme.dart';
@@ -558,7 +559,7 @@ class WaterCard extends GetView<TodayController> {
           Semantics(
             button: true,
             label:
-                'Water ${controller.litres} of ${controller.waterGoalLitres} litres. Open water',
+                'Water ${controller.litres} of ${controller.waterGoalLitres} ${Water.unitWords}. Open water',
             excludeSemantics: true,
             child: PressScale(
               onTap: controller.openWater,
@@ -586,13 +587,13 @@ class WaterCard extends GetView<TodayController> {
                         ),
                         _ValueText(
                           controller.litres,
-                          '/ ${controller.waterGoalLitres} L',
+                          '/ ${controller.waterGoalLitres} ${Water.unit}',
                         ),
                       ],
                     ),
                   ),
                   Text(
-                    controller.waterGoalHit ? 'Goal hit!' : '250 ml a glass',
+                    controller.waterGoalHit ? 'Goal hit!' : Water.glassLabel,
                     style: AppText.small.copyWith(
                       fontSize: 12.5.sp,
                       fontWeight: FontWeight.w800,

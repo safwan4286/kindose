@@ -5,10 +5,12 @@ import '../../models/user_profile.dart';
 import '../../resources/catalog.dart';
 import '../../resources/date_utils.dart';
 import '../../resources/routes.dart';
+import '../../resources/water_units.dart';
 import '../../widgets/no_internet_sheet.dart';
 import '../../services/backend/backend_service.dart';
 import '../../services/haptics/haptics.dart';
 import '../../services/region/region.dart';
+import '../../services/notifications/notif_prefs.dart';
 import '../../services/notifications/notification_service.dart';
 import '../../services/tracker_service.dart';
 import '../../widgets/social_button.dart';
@@ -122,6 +124,9 @@ class OnboardingController extends GetxController {
 
   /// Pounds by default in the US and UK (from the phone's region).
   final RxBool useKg = (!Region.prefersPounds).obs;
+
+  /// Kept from the saved plan when editing; Region default for new plans.
+  final RxBool useOz = Region.prefersOunces.obs;
   final RxDouble weightKg = 72.0.obs;
 
   /// False until the user moves the weight, so the default can follow the
@@ -158,6 +163,11 @@ class OnboardingController extends GetxController {
   /// Set on the reminders screen: true only when the system said yes.
   final RxBool remindersOn = false.obs;
   final RxBool askingReminders = false.obs;
+
+  /// Extra nudges picked on the reminders page (off by default). Saved to
+  /// [NotifPrefs] only when notifications are allowed.
+  final RxBool wantWater = false.obs;
+  final RxBool wantProtein = false.obs;
   final RxSet<String> plateOff = <String>{}.obs;
 
   /// What the user wants help with. Empty until they pick (Continue needs one).
@@ -260,6 +270,7 @@ class OnboardingController extends GetxController {
       doseDate.value = Dates.dateOnly(last.takenAt);
     }
     useKg.value = p.useKg;
+    useOz.value = p.useOz;
     weightKg.value = p.startWeightKg;
     weightTouched.value = true;
     goalKg.value = p.goalWeightKg;
@@ -644,6 +655,7 @@ class OnboardingController extends GetxController {
       remindersOn.value = granted;
       if (granted) {
         Haptics.instance.lightImpact();
+        await _saveExtraNudges();
       } else {
         showToast('No problem. You can turn reminders on later in Me.');
       }
@@ -651,6 +663,27 @@ class OnboardingController extends GetxController {
     } finally {
       askingReminders.value = false;
     }
+  }
+
+  void toggleWater() {
+    Haptics.instance.selectionClick();
+    wantWater.toggle();
+  }
+
+  void toggleProtein() {
+    Haptics.instance.selectionClick();
+    wantProtein.toggle();
+  }
+
+  Future<void> _saveExtraNudges() async {
+    if (!Get.isRegistered<NotifPrefs>()) return;
+    // Only turns nudges on: editing a plan never switches off ones the
+    // person already chose in Me › Notifications.
+    if (!wantWater.value && !wantProtein.value) return;
+    final prefs = Get.find<NotifPrefs>();
+    if (wantWater.value) prefs.waterOn.value = true;
+    if (wantProtein.value) prefs.proteinOn.value = true;
+    await prefs.save();
   }
 
   void skipReminders() {
@@ -777,7 +810,10 @@ class OnboardingController extends GetxController {
       _ => 0,
     };
     final ml = weightKg.value * 35 + extra;
-    return ((ml / 250).round() * 250).clamp(2000, 4000);
+    final rounded = ((ml / 250).round() * 250).clamp(2000, 4000);
+    // Ounce people get whole glasses of 8 fl oz (64, 72, 80 … fl oz).
+    if (!useOz.value) return rounded;
+    return Water.fromOz((Water.toOz(rounded) / 8).round() * 8.0);
   }
 
   /// "every Thursday", "daily", "every other Monday", "every 3 days".
@@ -799,6 +835,12 @@ class OnboardingController extends GetxController {
   void setWaterGoal(double litres) {
     waterTouched.value = true;
     waterGoal.value = ((litres * 1000 / 250).round() * 250).clamp(1000, 5000);
+  }
+
+  /// For people who see water in fluid ounces (whole ounces).
+  void setWaterGoalOz(double oz) {
+    waterTouched.value = true;
+    waterGoal.value = Water.fromOz(oz.roundToDouble()).clamp(1000, 5000);
   }
 
   // ------------------------------------------------------------------ plan
@@ -862,11 +904,10 @@ class OnboardingController extends GetxController {
       }
       final cloud = check.backup;
       if (cloud != null) {
-        final day = Dates.relativeDay(cloud.updatedAt, DateTime.now());
-        final restore = await showRestoreSheet(
-          when:
-              '${day == 'Today' ? 'today' : day} at ${Dates.time(cloud.updatedAt)}',
-          phoneHasData: false,
+        final restore = await showWelcomeBackSheet(
+          backup: cloud,
+          otherLabel: 'Start a new plan',
+          otherNote: 'A new plan replaces your saved data.',
         );
         if (restore == null) {
           // Closed without choosing: stay here, signed out.
@@ -894,11 +935,20 @@ class OnboardingController extends GetxController {
     await finish();
   }
 
-  /// "Not now": keep everything on the phone and carry on to Plus.
-  void skipSave() {
+  /// Already signed in (came from "I already have an account" with no
+  /// backup yet): the plan is theirs, carry on.
+  bool get alreadySignedIn =>
+      Get.isRegistered<BackendService>() && Get.find<BackendService>().signedIn;
+
+  String? get signedInEmail => Get.isRegistered<BackendService>()
+      ? Get.find<BackendService>().email
+      : null;
+
+  Future<void> continueSignedIn() async {
     if (signingIn.value != null || current != OnboardingStep.save) return;
-    Haptics.instance.selectionClick();
-    finish();
+    Haptics.instance.lightImpact();
+    await Get.find<BackendService>().claimLocal();
+    await finish();
   }
 
   void setProteinGoal(double v) {
@@ -988,6 +1038,7 @@ class OnboardingController extends GetxController {
       heightInCm: heightInCm.value,
       activity: activity.value.isEmpty ? null : activity.value,
       useKg: useKg.value,
+      useOz: useOz.value,
       startWeightKg: weightKg.value,
       goalWeightKg: goalKg.value,
       heightCm: heightCm.value,

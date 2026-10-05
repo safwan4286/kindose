@@ -45,7 +45,13 @@ class PlusScreen extends GetView<PlusController> {
                   controller: controller.scrollController,
                   padding: EdgeInsets.zero,
                   children: [
-                    Obx(() => _Hero(onClose: controller.close, motion: motion, line: controller.freeLine)),
+                    Obx(
+                      () => _Hero(
+                        onClose: controller.close,
+                        motion: motion,
+                        line: controller.freeLine,
+                      ),
+                    ),
                     Padding(
                       padding: EdgeInsets.fromLTRB(20.sp, 20.sp, 20.sp, 16.sp),
                       child: Obx(() {
@@ -139,7 +145,11 @@ class PlusScreen extends GetView<PlusController> {
 // ---------------------------------------------------------------------- hero
 
 class _Hero extends StatelessWidget {
-  const _Hero({required this.onClose, required this.motion, required this.line});
+  const _Hero({
+    required this.onClose,
+    required this.motion,
+    required this.line,
+  });
 
   final VoidCallback onClose;
   final bool motion;
@@ -327,7 +337,7 @@ class _Perks extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final k = context.k;
-    const perks = PlusController.perks;
+    final perks = controller.shownPerks;
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16.sp, vertical: 4.sp),
       decoration: BoxDecoration(

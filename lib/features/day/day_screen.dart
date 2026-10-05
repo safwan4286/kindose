@@ -4,6 +4,7 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 import '../../models/logs.dart';
 import '../../resources/colors.dart';
+import '../../resources/water_units.dart';
 import '../../services/responsiveness/device_manager.dart';
 import '../../services/theme/theme.dart';
 import '../../widgets/day_switcher.dart';
@@ -285,29 +286,35 @@ class _Bar extends StatelessWidget {
   }
 }
 
-Widget _listLabel(BuildContext context, String text, {bool swipeHint = false}) =>
-    Padding(
-      padding: EdgeInsets.only(top: 16.sp, bottom: 2.sp),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              text,
-              style: AppText.caps.copyWith(
-                fontSize: 11.sp,
-                letterSpacing: 1,
-                color: context.k.faint,
-              ),
-            ),
+Widget _listLabel(
+  BuildContext context,
+  String text, {
+  bool swipeHint = false,
+}) => Padding(
+  padding: EdgeInsets.only(top: 16.sp, bottom: 2.sp),
+  child: Row(
+    children: [
+      Expanded(
+        child: Text(
+          text,
+          style: AppText.caps.copyWith(
+            fontSize: 11.sp,
+            letterSpacing: 1,
+            color: context.k.faint,
           ),
-          if (swipeHint)
-            Text(
-              'Swipe left to remove',
-              style: AppText.small.copyWith(fontSize: 11.5.sp, color: context.k.faint),
-            ),
-        ],
+        ),
       ),
-    );
+      if (swipeHint)
+        Text(
+          'Swipe left to remove',
+          style: AppText.small.copyWith(
+            fontSize: 11.5.sp,
+            color: context.k.faint,
+          ),
+        ),
+    ],
+  ),
+);
 
 class _ProteinSection extends StatelessWidget {
   const _ProteinSection({required this.controller});
@@ -377,7 +384,10 @@ class _ProteinSection extends StatelessWidget {
                       label: '$name: ${g == 0 ? 'nothing' : '$g grams'}',
                       excludeSemantics: true,
                       child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 10.sp, vertical: 9.sp),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 10.sp,
+                          vertical: 9.sp,
+                        ),
                         decoration: BoxDecoration(
                           color: g > 0 && g == best
                               ? (dark ? k.cardAlt : AppColors.tangerineSoft)
@@ -404,9 +414,9 @@ class _ProteinSection extends StatelessWidget {
                             SizedBox(height: 2.sp),
                             Text(
                               g == 0 ? '—' : '$g g',
-                              style: AppText.number(17.sp).copyWith(
-                                color: g == 0 ? k.faint : k.text,
-                              ),
+                              style: AppText.number(
+                                17.sp,
+                              ).copyWith(color: g == 0 ? k.faint : k.text),
                             ),
                           ],
                         ),
@@ -449,7 +459,8 @@ class _FoodEntryRow extends StatelessWidget {
       id: entry.id,
       onRemove: () => controller.removeEntry(entry),
       child: Semantics(
-        label: '$name${portion.isEmpty ? '' : ', $portion'}, $time, ${entry.amount} grams. Swipe left to remove.',
+        label:
+            '$name${portion.isEmpty ? '' : ', $portion'}, $time, ${entry.amount} grams. Swipe left to remove.',
         excludeSemantics: true,
         child: _EntryTile(
           first: first,
@@ -492,14 +503,14 @@ class _WaterSection extends StatelessWidget {
         children: [
           Semantics(
             label:
-                '${controller.litres(total)} of ${controller.litres(goal)} litres water. ${controller.waterLine}',
+                '${controller.litres(total)} of ${controller.litres(goal)} ${Water.unitWords} water. ${controller.waterLine}',
             excludeSemantics: true,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _Total(
                   value: controller.litres(total),
-                  of: 'of ${controller.litres(goal)} L',
+                  of: 'of ${controller.litres(goal)} ${Water.unit}',
                   hit: goal > 0 && total >= goal,
                   tagBg: AppColors.aquaSoft,
                   tagFg: AppColors.aquaText,
@@ -561,7 +572,7 @@ class _DrinkRow extends StatelessWidget {
   final DrinkGroup group;
   final bool first;
 
-  String _amount(int ml) => ml >= 1000 ? '${controller.litres(ml)} L' : '$ml ml';
+  String _amount(int ml) => Water.amount(ml);
 
   @override
   Widget build(BuildContext context) {
@@ -573,7 +584,9 @@ class _DrinkRow extends StatelessWidget {
     final time = n == 1
         ? controller.entryTime(newest)
         : '${controller.entryTime(oldest)} – ${controller.entryTime(newest)}';
-    final sub = n == 1 ? '${group.each} ml · $time' : '${group.each} ml each · $time';
+    final sub = n == 1
+        ? '${Water.amount(group.each)} · $time'
+        : '${Water.amount(group.each)} each · $time';
     return _Swipe(
       id: 'g-${newest.id}',
       onRemove: () => controller.removeEntry(newest),
@@ -614,7 +627,11 @@ class _Swipe extends StatelessWidget {
         alignment: Alignment.centerRight,
         padding: EdgeInsets.only(right: 12.sp),
         color: AppColors.dangerSoft,
-        child: Icon(PhosphorIconsBold.trash, size: 18.sp, color: AppColors.danger),
+        child: Icon(
+          PhosphorIconsBold.trash,
+          size: 18.sp,
+          color: AppColors.danger,
+        ),
       ),
       child: child,
     );
@@ -683,7 +700,10 @@ class _EntryTile extends StatelessWidget {
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: AppText.title.copyWith(fontSize: 14.5.sp, color: k.text),
+                  style: AppText.title.copyWith(
+                    fontSize: 14.5.sp,
+                    color: k.text,
+                  ),
                 ),
                 SizedBox(height: 1.sp),
                 Text(

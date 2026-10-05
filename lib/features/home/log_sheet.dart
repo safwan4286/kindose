@@ -7,6 +7,7 @@ import '../../resources/colors.dart';
 import '../../resources/date_utils.dart';
 import '../../resources/images.dart';
 import '../../resources/routes.dart';
+import '../../resources/water_units.dart';
 import '../../services/haptics/haptics.dart';
 import '../../services/responsiveness/device_manager.dart';
 import '../../services/theme/theme.dart';
@@ -33,11 +34,6 @@ class LogSheet extends StatelessWidget {
     Haptics.instance.selectionClick();
     popRoute();
     Get.toNamed<void>(route, arguments: args);
-  }
-
-  static String _litres(int ml) {
-    final l = ml / 1000;
-    return l == l.roundToDouble() ? l.toStringAsFixed(0) : l.toStringAsFixed(1);
   }
 
   @override
@@ -121,7 +117,7 @@ class LogSheet extends StatelessWidget {
                     child: _Tile(
                       icon: Img3d.droplet,
                       title: 'Water',
-                      sub: '${_litres(day.waterMl)} of ${_litres(waterGoal)} L',
+                      sub: '${Water.total(day.waterMl)} of ${Water.totalWithUnit(waterGoal)}',
                       bg: AppColors.aquaSoft,
                       subColor: AppColors.aquaText,
                       onTap: () => _goTo(Routes.addIntake, 'water'),

@@ -404,7 +404,7 @@ class _PlusRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
-      label: 'More ideas and a low-appetite plan with Plus',
+      label: '2 more ideas with Plus',
       excludeSemantics: true,
       child: PressScale(
         onTap: onTap,
@@ -418,7 +418,7 @@ class _PlusRow extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  '2 more ideas + a plan for low-appetite days',
+                  '2 more ideas for today',
                   style: AppText.small.copyWith(
                     fontSize: 13.5.sp,
                     fontWeight: FontWeight.w700,

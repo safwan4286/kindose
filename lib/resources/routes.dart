@@ -2,6 +2,8 @@ import 'package:get/get.dart';
 
 import '../services/plus/access_service.dart';
 
+import '../features/account/save_data_screen.dart';
+import '../features/update/update_screen.dart';
 import '../features/check_in/check_in_binding.dart';
 import '../features/check_in/check_in_screen.dart';
 import '../features/day/day_binding.dart';
@@ -16,6 +18,8 @@ import '../features/intake/intake_binding.dart';
 import '../features/intake/intake_screen.dart';
 import '../features/log_dose/log_dose_binding.dart';
 import '../features/log_dose/log_dose_screen.dart';
+import '../features/notifications/notifications_controller.dart';
+import '../features/notifications/notifications_screen.dart';
 import '../features/offer/offer_binding.dart';
 import '../features/offer/offer_screen.dart';
 import '../features/onboarding/onboarding_binding.dart';
@@ -60,6 +64,11 @@ class Routes {
 
   /// Injection guide. Pass a GuideArgs when opened from Log dose.
   static const String guide = '/guide';
+  static const String saveData = '/save-data';
+  static const String update = '/update';
+
+  /// Me → Notifications: a switch per reminder, quiet hours.
+  static const String notifications = '/notifications';
 }
 
 class AppPages {
@@ -102,6 +111,17 @@ class AppPages {
       transition: Transition.fadeIn,
     ),
     GetPage<dynamic>(
+      name: Routes.update,
+      page: () => const UpdateScreen(),
+      transition: Transition.fadeIn,
+    ),
+    GetPage<dynamic>(
+      name: Routes.saveData,
+      page: () => const SaveDataScreen(),
+      binding: SaveDataBinding(),
+      transition: Transition.fadeIn,
+    ),
+    GetPage<dynamic>(
       name: Routes.home,
       page: () => const HomeScreen(),
       binding: HomeBinding(),
@@ -130,6 +150,11 @@ class AppPages {
       page: () => const DayScreen(),
       binding: DayBinding(),
       middlewares: [PlusGate()],
+    ),
+    GetPage<dynamic>(
+      name: Routes.notifications,
+      page: () => const NotificationsScreen(),
+      binding: NotificationsBinding(),
     ),
     GetPage<dynamic>(
       name: Routes.pens,

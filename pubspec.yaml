@@ -35,28 +35,16 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   get: ^4.7.3
-  get_storage: ^2.1.1
-  image_picker: ^1.2.3
   vibration: ^3.2.1
   flutter_animate: ^4.5.2
   get_it: ^9.3.0
   hive_flutter: ^1.1.0
-  firebase_core: ^4.15.0
-  firebase_messaging: ^16.7.0
-  android_id: ^0.5.2+1
   package_info_plus: ^10.2.1
-  device_info_plus: ^13.2.0
   url_launcher: ^6.3.2
-  http: ^1.6.0
-  lottie: ^3.6.1
   flutter_local_notifications: ^22.3.1
   timezone: ^0.11.1
-  encrypt: ^5.0.3
-  pointycastle: ^3.9.1
-  android_intent_plus: ^6.1.0
   connectivity_plus: ^7.3.1
   #  internet_connection_checker: ^3.0.1
-  shared_preferences: ^2.5.5
   hive: ^2.2.3
   #  phosphor_flutter: ^2.1.0
   phosphoricons_flutter: ^1.0.0
@@ -67,7 +55,6 @@ dependencies:
   supabase_flutter: ^2.17.2
   google_sign_in: ^7.2.0
   purchases_flutter: ^10.13.2
-  purchases_ui_flutter: ^10.13.2
 
 dev_dependencies:
   flutter_test:

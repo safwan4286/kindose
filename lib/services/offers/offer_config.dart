@@ -106,7 +106,7 @@ class OfferConfig {
     cta: 'Get 30% off',
     perks: [
       'Dose log and spot rotation',
-      'Protein coach',
+      'Protein & water coach',
       'Progress and doctor report',
     ],
     maxShows: 1,

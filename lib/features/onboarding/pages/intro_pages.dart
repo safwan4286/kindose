@@ -5,6 +5,7 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 import '../../../resources/colors.dart';
 import '../../../resources/images.dart';
+import '../../../resources/water_units.dart';
 import '../../../services/responsiveness/device_manager.dart';
 import '../../../services/theme/theme.dart';
 import '../../../widgets/buttons.dart';
@@ -256,9 +257,9 @@ class _HeroPreview extends StatelessWidget {
                             AppColors.tangerineSoft,
                           ),
                           const SizedBox(height: 6),
-                          const _MiniBar(
+                          _MiniBar(
                             'Water',
-                            '1.8 / 2.5 L',
+                            Water.oz ? '61 / 85 fl oz' : '1.8 / 2.5 L',
                             0.72,
                             AppColors.aqua,
                             AppColors.aquaSoft,
@@ -411,7 +412,7 @@ class StagePage extends GetView<OnboardingController> {
         mainAxisSize: MainAxisSize.min,
         children: [
           const PrivacyNote(
-            'Everything you enter stays on this phone unless you choose to back it up.',
+            'About 2 minutes. At the end you save your plan to your account. We never sell your data.',
           ).enter(motion, delay: 420, dy: 0.1),
           SizedBox(height: 10.sp),
           const TapHint(

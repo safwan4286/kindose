@@ -153,13 +153,17 @@ class AccessService extends GetxService with WidgetsBindingObserver {
     final c = config.value;
     final t = now;
     final seen = _settings.get(_seenKey);
-    if (seen is! int || t.millisecondsSinceEpoch - seen > const Duration(hours: 1).inMilliseconds) {
+    if (seen is! int ||
+        t.millisecondsSinceEpoch - seen >
+            const Duration(hours: 1).inMilliseconds) {
       _settings.put(_seenKey, t.millisecondsSinceEpoch);
     }
 
     final override = kDebugMode ? _settings.get(_overrideKey) : null;
     final first = _firstDose;
-    final byInstall = _date(_installKey).add(Duration(days: c.startAfterInstallDays));
+    final byInstall = _date(
+      _installKey,
+    ).add(Duration(days: c.startAfterInstallDays));
     final DateTime start;
     if (override is int) {
       start = DateTime.fromMillisecondsSinceEpoch(override);
@@ -233,7 +237,9 @@ class AccessService extends GetxService with WidgetsBindingObserver {
   /// Ends the free week now (debug builds).
   Future<void> debugEnd() async {
     if (!kDebugMode) return;
-    final start = DateTime.now().subtract(Duration(days: config.value.freeDays, minutes: 1));
+    final start = DateTime.now().subtract(
+      Duration(days: config.value.freeDays, minutes: 1),
+    );
     await _settings.put(_overrideKey, start.millisecondsSinceEpoch);
     refresh();
   }

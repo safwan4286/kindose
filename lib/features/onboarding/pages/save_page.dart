@@ -14,8 +14,8 @@ import '../../../widgets/k_ruler.dart';
 import '../../../widgets/social_button.dart';
 import '../onboarding_controller.dart';
 
-/// Wrap-up 4: offer Apple / Google sign-in so data survives a new phone.
-/// "Not now" is always fine; everything stays on the phone.
+/// Wrap-up 4: "Save your plan". Signing in is required (no guest mode):
+/// the plan lives in the account and syncs by itself.
 class SavePage extends GetView<OnboardingController> {
   const SavePage({super.key});
 
@@ -40,14 +40,14 @@ class SavePage extends GetView<OnboardingController> {
               Semantics(
                 header: true,
                 child: Text(
-                  'Save your progress',
+                  'Save your plan',
                   textAlign: TextAlign.center,
                   style: AppText.h1.copyWith(fontSize: 30.sp, color: k.text),
                 ),
               ).enter(motion, delay: 120, dy: 0.12),
               SizedBox(height: 10.sp),
               Text(
-                'Keep your doses, weight and reports safe if you change or lose your phone.',
+                'Your plan, doses and progress live in your Kindose account, safe on any phone.',
                 textAlign: TextAlign.center,
                 style: AppText.bodyText.copyWith(
                   fontSize: 14.5.sp,
@@ -60,8 +60,8 @@ class SavePage extends GetView<OnboardingController> {
                 padding: EdgeInsets.symmetric(horizontal: 6.sp),
                 child: const Column(
                   children: [
-                    _Benefit('Backs up by itself, no effort'),
-                    _Benefit('Move to a new phone easily'),
+                    _Benefit('Syncs by itself, even after offline'),
+                    _Benefit('New phone? Just sign in'),
                     _Benefit('No password to remember'),
                   ],
                 ),
@@ -74,6 +74,31 @@ class SavePage extends GetView<OnboardingController> {
           child: Obx(() {
             final busy = controller.signingIn.value;
             final saving = controller.saving.value;
+            final email = controller.signedInEmail;
+            if (controller.alreadySignedIn) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Signed in as ${email ?? 'your account'}',
+                    textAlign: TextAlign.center,
+                    style: AppText.small.copyWith(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w700,
+                      color: k.muted,
+                    ),
+                  ),
+                  SizedBox(height: 10.sp),
+                  KBottomPadding(
+                    child: PillButton(
+                      label: 'Continue',
+                      busy: saving,
+                      onPressed: saving ? null : controller.continueSignedIn,
+                    ),
+                  ),
+                ],
+              );
+            }
             return Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -94,14 +119,10 @@ class SavePage extends GetView<OnboardingController> {
                       ? null
                       : () => controller.signInWith(SocialProvider.google),
                 ),
-                SizedBox(height: 2.sp),
-                LinkButton(
-                  label: 'Not now',
-                  onTap: busy != null || saving ? null : controller.skipSave,
-                ),
+                SizedBox(height: 12.sp),
                 KBottomPadding(
                   child: Text(
-                    'Signing in only shares your name and email with Kindose.\nYou can do this later in Me.',
+                    'Only your name and email are shared with Kindose.\nWe never sell your data.',
                     textAlign: TextAlign.center,
                     style: AppText.small.copyWith(
                       fontSize: 12.sp,

@@ -37,7 +37,13 @@ class PlusPlan {
 }
 
 class PlusPerk {
-  const PlusPerk(this.icon, this.title, this.sub, this.focus);
+  const PlusPerk(
+    this.icon,
+    this.title,
+    this.sub,
+    this.focus, {
+    this.weeklyOnly = false,
+  });
 
   final String icon;
   final String title;
@@ -45,6 +51,9 @@ class PlusPerk {
 
   /// "What to help with" answers this perk matches, for the FOR YOU tag.
   final Set<String> focus;
+
+  /// Hidden for daily plans (the dose-week pattern needs weekly doses).
+  final bool weeklyOnly;
 }
 
 /// Paywall. No store trial: everyone gets a free week in the app first
@@ -60,13 +69,7 @@ class PlusController extends GetxController {
       'a year',
       badge: 'SAVE 72%',
     ),
-    PlusPlan(
-      'month',
-      'Monthly',
-      'Cancel anytime',
-      '\$14.99',
-      'a month',
-    ),
+    PlusPlan('month', 'Monthly', 'Cancel anytime', '\$14.99', 'a month'),
   ];
 
   static const List<PlusPerk> perks = [
@@ -80,9 +83,16 @@ class PlusController extends GetxController {
     ),
     PlusPerk(
       Img3d.biceps,
-      'Protein coach',
-      'Next bite ideas for low-appetite days',
-      {'muscle', 'nausea', 'noise'},
+      'Protein & water coach',
+      'Next bite ideas and gentle reminders you control',
+      {'muscle', 'noise'},
+    ),
+    PlusPerk(
+      Img3d.nauseated,
+      'Your pattern',
+      'See which day after your dose is hardest for you',
+      {'nausea'},
+      weeklyOnly: true,
     ),
     PlusPerk(
       Img3d.chartDown,
@@ -138,6 +148,16 @@ class PlusController extends GetxController {
 
   bool isForYou(PlusPerk perk) => perk.focus.any(_focus.contains);
 
+  /// Perks for this plan: no dose-week pattern for daily plans.
+  List<PlusPerk> get shownPerks {
+    final daily =
+        Get.find<TrackerService>().profile.value?.isDaily ?? false;
+    return [
+      for (final p in perks)
+        if (!daily || !p.weeklyOnly) p,
+    ];
+  }
+
   bool get isYearly => selected.value == 'year';
 
   PurchaseService? get _purchases =>
@@ -149,7 +169,9 @@ class PlusController extends GetxController {
     final y = ps?.package('year')?.storeProduct;
     final m = ps?.package('month')?.storeProduct;
     if (y == null || m == null) return fallbackPlans;
-    final save = m.price > 0 ? ((1 - y.price / (m.price * 12)) * 100).round() : 0;
+    final save = m.price > 0
+        ? ((1 - y.price / (m.price * 12)) * 100).round()
+        : 0;
     return [
       PlusPlan(
         'year',
@@ -163,13 +185,16 @@ class PlusController extends GetxController {
     ];
   }
 
-  PlusPlan get _plan =>
-      plans.firstWhere((p) => p.id == selected.value, orElse: () => plans.first);
+  PlusPlan get _plan => plans.firstWhere(
+    (p) => p.id == selected.value,
+    orElse: () => plans.first,
+  );
 
   /// True while a purchase or restore runs.
   bool get busy => _purchases?.busy.value ?? false;
 
-  String get cta => 'Get Plus · ${_plan.price} / ${isYearly ? 'year' : 'month'}';
+  String get cta =>
+      'Get Plus · ${_plan.price} / ${isYearly ? 'year' : 'month'}';
 
   String get fine => isYearly
       ? 'Billed now. Renews yearly until you cancel.'
@@ -179,7 +204,8 @@ class PlusController extends GetxController {
 
   /// The free-week line in the hero.
   String get freeLine {
-    if (_access.locked) return 'Your free week has ended.\nYour data is safe. Pick a plan to keep logging.';
+    if (_access.locked)
+      return 'Your free week has ended.\nYour data is safe. Pick a plan to keep logging.';
     if (!_access.started.value) {
       return 'Your first week is free. No card needed.\nIt starts with your first dose.';
     }
@@ -202,7 +228,9 @@ class PlusController extends GetxController {
     final ps = _purchases;
     final pkg = ps?.package(selected.value);
     if (ps == null || !ps.ready || pkg == null) {
-      showToast("Plans aren't available right now. Check your connection and try again.");
+      showToast(
+        "Plans aren't available right now. Check your connection and try again.",
+      );
       if (ps != null) unawaited(ps.loadOfferings());
       return;
     }
@@ -213,7 +241,9 @@ class PlusController extends GetxController {
         showToast('Welcome to Kindose Plus');
         _leave();
       case PurchaseOutcome.pending:
-        showToast('Your payment is pending. Plus turns on as soon as it goes through.');
+        showToast(
+          'Your payment is pending. Plus turns on as soon as it goes through.',
+        );
       case PurchaseOutcome.failed:
         showToast("The purchase didn't go through. Please try again.");
       case PurchaseOutcome.unavailable:
@@ -261,9 +291,15 @@ class PlusController extends GetxController {
     // Only offer what can really be bought (debug builds always show it,
     // so the screen can be checked before the offer product exists).
     final offers = Get.find<OfferService>();
-    final canOffer = kDebugMode ||
-        _purchases?.package('year', offeringId: offers.config.value.offeringId) != null;
-    final showOffer = canOffer &&
+    final canOffer =
+        kDebugMode ||
+        _purchases?.package(
+              'year',
+              offeringId: offers.config.value.offeringId,
+            ) !=
+            null;
+    final showOffer =
+        canOffer &&
         await offers.onPaywallClosed(fromOnboarding: fromOnboarding);
     if (showOffer) {
       Get.offNamed<void>(

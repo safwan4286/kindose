@@ -7,14 +7,13 @@ import '../../resources/routes.dart';
 import '../../services/haptics/haptics.dart';
 import '../../services/plus/plus_access.dart';
 import '../../services/tracker_service.dart';
-import '../../widgets/toast.dart';
 import '../../widgets/k_date_picker.dart';
 
 /// Moving between days on screens that show one day (Protein, Water, Day).
 ///
-/// Free users can open the last 4 weeks ([PlusAccess.freeHistoryDays]);
-/// one step further opens the Plus screen. Plus goes back to the start of
-/// treatment. Future days are never shown.
+/// These screens are Plus (or free week) only, so every day back to the
+/// start of treatment can be opened. If the free week ends while one is
+/// open, going back opens the Plus screen. Future days are never shown.
 mixin DayNav on GetxController {
   /// The day being shown (date only).
   final Rx<DateTime> day = Dates.dateOnly(DateTime.now()).obs;
@@ -26,24 +25,16 @@ mixin DayNav on GetxController {
 
   DateTime get today => Dates.dateOnly(DateTime.now());
   bool get isToday => Dates.sameDay(day.value, today);
-  bool get isPlusUser => PlusAccess.unlocked;
-
-  /// Oldest day free users can open (4 weeks including today).
-  DateTime get freeFirstDay =>
-      today.subtract(const Duration(days: PlusAccess.freeHistoryDays - 1));
-
-  /// Oldest day that can be opened at all.
+  /// Oldest day that can be opened.
   DateTime get firstDay {
-    if (!isPlusUser) return freeFirstDay;
     final p = _navProfile;
-    final start = p?.treatmentStartedAt ?? p?.startedAt ?? freeFirstDay;
+    final start = p?.treatmentStartedAt ?? p?.startedAt ?? today;
     final earliest = Dates.dateOnly(start).subtract(const Duration(days: 30));
     final twoYears = today.subtract(const Duration(days: 730));
     return earliest.isBefore(twoYears) ? twoYears : earliest;
   }
 
-  /// Free users can always tap back: at the limit it shows Plus.
-  bool get canGoBack => !isPlusUser || day.value.isAfter(firstDay);
+  bool get canGoBack => day.value.isAfter(firstDay);
   bool get canGoForward => day.value.isBefore(today);
 
   /// "Today", "Yesterday" or "Mon, 28 Sep".
@@ -73,13 +64,12 @@ mixin DayNav on GetxController {
   }
 
   void previousDay() {
-    final prev = day.value.subtract(const Duration(days: 1));
-    if (!isPlusUser && prev.isBefore(freeFirstDay)) {
+    if (!PlusAccess.unlocked) {
       Haptics.instance.selectionClick();
-      showToast('Older days are part of Kindose Plus.');
       Get.toNamed<void>(Routes.plus);
       return;
     }
+    final prev = day.value.subtract(const Duration(days: 1));
     if (prev.isBefore(firstDay)) return;
     setDay(prev);
   }
@@ -91,28 +81,16 @@ mixin DayNav on GetxController {
   void backToToday() => setDay(today);
 
   Future<void> pickDay(BuildContext context) async {
-    // Free users see older days with a lock; tapping one opens Plus.
-    final p = _navProfile;
-    final start = Dates.dateOnly(
-      p?.treatmentStartedAt ?? p?.startedAt ?? freeFirstDay,
-    );
-    final earliest = isPlusUser
-        ? firstDay
-        : (start.isBefore(freeFirstDay) ? start : freeFirstDay);
+    if (!PlusAccess.unlocked) {
+      Get.toNamed<void>(Routes.plus);
+      return;
+    }
     final picked = await showKDatePicker(
       context: context,
       initialDate: day.value,
-      firstDate: earliest,
+      firstDate: firstDay,
       lastDate: today,
-      note: isPlusUser
-          ? null
-          : 'Last 4 weeks are free. Older days come with Plus.',
       marked: hasLogOn,
-      lockedBefore: isPlusUser ? null : freeFirstDay,
-      onLockedTap: () {
-        showToast('Older days are part of Kindose Plus.');
-        Get.toNamed<void>(Routes.plus);
-      },
     );
     if (picked != null) setDay(picked);
   }

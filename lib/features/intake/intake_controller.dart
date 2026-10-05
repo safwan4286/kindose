@@ -11,6 +11,7 @@ import '../common/day_nav.dart';
 import '../today/next_bite.dart';
 import '../today/today_controller.dart';
 import '../../resources/images.dart';
+import '../../resources/water_units.dart';
 import 'widgets/protein_sheets.dart';
 import '../../services/tracker_service.dart';
 import '../../widgets/ask_number.dart';
@@ -437,18 +438,15 @@ class IntakeController extends GetxController with DayNav {
   double get waterProgress =>
       waterGoal == 0 ? 0 : (waterToday / waterGoal).clamp(0.0, 1.0);
 
-  String litres(int ml) {
-    final l = ml / 1000;
-    final s = l.toStringAsFixed(2);
-    return s.replaceAll(RegExp(r'\.?0+$'), '');
-  }
+  /// Number only ("1.25" or "42"); the unit is [Water.unit].
+  String litres(int ml) => Water.total(ml);
 
   String get waterLine {
     final left = waterGoal - waterToday;
     if (left <= 0)
       return isToday ? 'Goal reached today.' : 'Goal reached that day.';
-    if (!isToday) return '${litres(left)} L short of the goal that day';
-    final glasses = (left / 250).ceil();
+    if (!isToday) return '${Water.amount(left)} short of the goal that day';
+    final glasses = (left / Water.glassMl).ceil();
     return 'About $glasses more ${glasses == 1 ? 'glass' : 'glasses'} to go';
   }
 
@@ -457,26 +455,30 @@ class IntakeController extends GetxController with DayNav {
     return Catalog.otherDrinks.where((d) => !(noDairy && d.dairy)).toList();
   }
 
-  Future<void> addDrink(Drink d) => _add(
-    'water',
-    d.ml,
-    d.label,
-    'Added ${d.label.toLowerCase()} · ${d.ml} ml',
-  );
+  Future<void> addDrink(Drink d) {
+    final ml = d.mlFor(Water.oz);
+    return _add(
+      'water',
+      ml,
+      d.label,
+      'Added ${d.label.toLowerCase()} · ${Water.amount(ml)}',
+    );
+  }
 
   Future<void> addCustomWater(BuildContext context) async {
+    final oz = Water.oz;
     final v = await askNumber(
       context,
       title: 'How much?',
-      unit: 'ml',
-      initial: 330,
-      min: 50,
-      max: 2000,
+      unit: oz ? 'fl oz' : 'ml',
+      initial: oz ? 12 : 330,
+      min: oz ? 2 : 50,
+      max: oz ? 68 : 2000,
       decimals: 0,
     );
     if (v == null || v.isNaN) return;
-    final ml = v.round();
-    await _add('water', ml, null, 'Added $ml ml');
+    final ml = oz ? Water.fromOz(v) : v.round();
+    await _add('water', ml, null, 'Added ${Water.amount(ml)}');
   }
 
   // ---------------------------------------------------------------- entries

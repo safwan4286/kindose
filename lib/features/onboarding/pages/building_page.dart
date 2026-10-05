@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import '../../../resources/catalog.dart';
 import '../../../resources/colors.dart';
 import '../../../resources/date_utils.dart';
+import '../../../resources/water_units.dart';
 import '../../../services/haptics/haptics.dart';
 import '../../../services/responsiveness/device_manager.dart';
 import '../../../services/theme/theme.dart';
@@ -122,10 +123,9 @@ class _BuildingPageState extends State<BuildingPage>
     final dose = _c.doseMode.value == 'unsure'
         ? ''
         : ' ${Catalog.mgLabel(_c.strength.value)}';
-    final litres = _c.suggestedWaterMl / 1000;
-    final water = litres == litres.roundToDouble()
-        ? litres.toStringAsFixed(0)
-        : litres.toStringAsFixed(2).replaceAll(RegExp(r'0$'), '');
+    final water = _c.useOz.value
+        ? '${Water.toOz(_c.suggestedWaterMl).round()} fl oz'
+        : '${Water.litres(_c.suggestedWaterMl)} L';
     return [
       _Row(
         'Setting your dose schedule',
@@ -137,7 +137,7 @@ class _BuildingPageState extends State<BuildingPage>
         'Working out your protein goal',
         'About ${_c.suggestedProtein} g a day',
       ),
-      _Row('Setting your water goal', 'About $water L a day'),
+      _Row('Setting your water goal', 'About $water a day'),
       _Row(
         'Planning your reminders',
         _c.remindersOn.value

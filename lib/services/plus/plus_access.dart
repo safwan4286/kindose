@@ -19,6 +19,6 @@ class PlusAccess {
   /// Plus or free week. Reading it inside an Obx watches both.
   static bool get unlocked => active.value || freeWeek.value;
 
-  /// Charts and history free users can see.
+  /// Length of the 4-week Progress range.
   static const int freeHistoryDays = 28;
 }

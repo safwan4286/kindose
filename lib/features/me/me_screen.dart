@@ -45,7 +45,7 @@ class MeScreen extends GetView<MeController> {
             _PlusCard(controller: c).enter(motion, delay: 60),
             if (kDebugMode) _DebugAccess(controller: c),
             _label(context, 'Treatment'),
-            _Group(
+            KGroup(
               children: [
                 _NavRow(
                   label: c.pensLabel,
@@ -63,7 +63,7 @@ class MeScreen extends GetView<MeController> {
               ],
             ).enter(motion, delay: 80),
             _label(context, 'Goals'),
-            _Group(
+            KGroup(
               children: [
                 _NavRow(
                   label: 'Goal weight',
@@ -88,36 +88,21 @@ class MeScreen extends GetView<MeController> {
               ],
             ).enter(motion, delay: 100),
             _label(context, 'Reminders'),
-            _Group(
-              padded: true,
+            KGroup(
               children: [
-                SwitchRow(
-                  label: 'Dose reminders',
-                  sub: 'Dose day, and a follow-up if not logged',
-                  value: c.doseReminders,
-                  onChanged: c.setDoseReminders,
-                  padding: EdgeInsets.symmetric(vertical: 12.sp),
-                ),
-                SwitchRow(
-                  label: 'Doctor visit',
-                  sub: '3 days before, to get your report ready',
-                  value: c.visitReminders,
-                  onChanged: c.setVisitReminders,
-                  padding: EdgeInsets.symmetric(vertical: 12.sp),
-                ),
-                _PlusSwitchRow(
-                  label: 'Protein & water nudges',
-                  sub: 'Gentle nudges at lunch and afternoon',
-                  onTap: c.foodNudges,
+                _NavRow(
+                  label: 'Notifications',
+                  sub: c.notificationsSummary,
+                  onTap: c.openNotifications,
                 ),
               ],
             ).enter(motion, delay: 140),
             _label(context, 'App'),
-            _Group(
+            KGroup(
               padded: true,
               children: [
                 _SettingRow(
-                  label: 'Units',
+                  label: 'Weight',
                   child: SizedBox(
                     width: 120.sp,
                     child: KSegmented<bool>(
@@ -125,6 +110,19 @@ class MeScreen extends GetView<MeController> {
                       selected: c.useKg,
                       onChanged: c.setUseKg,
                       labelOf: (v) => v ? 'kg' : 'lb',
+                      dense: true,
+                    ),
+                  ),
+                ),
+                _SettingRow(
+                  label: 'Water',
+                  child: SizedBox(
+                    width: 120.sp,
+                    child: KSegmented<bool>(
+                      options: const [false, true],
+                      selected: c.useOz,
+                      onChanged: c.setUseOz,
+                      labelOf: (v) => v ? 'fl oz' : 'L',
                       dense: true,
                     ),
                   ),
@@ -152,10 +150,10 @@ class MeScreen extends GetView<MeController> {
                 ),
               ],
             ).enter(motion, delay: 170),
-            _label(context, c.signedIn ? 'Account & backup' : 'Backup'),
+            _label(context, c.signedIn ? 'Account' : 'Backup'),
             _BackupCard(controller: c).enter(motion, delay: 200),
             _label(context, 'Your data'),
-            _Group(
+            KGroup(
               children: [
                 _NavRow(
                   label: c.exporting.value ? 'Preparing…' : 'Export everything',
@@ -177,7 +175,7 @@ class MeScreen extends GetView<MeController> {
               ],
             ),
             _label(context, 'About'),
-            _Group(
+            KGroup(
               children: [
                 _NavRow(label: 'Privacy policy', onTap: c.openLegal),
                 _NavRow(label: 'Terms of use', onTap: c.openLegal),
@@ -387,7 +385,8 @@ class _PlusCard extends StatelessWidget {
     final ended = state == 'ended';
     final plus = state == 'plus';
     return PressScale(
-      semanticLabel: '${controller.planTitle}. ${controller.planSub}. ${controller.planButton}',
+      semanticLabel:
+          '${controller.planTitle}. ${controller.planSub}. ${controller.planButton}',
       onTap: controller.openPlus,
       child: ExcludeSemantics(
         child: Container(
@@ -397,7 +396,9 @@ class _PlusCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(22.sp),
             border: ended
                 ? Border.all(color: AppColors.lime, width: 2)
-                : (k.selectedBorder == AppColors.lime ? Border.all(color: k.border) : null),
+                : (k.selectedBorder == AppColors.lime
+                      ? Border.all(color: k.border)
+                      : null),
           ),
           child: Row(
             children: [
@@ -482,7 +483,11 @@ class _DebugAccess extends StatelessWidget {
           ),
           child: Text(
             label,
-            style: AppText.small.copyWith(fontSize: 12.5.sp, fontWeight: FontWeight.w800, color: k.text),
+            style: AppText.small.copyWith(
+              fontSize: 12.5.sp,
+              fontWeight: FontWeight.w800,
+              color: k.text,
+            ),
           ),
         ),
       ),
@@ -659,77 +664,61 @@ class _SignedInBackup extends StatelessWidget {
             child: Divider(height: 1, thickness: 1, color: k.border),
           ),
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 36.sp,
-                height: 36.sp,
-                alignment: Alignment.center,
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                width: 10.sp,
+                height: 10.sp,
                 decoration: BoxDecoration(
-                  color: dark
-                      ? AppColors.lime.withValues(alpha: 0.16)
-                      : AppColors.limeSoft,
-                  borderRadius: BorderRadius.circular(12.sp),
-                ),
-                child: Icon(
-                  Icons.cloud_done_rounded,
-                  size: 20.sp,
-                  color: dark ? AppColors.lime : AppColors.limeText,
+                  color: controller.syncWaiting
+                      ? const Color(0xFFF0B44C)
+                      : const Color(0xFF5DBB63),
+                  shape: BoxShape.circle,
                 ),
               ),
               SizedBox(width: 12.sp),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Semantics(
-                      liveRegion: true,
-                      child: Text(
+                child: Semantics(
+                  liveRegion: true,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
                         controller.backupLine,
                         style: AppText.title.copyWith(
                           fontSize: 15.sp,
                           color: k.text,
                         ),
                       ),
-                    ),
-                    SizedBox(height: 2.sp),
-                    Text(
-                      'Backs up by itself after changes',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppText.small.copyWith(
-                        fontSize: 12.5.sp,
-                        fontWeight: FontWeight.w600,
-                        color: k.muted,
+                      SizedBox(height: 2.sp),
+                      Text(
+                        controller.syncWaiting
+                            ? 'Saved on this phone · syncs when you’re online'
+                            : 'Syncs by itself after changes',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppText.small.copyWith(
+                          fontSize: 12.5.sp,
+                          fontWeight: FontWeight.w600,
+                          color: k.muted,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ],
-          ),
-          SizedBox(height: 12.sp),
-          Row(
-            children: [
-              Expanded(
-                child: SoftButton(
-                  label: busy ? 'Backing up…' : 'Back up now',
-                  background: dark ? AppColors.lime : AppColors.ink,
-                  foreground: dark ? AppColors.ink : AppColors.white,
-                  height: 46,
+              if (controller.syncWaiting) ...[
+                SizedBox(width: 8.sp),
+                SoftButton(
+                  label: busy ? 'Syncing…' : 'Retry',
+                  background: k.cardAlt,
+                  height: 36,
                   onPressed: busy ? null : controller.backupNow,
                 ),
-              ),
-              SizedBox(width: 8.sp),
-              SoftButton(
-                label: 'Restore',
-                background: k.cardAlt,
-                height: 46,
-                onPressed: busy ? null : controller.restoreBackup,
-              ),
+              ],
             ],
           ),
-          SizedBox(height: 4.sp),
+          SizedBox(height: 6.sp),
           Center(
             child: LinkButton(
               label: 'Sign out',
@@ -743,44 +732,6 @@ class _SignedInBackup extends StatelessWidget {
 }
 
 /// White rounded group with hairline dividers between rows.
-class _Group extends StatelessWidget {
-  const _Group({required this.children, this.padded = false});
-
-  final List<Widget> children;
-
-  /// Adds side padding for rows that have none of their own (switches).
-  final bool padded;
-
-  @override
-  Widget build(BuildContext context) {
-    final k = context.k;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(22.sp),
-      child: ColoredBox(
-        color: k.card,
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: padded ? 16.sp : 0),
-          child: Column(
-            children: [
-              for (var i = 0; i < children.length; i++) ...[
-                if (i > 0)
-                  Divider(
-                    height: 1,
-                    thickness: 1,
-                    color: k.border,
-                    indent: padded ? 0 : 16.sp,
-                    endIndent: padded ? 0 : 16.sp,
-                  ),
-                children[i],
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _NavRow extends StatelessWidget {
   const _NavRow({
     required this.label,
@@ -901,71 +852,6 @@ class _SettingRow extends StatelessWidget {
           ),
           child,
         ],
-      ),
-    );
-  }
-}
-
-/// A switch row for a Plus feature: shows the Plus tag and an off switch.
-/// Tapping opens the Plus screen for free users.
-class _PlusSwitchRow extends StatelessWidget {
-  const _PlusSwitchRow({
-    required this.label,
-    required this.sub,
-    required this.onTap,
-  });
-
-  final String label;
-  final String sub;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final k = context.k;
-    return Semantics(
-      button: true,
-      label: '$label, Plus feature. $sub',
-      excludeSemantics: true,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14.sp),
-        onTap: onTap,
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 12.sp),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Wrap(
-                      spacing: 8.sp,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        Text(
-                          label,
-                          style: AppText.title.copyWith(
-                            fontSize: 15.sp,
-                            color: k.text,
-                          ),
-                        ),
-                        const PlusTag(),
-                      ],
-                    ),
-                    Text(
-                      sub,
-                      style: AppText.small.copyWith(
-                        fontSize: 12.5.sp,
-                        color: k.muted,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(width: 12.sp),
-              const KSwitch(value: false),
-            ],
-          ),
-        ),
       ),
     );
   }

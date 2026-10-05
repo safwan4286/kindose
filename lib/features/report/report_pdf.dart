@@ -7,6 +7,7 @@ import 'package:pdf/widgets.dart' as pw;
 
 import '../../resources/catalog.dart';
 import '../../resources/date_utils.dart';
+import '../../resources/water_units.dart';
 import 'report_data.dart';
 
 /// Builds the doctor report as PDF bytes: one A4 page for most periods,
@@ -242,7 +243,12 @@ class ReportPdf {
 
   static pw.Widget _tiles(ReportData r) {
     final goal = r.profile?.proteinGoalG ?? 100;
-    final waterGoal = (r.profile?.waterGoalMl ?? 2500) / 1000;
+    final waterGoal = r.profile?.waterGoalMl ?? 2500;
+    // The person's own water unit (no Get lookups while building the PDF).
+    final oz = r.profile?.useOz ?? false;
+    String water(int ml) => oz
+        ? '${Water.toOz(ml).round()} fl oz'
+        : '${(ml / 1000).toStringAsFixed(1)} L';
     final tiles = <pw.Widget>[
       if (r.sections.weight)
         _tile('WEIGHT CHANGE', r.periodChange ?? '—', r.weightSub),
@@ -262,8 +268,8 @@ class ReportPdf {
           'WATER',
           r.loggedDays == 0
               ? '—'
-              : '${(r.avgWaterMl / 1000).toStringAsFixed(1)} L/day',
-          'goal ${waterGoal.toStringAsFixed(1)} L · ${r.loggedDays} days logged',
+              : '${water(r.avgWaterMl)}/day',
+          'goal ${water(waterGoal)} · ${r.loggedDays} days logged',
         ),
       ],
     ];
@@ -515,6 +521,18 @@ class ReportPdf {
               ),
             ),
         ],
+        if (!r.isDaily && r.hardestDay != null)
+          pw.Padding(
+            padding: const pw.EdgeInsets.only(top: 6),
+            child: pw.Text(
+              '${r.hardestDay!}  (from check-ins)',
+              style: pw.TextStyle(
+                fontSize: 8.5,
+                color: _ink,
+                fontWeight: pw.FontWeight.bold,
+              ),
+            ),
+          ),
       ],
     );
     final lines = [

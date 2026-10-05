@@ -4,6 +4,7 @@ import '../../models/logs.dart';
 import '../../models/user_profile.dart';
 import '../../resources/catalog.dart';
 import '../../resources/date_utils.dart';
+import '../../resources/feel_pattern.dart';
 import '../../services/tracker_service.dart';
 import '../../widgets/k_ruler.dart';
 
@@ -71,6 +72,7 @@ class ReportData {
     required this.foodNoise,
     required this.appetite,
     required this.moodLine,
+    this.hardestDay,
     this.patientName,
     this.patientDob,
   });
@@ -179,6 +181,12 @@ class ReportData {
     final goal = p?.proteinGoalG ?? 100;
     final firstDose = allDoses.isEmpty ? null : allDoses.first.takenAt;
 
+    // Same rule as Progress "Your pattern": weekly-type plans, 3+ dose
+    // weeks with check-ins in this period.
+    final hardest = (p?.isDaily ?? false)
+        ? null
+        : FeelPattern.hardestDay(days, t.doses);
+
     return ReportData._(
       from: start,
       to: Dates.dateOnly(to),
@@ -215,6 +223,11 @@ class ReportData {
           ? 'Appetite: low ${countOf(appetite, 0)} days, normal ${countOf(appetite, 1)}, high ${countOf(appetite, 2)}'
           : '',
       moodLine: moodLine,
+      hardestDay: hardest == null
+          ? null
+          : (hardest < 0
+                ? 'No day after the dose stands out'
+                : 'Hardest day on average: ${FeelPattern.dayName(hardest)}'),
       patientName: patientName,
       patientDob: patientDob,
     );
@@ -274,6 +287,10 @@ class ReportData {
   final String foodNoise;
   final String appetite;
   final String moodLine;
+
+  /// "Hardest day on average: Day 2 after the dose", or null when there
+  /// isn't enough data (see [FeelPattern]).
+  final String? hardestDay;
   final String? patientName;
   final String? patientDob;
 

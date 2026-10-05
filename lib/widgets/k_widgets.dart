@@ -388,3 +388,42 @@ class PlusTag extends StatelessWidget {
         : KTag('Plus', bg: context.k.tint, fg: context.k.tintText);
   }
 }
+
+/// Rounded card that stacks settings rows with thin dividers.
+class KGroup extends StatelessWidget {
+  const KGroup({super.key, required this.children, this.padded = false});
+
+  final List<Widget> children;
+
+  /// Adds side padding for rows that have none of their own (switches).
+  final bool padded;
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(22.sp),
+      child: ColoredBox(
+        color: k.card,
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: padded ? 16.sp : 0),
+          child: Column(
+            children: [
+              for (var i = 0; i < children.length; i++) ...[
+                if (i > 0)
+                  Divider(
+                    height: 1,
+                    thickness: 1,
+                    color: k.border,
+                    indent: padded ? 0 : 16.sp,
+                    endIndent: padded ? 0 : 16.sp,
+                  ),
+                children[i],
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
