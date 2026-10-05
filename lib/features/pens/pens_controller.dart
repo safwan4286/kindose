@@ -99,14 +99,14 @@ class PensController extends GetxController {
   }
 
   String get spareTitle {
-    final n = supply.spare.value;
+    final n = supply.spareLeft;
     return n == 0 ? 'No spare $packs' : '$n spare ${n == 1 ? pack : packs}';
   }
 
   String get spareSub {
     final until = supply.supplyLastsUntil;
     if (until == null) return 'Add one when you pick up more.';
-    return supply.spare.value == 0
+    return supply.spareLeft == 0
         ? 'Your supply lasts until about ${Dates.shortWithDay(until)}'
         : 'With your current $pack, lasts until about ${Dates.shortWithDay(until)}';
   }
@@ -126,7 +126,7 @@ class PensController extends GetxController {
       dosesWord: dosesWord,
       perPack: supply.isSetUp ? supply.dosesPerPack.value : _defaultPerPack,
       left: supply.isSetUp ? supply.leftInPack : null,
-      spare: supply.spare.value,
+      spare: supply.spareLeft,
     );
     if (r == null) return;
     Haptics.instance.mediumImpact();
@@ -138,12 +138,18 @@ class PensController extends GetxController {
     showToast('Saved. It counts down each time you log.');
   }
 
+  /// Lime only when the pen is (nearly) used up, so a full pen isn't
+  /// restarted by accident. Undo is always offered.
+  bool get newPackFirst => supply.leftInPack <= 1;
+
   Future<void> startNewPack() async {
     Haptics.instance.mediumImpact();
-    final hadSpare = supply.spare.value > 0;
+    final before = supply.snapshot();
+    final hadSpare = supply.spareLeft > 0;
     await supply.startNewPack();
-    showToast(
+    showUndoToast(
       hadSpare ? 'New $pack started · 1 spare used' : 'New $pack started',
+      () => supply.restore(before),
     );
   }
 
@@ -163,7 +169,7 @@ class PensController extends GetxController {
   }
 
   void changeSpare(int by) {
-    final next = supply.spare.value + by;
+    final next = supply.spareLeft + by;
     if (next < 0 || next > 99) return;
     Haptics.instance.selectionClick();
     supply.setSpare(next);
@@ -194,10 +200,16 @@ class PensController extends GetxController {
 
   Future<void> removePurchase(Purchase p) async {
     Haptics.instance.mediumImpact();
-    await supply.removePurchase(p.id);
+    final before = supply.snapshot();
+    final taken = await supply.removePurchase(p.id);
     showUndoToast(
-      'Purchase removed',
-      () => supply.addPurchase(p, addToSpare: false),
+      taken == 0
+          ? 'Purchase removed'
+          : 'Purchase removed · $taken spare ${taken == 1 ? pack : packs} taken off',
+      () async {
+        await supply.addPurchase(p, addToSpare: false);
+        await supply.restore(before);
+      },
     );
   }
 

@@ -109,6 +109,7 @@ class LogSheet extends StatelessWidget {
                           : '$proteinLeft g to go',
                       bg: AppColors.tangerineSoft,
                       subColor: AppColors.tangerineText,
+                      accent: AppColors.tangerine,
                       onTap: () => _goTo(Routes.addIntake, 'protein'),
                     ),
                   ),
@@ -120,6 +121,7 @@ class LogSheet extends StatelessWidget {
                       sub: '${Water.total(day.waterMl)} of ${Water.totalWithUnit(waterGoal)}',
                       bg: AppColors.aquaSoft,
                       subColor: AppColors.aquaText,
+                      accent: AppColors.aqua,
                       onTap: () => _goTo(Routes.addIntake, 'water'),
                     ),
                   ),
@@ -133,9 +135,9 @@ class LogSheet extends StatelessWidget {
                       icon: Img3d.chartDown,
                       title: 'Weight',
                       sub: lastWeight,
-                      bg: k.card,
-                      subColor: k.muted,
-                      titleColor: k.text,
+                      bg: AppColors.violetSoft,
+                      subColor: AppColors.violetDark,
+                      accent: AppColors.violetLight,
                       onTap: () {
                         Haptics.instance.selectionClick();
                         popRoute();
@@ -151,6 +153,7 @@ class LogSheet extends StatelessWidget {
                       sub: 'Side effects, notes',
                       bg: AppColors.limeSoft,
                       subColor: AppColors.limeText,
+                      accent: AppColors.lime,
                       onTap: () => _goTo(Routes.checkIn),
                     ),
                   ),
@@ -296,18 +299,32 @@ class _Tile extends StatelessWidget {
     required this.subColor,
     required this.onTap,
     this.titleColor = AppColors.ink,
+    this.accent,
   });
 
   final String icon;
   final String title;
   final String sub;
+
+  /// Light theme colours. In dark theme a tile with an [accent] gets a
+  /// dark card tinted with it instead of the pastel, and accent text.
   final Color bg;
   final Color subColor;
   final Color titleColor;
+  final Color? accent;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    final k = context.k;
+    final dark = k.selectedBorder == AppColors.lime;
+    final a = accent;
+    final tinted = dark && a != null;
+    final fill = tinted
+        ? Color.alphaBlend(a.withValues(alpha: 0.16), k.card)
+        : bg;
+    final titleC = tinted ? k.text : titleColor;
+    final subC = tinted ? a : subColor;
     return PressScale(
       semanticLabel: 'Log $title. $sub',
       onTap: onTap,
@@ -315,7 +332,7 @@ class _Tile extends StatelessWidget {
         child: Container(
           padding: EdgeInsets.all(14.sp),
           decoration: BoxDecoration(
-            color: bg,
+            color: fill,
             borderRadius: BorderRadius.circular(22.sp),
           ),
           child: Column(
@@ -327,7 +344,7 @@ class _Tile extends StatelessWidget {
                 title,
                 style: AppText.title.copyWith(
                   fontSize: 16.sp,
-                  color: titleColor,
+                  color: titleC,
                 ),
               ),
               Text(
@@ -336,7 +353,7 @@ class _Tile extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: AppText.small.copyWith(
                   fontSize: 12.5.sp,
-                  color: subColor,
+                  color: subC,
                 ),
               ),
             ],

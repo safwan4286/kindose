@@ -63,8 +63,9 @@ class TrackerService extends GetxService {
   /// first. Kept in the settings box, so cloud backup includes them.
   final RxList<Food> myFoods = <Food>[].obs;
 
-  Future<TrackerService> init() async {
-    await Hive.initFlutter();
+  /// [initHive] is false only in tests, which call `Hive.init(tempDir)`.
+  Future<TrackerService> init({bool initHive = true}) async {
+    if (initHive) await Hive.initFlutter();
     _profile = await Hive.openBox<dynamic>(_profileBox);
     _doses = await Hive.openBox<dynamic>(_dosesBox);
     _days = await Hive.openBox<dynamic>(_daysBox);
@@ -588,16 +589,6 @@ class TrackerService extends GetxService {
         return ThemeMode.system;
     }
   }
-
-  /// Everything as plain data, for the user's own export.
-  Map<String, dynamic> exportAll() => {
-    'app': 'Kindose',
-    'exportedAt': DateTime.now().toIso8601String(),
-    'profile': profile.value?.toMap(),
-    'doses': doses.map((d) => d.toMap()).toList(),
-    'days': days.values.map((d) => d.toMap()).toList(),
-    'weights': weights.map((w) => w.toMap()).toList(),
-  };
 
   // ---------------------------------------------------------- cloud backup
 

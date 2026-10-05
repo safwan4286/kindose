@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
+import '../../models/logs.dart';
 import '../../models/map_read.dart';
 import '../../resources/date_utils.dart';
 import '../region/region.dart';
@@ -54,6 +55,15 @@ class Purchase {
 
 /// Pens & cost (Plus). Counts doses in the current pen from the dose log,
 /// so logging, editing or undoing a dose keeps the count right by itself.
+///
+/// Counting rules (see test/supply_service_test.dart):
+/// - A dose counts when it was *logged* after the pen was started, even if
+///   its time was set earlier ("took it this morning"). Doses back-logged
+///   for days long before the pen started don't count.
+/// - When the current pen is used up and more doses are logged, spare pens
+///   are opened by themselves, so the supply keeps counting down even if
+///   nobody taps "Start a new pen". Nothing is saved for this until the
+///   user changes something (see [_settle]), so undoing a dose undoes it.
 ///
 /// Stored in the settings box, so "Delete all my data" clears it too.
 class SupplyService extends GetxService {
@@ -111,21 +121,53 @@ class SupplyService extends GetxService {
 
   // ------------------------------------------------------------ counting
 
-  /// Doses taken from the current pen (logged since it was started, plus
-  /// any manual correction), 0 … [dosesPerPack].
-  int get usedInPack {
-    final start = packStartedAt.value;
-    if (start == null) return 0;
-    final logged = tracker.doses
-        .where((d) => !d.takenAt.isBefore(start))
-        .length;
-    return (logged + usedOffset.value).clamp(0, dosesPerPack.value);
+  /// When a dose was logged. Dose ids are the creation time in
+  /// microseconds; anything else falls back to the dose time.
+  static DateTime loggedAt(DoseLog d) {
+    final us = int.tryParse(d.id);
+    return us == null ? d.takenAt : DateTime.fromMicrosecondsSinceEpoch(us);
   }
 
-  int get leftInPack => dosesPerPack.value - usedInPack;
+  /// Doses that count against pens started at [start].
+  int _loggedSince(DateTime start) {
+    final earliest = start.subtract(const Duration(days: 2));
+    return tracker.doses
+        .where(
+          (d) => !loggedAt(d).isBefore(start) && !d.takenAt.isBefore(earliest),
+        )
+        .length;
+  }
+
+  /// Doses used since the current pen started (may run past one pen).
+  int get _used {
+    final start = packStartedAt.value;
+    if (start == null) return 0;
+    final n = _loggedSince(start) + usedOffset.value;
+    return n < 0 ? 0 : n;
+  }
+
+  /// Left in the pen in use and spare pens still closed, after opening
+  /// spares for doses past the end of the current pen.
+  ({int left, int spare}) get _state {
+    final per = dosesPerPack.value;
+    final used = _used;
+    if (used <= per) return (left: per - used, spare: spare.value);
+    final extra = used - per;
+    final opened = (extra + per - 1) ~/ per;
+    if (opened > spare.value) return (left: 0, spare: 0);
+    return (left: opened * per - extra, spare: spare.value - opened);
+  }
+
+  int get leftInPack => _state.left;
+
+  /// Doses taken from the pen in use, 0 … [dosesPerPack].
+  int get usedInPack => dosesPerPack.value - leftInPack;
+
+  /// Spare pens still closed (spares opened by the count are taken off).
+  int get spareLeft => _state.spare;
 
   /// Doses left in the current pen plus all spare pens.
-  int get dosesLeft => leftInPack + spare.value * dosesPerPack.value;
+  int get dosesLeft => leftInPack + spareLeft * dosesPerPack.value;
 
   /// Date of the dose that will need the next pen (null when unknown).
   DateTime? get nextPackNeededOn => _doseDateAfter(leftInPack);
@@ -157,6 +199,30 @@ class SupplyService extends GetxService {
 
   // -------------------------------------------------------------- actions
 
+  /// Saves spares the count opened by itself, so manual changes start from
+  /// what the screen shows.
+  void _settle() {
+    final start = packStartedAt.value;
+    if (start == null || _used <= dosesPerPack.value) return;
+    final s = _state;
+    spare.value = s.spare;
+    usedOffset.value = (dosesPerPack.value - s.left) - _loggedSince(start);
+  }
+
+  /// Everything a pen change touches, for Undo.
+  ({DateTime? start, int offset, int spare}) snapshot() => (
+    start: packStartedAt.value,
+    offset: usedOffset.value,
+    spare: spare.value,
+  );
+
+  Future<void> restore(({DateTime? start, int offset, int spare}) s) async {
+    packStartedAt.value = s.start;
+    usedOffset.value = s.offset;
+    spare.value = s.spare;
+    await _save();
+  }
+
   Future<void> setUp({
     required int dosesPerPack,
     required int usedAlready,
@@ -171,6 +237,7 @@ class SupplyService extends GetxService {
 
   /// A fresh pen: counting restarts, one spare is used if there is one.
   Future<void> startNewPack() async {
+    _settle();
     packStartedAt.value = DateTime.now();
     usedOffset.value = 0;
     if (spare.value > 0) spare.value--;
@@ -179,22 +246,23 @@ class SupplyService extends GetxService {
 
   /// "Fix count": set how many doses are left in the current pen.
   Future<void> setLeftInPack(int left) async {
+    _settle();
     final start = packStartedAt.value ?? DateTime.now();
     packStartedAt.value = start;
-    final logged = tracker.doses
-        .where((d) => !d.takenAt.isBefore(start))
-        .length;
+    final logged = _loggedSince(start);
     final wantUsed = (dosesPerPack.value - left).clamp(0, dosesPerPack.value);
     usedOffset.value = wantUsed - logged;
     await _save();
   }
 
   Future<void> setDosesPerPack(int n) async {
+    _settle();
     dosesPerPack.value = n.clamp(1, 60);
     await _save();
   }
 
   Future<void> setSpare(int n) async {
+    _settle();
     spare.value = n.clamp(0, 99);
     await _save();
   }
@@ -211,15 +279,24 @@ class SupplyService extends GetxService {
 
   /// Adds a purchase. The pens bought go to the spare count.
   Future<void> addPurchase(Purchase p, {bool addToSpare = true}) async {
+    _settle();
     purchases.add(p);
     purchases.sort((a, b) => b.date.compareTo(a.date));
     if (addToSpare) spare.value = (spare.value + p.packs).clamp(0, 99);
     await _save();
   }
 
-  Future<void> removePurchase(String id) async {
-    purchases.removeWhere((p) => p.id == id);
+  /// Removes a purchase and takes its pens off the spare count (as many as
+  /// are still there). Returns how many were taken off.
+  Future<int> removePurchase(String id) async {
+    final i = purchases.indexWhere((p) => p.id == id);
+    if (i == -1) return 0;
+    _settle();
+    final p = purchases.removeAt(i);
+    final taken = p.packs < spare.value ? p.packs : spare.value;
+    spare.value -= taken;
     await _save();
+    return taken;
   }
 
   Future<void> _save() async {
@@ -233,17 +310,6 @@ class SupplyService extends GetxService {
       'supplyPurchases': purchases.map((p) => p.toMap()).toList(),
     });
   }
-
-  /// Everything Pens & cost stores, for the JSON backup.
-  Map<String, dynamic> exportMap() => {
-    'dosesPerPack': dosesPerPack.value,
-    'packStartedAt': packStartedAt.value?.toIso8601String(),
-    'usedOffset': usedOffset.value,
-    'spare': spare.value,
-    'refillReminder': refillReminder.value,
-    'currency': currency.value,
-    'purchases': purchases.map((p) => p.toMap()).toList(),
-  };
 
   // ---------------------------------------------------------------- spend
 

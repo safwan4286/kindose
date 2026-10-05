@@ -262,8 +262,12 @@ class _CurrentPack extends StatelessWidget {
                   child: SoftButton(
                     label: 'Start a new ${c.pack}',
                     onPressed: c.startNewPack,
-                    background: AppColors.lime,
-                    foreground: AppColors.ink,
+                    background: c.newPackFirst
+                        ? AppColors.lime
+                        : AppColors.white.withValues(alpha: 0.1),
+                    foreground: c.newPackFirst
+                        ? AppColors.ink
+                        : AppColors.white,
                     height: 46,
                   ),
                 ),
@@ -392,7 +396,7 @@ class _SpareCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final k = context.k;
     final c = controller;
-    final n = c.supply.spare.value;
+    final n = c.supply.spareLeft;
     return _Card(
       child: Row(
         children: [

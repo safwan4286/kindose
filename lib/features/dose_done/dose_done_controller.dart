@@ -123,7 +123,7 @@ class DoseDoneController extends GetxController {
     final word = isTablet ? 'tablet' : 'dose';
     if (left > 0)
       return '$left ${left == 1 ? word : '${word}s'} left in this $_pack';
-    final spare = supply.spare.value;
+    final spare = supply.spareLeft;
     return spare == 0
         ? 'That was the last $word in this $_pack. No spare ${_pack}s at home.'
         : 'That was the last $word in this $_pack.';
@@ -133,8 +133,9 @@ class DoseDoneController extends GetxController {
 
   Future<void> startNewPack() async {
     Haptics.instance.mediumImpact();
+    final before = supply.snapshot();
     await supply.startNewPack();
-    showToast('New $_pack started');
+    showUndoToast('New $_pack started', () => supply.restore(before));
   }
 
   void openPens() {

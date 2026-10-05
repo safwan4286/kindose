@@ -8,6 +8,9 @@ class AppColors {
   static const Color violetDark = Color(0xFF4336D9);
   static const Color violetSoft = Color(0xFFE8E5FF);
 
+  /// Weight accent on dark backgrounds (readable text, soft tint).
+  static const Color violetLight = Color(0xFFA9A0FF);
+
   static const Color lime = Color(0xFFD6F84C);
   static const Color limeSoft = Color(0xFFF1FBD2);
   static const Color limeText = Color(0xFF3E5205);

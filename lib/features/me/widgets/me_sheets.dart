@@ -12,28 +12,12 @@ import '../../../widgets/buttons.dart';
 import '../../../widgets/k_sheet.dart';
 import '../../../widgets/k_widgets.dart';
 
-enum ExportChoice { csv, json }
-
 /// "How I eat" picker. Returns the diet id, or null when dismissed.
 Future<String?> showDietSheet(String? current) {
   return Get.bottomSheet<String>(
     _DietSheet(current: current),
     isScrollControlled: true,
   );
-}
-
-/// Export format picker.
-Future<ExportChoice?> showExportSheet() {
-  return Get.bottomSheet<ExportChoice>(
-    const _ExportSheet(),
-    isScrollControlled: true,
-  );
-}
-
-/// Explains that cloud backup is coming. Returns true to save a backup
-/// file now.
-Future<bool?> showBackupSoonSheet() {
-  return Get.bottomSheet<bool>(const _BackupSheet(), isScrollControlled: true);
 }
 
 /// A cloud backup was found. Returns true to replace this phone's data with
@@ -274,102 +258,6 @@ class _DietSheet extends StatelessWidget {
           ),
           SizedBox(height: 8.sp),
         ],
-      ],
-    );
-  }
-}
-
-class _ExportSheet extends StatelessWidget {
-  const _ExportSheet();
-
-  @override
-  Widget build(BuildContext context) {
-    final k = context.k;
-    Widget option(ExportChoice c, String title, String sub, String icon) =>
-        Padding(
-          padding: EdgeInsets.only(bottom: 8.sp),
-          child: ChoiceBox(
-            selected: false,
-            alignment: Alignment.centerLeft,
-            padding: EdgeInsets.symmetric(horizontal: 14.sp, vertical: 12.sp),
-            semanticLabel: '$title. $sub',
-            onTap: () => Navigator.of(context).pop(c),
-            child: Row(
-              children: [
-                ThreeD(icon, size: 34.sp),
-                SizedBox(width: 12.sp),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: AppText.title.copyWith(
-                          fontSize: 15.sp,
-                          color: k.text,
-                        ),
-                      ),
-                      Text(
-                        sub,
-                        style: AppText.small.copyWith(
-                          fontSize: 12.5.sp,
-                          color: k.muted,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-    return KSheetFrame(
-      title: 'Export everything',
-      sub:
-          'Your doses, weights, food, water and check-ins. Saved or sent only where you choose.',
-      children: [
-        option(
-          ExportChoice.csv,
-          'Spreadsheet (CSV)',
-          'Three files you can open in Excel or Google Sheets',
-          Img3d.clipboard,
-        ),
-        option(
-          ExportChoice.json,
-          'Backup file (JSON)',
-          'One complete file. Keep it somewhere safe',
-          Img3d.locked,
-        ),
-      ],
-    );
-  }
-}
-
-class _BackupSheet extends StatelessWidget {
-  const _BackupSheet();
-
-  @override
-  Widget build(BuildContext context) {
-    final k = context.k;
-    final dark = k.selectedBorder == AppColors.lime;
-    return KSheetFrame(
-      icon: ThreeD(Img3d.locked, size: 48.sp),
-      title: 'Backup is almost here',
-      sub:
-          'Soon you can sign in with Google or Apple and your log will be backed up for free. '
-          'Until then, save a backup file and keep it in Drive, iCloud or email.',
-      children: [
-        PillButton(
-          label: 'Save a backup file',
-          ink: !dark,
-          onPressed: () => Navigator.of(context).pop(true),
-        ),
-        SizedBox(height: 8.sp),
-        SoftButton(
-          label: 'Not now',
-          height: 48,
-          onPressed: () => Navigator.of(context).pop(false),
-        ),
       ],
     );
   }

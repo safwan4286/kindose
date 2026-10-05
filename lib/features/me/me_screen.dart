@@ -156,8 +156,8 @@ class MeScreen extends GetView<MeController> {
             KGroup(
               children: [
                 _NavRow(
-                  label: c.exporting.value ? 'Preparing…' : 'Export everything',
-                  sub: 'Spreadsheet (CSV) or a full backup file',
+                  label: c.exporting.value ? 'Preparing…' : 'Export my data',
+                  sub: 'Spreadsheet files for Excel or Google Sheets',
                   onTap: c.exporting.value ? null : c.export,
                 ),
                 if (c.signedIn)

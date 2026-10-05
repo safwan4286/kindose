@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -480,12 +479,11 @@ class MeController extends GetxController {
   }
 
   /// Signed out: sign in with Google, then back up (or restore a backup
-  /// found in the cloud). Before the backend is ready: backup file.
+  /// found in the cloud).
   Future<void> backup() async {
     Haptics.instance.selectionClick();
     if (!backend.ready) {
-      final save = await showBackupSoonSheet();
-      if (save == true) await exportJson();
+      _explain(BackendResult.notReady);
       return;
     }
     if (signedIn) {
@@ -621,28 +619,12 @@ class MeController extends GetxController {
 
   // ---------------------------------------------------------------- export
 
+  /// Spreadsheet files (CSV) through the share sheet. Cloud sync is the
+  /// backup, so there is no separate backup file.
   Future<void> export() async {
     if (exporting.value) return;
     Haptics.instance.selectionClick();
-    final choice = await showExportSheet();
-    switch (choice) {
-      case ExportChoice.csv:
-        await exportCsv();
-      case ExportChoice.json:
-        await exportJson();
-      case null:
-        return;
-    }
-  }
-
-  Future<void> exportJson() async {
-    const encoder = JsonEncoder.withIndent('  ');
-    await _share({
-      'kindose-backup-${Dates.key(DateTime.now())}.json': encoder.convert({
-        ...tracker.exportAll(),
-        'supply': supply.exportMap(),
-      }),
-    });
+    await exportCsv();
   }
 
   Future<void> exportCsv() async {
@@ -672,7 +654,7 @@ class MeController extends GetxController {
     }
 
     final days = StringBuffer(
-      'date,protein_g,water_ml,mood,symptoms,nausea,food_noise,appetite,note\n',
+      'date,protein_g,water_ml,water_fl_oz,mood,symptoms,nausea,food_noise,appetite,note\n',
     );
     final sorted = tracker.days.values.toList()
       ..sort((a, b) => a.key.compareTo(b.key));
@@ -682,6 +664,7 @@ class MeController extends GetxController {
           d.key,
           d.proteinG,
           d.waterMl,
+          Water.toOz(d.waterMl).round(),
           d.mood == null ? '' : Catalog.moods[d.mood!.clamp(0, 4)].label,
           d.symptoms
               .map(
@@ -698,9 +681,34 @@ class MeController extends GetxController {
       );
     }
 
-    final weights = StringBuffer('date,weight_kg\n');
+    final weights = StringBuffer('date,weight_kg,weight_lb\n');
     for (final w in tracker.weights) {
-      weights.writeln('${w.key},${w.kg.toStringAsFixed(2)}');
+      weights.writeln(
+        '${w.key},${w.kg.toStringAsFixed(2)},${(w.kg * _lbPerKg).toStringAsFixed(1)}',
+      );
+    }
+
+    // Every protein and water entry with its time and food name.
+    final log = StringBuffer('date,time,type,item,amount,unit\n');
+    for (final d in sorted) {
+      final entries = d.entries.toList()..sort((a, b) => a.at.compareTo(b.at));
+      for (final e in entries) {
+        log.writeln(
+          [
+            d.key,
+            Dates.time(e.at),
+            e.isProtein ? 'protein' : 'water',
+            e.label ?? '',
+            e.amount,
+            e.isProtein ? 'g' : 'ml',
+          ].map(esc).join(','),
+        );
+      }
+    }
+
+    final myFoods = StringBuffer('name,portion,protein_g\n');
+    for (final f in tracker.myFoods) {
+      myFoods.writeln([f.name, f.portion, f.grams].map(esc).join(','));
     }
 
     final purchases = StringBuffer(
@@ -723,9 +731,44 @@ class MeController extends GetxController {
       'kindose-doses.csv': doses.toString(),
       'kindose-days.csv': days.toString(),
       'kindose-weights.csv': weights.toString(),
+      'kindose-food-and-water.csv': log.toString(),
+      'kindose-plan.csv': _planCsv(esc),
+      if (tracker.myFoods.isNotEmpty) 'kindose-my-foods.csv': myFoods.toString(),
       if (supply.purchases.isNotEmpty)
         'kindose-purchases.csv': purchases.toString(),
     });
+  }
+
+  /// The plan and goals as "item,value" rows.
+  String _planCsv(String Function(Object?) esc) {
+    final p = tracker.profile.value;
+    String day(DateTime? d) => d == null ? '' : Dates.key(d);
+    final rows = <(String, Object?)>[
+      if (p != null) ...[
+        ('medicine', Catalog.medicineName(p.medicineId, p.customMedicine)),
+        ('form', p.form),
+        ('strength_mg', p.strengthMg),
+        ('every_days', p.everyDays),
+        if (!p.isDaily) ('dose_weekday', Dates.weekdayName(p.shotWeekday)),
+        ('dose_time', Dates.timeOfDay(p.shotMinutes)),
+        ('treatment_started', day(p.treatmentStartedAt)),
+        ('start_weight_kg', p.startWeightKg.toStringAsFixed(1)),
+        ('goal_weight_kg', p.goalWeightKg?.toStringAsFixed(1) ?? ''),
+        ('height_cm', p.heightCm?.toStringAsFixed(0) ?? ''),
+        ('protein_goal_g', p.proteinGoalG),
+        ('water_goal_ml', p.waterGoalMl),
+        ('diet', p.diet ?? ''),
+        ('kindose_started', day(p.startedAt)),
+      ],
+      ('last_doctor_visit', day(tracker.lastAppointment.value)),
+      ('next_doctor_visit', day(tracker.nextAppointment.value)),
+      for (final q in tracker.reportQuestions) ('question_for_doctor', q),
+    ];
+    final b = StringBuffer('item,value\n');
+    for (final (k, v) in rows) {
+      b.writeln('${esc(k)},${esc(v)}');
+    }
+    return b.toString();
   }
 
   String _level(int? v, List<String> names) =>
