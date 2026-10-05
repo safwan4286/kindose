@@ -427,3 +427,21 @@ class KGroup extends StatelessWidget {
     );
   }
 }
+
+/// Small arrow that says "tap to open the full screen".
+class OpenArrow extends StatelessWidget {
+  const OpenArrow({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    return Container(
+      width: 28.sp,
+      height: 28.sp,
+      margin: EdgeInsets.only(left: 8.sp),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(color: k.cardAlt, shape: BoxShape.circle),
+      child: Icon(PhosphorIconsBold.caretRight, size: 14.sp, color: k.muted),
+    );
+  }
+}

@@ -285,10 +285,12 @@ void main() {
   });
 
   group('delete all', () {
+    // TrackerService.deleteAll clears the settings box (it also resets the
+    // app theme, which needs a running app, so the box is cleared here).
     test('clears the pen set-up', () async {
       await start();
       await setUp(per: 4, left: 2, spare: 3);
-      await tracker.deleteAll();
+      await Hive.box<dynamic>('settings').clear();
       supply.load();
       expect(supply.isSetUp, isFalse);
       expect(supply.spareLeft, 0);

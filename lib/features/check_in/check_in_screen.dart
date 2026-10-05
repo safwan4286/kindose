@@ -197,9 +197,7 @@ class _Scales extends GetView<CheckInController> {
               title: 'Nausea',
               hint: 'Feeling sick',
               options: const ['None', 'Mild', 'Moderate', 'Severe'],
-              selected: controller.nausea.value == null
-                  ? null
-                  : controller.nauseaOnScreen,
+              selected: controller.nauseaOnScreen,
               onPick: controller.pickNausea,
             ),
             Divider(height: 1, color: k.border),

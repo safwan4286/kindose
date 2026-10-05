@@ -423,7 +423,7 @@ class NextBite {
     // ------------------------------------------------------------ mode
     var mode = BiteMode.normal;
     String context;
-    final nausea = day.nausea != null || day.symptoms.contains('nausea');
+    final nausea = day.hasNausea;
     final daysSince = _daysSinceDose(t, p, now);
     if (nausea) {
       mode = BiteMode.gentle;

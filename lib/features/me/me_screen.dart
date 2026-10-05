@@ -5,6 +5,7 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 import '../../resources/colors.dart';
 import '../../resources/images.dart';
+import '../../services/plus/plus_access.dart';
 import '../../services/responsiveness/device_manager.dart';
 import '../../services/theme/theme.dart';
 import '../../widgets/buttons.dart';
@@ -499,6 +500,10 @@ class _DebugAccess extends StatelessWidget {
           chip('Debug: restart free week', controller.debugRestartWeek),
           chip('End free week', controller.debugEndWeek),
           chip('Real dates', controller.debugRealDates),
+          chip(
+            PlusAccess.debugPlus.value ? 'Plus: on ✓' : 'Plus: off',
+            controller.debugTogglePlus,
+          ),
         ],
       ),
     );

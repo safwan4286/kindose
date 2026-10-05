@@ -128,6 +128,15 @@ class MeController extends GetxController {
   Future<void> debugRestartWeek() => access.debugRestart();
   Future<void> debugEndWeek() => access.debugEnd();
   Future<void> debugRealDates() => access.debugClear();
+
+  /// Act as a paying Plus user (debug builds only).
+  Future<void> debugTogglePlus() async {
+    Haptics.instance.selectionClick();
+    await PlusAccess.setDebugPlus(!PlusAccess.debugPlus.value);
+    showToast(
+      PlusAccess.debugPlus.value ? 'Debug: Plus is on' : 'Debug: Plus is off',
+    );
+  }
   bool get useKg => tracker.profile.value?.useKg ?? true;
   ThemeMode get themeMode => tracker.themeMode.value;
 
@@ -673,7 +682,9 @@ class MeController extends GetxController {
                     : '${Catalog.symptoms[s] ?? s} (${Catalog.levelWords[d.levelOf(s)]})',
               )
               .join('; '),
-          _level(d.nausea, const ['mild', 'moderate', 'severe']),
+          d.nausea == -1
+              ? 'none'
+              : _level(d.nausea, const ['mild', 'moderate', 'severe']),
           _level(d.foodNoise, const ['quiet', 'some', 'loud']),
           _level(d.appetite, const ['low', 'normal', 'high']),
           d.note,

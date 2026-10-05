@@ -162,8 +162,12 @@ class DayLog {
   /// before levels existed only have [symptoms]; [levelOf] reads those as mild.
   final Map<String, int> symptomLevels;
 
-  /// 0 = mild, 1 = moderate, 2 = severe
+  /// 0 = mild, 1 = moderate, 2 = severe (with 'nausea' in [symptoms]);
+  /// -1 = "None" was picked; null = not answered.
   final int? nausea;
+
+  /// Nausea was logged at any level (not "None", not unanswered).
+  bool get hasNausea => symptoms.contains('nausea') || (nausea ?? -1) >= 0;
 
   /// 0 = quiet, 1 = some, 2 = loud
   final int? foodNoise;

@@ -381,7 +381,7 @@ class Catalog {
     Mood('Great', Img3d.great),
     Mood('Good', Img3d.smile),
     Mood('Okay', Img3d.neutral),
-    Mood('Meh', Img3d.frown),
+    Mood('Low', Img3d.frown),
     Mood('Rough', Img3d.nauseated),
   ];
 

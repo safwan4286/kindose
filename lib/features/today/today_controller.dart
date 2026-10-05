@@ -514,13 +514,10 @@ class TodayController extends GetxController {
 
   // ------------------------------------------------------------------ feel
 
-  /// Faces left to right: Rough … Great. Catalog.moods is Great … Rough.
-  static const List<String> faceLabels = [
-    'Rough',
-    'Low',
-    'Okay',
-    'Good',
-    'Great',
+  /// Faces left to right: Rough … Great (Catalog.moods is Great … Rough).
+  /// The check-in screen shows them in the same order with the same words.
+  static final List<String> faceLabels = [
+    for (final m in Catalog.moods.reversed) m.label,
   ];
   int? get selectedFace => day.mood == null ? null : 4 - day.mood!;
 

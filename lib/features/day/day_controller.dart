@@ -303,6 +303,7 @@ class DayController extends GetxController with DayNav {
   ];
 
   List<String> get scales => [
+    if (log.nausea == -1) 'No nausea',
     if (log.foodNoise != null)
       'Food noise${_word(log.foodNoise, const ['quiet', 'some', 'loud'])}',
     if (log.appetite != null)

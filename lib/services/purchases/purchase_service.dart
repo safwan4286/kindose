@@ -84,7 +84,7 @@ class PurchaseService extends GetxService {
 
   void _apply(CustomerInfo i) {
     info.value = i;
-    PlusAccess.active.value = i.entitlements.active.containsKey(entitlementId);
+    PlusAccess.setFromStore(i.entitlements.active.containsKey(entitlementId));
   }
 
   /// Links purchases to the signed-in account (Supabase user id).

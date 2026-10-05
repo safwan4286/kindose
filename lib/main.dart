@@ -20,6 +20,7 @@ import 'services/notifications/reminder_service.dart';
 import 'services/offers/offer_service.dart';
 import 'services/app_status/app_status_service.dart';
 import 'services/plus/access_service.dart';
+import 'services/plus/plus_access.dart';
 import 'services/purchases/purchase_service.dart';
 import 'services/supply/supply_service.dart';
 import 'services/tracker_service.dart';
@@ -78,6 +79,8 @@ Future<void> main() async {
   );
   // Force update + backend banner (last config cached for offline starts).
   Get.put<AppStatusService>(AppStatusService().init(), permanent: true);
+  // Debug builds: the saved "Debug: Plus" switch (no-op in release).
+  PlusAccess.loadDebug();
   // Free week + who can use what (before anything that checks Plus).
   Get.put<AccessService>(AccessService().init(), permanent: true);
   // Pens & cost: counts doses left from the dose log. Before reminders,

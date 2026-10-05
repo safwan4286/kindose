@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 /// Who can use the app.
 ///
@@ -21,4 +23,36 @@ class PlusAccess {
 
   /// Length of the 4-week Progress range.
   static const int freeHistoryDays = 28;
+
+  // ------------------------------------------------------------ debug
+
+  static const String _debugKey = 'debugPlus';
+
+  /// Debug builds only: act as a Plus subscriber (Me → "Debug: Plus").
+  /// Always false in release builds.
+  static final RxBool debugPlus = false.obs;
+
+  /// What the store (RevenueCat) last said.
+  static bool _fromStore = false;
+
+  /// The only way to set [active] from purchases, so the debug switch
+  /// isn't undone by the next customer-info update.
+  static void setFromStore(bool entitled) {
+    _fromStore = entitled;
+    active.value = entitled || debugPlus.value;
+  }
+
+  /// Reads the saved debug switch. Call once the settings box is open.
+  static void loadDebug() {
+    if (!kDebugMode) return;
+    debugPlus.value = Hive.box<dynamic>('settings').get(_debugKey) == true;
+    active.value = _fromStore || debugPlus.value;
+  }
+
+  static Future<void> setDebugPlus(bool on) async {
+    if (!kDebugMode) return;
+    debugPlus.value = on;
+    active.value = _fromStore || on;
+    await Hive.box<dynamic>('settings').put(_debugKey, on);
+  }
 }

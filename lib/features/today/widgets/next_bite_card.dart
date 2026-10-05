@@ -17,7 +17,7 @@ import '../today_controller.dart';
 class NextBiteCard extends GetView<TodayController> {
   const NextBiteCard({super.key, this.compact = false});
 
-  /// On the Protein screen: no progress block or "Other ideas" (the screen
+  /// On the Protein screen: no progress block or "Log other food" (the screen
   /// already shows both).
   final bool compact;
 
@@ -60,29 +60,50 @@ class NextBiteCard extends GetView<TodayController> {
                   ),
                 ),
               ),
-              const Spacer(),
+              SizedBox(width: 2.sp),
               Semantics(
                 button: true,
                 label: 'Why these ideas?',
                 excludeSemantics: true,
                 child: PressScale(
                   onTap: () => controller.showBiteWhy(b),
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(
-                      vertical: 6.sp,
-                      horizontal: 2.sp,
-                    ),
-                    child: Text(
-                      'Why these?',
-                      style: AppText.small.copyWith(
-                        fontSize: 12.5.sp,
-                        fontWeight: FontWeight.w800,
-                        color: k.text,
+                  // 44 px tap area around a small ⓘ button.
+                  child: SizedBox.square(
+                    dimension: 44.sp,
+                    child: Center(
+                      child: Container(
+                        width: 28.sp,
+                        height: 28.sp,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: k.border, width: 1.5),
+                        ),
+                        child: PhosphorIcon(
+                          PhosphorIconsBold.info,
+                          size: 15.sp,
+                          color: k.muted,
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
+              const Spacer(),
+              // Same arrow as the Water card: opens the Protein screen.
+              if (!compact)
+                Semantics(
+                  button: true,
+                  label: 'Open protein',
+                  excludeSemantics: true,
+                  child: PressScale(
+                    onTap: controller.openProtein,
+                    child: SizedBox(
+                      height: 44.sp,
+                      child: const Center(child: OpenArrow()),
+                    ),
+                  ),
+                ),
             ],
           ),
           SizedBox(height: 6.sp),
@@ -108,22 +129,35 @@ class NextBiteCard extends GetView<TodayController> {
                     style: AppText.number(30.sp).copyWith(color: k.text),
                   ),
                   SizedBox(width: 6.sp),
-                  Text(
-                    'of ${b.goal} g protein',
-                    style: AppText.bodyStrong.copyWith(
-                      fontSize: 15.sp,
-                      fontWeight: FontWeight.w800,
-                      color: k.muted,
+                  Expanded(
+                    child: Text(
+                      'of ${b.goal} g protein',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.bodyStrong.copyWith(
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w800,
+                        color: k.muted,
+                      ),
                     ),
                   ),
+                  if (!b.goalHit)
+                    Text(
+                      '${b.goal - b.have} g to go',
+                      style: AppText.small.copyWith(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w800,
+                        color: k.muted,
+                      ),
+                    ),
                 ],
               ),
             ),
             SizedBox(height: 8.sp),
             ClipRRect(
-              borderRadius: BorderRadius.circular(4.sp),
+              borderRadius: BorderRadius.circular(3.sp),
               child: SizedBox(
-                height: 8.sp,
+                height: 6.sp,
                 child: TweenAnimationBuilder<double>(
                   tween: Tween<double>(
                     end: b.goal == 0 ? 0 : (b.have / b.goal).clamp(0.0, 1.0),
@@ -132,7 +166,7 @@ class NextBiteCard extends GetView<TodayController> {
                   curve: Curves.easeOutCubic,
                   builder: (_, v, _) => LinearProgressIndicator(
                     value: v,
-                    minHeight: 8.sp,
+                    minHeight: 6.sp,
                     backgroundColor: k.cardAlt,
                     valueColor: AlwaysStoppedAnimation<Color>(ink),
                   ),
@@ -145,7 +179,9 @@ class NextBiteCard extends GetView<TodayController> {
             _GoalHit(goal: b.goal)
           else ...[
             Text(
-              b.lead,
+              b.lead.endsWith(':')
+                  ? b.lead.substring(0, b.lead.length - 1)
+                  : b.lead,
               style: AppText.title.copyWith(fontSize: 14.5.sp, color: k.text),
             ),
             SizedBox(height: 10.sp),
@@ -184,25 +220,17 @@ class NextBiteCard extends GetView<TodayController> {
               _PlusRow(onTap: controller.openPlusFromBite),
             ],
             if (b.tip != null) ...[
-              SizedBox(height: 10.sp),
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.symmetric(
-                  horizontal: 12.sp,
-                  vertical: 10.sp,
-                ),
-                decoration: BoxDecoration(
-                  color: dark
-                      ? AppColors.lime.withValues(alpha: 0.14)
-                      : AppColors.limeSoft,
-                  borderRadius: BorderRadius.circular(14.sp),
-                ),
+              SizedBox(height: 8.sp),
+              // A quiet line, not another coloured box.
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 2.sp),
                 child: Text(
                   b.tip!,
                   style: AppText.small.copyWith(
                     fontSize: 13.sp,
-                    fontWeight: FontWeight.w700,
-                    color: dark ? AppColors.lime : AppColors.limeText,
+                    height: 1.4,
+                    fontWeight: FontWeight.w600,
+                    color: k.muted,
                   ),
                 ),
               ),
@@ -221,45 +249,24 @@ class NextBiteCard extends GetView<TodayController> {
                   label: '+20 g',
                   onTap: () => controller.addProtein(20),
                 ),
-                const Spacer(),
-                Semantics(
-                  button: true,
-                  label: 'Other protein ideas',
-                  excludeSemantics: true,
-                  child: PressScale(
-                    onTap: controller.openProtein,
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(vertical: 10.sp),
-                      child: Row(
-                        children: [
-                          Text(
-                            'Other ideas',
-                            style: AppText.small.copyWith(
-                              fontSize: 13.sp,
-                              fontWeight: FontWeight.w800,
-                              color: k.text,
-                            ),
-                          ),
-                          SizedBox(width: 2.sp),
-                          PhosphorIcon(
-                            PhosphorIconsBold.caretRight,
-                            size: 13.sp,
-                            color: k.text,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                SizedBox(width: 8.sp),
+                // Opens the Protein screen: search, My foods, all foods.
+                Expanded(
+                  child: _OtherFoodChip(onTap: controller.openProtein),
                 ),
               ],
             ),
-          SizedBox(height: 6.sp),
-          Text(
-            'Ideas only, not medical advice',
-            style: AppText.small.copyWith(
-              fontSize: 11.5.sp,
-              fontWeight: FontWeight.w600,
-              color: k.faint,
+          SizedBox(height: 10.sp),
+          SizedBox(
+            width: double.infinity,
+            child: Text(
+              'Ideas only, not medical advice',
+              textAlign: TextAlign.center,
+              style: AppText.small.copyWith(
+                fontSize: 11.5.sp,
+                fontWeight: FontWeight.w600,
+                color: k.faint,
+              ),
             ),
           ),
         ],
@@ -299,6 +306,57 @@ class _QuickChip extends StatelessWidget {
               fontWeight: FontWeight.w800,
               color: k.text,
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// "Log other food ›", same outline style as the +10 g / +20 g chips.
+class _OtherFoodChip extends StatelessWidget {
+  const _OtherFoodChip({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    return Semantics(
+      button: true,
+      label: 'Log other food. Opens the protein screen',
+      excludeSemantics: true,
+      child: PressScale(
+        onTap: onTap,
+        child: Container(
+          height: 36.sp,
+          padding: EdgeInsets.symmetric(horizontal: 12.sp),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18.sp),
+            border: Border.all(color: k.border, width: 1.5),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Flexible(
+                child: Text(
+                  'Log other food',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.bodyStrong.copyWith(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w800,
+                    color: k.text,
+                  ),
+                ),
+              ),
+              SizedBox(width: 2.sp),
+              PhosphorIcon(
+                PhosphorIconsBold.caretRight,
+                size: 13.sp,
+                color: k.text,
+              ),
+            ],
           ),
         ),
       ),
@@ -347,7 +405,7 @@ class _IdeaRow extends StatelessWidget {
                   children: [
                     Text(
                       idea.name,
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AppText.title.copyWith(
                         fontSize: 14.5.sp,
@@ -368,23 +426,22 @@ class _IdeaRow extends StatelessWidget {
                 ),
               ),
               SizedBox(width: 8.sp),
-              Text(
-                '${idea.grams} g',
-                style: AppText.number(17.sp).copyWith(color: k.text),
-              ),
-              SizedBox(width: 10.sp),
+              // Amount and action in one button: "+ 30 g".
               Container(
-                width: 36.sp,
                 height: 36.sp,
+                padding: EdgeInsets.symmetric(horizontal: 12.sp),
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: dark ? AppColors.lime : AppColors.ink,
-                  shape: BoxShape.circle,
+                  borderRadius: BorderRadius.circular(18.sp),
                 ),
-                child: PhosphorIcon(
-                  PhosphorIconsBold.plus,
-                  size: 16.sp,
-                  color: dark ? AppColors.ink : AppColors.lime,
+                child: Text(
+                  '+ ${idea.grams} g',
+                  style: AppText.small.copyWith(
+                    fontSize: 13.5.sp,
+                    fontWeight: FontWeight.w800,
+                    color: dark ? AppColors.ink : AppColors.lime,
+                  ),
                 ),
               ),
             ],

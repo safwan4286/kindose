@@ -30,8 +30,12 @@ class MoodRow extends StatelessWidget {
     final k = context.k;
     return Row(
       children: [
-        for (var i = 0; i < Catalog.moods.length; i++) ...[
-          if (i > 0) const SizedBox(width: 6),
+        // Rough … Great left to right, like the faces on Today.
+        // [selected] and [onPick] use Catalog.moods indexes (0 = Great).
+        for (final (p, i) in [
+          for (var n = Catalog.moods.length - 1; n >= 0; n--) n,
+        ].indexed) ...[
+          if (p > 0) const SizedBox(width: 6),
           Expanded(
             child: Semantics(
               button: true,

@@ -464,8 +464,10 @@ class _WaterTile extends StatelessWidget {
           color: bg,
           borderRadius: BorderRadius.circular(20.sp),
         ),
+        padding: EdgeInsets.fromLTRB(6.sp, 14.sp, 6.sp, 8.sp),
+        // Icon at the same height on every tile; the name is centred in the
+        // space below, so a two-line name ("Large bottle") stays centred.
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             SizedBox(
               height: 32.sp,
@@ -482,13 +484,20 @@ class _WaterTile extends StatelessWidget {
                       ),
               ),
             ),
-            SizedBox(height: 6.sp),
-            Text(
-              label,
-              style: AppText.small.copyWith(
-                fontSize: 13.sp,
-                fontWeight: FontWeight.w800,
-                color: k.text,
+            Expanded(
+              child: Center(
+                child: Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.small.copyWith(
+                    fontSize: 13.sp,
+                    height: 1.15,
+                    fontWeight: FontWeight.w800,
+                    color: k.text,
+                  ),
+                ),
               ),
             ),
           ],

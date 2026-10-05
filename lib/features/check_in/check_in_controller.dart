@@ -18,7 +18,7 @@ class CheckInController extends GetxController {
 
   final RxnInt mood = RxnInt();
 
-  /// 0 mild, 1 moderate, 2 severe; null = no nausea.
+  /// -1 none, 0 mild, 1 moderate, 2 severe; null = not answered.
   final RxnInt nausea = RxnInt();
   final RxnInt foodNoise = RxnInt();
   final RxnInt appetite = RxnInt();
@@ -36,7 +36,9 @@ class CheckInController extends GetxController {
     super.onInit();
     final d = tracker.today;
     mood.value = d.mood;
-    nausea.value = d.symptoms.contains('nausea') ? (d.nausea ?? 0) : null;
+    nausea.value = d.symptoms.contains('nausea')
+        ? (d.nausea ?? 0).clamp(0, 2)
+        : (d.nausea == -1 ? -1 : null);
     foodNoise.value = d.foodNoise;
     appetite.value = d.appetite;
     for (final id in Catalog.checkInEffects) {
@@ -76,17 +78,18 @@ class CheckInController extends GetxController {
     mood.value = mood.value == i ? null : i;
   }
 
-  /// Tapping the selected level again clears it. [nausea] uses 0 = none
-  /// on screen, so it is shifted by one.
+  /// On screen 0 None, 1 Mild, 2 Moderate, 3 Severe (stored one lower,
+  /// so None is -1). Tapping the selected one again clears the answer.
   void pickNausea(int onScreen) {
     Haptics.instance.selectionClick();
-    final v = onScreen == 0 ? null : onScreen - 1;
+    final v = onScreen - 1;
     nausea.value = nausea.value == v ? null : v;
   }
 
-  int get nauseaOnScreen {
+  /// Selected button on screen, or null when not answered.
+  int? get nauseaOnScreen {
     final n = nausea.value;
-    return n == null ? 0 : n + 1;
+    return n == null ? null : n + 1;
   }
 
   void pickLevel(RxnInt target, int value) {
@@ -134,7 +137,10 @@ class CheckInController extends GetxController {
           waterMl: d.waterMl,
           entries: d.entries,
           mood: mood.value,
-          symptoms: [if (nausea.value != null) 'nausea', ...effects.keys],
+          symptoms: [
+            if ((nausea.value ?? -1) >= 0) 'nausea',
+            ...effects.keys,
+          ],
           symptomLevels: effects,
           nausea: nausea.value,
           foodNoise: foodNoise.value,

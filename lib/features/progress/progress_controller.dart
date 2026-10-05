@@ -68,6 +68,7 @@ class ProgressController extends GetxController {
     tracker.doses.length;
     tracker.days.length;
     tracker.profile.value;
+    tracker.nextDoseOverride.value; // "Move date" changes the next dose
     range.value;
     selected.value;
     PlusAccess.unlocked;
@@ -207,37 +208,69 @@ class ProgressController extends GetxController {
   bool get hasDoses => tracker.doses.isNotEmpty;
   bool get isDaily => profile?.isDaily ?? false;
 
-  /// "16/16" doses within a day of plan (weekly) or "24/28" days taken (daily).
+  /// Doses in the chosen range taken within a day of plan ("3/4"), or for
+  /// daily plans days taken out of days since the first dose ("5/6"),
+  /// never counting days before treatment started.
   String get onTimeValue {
     final p = profile;
     if (p == null || tracker.doses.isEmpty) return '0';
+    final start = rangeStart;
+    final today = Dates.dateOnly(DateTime.now());
     if (p.isDaily) {
-      final today = Dates.dateOnly(DateTime.now());
+      final first = Dates.dateOnly(tracker.doses.last.takenAt);
+      final from = first.isAfter(start) ? first : start;
+      final days = Dates.daysBetween(from, today) + 1;
       var taken = 0;
-      for (var i = 0; i < 28; i++) {
+      for (var i = 0; i < days; i++) {
         if (tracker.doseOn(today.subtract(Duration(days: i))) != null) taken++;
       }
-      return '$taken/28';
+      return '$taken/$days';
     }
-    final list = tracker.doses.reversed.toList();
-    var ok = 1;
-    for (var i = 1; i < list.length; i++) {
+    final list = tracker.doses.reversed.toList(); // oldest first
+    var ok = 0;
+    var total = 0;
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].takenAt.isBefore(start)) continue;
+      total++;
+      // The very first dose has nothing to be late against.
+      if (i == 0) {
+        ok++;
+        continue;
+      }
       final gap = Dates.daysBetween(list[i - 1].takenAt, list[i].takenAt);
       if ((gap - p.everyDays).abs() <= 1) ok++;
     }
-    return '$ok/${list.length}';
+    return total == 0 ? '0' : '$ok/$total';
   }
 
   String get onTimeSub => isDaily ? 'days taken' : 'on time';
 
+  /// The plan's dose changed since the last logged one (e.g. moved up to
+  /// 7.5 mg in Edit plan): show the new dose "from next dose".
+  bool get _planChanged {
+    final p = profile;
+    final last = tracker.lastDose;
+    return p != null &&
+        last != null &&
+        p.strengthMg > 0 &&
+        p.strengthMg != last.strengthMg;
+  }
+
   String get currentDose {
     final last = tracker.lastDose;
-    return last == null ? '—' : Catalog.mgLabel(last.strengthMg);
+    if (last == null) {
+      final mg = profile?.strengthMg ?? 0;
+      return mg > 0 ? Catalog.mgLabel(mg) : '—';
+    }
+    return Catalog.mgLabel(
+      _planChanged ? profile!.strengthMg : last.strengthMg,
+    );
   }
 
   String get currentDoseSince {
     final list = tracker.doses; // newest first
-    if (list.isEmpty) return '';
+    if (list.isEmpty) return 'your dose';
+    if (_planChanged) return 'from next dose';
     final mg = list.first.strengthMg;
     var since = list.first.takenAt;
     for (final d in list) {
@@ -251,9 +284,11 @@ class ProgressController extends GetxController {
     final n = tracker.nextDoseAt();
     if (n == null) return '—';
     final rel = Dates.relativeDay(n, DateTime.now());
-    return rel == 'Today' || rel == 'Tomorrow'
-        ? rel
-        : Dates.weekdayShort(n.weekday);
+    if (rel == 'Today' || rel == 'Tomorrow') return rel;
+    // A weekday alone is only clear within the coming week.
+    final days = Dates.daysBetween(DateTime.now(), n);
+    if (days < 0) return 'Due';
+    return days < 7 ? Dates.weekdayShort(n.weekday) : Dates.short(n);
   }
 
   /// (area, count) for belly, thighs, arms inside the range.
