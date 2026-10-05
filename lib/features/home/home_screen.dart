@@ -22,6 +22,9 @@ class HomeScreen extends GetView<HomeController> {
 
   @override
   Widget build(BuildContext context) {
+    // Read here, above the Scaffold: inside the body the Scaffold removes
+    // the keyboard inset (it resizes the body instead), so it reads 0.
+    final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
     return Scaffold(
       body: Stack(
         children: [
@@ -55,10 +58,13 @@ class HomeScreen extends GetView<HomeController> {
             ),
           ),
           Positioned(
-            left: 16,
-            right: 16,
+            left: 15.sp,
+            right: 15.sp,
             bottom: 0,
-            child: _FloatingNav(controller: controller),
+            child: _HideWithKeyboard(
+              open: keyboardOpen,
+              child: _FloatingNav(controller: controller),
+            ),
           ),
         ],
       ),
@@ -67,6 +73,38 @@ class HomeScreen extends GetView<HomeController> {
 }
 
 const double _navHeight = 68;
+
+/// Slides the nav down out of the way while the keyboard is open, so it
+/// never covers the field being typed in (the screen above already moves
+/// up for the keyboard).
+class _HideWithKeyboard extends StatelessWidget {
+  const _HideWithKeyboard({required this.open, required this.child});
+
+  final bool open;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final motion = !MediaQuery.disableAnimationsOf(context);
+    final duration = Duration(milliseconds: motion ? 200 : 0);
+    return IgnorePointer(
+      ignoring: open,
+      child: ExcludeSemantics(
+        excluding: open,
+        child: AnimatedSlide(
+          offset: open ? const Offset(0, 1.6) : Offset.zero,
+          duration: duration,
+          curve: Curves.easeOutCubic,
+          child: AnimatedOpacity(
+            opacity: open ? 0 : 1,
+            duration: duration,
+            child: child,
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 /// Bottom padding every tab adds so its content can scroll above the nav.
 double get kNavClearance =>

@@ -166,7 +166,6 @@ class AppPages {
       name: Routes.guide,
       page: () => const GuideScreen(),
       binding: GuideBinding(),
-      transition: Transition.downToUp,
     ),
     GetPage<dynamic>(
       name: Routes.checkIn,

@@ -592,62 +592,135 @@ class WaterCard extends GetView<TodayController> {
                       ],
                     ),
                   ),
-                  Text(
-                    controller.waterGoalHit ? 'Goal hit!' : Water.glassLabel,
-                    style: AppText.small.copyWith(
-                      fontSize: 12.5.sp,
-                      fontWeight: FontWeight.w800,
-                      color: controller.waterGoalHit
-                          ? (k.selectedBorder == AppColors.lime
-                                ? AppColors.aqua
-                                : AppColors.aquaText)
-                          : k.faint,
-                    ),
-                  ),
                   const _OpenArrow(),
                 ],
               ),
             ),
           ),
-          SizedBox(height: 10.sp),
-          GridView.count(
-            crossAxisCount: 7,
+          SizedBox(height: 14.sp),
+          _WaterProgress(controller: controller),
+          SizedBox(height: 12.sp),
+          GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             padding: EdgeInsets.zero,
-            childAspectRatio: 0.95,
-            children: [
-              for (var i = 0; i < count; i++)
-                Semantics(
-                  button: true,
-                  label: i < full
-                      ? 'Glass ${i + 1}, full'
-                      : 'Glass ${i + 1}, empty',
-                  excludeSemantics: true,
-                  child: PressScale(
-                    onTap: () => controller.tapGlass(i),
-                    child: Center(
-                      child: TweenAnimationBuilder<double>(
-                        tween: Tween(end: i < full ? 1 : 0),
-                        duration: const Duration(milliseconds: 350),
-                        curve: Curves.easeOutCubic,
-                        builder: (context, v, _) => CustomPaint(
-                          size: Size.square(30.sp),
-                          painter: _GlassPainter(
-                            fill: v,
-                            showPlus: i == full,
-                            empty: _tint(
-                              context,
-                              AppColors.aquaSoft,
-                              AppColors.aqua,
-                            ),
-                            edge: k.waterEdge,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 6,
+              mainAxisExtent: 52.sp,
+              mainAxisSpacing: 6.sp,
+              crossAxisSpacing: 6.sp,
+            ),
+            itemCount: count,
+            itemBuilder: (context, i) {
+              final isFull = i < full;
+              final isNext = i == full;
+              return Semantics(
+                button: true,
+                label: isFull
+                    ? 'Glass ${i + 1}, full'
+                    : 'Glass ${i + 1}, empty',
+                excludeSemantics: true,
+                child: PressScale(
+                  pressedScale: 0.9,
+                  onTap: () => controller.tapGlass(i),
+                  child: Container(
+                    color: Colors.transparent,
+                    alignment: Alignment.center,
+                    child: TweenAnimationBuilder<double>(
+                      tween: Tween(end: isFull ? 1 : 0),
+                      duration: const Duration(milliseconds: 350),
+                      curve: Curves.easeOutCubic,
+                      builder: (context, v, _) => CustomPaint(
+                        size: Size.square(40.sp),
+                        painter: _GlassPainter(
+                          fill: v,
+                          showPlus: isNext,
+                          empty: _tint(
+                            context,
+                            AppColors.aquaSoft,
+                            AppColors.aqua,
                           ),
+                          edge: k.waterEdge,
                         ),
                       ),
                     ),
                   ),
                 ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Thin bar + "5 of 12 glasses" · "250 ml each" (or "Goal hit!").
+class _WaterProgress extends StatelessWidget {
+  const _WaterProgress({required this.controller});
+
+  final TodayController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    final dark = k.selectedBorder == AppColors.lime;
+    final full = controller.glassesFull;
+    final goal = controller.glassesGoal;
+    final hit = controller.waterGoalHit;
+    final caption = AppText.small.copyWith(
+      fontSize: 12.5.sp,
+      fontWeight: FontWeight.w700,
+      color: k.muted,
+    );
+    return ExcludeSemantics(
+      child: Column(
+        children: [
+          // Full-width track, fill grows from the left.
+          SizedBox(
+            width: double.infinity,
+            height: 8.sp,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: _tint(context, AppColors.aquaSoft, AppColors.aqua),
+                borderRadius: BorderRadius.circular(4.sp),
+              ),
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(end: controller.waterProgress),
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.easeOutCubic,
+                builder: (context, v, _) => FractionallySizedBox(
+                  alignment: Alignment.centerLeft,
+                  widthFactor: v,
+                  heightFactor: 1,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: AppColors.aqua,
+                      borderRadius: BorderRadius.circular(4.sp),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          SizedBox(height: 6.sp),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '$full of $goal ${goal == 1 ? 'glass' : 'glasses'}',
+                  style: caption,
+                ),
+              ),
+              Text(
+                hit ? 'Goal hit!' : '${Water.amount(Water.glassMl)} each',
+                style: hit
+                    ? caption.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: dark ? AppColors.aqua : AppColors.aquaText,
+                      )
+                    : caption,
+              ),
             ],
           ),
         ],

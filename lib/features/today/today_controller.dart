@@ -428,11 +428,17 @@ class TodayController extends GetxController {
   int get waterGoal => profile?.waterGoalMl ?? 2500;
 
   /// Glasses shown: enough for the goal, and always one more empty "+"
-  /// glass so days above the goal can be logged too (max 4 rows).
+  /// glass so days above the goal can be logged too (6 per row, max 4 rows).
   int get glassCount {
-    final goal = (waterGoal / glassMl).ceil().clamp(4, 21);
-    return (glassesFull + 1 > goal ? glassesFull + 1 : goal).clamp(4, 28);
+    final goal = (waterGoal / glassMl).ceil().clamp(4, 18);
+    return (glassesFull + 1 > goal ? glassesFull + 1 : goal).clamp(4, 24);
   }
+
+  /// Glasses that make up the goal ("5 of 12 glasses").
+  int get glassesGoal => (waterGoal / glassMl).ceil().clamp(1, 99);
+
+  double get waterProgress =>
+      waterGoal <= 0 ? 0 : (day.waterMl / waterGoal).clamp(0.0, 1.0);
 
   bool get waterGoalHit => day.waterMl >= waterGoal;
 

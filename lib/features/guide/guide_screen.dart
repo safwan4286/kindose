@@ -107,11 +107,7 @@ class _TopBar extends StatelessWidget {
     final dark = k.selectedBorder == AppColors.lime;
     return Row(
       children: [
-        CircleIconButton(
-          icon: PhosphorIconsBold.x,
-          label: 'Close guide',
-          onTap: onClose,
-        ),
+        BackCircle(onTap: onClose),
         SizedBox(width: 12.sp),
         Expanded(
           child: Semantics(
