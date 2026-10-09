@@ -10,6 +10,7 @@ import '../../widgets/no_internet_sheet.dart';
 import '../../services/backend/backend_service.dart';
 import '../../services/haptics/haptics.dart';
 import '../../services/region/region.dart';
+import '../../services/review/review_service.dart';
 import '../../services/notifications/notif_prefs.dart';
 import '../../services/notifications/notification_service.dart';
 import '../../services/tracker_service.dart';
@@ -337,6 +338,13 @@ class OnboardingController extends GetxController {
   void _go(int index) {
     final from = page.value;
     page.value = index;
+    // "Your plan is ready": a good moment to ask for a rating (once).
+    if (!editMode && steps[index] == OnboardingStep.plan) {
+      ReviewService.maybeAsk(
+        ReviewService.onboarding,
+        delay: const Duration(seconds: 2),
+      );
+    }
     if (!pageController.hasClients) return;
     // Long jumps (plan ⇄ dose edit) skip the pages in between, then slide
     // the last step so it still feels like normal navigation.

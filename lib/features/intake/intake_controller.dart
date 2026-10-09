@@ -6,6 +6,7 @@ import '../../models/user_profile.dart';
 import '../../resources/catalog.dart';
 import '../../resources/date_utils.dart';
 import '../../services/haptics/haptics.dart';
+import '../../services/plus/access_service.dart';
 import '../../services/plus/plus_access.dart';
 import '../common/day_nav.dart';
 import '../today/next_bite.dart';
@@ -384,6 +385,7 @@ class IntakeController extends GetxController with DayNav {
   /// Adds the custom amount (and saves it when asked), or saves an edit.
   /// The sheet closes itself first, so a double tap can't add twice.
   Future<void> submitCustom() async {
+    if (!await AccessService.ensure()) return;
     final name = nameCtrl.text.trim();
     final portionText = portionCtrl.text.trim();
     final grams = customGrams.value;
@@ -421,6 +423,7 @@ class IntakeController extends GetxController with DayNav {
 
   /// "Delete" in the edit sheet. Undo saves it back.
   Future<void> deleteEditing() async {
+    if (!await AccessService.ensure()) return;
     final f = tracker.myFoods.firstWhereOrNull((x) => x.id == editingId.value);
     if (f == null) return;
     await tracker.removeMyFood(f.id);
@@ -495,6 +498,7 @@ class IntakeController extends GetxController with DayNav {
   String timeOf(DateTime d) => Dates.time(d);
 
   Future<void> removeEntry(LogEntry e) async {
+    if (!await AccessService.ensure()) return;
     Haptics.instance.lightImpact();
     await tracker.removeEntry(Dates.key(e.at), e.id);
   }
@@ -512,6 +516,7 @@ class IntakeController extends GetxController with DayNav {
     String? label,
     String message,
   ) async {
+    if (!await AccessService.ensure()) return;
     Haptics.instance.lightImpact();
     // Past days get the entry at the current time of day on that date.
     final clock = DateTime.now();

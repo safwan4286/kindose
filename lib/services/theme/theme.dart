@@ -34,12 +34,15 @@ class AppText {
     fontWeight: FontWeight.w800,
   );
 
+  /// Big numbers. Equal-width digits, so a value that counts up (water,
+  /// protein, weight) doesn't jitter sideways.
   static TextStyle number(double size) => TextStyle(
     fontFamily: display,
     fontSize: size,
     height: 1,
     fontWeight: FontWeight.w800,
     letterSpacing: size >= 40 ? -2 : -0.5,
+    fontFeatures: const [FontFeature.tabularFigures()],
   );
 
   static const TextStyle caps = TextStyle(

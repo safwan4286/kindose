@@ -99,10 +99,8 @@ class _PortionSheet extends GetView<IntakeController> {
                   tween: Tween(end: g.toDouble()),
                   duration: const Duration(milliseconds: 250),
                   curve: Curves.easeOutCubic,
-                  builder: (_, v, _) => Text(
-                    '${v.round()} g',
-                    style: AppText.number(44.sp).copyWith(color: k.text),
-                  ),
+                  builder: (_, v, _) =>
+                      NumberUnit('${v.round()}', 'g', size: 44.sp, color: k.text),
                 ),
                 SizedBox(width: 6.sp),
                 Text(

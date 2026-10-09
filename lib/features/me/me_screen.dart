@@ -504,6 +504,8 @@ class _DebugAccess extends StatelessWidget {
             PlusAccess.debugPlus.value ? 'Plus: on ✓' : 'Plus: off',
             controller.debugTogglePlus,
           ),
+          chip('Test reminders', controller.debugTestReminders),
+          chip('Show planned', controller.debugShowPlanned),
         ],
       ),
     );

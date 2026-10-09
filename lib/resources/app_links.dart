@@ -20,6 +20,10 @@ class AppLinks {
   static const String playStoreUrl = '';
   static const String appStoreUrl = '';
 
+  /// Numeric App Store id (from App Store Connect, e.g. '6741234567'), for
+  /// "Rate Kindose" on iOS. Empty until the listing exists.
+  static const String appStoreId = '';
+
   /// Opens a web page in the in-app browser (falls back to the browser).
   static Future<bool> open(String url) async {
     final uri = Uri.parse(url);

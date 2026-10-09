@@ -6,6 +6,7 @@ import '../../resources/catalog.dart';
 import '../../resources/date_utils.dart';
 import '../../resources/routes.dart';
 import '../../services/haptics/haptics.dart';
+import '../../services/plus/access_service.dart';
 import '../../services/tracker_service.dart';
 import '../../widgets/toast.dart';
 
@@ -124,6 +125,7 @@ class CheckInController extends GetxController {
 
   Future<void> save() async {
     if (saving.value) return;
+    if (!await AccessService.ensure()) return;
     saving.value = true;
     try {
       final note = noteCtrl.text.trim();

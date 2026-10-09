@@ -17,6 +17,7 @@ import '../../widgets/k_widgets.dart';
 import '../../widgets/press_scale.dart';
 import '../../widgets/safe_bottom.dart';
 import '../../widgets/toast.dart';
+import '../log_dose/log_dose_controller.dart' show logMissedDose;
 import 'weight_sheet.dart';
 
 /// "Log something" sheet opened from the + button.
@@ -180,6 +181,7 @@ class _DoseRow extends StatelessWidget {
       var noMedicine = true;
       var tablet = false;
       var due = false;
+      var loggedToday = false;
       var sub = 'Add your medicine to get reminders';
       if (p != null && p.medicineId != Catalog.undecided) {
         noMedicine = false;
@@ -196,7 +198,9 @@ class _DoseRow extends StatelessWidget {
               ? '$name$mark$dose'
               : '$name$mark$dose · ${Catalog.siteName(t.nextSiteId).toLowerCase()} next';
         } else if (t.doseOn(DateTime.now()) != null) {
-          sub = 'Logged today · add another or fix a time';
+          // Editing today's dose lives on the Today card (tap it or ⋯).
+          loggedToday = true;
+          sub = 'Logged today · log a missed one';
         } else {
           sub = next == null
               ? '$name$mark$dose'
@@ -216,7 +220,11 @@ class _DoseRow extends StatelessWidget {
         onTap: () {
           Haptics.instance.selectionClick();
           popRoute();
-          Get.toNamed<void>(noMedicine ? Routes.editPlan : Routes.logDose);
+          Get.toNamed<void>(
+            noMedicine ? Routes.editPlan : Routes.logDose,
+            // Already logged today: go straight to picking the earlier day.
+            arguments: loggedToday ? logMissedDose : null,
+          );
         },
         child: ExcludeSemantics(
           child: Container(

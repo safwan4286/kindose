@@ -10,6 +10,7 @@ import '../../services/haptics/haptics.dart';
 import '../../services/plus/plus_access.dart';
 import '../../services/supply/supply_service.dart';
 import '../../services/tracker_service.dart';
+import '../../services/review/review_service.dart';
 import '../../widgets/toast.dart';
 
 /// Route argument for the "Dose logged" screen.
@@ -41,7 +42,16 @@ class DoseDoneController extends GetxController {
   void onReady() {
     super.onReady();
     // Nothing to show (e.g. opened by a deep link): just go back.
-    if (_args == null) popRoute();
+    if (_args == null) {
+      popRoute();
+      return;
+    }
+    // After logging a dose: ask for a rating once (skipped if the last ask
+    // was only days ago; then it waits for a later dose).
+    ReviewService.maybeAsk(
+      ReviewService.firstDose,
+      delay: const Duration(milliseconds: 1800),
+    );
   }
 
   UserProfile? get profile => tracker.profile.value;

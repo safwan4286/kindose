@@ -445,3 +445,45 @@ class OpenArrow extends StatelessWidget {
     );
   }
 }
+
+/// A big number with its unit ("40 g"): the number in the display font,
+/// the unit smaller in the body font so it doesn't look heavy.
+class NumberUnit extends StatelessWidget {
+  const NumberUnit(
+    this.number,
+    this.unit, {
+    super.key,
+    required this.size,
+    this.color,
+    this.unitColor,
+  });
+
+  final String number;
+  final String unit;
+
+  /// Number size, already scaled (e.g. 30.sp).
+  final double size;
+  final Color? color;
+
+  /// Defaults to [color].
+  final Color? unitColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = color ?? context.k.text;
+    return Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(text: number, style: AppText.number(size).copyWith(color: c)),
+          TextSpan(
+            text: ' $unit',
+            style: AppText.title.copyWith(
+              fontSize: (size * 0.5).clamp(12.0, 22.0),
+              color: unitColor ?? c,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

@@ -192,7 +192,9 @@ class _DoseSection extends StatelessWidget {
       icon: PhosphorIconsBold.syringe,
       tint: AppColors.lime,
       title: 'Dose',
-      trailing: has ? _link(context, 'Edit', controller.editDose) : null,
+      trailing: has
+          ? _link(context, 'Edit', controller.editDose)
+          : _link(context, 'Log', controller.logDoseForDay),
       child: has
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -209,7 +211,12 @@ class _DoseSection extends StatelessWidget {
                 _muted(context, controller.doseLine),
               ],
             )
-          : _muted(context, 'No dose logged this day.'),
+          : _muted(
+              context,
+              controller.isToday
+                  ? 'No dose logged yet today.'
+                  : 'No dose logged this day. Took one? Tap Log to add it.',
+            ),
     );
   }
 }
@@ -412,12 +419,14 @@ class _ProteinSection extends StatelessWidget {
                               ),
                             ),
                             SizedBox(height: 2.sp),
-                            Text(
-                              g == 0 ? '—' : '$g g',
-                              style: AppText.number(
-                                17.sp,
-                              ).copyWith(color: g == 0 ? k.faint : k.text),
-                            ),
+                            g == 0
+                                ? Text(
+                                    '—',
+                                    style: AppText.number(
+                                      20.sp,
+                                    ).copyWith(color: k.faint),
+                                  )
+                                : NumberUnit('$g', 'g', size: 20.sp),
                           ],
                         ),
                       ),
@@ -722,7 +731,12 @@ class _EntryTile extends StatelessWidget {
           SizedBox(width: 10.sp),
           Text(
             amount,
-            style: AppText.number(16.sp).copyWith(color: amountColor),
+            // Small amount: body font, equal-width digits.
+            style: AppText.title.copyWith(
+              fontSize: 15.sp,
+              color: amountColor,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
           ),
         ],
       ),

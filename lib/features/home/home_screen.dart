@@ -5,15 +5,12 @@ import 'package:get/get.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 import '../../resources/colors.dart';
-import '../../resources/images.dart';
-import '../../services/plus/plus_access.dart';
 import '../../services/responsiveness/device_manager.dart';
 import '../../widgets/press_scale.dart';
 import '../me/me_screen.dart';
 import '../progress/progress_screen.dart';
 import '../report/report_screen.dart';
 import '../today/today_screen.dart';
-import '../today/widgets/free_week.dart';
 import 'home_controller.dart';
 
 /// Tab shell with the floating pill navigation from the design.
@@ -35,23 +32,11 @@ class HomeScreen extends GetView<HomeController> {
                 index: controller.tab.value.index,
                 children: [
                   const TodayScreen(),
-                  // After the free week these two tabs ask for Plus.
-                  PlusAccess.unlocked
-                      ? const ProgressScreen()
-                      : const LockedTab(
-                          title: 'Your progress is waiting',
-                          sub:
-                              'Charts, trends and how you felt since day one, with Plus.',
-                          icon: Img3d.chartUp,
-                        ),
-                  PlusAccess.unlocked
-                      ? const ReportScreen()
-                      : const LockedTab(
-                          title: 'Your doctor report',
-                          sub:
-                              'Doses, weight and side effects as a PDF for your next visit, with Plus.',
-                          icon: Img3d.clipboard,
-                        ),
+                  // Soft paywall (6 Oct): Progress and Report stay open after
+                  // the free week; Plus-only actions inside open the paywall.
+                  // Old lock: LockedTab from today/widgets/free_week.dart.
+                  const ProgressScreen(),
+                  const ReportScreen(),
                   const MeScreen(),
                 ],
               ),

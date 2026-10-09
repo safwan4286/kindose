@@ -3,11 +3,14 @@ import 'package:get/get.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 import '../../../resources/colors.dart';
+import '../../../services/haptics/haptics.dart';
 import '../../../services/responsiveness/device_manager.dart';
 import '../../../services/theme/theme.dart';
 import '../../../widgets/body_map.dart';
 import '../../../widgets/buttons.dart';
+import '../../../widgets/k_sheet.dart';
 import '../../../widgets/press_scale.dart';
+import '../../../widgets/toast.dart';
 import '../today_controller.dart';
 
 /// The top card on Today. One widget, many states (see [DoseCardState]).
@@ -597,51 +600,105 @@ class _TakenToday extends GetView<TodayController> {
         ? ''
         : controller.siteName(dose.site);
     final when = [time, site].where((s) => s.isNotEmpty).join(' · ');
-    final next = controller.nextDoseWhen.split(' · ').first;
+    final next = controller.nextDoseLine;
+    final quickUndo = controller.canQuickUndo;
     return _InkCard(
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 48.sp,
-            height: 48.sp,
-            decoration: const BoxDecoration(
-              color: AppColors.lime,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              PhosphorIconsBold.check,
-              size: 24.sp,
-              color: AppColors.ink,
-            ),
-          ),
-          SizedBox(width: 14.sp),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Dose logged',
-                  style: AppText.h1.copyWith(
-                    fontSize: 22.sp,
-                    color: AppColors.white,
-                  ),
-                ),
-                if (when.isNotEmpty) ...[
-                  SizedBox(height: 2.sp),
-                  Text(
-                    when,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppText.small.copyWith(
-                      fontSize: 13.sp,
-                      color: AppColors.heroMuted,
+          Row(
+            children: [
+              // The whole top part opens the dose to edit it.
+              Expanded(
+                child: Semantics(
+                  button: true,
+                  label: 'Dose logged. $when. Edit this dose',
+                  excludeSemantics: true,
+                  child: PressScale(
+                    onTap: controller.editDoseToday,
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 48.sp,
+                          height: 48.sp,
+                          decoration: const BoxDecoration(
+                            color: AppColors.lime,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            PhosphorIconsBold.check,
+                            size: 24.sp,
+                            color: AppColors.ink,
+                          ),
+                        ),
+                        SizedBox(width: 14.sp),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Dose logged',
+                                style: AppText.h1.copyWith(
+                                  fontSize: 22.sp,
+                                  color: AppColors.white,
+                                ),
+                              ),
+                              if (when.isNotEmpty) ...[
+                                SizedBox(height: 2.sp),
+                                Text(
+                                  when,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppText.small.copyWith(
+                                    fontSize: 13.sp,
+                                    color: AppColors.heroMuted,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-                if (next.isNotEmpty) ...[
-                  SizedBox(height: 2.sp),
-                  Text(
-                    'Next dose $next',
+                ),
+              ),
+              SizedBox(width: 10.sp),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 220),
+                child: quickUndo
+                    ? _OutlinePill(
+                        key: const ValueKey('undo'),
+                        label: 'Undo',
+                        semantic: 'Undo dose',
+                        onTap: controller.undoDoseToday,
+                      )
+                    : _MoreButton(
+                        key: const ValueKey('more'),
+                        onTap: () => _showDoseActions(context, controller),
+                      ),
+              ),
+            ],
+          ),
+          if (next.isNotEmpty) ...[
+            SizedBox(height: 14.sp),
+            Divider(
+              height: 1,
+              color: AppColors.white.withValues(alpha: 0.12),
+            ),
+            SizedBox(height: 4.sp),
+            Row(
+              children: [
+                Text(
+                  'Next: ',
+                  style: AppText.small.copyWith(
+                    fontSize: 13.sp,
+                    color: AppColors.heroMuted,
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    next,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: AppText.small.copyWith(
@@ -650,41 +707,231 @@ class _TakenToday extends GetView<TodayController> {
                       color: AppColors.lime,
                     ),
                   ),
-                ],
+                ),
+                _TextLink(
+                  'Move ›',
+                  () => controller.moveDate(context),
+                  color: AppColors.white,
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Outlined pill on the ink card ("Undo").
+class _OutlinePill extends StatelessWidget {
+  const _OutlinePill({
+    super.key,
+    required this.label,
+    required this.semantic,
+    required this.onTap,
+  });
+
+  final String label;
+  final String semantic;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: semantic,
+      excludeSemantics: true,
+      child: PressScale(
+        onTap: onTap,
+        child: Container(
+          constraints: BoxConstraints(minHeight: 36.sp),
+          padding: EdgeInsets.symmetric(horizontal: 14.sp),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18.sp),
+            border: Border.all(
+              color: AppColors.white.withValues(alpha: 0.2),
+              width: 1.5,
+            ),
+          ),
+          child: Text(
+            label,
+            style: AppText.small.copyWith(
+              fontSize: 13.sp,
+              fontWeight: FontWeight.w800,
+              color: AppColors.white,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// "⋯" on the logged card: opens the dose options.
+class _MoreButton extends StatelessWidget {
+  const _MoreButton({super.key, required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: 'Dose options',
+      excludeSemantics: true,
+      child: PressScale(
+        onTap: onTap,
+        child: Container(
+          width: 40.sp,
+          height: 40.sp,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: AppColors.white.withValues(alpha: 0.2),
+              width: 1.5,
+            ),
+          ),
+          child: Icon(
+            Icons.more_horiz_rounded,
+            size: 20.sp,
+            color: AppColors.white,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Edit · Move next dose · Log a missed dose · Remove.
+Future<void> _showDoseActions(BuildContext context, TodayController c) {
+  Haptics.instance.selectionClick();
+  return Get.bottomSheet<void>(
+    _DoseActionsSheet(controller: c, cardContext: context),
+    isScrollControlled: true,
+  );
+}
+
+class _DoseActionsSheet extends StatelessWidget {
+  const _DoseActionsSheet({
+    required this.controller,
+    required this.cardContext,
+  });
+
+  final TodayController controller;
+
+  /// Context of the card under the sheet, for the date picker after the
+  /// sheet closes.
+  final BuildContext cardContext;
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    final dark = k.selectedBorder == AppColors.lime;
+    final red = dark ? const Color(0xFFFF8A80) : AppColors.danger;
+    Widget row(
+      IconData icon,
+      String title,
+      String sub,
+      VoidCallback onTap, {
+      bool danger = false,
+    }) => Padding(
+      padding: EdgeInsets.only(bottom: 8.sp),
+      child: Semantics(
+        button: true,
+        label: '$title. $sub',
+        excludeSemantics: true,
+        child: PressScale(
+          onTap: () {
+            popRoute();
+            onTap();
+          },
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 14.sp, vertical: 12.sp),
+            decoration: BoxDecoration(
+              color: k.card,
+              borderRadius: BorderRadius.circular(18.sp),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 40.sp,
+                  height: 40.sp,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: danger
+                        ? red.withValues(alpha: 0.12)
+                        : (dark
+                              ? AppColors.lime.withValues(alpha: 0.14)
+                              : AppColors.limeSoft),
+                    borderRadius: BorderRadius.circular(12.sp),
+                  ),
+                  child: Icon(
+                    icon,
+                    size: 20.sp,
+                    color: danger ? red : (dark ? AppColors.lime : AppColors.ink),
+                  ),
+                ),
+                SizedBox(width: 12.sp),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: AppText.title.copyWith(
+                          fontSize: 15.sp,
+                          color: danger ? red : k.text,
+                        ),
+                      ),
+                      Text(
+                        sub,
+                        style: AppText.small.copyWith(
+                          fontSize: 12.5.sp,
+                          color: k.muted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
-          SizedBox(width: 10.sp),
-          Semantics(
-            button: true,
-            label: 'Undo dose',
-            excludeSemantics: true,
-            child: PressScale(
-              onTap: controller.undoDoseToday,
-              child: Container(
-                constraints: BoxConstraints(minHeight: 36.sp),
-                padding: EdgeInsets.symmetric(horizontal: 14.sp),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(18.sp),
-                  border: Border.all(
-                    color: AppColors.white.withValues(alpha: 0.2),
-                    width: 1.5,
-                  ),
-                ),
-                child: Text(
-                  'Undo',
-                  style: AppText.small.copyWith(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.white,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
+    );
+    return KSheetFrame(
+      title: 'Your dose',
+      children: [
+        row(
+          PhosphorIconsBold.pencilSimple,
+          'Edit this dose',
+          'Time, spot, strength, how it felt, note',
+          controller.editDoseToday,
+        ),
+        row(
+          PhosphorIconsBold.calendarBlank,
+          'Move next dose',
+          'Only the reminder moves',
+          () {
+            if (cardContext.mounted) controller.moveDate(cardContext);
+          },
+        ),
+        row(
+          Icons.history_rounded,
+          'Log a missed dose',
+          'One you took on an earlier day',
+          controller.logMissedDose,
+        ),
+        row(
+          PhosphorIconsBold.trash,
+          'Remove this dose',
+          'You can undo right after',
+          controller.undoDoseToday,
+          danger: true,
+        ),
+      ],
     );
   }
 }

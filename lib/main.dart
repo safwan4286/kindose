@@ -15,6 +15,7 @@ import 'package:kindose/services/theme/theme.dart';
 
 import 'resources/routes.dart';
 import 'services/backend/backend_service.dart';
+import 'services/crash/crash_reporting.dart';
 import 'services/notifications/notif_prefs.dart';
 import 'services/notifications/reminder_service.dart';
 import 'services/offers/offer_service.dart';
@@ -42,6 +43,10 @@ Future<void> main() async {
       devPrint(details.toString()); // Only temporary for debugging
     }
   };
+
+  // Crash reports (Firebase Crashlytics), release builds only. Wraps the
+  // handler above, so console printing still works.
+  await CrashReporting.init();
 
   /// notification setup
   // try {
@@ -81,6 +86,7 @@ Future<void> main() async {
   Get.put<AppStatusService>(AppStatusService().init(), permanent: true);
   // Debug builds: the saved "Debug: Plus" switch (no-op in release).
   PlusAccess.loadDebug();
+  ever<bool>(PlusAccess.active, CrashReporting.setPlus);
   // Free week + who can use what (before anything that checks Plus).
   Get.put<AccessService>(AccessService().init(), permanent: true);
   // Pens & cost: counts doses left from the dose log. Before reminders,
@@ -148,6 +154,8 @@ class KindoseApp extends StatelessWidget {
         initialRoute: initialRoute,
         getPages: AppPages.pages,
         defaultTransition: Transition.cupertino,
+        // Screen name for crash reports (route only, never arguments).
+        routingCallback: (r) => CrashReporting.setScreen(r?.current),
         builder: (context, child) {
           final dark = Theme.of(context).brightness == Brightness.dark;
           final mq = MediaQuery.of(context);

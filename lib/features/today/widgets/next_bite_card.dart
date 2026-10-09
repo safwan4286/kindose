@@ -124,10 +124,7 @@ class NextBiteCard extends GetView<TodayController> {
                 crossAxisAlignment: CrossAxisAlignment.baseline,
                 textBaseline: TextBaseline.alphabetic,
                 children: [
-                  Text(
-                    '${b.have} g',
-                    style: AppText.number(30.sp).copyWith(color: k.text),
-                  ),
+                  NumberUnit('${b.have}', 'g', size: 30.sp, color: k.text),
                   SizedBox(width: 6.sp),
                   Expanded(
                     child: Text(

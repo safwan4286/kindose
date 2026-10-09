@@ -292,9 +292,9 @@ class ChoiceGlyph extends StatelessWidget {
           ? PhosphorIcon(icon!, size: 22.sp, color: context.k.text)
           : Text(
               text!,
-              style: AppText.h1.copyWith(
+              // Small text: body font (the display font is for 20 px+).
+              style: AppText.title.copyWith(
                 fontSize: 16.sp,
-                letterSpacing: -0.2,
                 color: context.k.text,
               ),
             ),

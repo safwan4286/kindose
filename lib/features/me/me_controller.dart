@@ -15,9 +15,12 @@ import '../../resources/water_units.dart';
 import '../../services/backend/backend_service.dart';
 import '../../services/haptics/haptics.dart';
 import '../../services/notifications/notif_prefs.dart';
+import '../../services/notifications/notification_service.dart';
+import '../../services/notifications/reminder_service.dart';
 import '../../services/plus/access_service.dart';
 import '../../services/plus/plus_access.dart';
 import '../../services/purchases/purchase_service.dart';
+import '../../services/review/review_service.dart';
 import '../../services/supply/supply_service.dart';
 import '../../services/tracker_service.dart';
 import '../../widgets/mood_row.dart';
@@ -128,6 +131,39 @@ class MeController extends GetxController {
   Future<void> debugRestartWeek() => access.debugRestart();
   Future<void> debugEndWeek() => access.debugEnd();
   Future<void> debugRealDates() => access.debugClear();
+
+  /// Debug: water + protein test reminders in 10 / 15 seconds.
+  Future<void> debugTestReminders() async {
+    Haptics.instance.selectionClick();
+    final ok = await NotificationService.instance.requestPermission();
+    if (!ok) {
+      showToast('Notifications are off for Kindose in phone settings.');
+      return;
+    }
+    await Get.find<ReminderService>().debugTest();
+    showToast('Water in 10 s, protein in 15 s. You can leave the app.');
+  }
+
+  /// Debug: every reminder the phone is holding, with its time.
+  Future<void> debugShowPlanned() async {
+    Haptics.instance.selectionClick();
+    final notes = NotificationService.instance;
+    final ids = await notes.pendingIds();
+    final rows = [
+      for (final e in notes.plannedLog.entries)
+        if (ids.contains(e.key)) (e.key, e.value.$1, e.value.$2),
+    ]..sort((a, b) => a.$2.compareTo(b.$2));
+    final enabled = await notes.areEnabled();
+    await showPlannedSheet(
+      enabled: enabled,
+      pendingCount: ids.length,
+      rows: [
+        for (final r in rows)
+          '${Dates.shortWithDay(r.$2)} ${Dates.time(r.$2)} · ${r.$3} (#${r.$1})',
+      ],
+      reasons: Get.find<ReminderService>().debugReasons(),
+    );
+  }
 
   /// Act as a paying Plus user (debug builds only).
   Future<void> debugTogglePlus() async {
@@ -848,9 +884,10 @@ class MeController extends GetxController {
 
   bool get canContact => AppLinks.supportEmail.isNotEmpty;
 
-  String get _storeUrl =>
-      Platform.isIOS ? AppLinks.appStoreUrl : AppLinks.playStoreUrl;
-  bool get canRate => _storeUrl.isNotEmpty;
+
+  /// Always shown: opens the store page, or the rating dialog until the
+  /// App Store id is known (ReviewService.openStore).
+  bool get canRate => true;
 
   Future<void> contactSupport() async {
     Haptics.instance.selectionClick();
@@ -861,8 +898,9 @@ class MeController extends GetxController {
 
   Future<void> rateApp() async {
     Haptics.instance.selectionClick();
-    if (!await _launch(Uri.parse(_storeUrl)))
+    if (!await ReviewService.openStore()) {
       showToast("Couldn't open the store.");
+    }
   }
 
   Future<bool> _launch(Uri uri) async {

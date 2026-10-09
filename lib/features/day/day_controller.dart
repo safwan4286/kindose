@@ -9,6 +9,7 @@ import '../../resources/images.dart';
 import '../../resources/routes.dart';
 import '../../resources/water_units.dart';
 import '../../services/haptics/haptics.dart';
+import '../../services/plus/access_service.dart';
 import '../../services/plus/plus_access.dart';
 import '../../services/tracker_service.dart';
 import '../../widgets/toast.dart';
@@ -77,6 +78,16 @@ class DayController extends GetxController with DayNav {
     ].join(' · ');
   }
 
+  /// A dose on this day that wasn't logged: Log dose opens on this date
+  /// (today: now).
+  void logDoseForDay() {
+    Haptics.instance.selectionClick();
+    Get.toNamed<void>(
+      Routes.logDose,
+      arguments: isToday ? null : day.value,
+    );
+  }
+
   void editDose() {
     final d = dose;
     if (d == null) return;
@@ -111,6 +122,7 @@ class DayController extends GetxController with DayNav {
 
   /// Swipe to remove. Undo puts it back at the same time.
   Future<void> removeEntry(LogEntry e) async {
+    if (!AccessService.allow()) return;
     Haptics.instance.mediumImpact();
     await tracker.removeEntry(log.key, e.id);
     showUndoToast('${entryName(e)} removed', () async {

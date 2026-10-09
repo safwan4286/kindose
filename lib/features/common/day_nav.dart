@@ -3,17 +3,14 @@ import 'package:get/get.dart';
 
 import '../../models/user_profile.dart';
 import '../../resources/date_utils.dart';
-import '../../resources/routes.dart';
 import '../../services/haptics/haptics.dart';
-import '../../services/plus/plus_access.dart';
 import '../../services/tracker_service.dart';
 import '../../widgets/k_date_picker.dart';
 
 /// Moving between days on screens that show one day (Protein, Water, Day).
 ///
-/// These screens are Plus (or free week) only, so every day back to the
-/// start of treatment can be opened. If the free week ends while one is
-/// open, going back opens the Plus screen. Future days are never shown.
+/// Every day back to the start of treatment can be browsed (soft paywall:
+/// looking is free, changes ask for Plus). Future days are never shown.
 mixin DayNav on GetxController {
   /// The day being shown (date only).
   final Rx<DateTime> day = Dates.dateOnly(DateTime.now()).obs;
@@ -64,11 +61,6 @@ mixin DayNav on GetxController {
   }
 
   void previousDay() {
-    if (!PlusAccess.unlocked) {
-      Haptics.instance.selectionClick();
-      Get.toNamed<void>(Routes.plus);
-      return;
-    }
     final prev = day.value.subtract(const Duration(days: 1));
     if (prev.isBefore(firstDay)) return;
     setDay(prev);
@@ -81,10 +73,6 @@ mixin DayNav on GetxController {
   void backToToday() => setDay(today);
 
   Future<void> pickDay(BuildContext context) async {
-    if (!PlusAccess.unlocked) {
-      Get.toNamed<void>(Routes.plus);
-      return;
-    }
     final picked = await showKDatePicker(
       context: context,
       initialDate: day.value,

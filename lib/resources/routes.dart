@@ -1,6 +1,5 @@
 import 'package:get/get.dart';
 
-import '../services/plus/access_service.dart';
 
 import '../features/account/save_data_screen.dart';
 import '../features/update/update_screen.dart';
@@ -12,6 +11,7 @@ import '../features/dose_done/dose_done_binding.dart';
 import '../features/dose_done/dose_done_screen.dart';
 import '../features/home/home_binding.dart';
 import '../features/home/home_screen.dart';
+import '../features/home/weight_sheet.dart';
 import '../features/guide/guide_binding.dart';
 import '../features/guide/guide_screen.dart';
 import '../features/intake/intake_binding.dart';
@@ -47,6 +47,9 @@ class Routes {
   static const String offer = '/offer';
   static const String home = '/home';
   static const String logDose = '/log-dose';
+
+  /// Weigh-in (was a bottom sheet).
+  static const String logWeight = '/log-weight';
 
   /// Pass a DoseDoneArgs.
   static const String doseDone = '/dose-done';
@@ -131,7 +134,7 @@ class AppPages {
       name: Routes.logDose,
       page: () => const LogDoseScreen(),
       binding: LogDoseBinding(),
-      middlewares: [PlusGate()],
+      // Opens freely; saving asks for Plus (AccessService.ensure).
     ),
     GetPage<dynamic>(
       name: Routes.doseDone,
@@ -143,13 +146,17 @@ class AppPages {
       name: Routes.addIntake,
       page: () => const IntakeScreen(),
       binding: IntakeBinding(),
-      middlewares: [PlusGate()],
+      // Opens freely; saving asks for Plus (AccessService.ensure).
     ),
     GetPage<dynamic>(
       name: Routes.day,
       page: () => const DayScreen(),
       binding: DayBinding(),
-      middlewares: [PlusGate()],
+      // Open for browsing; Plus actions inside ask (soft paywall).
+    ),
+    GetPage<dynamic>(
+      name: Routes.logWeight,
+      page: () => const WeightScreen(),
     ),
     GetPage<dynamic>(
       name: Routes.notifications,
@@ -160,7 +167,7 @@ class AppPages {
       name: Routes.pens,
       page: () => const PensScreen(),
       binding: PensBinding(),
-      middlewares: [PlusGate()],
+      // Open for browsing; Plus actions inside ask (soft paywall).
     ),
     GetPage<dynamic>(
       name: Routes.guide,
@@ -171,12 +178,12 @@ class AppPages {
       name: Routes.checkIn,
       page: () => const CheckInScreen(),
       binding: CheckInBinding(),
-      middlewares: [PlusGate()],
+      // Opens freely; saving asks for Plus (AccessService.ensure).
     ),
     GetPage<dynamic>(
       name: Routes.reportPreview,
       page: () => const ReportPreviewScreen(),
-      middlewares: [PlusGate()],
+      // Preview is free to look at; Share asks for Plus.
     ),
   ];
 }

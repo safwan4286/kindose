@@ -2,48 +2,60 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
-import '../../services/plus/access_service.dart';
 import '../../models/logs.dart';
 import '../../resources/colors.dart';
 import '../../resources/date_utils.dart';
-import '../../resources/images.dart';
+import '../../resources/routes.dart';
 import '../../services/haptics/haptics.dart';
+import '../../services/plus/access_service.dart';
 import '../../services/responsiveness/device_manager.dart';
 import '../../services/theme/theme.dart';
 import '../../services/tracker_service.dart';
 import '../../widgets/buttons.dart';
+import '../../widgets/day_switcher.dart';
 import '../../widgets/k_ruler.dart';
 import '../../widgets/k_widgets.dart';
-import '../../widgets/press_scale.dart';
 import '../../widgets/safe_bottom.dart';
 import '../../widgets/toast.dart';
 import '../../widgets/trend_line.dart';
 import '../../widgets/weight_input.dart';
-import '../../widgets/k_date_picker.dart';
+import '../common/day_nav.dart';
 
-/// Weigh-in sheet: date, ruler, change since last and since start, a small
-/// trend with the goal line, and a calm tip. Starts from the last weight
-/// so most people nudge it once or twice and save.
+/// Opens the Log weight screen (it was a bottom sheet before 10 Oct; the
+/// name stays so callers don't change).
 Future<void> showWeightSheet() async {
-  if (!AccessService.allow()) return;
   Haptics.instance.lightImpact();
-  await Get.bottomSheet<void>(const WeightSheet(), isScrollControlled: true);
+  await Get.toNamed<void>(Routes.logWeight);
 }
 
-class WeightSheet extends StatefulWidget {
-  const WeightSheet({super.key});
+/// Log weight screen: date, ruler, change since last and since start, a
+/// small trend with the goal line, and a calm tip. Starts from the last
+/// weight so most people nudge it once or twice and save.
+class WeightScreen extends StatefulWidget {
+  const WeightScreen({super.key});
 
   @override
-  State<WeightSheet> createState() => _WeightSheetState();
+  State<WeightScreen> createState() => _WeightScreenState();
 }
 
 /// Local UI state only (the number being edited). Saving goes through
 /// [TrackerService], like everywhere else.
-class _WeightSheetState extends State<WeightSheet> {
+class _WeightScreenState extends State<WeightScreen> {
   final TrackerService _t = Get.find<TrackerService>();
   late bool _useKg = _t.profile.value?.useKg ?? true;
   late double _kg = _t.latestWeightKg ?? 80;
-  DateTime _day = Dates.dateOnly(DateTime.now());
+  /// ‹ Today › in the header, the same switcher as Water and Protein.
+  late final _WeightDayNav _nav = _WeightDayNav(onChanged: _onDayChanged);
+  DateTime get _day => _nav.day.value;
+
+  /// A day that already has a weigh-in starts from that number.
+  void _onDayChanged() {
+    if (!mounted) return;
+    setState(() {
+      final existing = _sameDay;
+      if (existing != null) _kg = existing.kg;
+    });
+  }
   bool _saving = false;
 
   String get _unit => _useKg ? 'kg' : 'lb';
@@ -76,25 +88,10 @@ class _WeightSheetState extends State<WeightSheet> {
     return Dates.shortWithDay(_day);
   }
 
-  Future<void> _pickDay() async {
-    final now = DateTime.now();
-    final d = await showKDatePicker(
-      context: context,
-      initialDate: _day,
-      firstDate: now.subtract(const Duration(days: 365)),
-      lastDate: now,
-      title: 'Day of this weigh-in',
-    );
-    if (d == null || !mounted) return;
-    setState(() {
-      _day = Dates.dateOnly(d);
-      final existing = _sameDay;
-      if (existing != null) _kg = existing.kg;
-    });
-  }
-
   Future<void> _save() async {
     if (_saving) return;
+    if (!await AccessService.ensure()) return;
+    if (!mounted) return;
     setState(() => _saving = true);
     try {
       await _t.addWeight(_kg, _day);
@@ -126,96 +123,43 @@ class _WeightSheetState extends State<WeightSheet> {
     ];
     final replaces = _sameDay;
 
-    return KSafeArea(
-      child: Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.sizeOf(context).height * 0.92,
-        ),
-        decoration: BoxDecoration(
-          color: k.bg,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28.sp)),
-        ),
-        padding: EdgeInsets.fromLTRB(
-          20.sp,
-          10.sp,
-          20.sp,
-          12.sp + MediaQuery.viewInsetsOf(context).bottom,
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(
-                child: Container(
-                  width: 40.sp,
-                  height: 5.sp,
-                  decoration: BoxDecoration(
-                    color: k.border,
-                    borderRadius: BorderRadius.circular(3.sp),
-                  ),
-                ),
-              ),
-              SizedBox(height: 14.sp),
-              Row(
+    return Scaffold(
+      backgroundColor: k.bg,
+      body: KSafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: EdgeInsets.fromLTRB(20.sp, 8.sp, 20.sp, 4.sp),
+              child: Row(
                 children: [
+                  BackCircle(onTap: popRoute),
+                  SizedBox(width: 12.sp),
                   Expanded(
                     child: Semantics(
                       header: true,
+                      // Short, one line: same header as Water / Protein.
                       child: Text(
-                        'Log weight',
+                        'Weight',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: AppText.h2.copyWith(
-                          fontSize: 24.sp,
+                          fontSize: 22.sp,
                           color: k.text,
                         ),
                       ),
                     ),
                   ),
-                  CircleIconButton(
-                    icon: PhosphorIconsBold.x,
-                    label: 'Close',
-                    size: 40.sp,
-                    onTap: popRoute,
-                  ),
+                  DaySwitcher(nav: _nav),
                 ],
               ),
-              SizedBox(height: 10.sp),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: PressScale(
-                  semanticLabel: 'Date: $_dayLabel. Tap to change',
-                  onTap: _pickDay,
-                  child: Container(
-                    height: 36.sp,
-                    padding: EdgeInsets.symmetric(horizontal: 12.sp),
-                    decoration: BoxDecoration(
-                      color: k.card,
-                      borderRadius: BorderRadius.circular(18.sp),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        ThreeD(Img3d.calendar, size: 18.sp),
-                        SizedBox(width: 6.sp),
-                        Text(
-                          _dayLabel,
-                          style: AppText.small.copyWith(
-                            fontSize: 13.sp,
-                            fontWeight: FontWeight.w800,
-                            color: k.text,
-                          ),
-                        ),
-                        SizedBox(width: 4.sp),
-                        Icon(
-                          PhosphorIconsBold.caretDown,
-                          size: 12.sp,
-                          color: k.muted,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
+            ),
+            Expanded(
+              child: ListView(
+                physics: const BouncingScrollPhysics(),
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                padding: EdgeInsets.fromLTRB(20.sp, 12.sp, 20.sp, 16.sp),
+                children: [
               if (replaces != null) ...[
                 SizedBox(height: 6.sp),
                 Text(
@@ -369,15 +313,19 @@ class _WeightSheetState extends State<WeightSheet> {
                   ),
                 ),
               ),
-              SizedBox(height: 14.sp),
-              PillButton(
+                ],
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.fromLTRB(20.sp, 8.sp, 20.sp, 12.sp),
+              child: PillButton(
                 label: 'Save ${_fmt(_kg)} $_unit',
                 icon: PhosphorIconsBold.check,
                 busy: _saving,
                 onPressed: _save,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -431,4 +379,15 @@ class _StatBox extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Day for this weigh-in (‹ Today ›). Back to the start of treatment,
+/// never the future.
+class _WeightDayNav extends GetxController with DayNav {
+  _WeightDayNav({required this.onChanged});
+
+  final VoidCallback onChanged;
+
+  @override
+  void onDayChanged() => onChanged();
 }

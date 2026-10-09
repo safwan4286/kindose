@@ -224,6 +224,15 @@ class AccessService extends GetxService with WidgetsBindingObserver {
     return false;
   }
 
+  /// For Save buttons (soft paywall): free users see the Plus screen; if
+  /// they get Plus there, the save carries on with what they entered.
+  static Future<bool> ensure() async {
+    if (PlusAccess.unlocked) return true;
+    Haptics.instance.lightImpact();
+    await Get.toNamed<void>(Routes.plus);
+    return PlusAccess.unlocked;
+  }
+
   // ---------------------------------------------------------- debug only
 
   /// Starts a new free week now (debug builds).

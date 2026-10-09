@@ -136,6 +136,21 @@ class NotificationService {
   ///
   /// Uses inexact delivery on Android (may arrive a few minutes late) so the
   /// app does not need the exact-alarm permission.
+  /// What this run of the app scheduled, by id: (time, title). Only for
+  /// the debug "Show planned" sheet; the phone keeps the real list.
+  final Map<int, (DateTime, String)> plannedLog = {};
+
+  /// Ids the phone is holding right now (debug check).
+  Future<Set<int>> pendingIds() async {
+    try {
+      await init();
+      final list = await _plugin.pendingNotificationRequests();
+      return {for (final r in list) r.id};
+    } catch (_) {
+      return <int>{};
+    }
+  }
+
   Future<void> scheduleAt({
     required int id,
     required DateTime when,
@@ -155,6 +170,7 @@ class NotificationService {
         body: body,
         payload: payload,
       );
+      plannedLog[id] = (when, title);
     } catch (e) {
       debugPrint('Could not schedule reminder $id: $e');
     }
@@ -165,6 +181,7 @@ class NotificationService {
       await init();
       for (final id in ids) {
         await _plugin.cancel(id: id);
+        plannedLog.remove(id);
       }
     } catch (e) {
       debugPrint('Could not cancel reminders: $e');

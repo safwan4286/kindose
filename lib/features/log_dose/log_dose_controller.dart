@@ -9,6 +9,7 @@ import '../../resources/catalog.dart';
 import '../../resources/date_utils.dart';
 import '../../resources/routes.dart';
 import '../../services/haptics/haptics.dart';
+import '../../services/plus/access_service.dart';
 import '../../services/tracker_service.dart';
 import '../../widgets/ask_number.dart';
 import '../../widgets/toast.dart';
@@ -19,6 +20,10 @@ import '../../widgets/k_date_picker.dart';
 
 /// When the dose was taken: right now, earlier today, or a picked date.
 enum DoseTime { now, earlier, pick }
+
+/// Route argument: open Log dose on "Pick date & time" for a dose that
+/// wasn't logged on the day (Today → ⋯ → Log a missed dose).
+const String logMissedDose = 'missed';
 
 /// Log dose screen. Pass a [DoseLog] as the route argument to edit it.
 class LogDoseController extends GetxController {
@@ -53,6 +58,27 @@ class LogDoseController extends GetxController {
     site.value = tracker.nextSiteId;
     final arg = Get.arguments;
     if (arg is DoseLog) _startEditing(arg);
+    if (arg is DateTime) _startOnDay(arg);
+  }
+
+  /// "Log a missed dose": straight to the date and time pickers.
+  @override
+  void onReady() {
+    super.onReady();
+    if (Get.arguments == logMissedDose) {
+      final c = Get.context;
+      if (c != null) pickTime(c, DoseTime.pick);
+    }
+  }
+
+  /// A past day from Day view: that day at the usual dose time (never
+  /// later than now).
+  void _startOnDay(DateTime day) {
+    final m = tracker.profile.value?.shotMinutes ?? 9 * 60;
+    final at = Dates.dateOnly(day).add(Duration(minutes: m));
+    final now = DateTime.now();
+    takenAt.value = at.isAfter(now) ? now : at;
+    timeMode.value = Dates.sameDay(at, now) ? DoseTime.now : DoseTime.pick;
   }
 
   @override
@@ -362,6 +388,7 @@ class LogDoseController extends GetxController {
 
   Future<void> save() async {
     if (saving.value) return;
+    if (!await AccessService.ensure()) return;
     final close = _closeDose;
     if (close != null) {
       final choice = await showCloseDoseSheet(

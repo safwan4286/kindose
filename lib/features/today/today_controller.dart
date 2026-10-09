@@ -20,6 +20,7 @@ import '../../widgets/k_ruler.dart';
 import '../../widgets/toast.dart';
 import '../home/home_controller.dart';
 import '../home/weight_sheet.dart';
+import '../log_dose/log_dose_controller.dart' show logMissedDose;
 import 'next_bite.dart';
 import 'weekly_summary.dart';
 import 'widgets/next_bite_card.dart';
@@ -163,6 +164,7 @@ class TodayController extends GetxController {
   }
 
   Future<void> addBite(BiteIdea idea) async {
+    if (!AccessService.allow()) return;
     Haptics.instance.lightImpact();
     final key = Dates.key(now.value);
     final entryId = await tracker.addProtein(idea.grams, null, idea.label);
@@ -375,24 +377,66 @@ class TodayController extends GetxController {
     }
   }
 
+  /// Removes today's dose; Undo puts the same record back (same id, so
+  /// Pens & cost counts it again).
   Future<void> undoDoseToday() async {
     final d = doseToday;
     if (d == null) return;
     Haptics.instance.selectionClick();
     await tracker.removeDose(d.id);
-    showToast('Dose removed');
+    showUndoToast('Dose removed', () => tracker.updateDose(d));
+  }
+
+  // ------------------------------------------------ after a dose is logged
+
+  /// "Undo" stays on the card for 10 minutes after logging (a quick fix
+  /// for a mis-tap); after that the card shows "⋯" with all the options.
+  bool get canQuickUndo {
+    final d = doseToday;
+    if (d == null) return false;
+    final us = int.tryParse(d.id);
+    final logged = us == null
+        ? d.takenAt
+        : DateTime.fromMicrosecondsSinceEpoch(us);
+    return now.value.difference(logged) < const Duration(minutes: 10);
+  }
+
+  /// "Next: Sun, 12 Oct · 8:00 AM" on the logged card.
+  String get nextDoseLine {
+    final next = nextDoseAt;
+    final p = profile;
+    if (next == null || p == null) return '';
+    return '${Dates.shortWithDay(next)} · ${Dates.timeOfDay(p.shotMinutes)}';
+  }
+
+  /// Tap on the logged card: edit time, spot, strength, how it felt, note.
+  void editDoseToday() {
+    final d = doseToday;
+    if (d == null) return;
+    Haptics.instance.selectionClick();
+    Get.toNamed<void>(Routes.logDose, arguments: d);
+  }
+
+  /// A dose from an earlier day that wasn't logged (past only).
+  void logMissedDose() {
+    Haptics.instance.selectionClick();
+    Get.toNamed<void>(Routes.logDose, arguments: logMissedDose);
   }
 
   Future<void> moveDate(BuildContext context) async {
     Haptics.instance.selectionClick();
     final today = Dates.dateOnly(now.value);
+    // Once today's dose is logged, the next one can't also be today.
+    final first = doseToday == null
+        ? today
+        : today.add(const Duration(days: 1));
     final current = nextDoseAt;
     final picked = await showKDatePicker(
       context: context,
-      initialDate: current == null || current.isBefore(today)
-          ? today
+      initialDate: current == null || current.isBefore(first)
+          ? first
           : Dates.dateOnly(current),
-      firstDate: today,
+      firstDate: first,
       lastDate: today.add(const Duration(days: 21)),
       title: 'Move this dose to',
       note: 'Only the reminder moves. Check your leaflet or doctor if unsure.',
@@ -413,6 +457,7 @@ class TodayController extends GetxController {
   List<Food> get quickFoods => Catalog.quickFoods(profile?.diet);
 
   Future<void> addProtein(int grams, [String? label]) async {
+    if (!AccessService.allow()) return;
     Haptics.instance.lightImpact();
     await tracker.addProtein(grams, null, label);
     showToast(
@@ -458,6 +503,7 @@ class TodayController extends GetxController {
 
   /// Tap an empty glass to fill up to it; tap the last full one to empty it.
   void tapGlass(int i) {
+    if (!AccessService.allow()) return;
     final full = glassesFull;
     final ml = (i == full - 1) ? i * glassMl : (i + 1) * glassMl;
     if (ml > day.waterMl) {
@@ -530,6 +576,7 @@ class TodayController extends GetxController {
   }
 
   Future<void> pickFace(int face) async {
+    if (!AccessService.allow()) return;
     Haptics.instance.selectionClick();
     await tracker.setMood(4 - face);
   }
@@ -627,6 +674,7 @@ class TodayController extends GetxController {
   Future<void> removeRow(TodayLogRow row) async {
     final id = row.entryId;
     if (id == null) return;
+    if (!AccessService.allow()) return;
     Haptics.instance.mediumImpact();
     await tracker.removeEntry(day.key, id);
     showToast('${row.title} removed');
@@ -666,7 +714,8 @@ class TodayController extends GetxController {
 
   AccessService get access => Get.find<AccessService>();
 
-  /// Free week over and no Plus: Today shows only the dose basics.
+  /// Free week over and no Plus. Today stays fully visible (6 Oct
+  /// decision); actions open the paywall through [AccessService.allow].
   bool get locked => access.locked;
 
   bool get showFreeStrip =>

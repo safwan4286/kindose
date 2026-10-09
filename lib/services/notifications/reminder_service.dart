@@ -113,6 +113,53 @@ class ReminderService extends GetxService {
     if (p != null) _open(p);
   }
 
+  // ------------------------------------------------------------- debug
+
+  static const int _testWaterId = 990;
+  static const int _testProteinId = 991;
+
+  /// Debug: a water and a protein reminder in 10 and 15 seconds, using
+  /// the real scheduling path but ignoring windows and quiet hours.
+  Future<void> debugTest() async {
+    final now = DateTime.now();
+    await _notes.scheduleAt(
+      id: _testWaterId,
+      when: now.add(const Duration(seconds: 10)),
+      title: 'Time for some water',
+      body: 'Test reminder. Tap to open Water.',
+      payload: waterPayload,
+    );
+    await _notes.scheduleAt(
+      id: _testProteinId,
+      when: now.add(const Duration(seconds: 15)),
+      title: 'Protein check',
+      body: 'Test reminder. Tap to open Protein.',
+      payload: proteinPayload,
+    );
+  }
+
+  /// Debug: why water / protein may be quiet right now.
+  List<String> debugReasons() {
+    final p = tracker.profile.value;
+    final now = DateTime.now();
+    final m = now.hour * 60 + now.minute;
+    return [
+      if (p == null) 'No plan yet',
+      if (!_prefs.waterOn.value) 'Water reminders are off in Notifications',
+      if (!_prefs.proteinOn.value)
+        'Protein reminders are off in Notifications',
+      if (!_habitsOpen) 'Water and protein need Plus (free week is over)',
+      if (_prefs.isQuiet(m)) 'Quiet hours right now',
+      if (_prefs.waterOn.value &&
+          (m < _prefs.waterStart.value || m > _prefs.waterEnd.value))
+        'Outside the water window right now',
+      if (p != null && tracker.today.waterMl >= p.waterGoalMl)
+        'Water goal already met today (today is skipped)',
+      if (p != null && tracker.today.proteinG >= p.proteinGoalG)
+        'Protein goal already met today (today is skipped)',
+    ];
+  }
+
   void _open(String payload) {
     if (payload == waterPayload || payload == proteinPayload) {
       if (Get.currentRoute != Routes.addIntake) {

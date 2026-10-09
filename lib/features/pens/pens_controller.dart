@@ -7,6 +7,7 @@ import '../../resources/date_utils.dart';
 import '../../resources/routes.dart';
 import '../../services/haptics/haptics.dart';
 import '../../services/notifications/notification_service.dart';
+import '../../services/plus/access_service.dart';
 import '../../services/plus/plus_access.dart';
 import '../../services/supply/supply_service.dart';
 import '../../services/tracker_service.dart';
@@ -23,6 +24,9 @@ class PensController extends GetxController {
   /// Plus feature. Also open in debug builds, so it can be tested before
   /// RevenueCat is connected.
   bool get unlocked => PlusAccess.unlocked || kDebugMode;
+
+  /// Every change here needs Plus; the screen itself is open to browse.
+  bool _allow() => unlocked || AccessService.allow();
 
   /// Read inside an Obx so every value the screen shows is watched.
   void watch() {
@@ -121,6 +125,7 @@ class PensController extends GetxController {
   // -------------------------------------------------------------- actions
 
   Future<void> setUp() async {
+    if (!_allow()) return;
     final r = await showPackSetupSheet(
       pack: pack,
       dosesWord: dosesWord,
@@ -143,6 +148,7 @@ class PensController extends GetxController {
   bool get newPackFirst => supply.leftInPack <= 1;
 
   Future<void> startNewPack() async {
+    if (!_allow()) return;
     Haptics.instance.mediumImpact();
     final before = supply.snapshot();
     final hadSpare = supply.spareLeft > 0;
@@ -154,6 +160,7 @@ class PensController extends GetxController {
   }
 
   Future<void> fixCount(BuildContext context) async {
+    if (!_allow()) return;
     final v = await askNumber(
       context,
       title: '${_cap(dosesWord)} left in this $pack',
@@ -169,6 +176,7 @@ class PensController extends GetxController {
   }
 
   void changeSpare(int by) {
+    if (!_allow()) return;
     final next = supply.spareLeft + by;
     if (next < 0 || next > 99) return;
     Haptics.instance.selectionClick();
@@ -176,6 +184,7 @@ class PensController extends GetxController {
   }
 
   Future<void> setRefillReminder(bool on) async {
+    if (!_allow()) return;
     if (on && !await NotificationService.instance.requestPermission()) {
       showToast('Allow notifications for Kindose in your phone settings.');
       return;
@@ -185,6 +194,7 @@ class PensController extends GetxController {
   }
 
   Future<void> addPurchase() async {
+    if (!_allow()) return;
     final p = await showPurchaseSheet(
       pack: pack,
       currency: supply.currency.value,
@@ -199,6 +209,7 @@ class PensController extends GetxController {
   }
 
   Future<void> removePurchase(Purchase p) async {
+    if (!_allow()) return;
     Haptics.instance.mediumImpact();
     final before = supply.snapshot();
     final taken = await supply.removePurchase(p.id);
@@ -214,6 +225,7 @@ class PensController extends GetxController {
   }
 
   Future<void> openSettings() async {
+    if (!_allow()) return;
     final r = await showPackSettingsSheet(
       pack: pack,
       dosesWord: dosesWord,

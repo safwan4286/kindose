@@ -372,3 +372,70 @@ class _DeleteAccountSheet extends StatelessWidget {
     );
   }
 }
+
+/// Debug: reminders the phone is holding, and why water / protein may be
+/// quiet right now.
+Future<void> showPlannedSheet({
+  required bool? enabled,
+  required int pendingCount,
+  required List<String> rows,
+  required List<String> reasons,
+}) {
+  return Get.bottomSheet<void>(
+    _PlannedSheet(
+      enabled: enabled,
+      pendingCount: pendingCount,
+      rows: rows,
+      reasons: reasons,
+    ),
+    isScrollControlled: true,
+  );
+}
+
+class _PlannedSheet extends StatelessWidget {
+  const _PlannedSheet({
+    required this.enabled,
+    required this.pendingCount,
+    required this.rows,
+    required this.reasons,
+  });
+
+  final bool? enabled;
+  final int pendingCount;
+  final List<String> rows;
+  final List<String> reasons;
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    TextStyle line(Color c) => AppText.small.copyWith(
+      fontSize: 13.sp,
+      height: 1.45,
+      fontWeight: FontWeight.w600,
+      color: c,
+    );
+    return KSheetFrame(
+      title: 'Planned reminders',
+      sub:
+          'Notifications ${enabled == false ? 'are OFF in phone settings' : 'allowed'} · $pendingCount waiting on this phone',
+      children: [
+        if (reasons.isNotEmpty) ...[
+          Text('WHY WATER / PROTEIN MAY BE QUIET', style: AppText.caps.copyWith(fontSize: 11.sp, color: k.faint)),
+          SizedBox(height: 6.sp),
+          for (final r in reasons) Text('• $r', style: line(k.text)),
+          SizedBox(height: 14.sp),
+        ],
+        Text('COMING UP', style: AppText.caps.copyWith(fontSize: 11.sp, color: k.faint)),
+        SizedBox(height: 6.sp),
+        if (rows.isEmpty)
+          Text(
+            'Nothing scheduled by this run of the app yet. Change any setting or reopen the app, then check again.',
+            style: line(k.muted),
+          )
+        else
+          for (final r in rows) Text(r, style: line(k.text)),
+        SizedBox(height: 8.sp),
+      ],
+    );
+  }
+}
