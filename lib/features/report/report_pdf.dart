@@ -241,6 +241,8 @@ class ReportPdf {
     ),
   );
 
+  static String _days(int n) => n == 1 ? '1 day' : '$n days';
+
   static pw.Widget _tiles(ReportData r) {
     final goal = r.profile?.proteinGoalG ?? 100;
     final waterGoal = r.profile?.waterGoalMl ?? 2500;
@@ -262,14 +264,15 @@ class ReportPdf {
         _tile(
           'PROTEIN',
           r.loggedDays == 0 ? '—' : '${r.avgProtein} g/day',
-          'goal $goal g · met ${r.proteinDaysHit} of ${r.days} days',
+          'goal $goal g · met ${r.proteinDaysHit} of ${_days(r.days)}'
+              '${r.loggedDays < r.days ? ' · avg of ${_days(r.loggedDays)} logged' : ''}',
         ),
         _tile(
           'WATER',
           r.loggedDays == 0
               ? '—'
               : '${water(r.avgWaterMl)}/day',
-          'goal ${water(waterGoal)} · ${r.loggedDays} days logged',
+          'goal ${water(waterGoal)} · avg of ${_days(r.loggedDays)} logged',
         ),
       ],
     ];
@@ -493,7 +496,9 @@ class ReportPdf {
     final left = pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
-        _section('Side effects · ${r.checkInDays} check-ins in ${r.days} days'),
+        _section(
+          'Side effects · ${r.checkInDays} check-in${r.checkInDays == 1 ? '' : 's'} in ${_days(r.days)}',
+        ),
         if (r.symptoms.isEmpty)
           pw.Text(
             'No side effects logged.',

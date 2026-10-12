@@ -314,13 +314,13 @@ class TodayController extends GetxController {
     final next = nextDoseAt;
     final today = Dates.dateOnly(now.value);
     final end = next == null
-        ? today.add(const Duration(days: 6))
+        ? Dates.addDays(today, 6)
         : Dates.dateOnly(next);
-    final start = end.subtract(const Duration(days: 6));
+    final start = Dates.addDays(end, -6);
     return [
       for (var i = 0; i < 7; i++)
         () {
-          final d = start.add(Duration(days: i));
+          final d = Dates.addDays(start, i);
           final letter = Dates.weekdayName(d.weekday).substring(0, 1);
           if (tracker.doseOn(d) != null) return (letter, 'done');
           if (d == end) return (letter, 'dose');
@@ -336,7 +336,7 @@ class TodayController extends GetxController {
     return [
       for (var i = 6; i >= 0; i--)
         () {
-          final d = today.subtract(Duration(days: i));
+          final d = Dates.addDays(today, -i);
           final letter = Dates.weekdayName(d.weekday).substring(0, 1);
           if (tracker.doseOn(d) != null) return (letter, 'done');
           return (letter, i == 0 ? 'today' : 'missed');
@@ -429,7 +429,7 @@ class TodayController extends GetxController {
     // Once today's dose is logged, the next one can't also be today.
     final first = doseToday == null
         ? today
-        : today.add(const Duration(days: 1));
+        : Dates.addDays(today, 1);
     final current = nextDoseAt;
     final picked = await showKDatePicker(
       context: context,
@@ -437,7 +437,7 @@ class TodayController extends GetxController {
           ? first
           : Dates.dateOnly(current),
       firstDate: first,
-      lastDate: today.add(const Duration(days: 21)),
+      lastDate: Dates.addDays(today, 21),
       title: 'Move this dose to',
       note: 'Only the reminder moves. Check your leaflet or doctor if unsure.',
     );

@@ -240,9 +240,9 @@ void main() {
       await start();
       await setUp(per: 4, left: 3, spare: 1);
       final next = Dates.dateOnly(tracker.nextDoseAt(DateTime.now())!);
-      expect(supply.packLastsUntil, next.add(const Duration(days: 14)));
-      expect(supply.nextPackNeededOn, next.add(const Duration(days: 21)));
-      expect(supply.supplyLastsUntil, next.add(const Duration(days: 42)));
+      expect(supply.packLastsUntil, Dates.addDays(next, 14));
+      expect(supply.nextPackNeededOn, Dates.addDays(next, 21));
+      expect(supply.supplyLastsUntil, Dates.addDays(next, 42));
     });
   });
 

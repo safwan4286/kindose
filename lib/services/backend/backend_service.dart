@@ -70,6 +70,7 @@ class BackendService extends GetxService {
   StreamSubscription<AuthState>? _authSub;
   Future<void>? _googleInit;
   Worker? _changes;
+  StreamSubscription<BoxEvent>? _settingsSub;
   Timer? _autoTimer;
   bool _autoRunning = false;
 
@@ -91,9 +92,33 @@ class BackendService extends GetxService {
 
   Box<dynamic> get _settings => Hive.box<dynamic>('settings');
 
+  /// Settings about this phone or the app itself, not the user's log.
+  /// Changing them never starts a backup (they are still in it).
+  static const Set<String> _phoneOnlyKeys = {
+    _ownerKey,
+    _pendingKey,
+    'installedAt',
+    'clockSeen',
+    'accessConfig',
+    'freeStartOverride',
+    'debugPlus',
+    'appStatusConfig',
+    'bannerDismissed',
+    'offerShows',
+    'offerLastShown',
+    'paywallCloses',
+    'reviewAsked',
+    'reviewLastAt',
+    'guideHoldSecs',
+  };
+
   /// Changes on this phone that aren't in the cloud yet (offline, or the
   /// quiet time hasn't passed).
   final RxBool pending = false.obs;
+
+  /// An automatic backup is planned for the end of the quiet time, so
+  /// [pending] is expected and nothing needs the user.
+  final RxBool autoQueued = false.obs;
 
   StreamSubscription<List<ConnectivityResult>>? _netSub;
 
@@ -201,6 +226,12 @@ class BackendService extends GetxService {
       ?supply?.purchases,
       ?supply?.packStartedAt,
     ], (_) => _scheduleAuto());
+
+    // Settings saved straight to the box (reminders, pens count, Today
+    // layout, visit date…) have no list to watch, so watch the box.
+    _settingsSub = _settings.watch().listen((e) {
+      if (!_phoneOnlyKeys.contains('${e.key}')) _scheduleAuto();
+    });
   }
 
   @override
@@ -208,6 +239,7 @@ class BackendService extends GetxService {
     _authSub?.cancel();
     _netSub?.cancel();
     _changes?.dispose();
+    _settingsSub?.cancel();
     _autoTimer?.cancel();
     super.onClose();
   }
@@ -226,10 +258,12 @@ class BackendService extends GetxService {
     if (autoPaused || !ownsLocal || !hasLocalData) return;
     if (!pending.value) unawaited(_setPending(true));
     _autoTimer?.cancel();
+    autoQueued.value = true;
     _autoTimer = Timer(_autoDelay, _autoBackup);
   }
 
   Future<void> _autoBackup() async {
+    autoQueued.value = false;
     if (autoPaused ||
         _autoRunning ||
         busy.value ||

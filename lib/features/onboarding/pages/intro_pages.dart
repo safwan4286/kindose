@@ -68,12 +68,12 @@ class WelcomePage extends GetView<OnboardingController> {
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    _Perk(PhosphorIconsDuotone.userCircleMinus, 'No account'),
                     _Perk(
-                      PhosphorIconsDuotone.deviceMobile,
-                      'Data stays on your phone',
+                      PhosphorIconsDuotone.cloudCheck,
+                      'Backed up to your account',
                     ),
-                    _Perk(PhosphorIconsDuotone.checkCircle, 'Free tracking'),
+                    _Perk(PhosphorIconsDuotone.fileText, 'Report for your doctor'),
+                    _Perk(PhosphorIconsDuotone.checkCircle, 'Free to start'),
                   ],
                 ),
               ],

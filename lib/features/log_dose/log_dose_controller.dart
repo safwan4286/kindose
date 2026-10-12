@@ -75,7 +75,7 @@ class LogDoseController extends GetxController {
   /// later than now).
   void _startOnDay(DateTime day) {
     final m = tracker.profile.value?.shotMinutes ?? 9 * 60;
-    final at = Dates.dateOnly(day).add(Duration(minutes: m));
+    final at = Dates.atMinutes(day, m);
     final now = DateTime.now();
     takenAt.value = at.isAfter(now) ? now : at;
     timeMode.value = Dates.sameDay(at, now) ? DoseTime.now : DoseTime.pick;
@@ -210,7 +210,7 @@ class LogDoseController extends GetxController {
         final date = await showKDatePicker(
           context: context,
           initialDate: takenAt.value,
-          firstDate: now.subtract(const Duration(days: 90)),
+          firstDate: Dates.addDays(now, -90),
           lastDate: now,
           title: 'When did you take it?',
         );

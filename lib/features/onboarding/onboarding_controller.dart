@@ -505,19 +505,19 @@ class OnboardingController extends GetxController {
       final nowMinutes = DateTime.now().hour * 60 + DateTime.now().minute;
       day = nowMinutes < shotMinutes.value
           ? today
-          : today.add(const Duration(days: 1));
+          : Dates.addDays(today, 1);
     } else {
       final picked = doseDate.value;
       if (picked == null) return null;
       if (asksLastDose) {
-        day = picked.add(Duration(days: every));
+        day = Dates.addDays(picked, every);
         // Last dose long ago: the next one is due today, not in the past.
         if (day.isBefore(today)) day = today;
       } else {
         day = picked;
       }
     }
-    return day.add(Duration(minutes: shotMinutes.value));
+    return Dates.atMinutes(day, shotMinutes.value);
   }
 
   void confirmSchedule() {
@@ -1069,7 +1069,7 @@ class OnboardingController extends GetxController {
     final day = doseDate.value;
     if (!asksLastDose || day == null) return;
     await _tracker.addDose(
-      takenAt: day.add(Duration(minutes: shotMinutes.value)),
+      takenAt: Dates.atMinutes(day, shotMinutes.value),
       site: '',
     );
   }

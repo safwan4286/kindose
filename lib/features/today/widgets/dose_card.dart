@@ -269,17 +269,22 @@ class _Upcoming extends GetView<TodayController> {
           children: [
             Row(
               children: [
+                Text(
+                  first
+                      ? 'YOUR FIRST DOSE'
+                      : week == null
+                      ? 'NEXT DOSE'
+                      : 'NEXT DOSE · WEEK $week',
+                  maxLines: 1,
+                  style: _caps(AppColors.heroMuted),
+                ),
+                SizedBox(width: 12.sp),
                 Expanded(
-                  child: Text(
-                    first
-                        ? 'YOUR FIRST DOSE'
-                        : week == null
-                        ? 'NEXT DOSE'
-                        : 'NEXT DOSE · WEEK $week',
-                    style: _caps(AppColors.heroMuted),
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: _MedicineLine(color: AppColors.heroMuted),
                   ),
                 ),
-                Flexible(child: _MedicineLine(color: AppColors.heroMuted)),
               ],
             ),
             SizedBox(height: 8.sp),

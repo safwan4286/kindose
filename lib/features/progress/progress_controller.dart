@@ -110,9 +110,9 @@ class ProgressController extends GetxController {
     final today = Dates.dateOnly(DateTime.now());
     switch (range.value) {
       case ProgressRange.month:
-        return today.subtract(const Duration(days: PlusAccess.freeHistoryDays));
+        return Dates.addDays(today, -PlusAccess.freeHistoryDays);
       case ProgressRange.quarter:
-        return today.subtract(const Duration(days: 90));
+        return Dates.addDays(today, -90);
       case ProgressRange.all:
         final firstWeight = tracker.weights.isNotEmpty
             ? tracker.weights.first.date
@@ -222,7 +222,7 @@ class ProgressController extends GetxController {
       final days = Dates.daysBetween(from, today) + 1;
       var taken = 0;
       for (var i = 0; i < days; i++) {
-        if (tracker.doseOn(today.subtract(Duration(days: i))) != null) taken++;
+        if (tracker.doseOn(Dates.addDays(today, -i)) != null) taken++;
       }
       return '$taken/$days';
     }
@@ -334,7 +334,7 @@ class ProgressController extends GetxController {
 
   List<DateTime> get last7Days {
     final today = Dates.dateOnly(DateTime.now());
-    return [for (var i = 6; i >= 0; i--) today.subtract(Duration(days: i))];
+    return [for (var i = 6; i >= 0; i--) Dates.addDays(today, -i)];
   }
 
   List<DayBar> get proteinBars {
@@ -379,12 +379,12 @@ class ProgressController extends GetxController {
   /// 4 weeks, Monday first, ending with the current week.
   List<FeelCell> get feelCells {
     final today = Dates.dateOnly(DateTime.now());
-    final monday = today.subtract(Duration(days: today.weekday - 1));
-    final start = monday.subtract(const Duration(days: 21));
+    final monday = Dates.addDays(today, -(today.weekday - 1));
+    final start = Dates.addDays(monday, -21);
     return [
       for (var i = 0; i < 28; i++)
         () {
-          final d = start.add(Duration(days: i));
+          final d = Dates.addDays(start, i);
           final future = d.isAfter(today);
           return FeelCell(
             date: d,

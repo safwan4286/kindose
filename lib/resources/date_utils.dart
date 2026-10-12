@@ -38,6 +38,25 @@ class Dates {
 
   static DateTime dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
 
+  /// [d] moved by [days] calendar days, keeping the clock time. Use this
+  /// instead of `add(Duration(days: n))`: a day is 23 or 25 hours long
+  /// when the clocks change, so adding 24 h can land on the wrong date.
+  static DateTime addDays(DateTime d, int days) => DateTime(
+    d.year,
+    d.month,
+    d.day + days,
+    d.hour,
+    d.minute,
+    d.second,
+    d.millisecond,
+    d.microsecond,
+  );
+
+  /// [day] at [minutes] after midnight on the wall clock ("8:00 AM" stays
+  /// 8:00 AM on the day the clocks change).
+  static DateTime atMinutes(DateTime day, int minutes) =>
+      DateTime(day.year, day.month, day.day, 0, minutes);
+
   static String key(DateTime d) {
     final m = d.month.toString().padLeft(2, '0');
     final day = d.day.toString().padLeft(2, '0');

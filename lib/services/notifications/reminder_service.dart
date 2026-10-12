@@ -257,9 +257,7 @@ class ReminderService extends GetxService {
     if (!_prefs.missedOn.value) return;
     final lateDays = Dates.daysBetween(next, now);
     if (lateDays > 3) return;
-    final tomorrow = Dates.dateOnly(
-      now,
-    ).add(Duration(days: 1, minutes: p.shotMinutes));
+    final tomorrow = Dates.atMinutes(Dates.addDays(now, 1), p.shotMinutes);
     await _notes.scheduleAt(
       id: _followUpId,
       when: tomorrow,
@@ -278,9 +276,7 @@ class ReminderService extends GetxService {
     if (appt == null) return;
     final day = Dates.dateOnly(appt);
     final when = _prefs.outsideQuiet(
-      day
-          .subtract(Duration(days: _prefs.visitDays.value))
-          .add(const Duration(hours: 9)),
+      Dates.atMinutes(Dates.addDays(day, -_prefs.visitDays.value), 9 * 60),
     );
     await _notes.scheduleAt(
       id: _visitId,
@@ -302,7 +298,7 @@ class ReminderService extends GetxService {
     if (!supply.runningLow) return;
     final last = tracker.lastDose?.takenAt ?? DateTime.now();
     final when = _prefs.outsideQuiet(
-      Dates.dateOnly(last).add(const Duration(days: 1, hours: 10)),
+      Dates.atMinutes(Dates.addDays(last, 1), 10 * 60),
     );
     final left = supply.dosesLeft;
     await _notes.scheduleAt(
@@ -326,7 +322,7 @@ class ReminderService extends GetxService {
       return;
     final end = a.endsAt.value;
     final when = _prefs.outsideQuiet(
-      Dates.dateOnly(end).subtract(const Duration(days: 1)).add(const Duration(hours: 10)),
+      Dates.atMinutes(Dates.addDays(end, -1), 10 * 60),
     );
     if (!when.isBefore(end)) return;
     await _notes.scheduleAt(
@@ -372,9 +368,9 @@ class ReminderService extends GetxService {
     var n = 0;
     for (var d = 0; d < 3 && n < _waterMax; d++) {
       if (d == 0 && goalMet) continue;
-      final day = Dates.dateOnly(now).add(Duration(days: d));
-      var when = day.add(Duration(minutes: start));
-      final last = day.add(Duration(minutes: end));
+      final day = Dates.addDays(Dates.dateOnly(now), d);
+      var when = Dates.atMinutes(day, start);
+      final last = Dates.atMinutes(day, end);
       while (!when.isAfter(last) && n < _waterMax) {
         final m = when.hour * 60 + when.minute;
         final ok = when.isAfter(now) &&
@@ -406,9 +402,9 @@ class ReminderService extends GetxService {
     var n = 0;
     for (var d = 0; d < 3 && n < _proteinMax; d++) {
       if (d == 0 && goalMet) continue;
-      final day = Dates.dateOnly(now).add(Duration(days: d));
+      final day = Dates.addDays(Dates.dateOnly(now), d);
       for (final t in times) {
-        final when = day.add(Duration(minutes: t));
+        final when = Dates.atMinutes(day, t);
         if (!when.isAfter(now) || _prefs.isQuiet(t)) continue;
         if (until != null && !when.isBefore(until)) continue;
         await _notes.scheduleAt(
@@ -430,9 +426,9 @@ class ReminderService extends GetxService {
     final takenToday = tracker.doseOn(now) != null;
     var scheduled = 0;
     for (var d = 0; scheduled < _dailyCount && d <= _dailyCount; d++) {
-      final day = Dates.dateOnly(now).add(Duration(days: d));
+      final day = Dates.addDays(Dates.dateOnly(now), d);
       if (d == 0 && takenToday) continue;
-      final when = day.add(Duration(minutes: p.shotMinutes));
+      final when = Dates.atMinutes(day, p.shotMinutes);
       if (!when.isAfter(now)) continue;
       await _notes.scheduleAt(
         id: _dailyFirstId + scheduled,

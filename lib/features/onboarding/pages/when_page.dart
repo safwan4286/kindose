@@ -49,8 +49,8 @@ class WhenPage extends GetView<OnboardingController> {
     final picked = await showKDatePicker(
       context: context,
       initialDate: controller.doseDate.value ?? today,
-      firstDate: past ? today.subtract(const Duration(days: 180)) : today,
-      lastDate: past ? today : today.add(const Duration(days: 365)),
+      firstDate: past ? Dates.addDays(today, -180) : today,
+      lastDate: past ? today : Dates.addDays(today, 365),
       title: past ? 'Your last dose' : 'Your first dose',
     );
     if (picked != null) controller.pickDoseDate(picked);
@@ -99,8 +99,8 @@ class WhenPage extends GetView<OnboardingController> {
               final days = [
                 for (var i = 0; i < _stripDays; i++)
                   past
-                      ? today.subtract(Duration(days: i))
-                      : today.add(Duration(days: i)),
+                      ? Dates.addDays(today, -i)
+                      : Dates.addDays(today, i),
               ];
               final outside = selected != null && !days.contains(selected);
               return ListView.separated(

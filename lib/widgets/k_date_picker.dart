@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 import '../resources/colors.dart';
+import '../resources/date_utils.dart';
 import '../services/haptics/haptics.dart';
 import '../services/responsiveness/device_manager.dart';
 import '../services/theme/theme.dart';
@@ -242,7 +243,7 @@ class _KDatePickerState extends State<_KDatePicker> {
                 SizedBox(width: 8.sp),
                 _QuickChip(
                   label: 'Yesterday',
-                  onTap: () => _pick(today.subtract(const Duration(days: 1))),
+                  onTap: () => _pick(Dates.addDays(today, -1)),
                 ),
               ],
             ],

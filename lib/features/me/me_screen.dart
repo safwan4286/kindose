@@ -170,6 +170,9 @@ class MeScreen extends GetView<MeController> {
                   ),
                 _NavRow(
                   label: 'Delete all my data',
+                  sub: c.signedIn
+                      ? 'Erases this phone and signs out. Cloud backup stays'
+                      : 'Erases everything on this phone',
                   danger: true,
                   onTap: c.confirmDeleteAll,
                 ),
@@ -319,7 +322,7 @@ class _PlanCard extends StatelessWidget {
                     ),
                     SizedBox(height: 2.sp),
                     Text(
-                      c.planTitle,
+                      c.medicineTitle,
                       maxLines: 2,
                       style: AppText.h2.copyWith(
                         fontSize: 21.sp,
@@ -677,7 +680,7 @@ class _SignedInBackup extends StatelessWidget {
                 width: 10.sp,
                 height: 10.sp,
                 decoration: BoxDecoration(
-                  color: controller.syncWaiting
+                  color: controller.syncWaiting && !controller.syncSoon
                       ? const Color(0xFFF0B44C)
                       : const Color(0xFF5DBB63),
                   shape: BoxShape.circle,
@@ -699,7 +702,9 @@ class _SignedInBackup extends StatelessWidget {
                       ),
                       SizedBox(height: 2.sp),
                       Text(
-                        controller.syncWaiting
+                        controller.syncSoon
+                            ? 'Saved on this phone'
+                            : controller.syncWaiting
                             ? 'Saved on this phone · syncs when you’re online'
                             : 'Syncs by itself after changes',
                         maxLines: 2,
@@ -717,7 +722,9 @@ class _SignedInBackup extends StatelessWidget {
               if (controller.syncWaiting) ...[
                 SizedBox(width: 8.sp),
                 SoftButton(
-                  label: busy ? 'Syncing…' : 'Retry',
+                  label: busy
+                      ? 'Syncing…'
+                      : (controller.syncSoon ? 'Sync now' : 'Retry'),
                   background: k.cardAlt,
                   height: 36,
                   onPressed: busy ? null : controller.backupNow,

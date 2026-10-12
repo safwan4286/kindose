@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../resources/routes.dart';
+import '../../resources/date_utils.dart';
 import '../haptics/haptics.dart';
 import '../tracker_service.dart';
 import 'plus_access.dart';
@@ -161,9 +162,10 @@ class AccessService extends GetxService with WidgetsBindingObserver {
 
     final override = kDebugMode ? _settings.get(_overrideKey) : null;
     final first = _firstDose;
-    final byInstall = _date(
-      _installKey,
-    ).add(Duration(days: c.startAfterInstallDays));
+    final byInstall = Dates.addDays(
+      _date(_installKey),
+      c.startAfterInstallDays,
+    );
     final DateTime start;
     if (override is int) {
       start = DateTime.fromMillisecondsSinceEpoch(override);
@@ -173,7 +175,7 @@ class AccessService extends GetxService with WidgetsBindingObserver {
       start = byInstall;
     }
     startsAt.value = start;
-    endsAt.value = start.add(Duration(days: c.freeDays));
+    endsAt.value = Dates.addDays(start, c.freeDays);
     started.value = override is int || first != null || !t.isBefore(byInstall);
     PlusAccess.freeWeek.value = !c.gatingOn || t.isBefore(endsAt.value);
   }

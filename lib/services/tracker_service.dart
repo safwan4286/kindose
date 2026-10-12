@@ -303,7 +303,7 @@ class TrackerService extends GetxService {
     final moved = nextDoseOverride.value;
     if (moved != null &&
         (last == null || moved.isAfter(Dates.dateOnly(last.takenAt)))) {
-      return moved.add(Duration(minutes: p.shotMinutes));
+      return Dates.atMinutes(moved, p.shotMinutes);
     }
 
     if (last == null &&
@@ -313,19 +313,15 @@ class TrackerService extends GetxService {
       day = Dates.dateOnly(planned);
     } else if (p.isDaily) {
       day = (last != null && Dates.sameDay(last.takenAt, now))
-          ? today.add(const Duration(days: 1))
+          ? Dates.addDays(today, 1)
           : today;
     } else if (last == null) {
       final ahead = (p.shotWeekday - today.weekday + 7) % 7;
-      day = today.add(Duration(days: ahead));
+      day = Dates.addDays(today, ahead);
     } else {
       day = _nextDay(last.takenAt, p.everyDays, p.shotWeekday);
     }
-    return DateTime(
-      day.year,
-      day.month,
-      day.day,
-    ).add(Duration(minutes: p.shotMinutes));
+    return Dates.atMinutes(day, p.shotMinutes);
   }
 
   /// When the next dose would be if one is taken at [takenAt]. Pass
@@ -334,21 +330,21 @@ class TrackerService extends GetxService {
     final p = profile.value;
     if (p == null) return null;
     final day = p.isDaily
-        ? Dates.dateOnly(takenAt).add(const Duration(days: 1))
+        ? Dates.addDays(Dates.dateOnly(takenAt), 1)
         : _nextDay(takenAt, p.everyDays, weekday ?? p.shotWeekday);
-    return day.add(Duration(minutes: p.shotMinutes));
+    return Dates.atMinutes(day, p.shotMinutes);
   }
 
   /// [everyDays] after [from], snapped to [weekday] for weekly and
   /// two-weekly plans when the dose was a day or three early or late.
   DateTime _nextDay(DateTime from, int everyDays, int weekday) {
-    var day = Dates.dateOnly(from).add(Duration(days: everyDays));
+    var day = Dates.addDays(Dates.dateOnly(from), everyDays);
     if (everyDays == 7 || everyDays == 14) {
       final shift = (weekday - day.weekday + 7) % 7;
       if (shift != 0 && shift <= 3) {
-        day = day.add(Duration(days: shift));
+        day = Dates.addDays(day, shift);
       } else if (shift != 0) {
-        day = day.subtract(Duration(days: 7 - shift));
+        day = Dates.addDays(day, -(7 - shift));
       }
     }
     return day;
@@ -505,11 +501,11 @@ class TrackerService extends GetxService {
     }
 
     var day = Dates.dateOnly(DateTime.now());
-    if (!active(day)) day = day.subtract(const Duration(days: 1));
+    if (!active(day)) day = Dates.addDays(day, -1);
     var n = 0;
     while (n < 3650 && active(day)) {
       n++;
-      day = day.subtract(const Duration(days: 1));
+      day = Dates.addDays(day, -1);
     }
     return n;
   }

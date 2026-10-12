@@ -108,13 +108,13 @@ class ReportController extends GetxController {
     final first = Dates.dateOnly(now);
     final saved = nextAppointment;
     final initial = (saved == null || saved.isBefore(first))
-        ? now.add(const Duration(days: 7))
+        ? Dates.addDays(now, 7)
         : saved;
     final picked = await showKDatePicker(
       context: context,
       initialDate: initial,
       firstDate: first,
-      lastDate: now.add(const Duration(days: 365)),
+      lastDate: Dates.addDays(now, 365),
       title: 'Next appointment',
       note: 'We’ll remind you 3 days before.',
     );
@@ -175,15 +175,15 @@ class ReportController extends GetxController {
       case ReportPeriod.lastVisit:
         return Dates.dateOnly(
           tracker.lastAppointment.value ??
-              today.subtract(const Duration(days: 27)),
+              Dates.addDays(today, -27),
         );
       case ReportPeriod.weeks4:
-        return today.subtract(const Duration(days: 27));
+        return Dates.addDays(today, -27);
       case ReportPeriod.months3:
-        return today.subtract(const Duration(days: 90));
+        return Dates.addDays(today, -90);
       case ReportPeriod.all:
         return Dates.dateOnly(
-          _treatmentStart ?? today.subtract(const Duration(days: 27)),
+          _treatmentStart ?? Dates.addDays(today, -27),
         );
     }
   }

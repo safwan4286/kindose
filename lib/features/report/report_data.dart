@@ -88,7 +88,7 @@ class ReportData {
     String? patientDob,
   }) {
     final start = Dates.dateOnly(from);
-    final end = Dates.dateOnly(to).add(const Duration(days: 1));
+    final end = Dates.addDays(Dates.dateOnly(to), 1);
     bool inRange(DateTime d) => !d.isBefore(start) && d.isBefore(end);
     final p = t.profile.value;
 
@@ -352,7 +352,7 @@ class ReportData {
     final first = periodWeights.first.kg;
     final last = periodWeights.last.kg;
     final since = startKg > 0 ? ' · ${signed(last - startKg)} since start' : '';
-    return '${weight(first)} to ${weight(last)}$since';
+    return '${weight(first)} to ${weight(last)} $unit$since';
   }
 
   String get dosesValue => '$onSchedule of ${doses.length}';

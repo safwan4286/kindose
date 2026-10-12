@@ -194,27 +194,13 @@ class MeController extends GetxController {
     return 'YOUR PLAN · WEEK ${Dates.daysBetween(start, now) ~/ 7 + 1}';
   }
 
-  // String get planTitle {
-  //   final p = tracker.profile.value;
-  //   if (p == null || !hasMedicine) return 'Add your medicine';
-  //   final dose = p.strengthMg > 0 ? ' ${Catalog.mgLabel(p.strengthMg)}' : '';
-  //   return '${Catalog.medicineName(p.medicineId, p.customMedicine)}$dose';
-  // }
-  //
-  // String get planSub {
-  //   final p = tracker.profile.value;
-  //   if (p == null || !hasMedicine)
-  //     return 'So we can remind you and track your doses.';
-  //   final time = Dates.timeOfDay(p.shotMinutes);
-  //   final day = Dates.weekdayName(p.shotWeekday);
-  //   final when = switch (p.everyDays) {
-  //     1 => 'Every day at $time',
-  //     7 => '${day}s at $time',
-  //     14 => 'Every other $day at $time',
-  //     _ => 'Every ${p.everyDays} days at $time',
-  //   };
-  //   return '${Catalog.formLabel(p.form)} · $when';
-  // }
+  /// "Mounjaro® 7.5 mg", or a prompt when no medicine is chosen yet.
+  String get medicineTitle {
+    final p = tracker.profile.value;
+    if (p == null || !hasMedicine) return 'Add your medicine';
+    final dose = p.strengthMg > 0 ? ' ${Catalog.mgLabel(p.strengthMg)}' : '';
+    return '${Catalog.medicineName(p.medicineId, p.customMedicine)}$dose';
+  }
 
   String get formLabel {
     final p = tracker.profile.value;
@@ -230,7 +216,7 @@ class MeController extends GetxController {
     if (p == null) return '—';
     return switch (p.everyDays) {
       1 => 'Daily',
-      7 => '${Dates.weekdayShort(p.shotWeekday)}s',
+      7 => '${Dates.weekdayName(p.shotWeekday)}s',
       14 => 'Every 2nd ${Dates.weekdayShort(p.shotWeekday)}',
       _ => 'Every ${p.everyDays} days',
     };
@@ -496,6 +482,9 @@ class MeController extends GetxController {
 
   /// Changes on the phone that aren't in the account yet.
   bool get syncWaiting => backend.pending.value;
+
+  /// Waiting only for the short quiet time after a change, not offline.
+  bool get syncSoon => backend.pending.value && backend.autoQueued.value;
   String get accountEmail => backend.email ?? 'your account';
 
   /// "Signed in with Google" / "Signed in with Apple".
@@ -514,7 +503,9 @@ class MeController extends GetxController {
   /// "Backed up today, 9:41 PM" / "Not backed up yet".
   String get backupLine {
     if (backend.busy.value) return 'Syncing…';
-    if (backend.pending.value) return 'Changes waiting to sync';
+    if (backend.pending.value) {
+      return syncSoon ? 'Syncing in a moment' : 'Changes waiting to sync';
+    }
     final at = backend.lastBackupAt.value;
     if (at == null) return 'Not synced yet';
     final mins = DateTime.now().difference(at).inMinutes;

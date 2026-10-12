@@ -1,6 +1,8 @@
 import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
+import '../../resources/date_utils.dart';
+
 /// Per-reminder choices from Me → Notifications. Saved in the settings box
 /// (so cloud backup includes them).
 ///
@@ -103,9 +105,8 @@ class NotifPrefs extends GetxService {
   DateTime outsideQuiet(DateTime when) {
     final m = when.hour * 60 + when.minute;
     if (!isQuiet(m)) return when;
-    final day = DateTime(when.year, when.month, when.day);
-    var end = day.add(Duration(minutes: quietEnd.value));
-    if (!end.isAfter(when)) end = end.add(const Duration(days: 1));
+    var end = Dates.atMinutes(when, quietEnd.value);
+    if (!end.isAfter(when)) end = Dates.addDays(end, 1);
     return end;
   }
 }

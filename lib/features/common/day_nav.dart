@@ -26,8 +26,8 @@ mixin DayNav on GetxController {
   DateTime get firstDay {
     final p = _navProfile;
     final start = p?.treatmentStartedAt ?? p?.startedAt ?? today;
-    final earliest = Dates.dateOnly(start).subtract(const Duration(days: 30));
-    final twoYears = today.subtract(const Duration(days: 730));
+    final earliest = Dates.addDays(Dates.dateOnly(start), -30);
+    final twoYears = Dates.addDays(today, -730);
     return earliest.isBefore(twoYears) ? twoYears : earliest;
   }
 
@@ -37,7 +37,7 @@ mixin DayNav on GetxController {
   /// "Today", "Yesterday" or "Mon, 28 Sep".
   String get dayTitle {
     if (isToday) return 'Today';
-    if (Dates.sameDay(day.value, today.subtract(const Duration(days: 1))))
+    if (Dates.sameDay(day.value, Dates.addDays(today, -1)))
       return 'Yesterday';
     return Dates.shortWithDay(day.value);
   }
@@ -61,13 +61,13 @@ mixin DayNav on GetxController {
   }
 
   void previousDay() {
-    final prev = day.value.subtract(const Duration(days: 1));
+    final prev = Dates.addDays(day.value, -1);
     if (prev.isBefore(firstDay)) return;
     setDay(prev);
   }
 
   void nextDay() {
-    if (canGoForward) setDay(day.value.add(const Duration(days: 1)));
+    if (canGoForward) setDay(Dates.addDays(day.value, 1));
   }
 
   void backToToday() => setDay(today);

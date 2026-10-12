@@ -42,7 +42,7 @@ class ReportScreen extends GetView<ReportController> {
             ).enter(motion),
             SizedBox(height: 6.sp),
             Text(
-              'Only what you logged. Nothing is sent anywhere unless you share it.',
+              'Only what you logged. It goes to no one unless you share it.',
               style: AppText.bodyStrong.copyWith(
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w600,

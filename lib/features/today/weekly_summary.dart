@@ -45,7 +45,7 @@ class WeeklySummary {
   /// Monday of the week before [now].
   static DateTime lastWeekStart(DateTime now) {
     final today = Dates.dateOnly(now);
-    return today.subtract(Duration(days: today.weekday - 1 + 7));
+    return Dates.addDays(today, -(today.weekday - 1 + 7));
   }
 
   /// Null when last week has fewer than [minLoggedDays] logged days.
@@ -53,7 +53,7 @@ class WeeklySummary {
     final p = t.profile.value;
     if (p == null) return null;
     final start = lastWeekStart(now);
-    final days = [for (var i = 0; i < 7; i++) start.add(Duration(days: i))];
+    final days = [for (var i = 0; i < 7; i++) Dates.addDays(start, i)];
     final logs = [for (final d in days) t.dayLog(d)];
     final doses = t.doses.where((d) => _inWeek(d.takenAt, start)).toList();
     final weights = t.weights.where((w) => _inWeek(w.date, start)).toList();
@@ -108,12 +108,12 @@ class WeeklySummary {
   static bool _inWeek(DateTime d, DateTime start) {
     final day = Dates.dateOnly(d);
     return !day.isBefore(start) &&
-        day.isBefore(start.add(const Duration(days: 7)));
+        day.isBefore(Dates.addDays(start, 7));
   }
 
   /// "21–27 Sep" / "Sep 21–27", or "28 Sep – 4 Oct" across months.
   static String _range(DateTime start) {
-    final end = start.add(const Duration(days: 6));
+    final end = Dates.addDays(start, 6);
     return start.month == end.month
         ? (Dates.monthFirst
               ? '${Dates.monthShort(end.month)} ${start.day}–${end.day}'
@@ -124,7 +124,7 @@ class WeeklySummary {
   static int? _weekOf(TrackerService t, UserProfile p, DateTime start) {
     final began =
         p.treatmentStartedAt ?? (t.doses.isEmpty ? null : t.doses.last.takenAt);
-    if (began == null || began.isAfter(start.add(const Duration(days: 6))))
+    if (began == null || began.isAfter(Dates.addDays(start, 6)))
       return null;
     final days = Dates.daysBetween(began, start);
     return days < 0 ? 1 : days ~/ 7 + 1;
@@ -138,7 +138,7 @@ class WeeklySummary {
     List<WeightEntry> week,
   ) {
     final before = t.weights
-        .where((w) => _inWeek(w.date, start.subtract(const Duration(days: 7))))
+        .where((w) => _inWeek(w.date, Dates.addDays(start, -7)))
         .toList();
     if (week.isEmpty || before.isEmpty) return null;
     double avg(List<WeightEntry> l) =>

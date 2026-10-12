@@ -130,7 +130,7 @@ class SupplyService extends GetxService {
 
   /// Doses that count against pens started at [start].
   int _loggedSince(DateTime start) {
-    final earliest = start.subtract(const Duration(days: 2));
+    final earliest = Dates.addDays(start, -2);
     return tracker.doses
         .where(
           (d) => !loggedAt(d).isBefore(start) && !d.takenAt.isBefore(earliest),
@@ -185,7 +185,7 @@ class SupplyService extends GetxService {
     final p = tracker.profile.value;
     final next = tracker.nextDoseAt(DateTime.now());
     if (p == null || next == null) return null;
-    return Dates.dateOnly(next).add(Duration(days: p.everyDays * n));
+    return Dates.addDays(Dates.dateOnly(next), p.everyDays * n);
   }
 
   /// Doses left at which the refill reminder fires: 1 for weekly pens,
