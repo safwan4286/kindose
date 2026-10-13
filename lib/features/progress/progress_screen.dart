@@ -83,9 +83,8 @@ class ProgressScreen extends GetView<ProgressController> {
             SizedBox(height: 12.sp),
             _FeelCard(controller: controller).enter(motion, delay: 200),
             SizedBox(height: 12.sp),
-            _ReportNudge(
-              onTap: controller.openReport,
-            ).enter(motion, delay: 230),
+            _ReportNudge(onTap: controller.openReport)
+                .enter(motion, delay: 230),
           ],
         );
       }),
@@ -236,7 +235,9 @@ class _WeightCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Semantics(
-                  label: controller.hasWeights
+                  label: controller.noChange
+                      ? 'Weight since you started: no change yet. ${controller.changeLine}'
+                      : controller.hasWeights
                       ? 'Weight since you started: ${controller.changeNumber} ${controller.unit}. ${controller.changeLine}'
                       : 'No weigh-ins yet',
                   excludeSemantics: true,
@@ -245,26 +246,37 @@ class _WeightCard extends StatelessWidget {
                     children: [
                       Text('WEIGHT · SINCE YOU STARTED', style: _caps(context)),
                       SizedBox(height: 6.sp),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.baseline,
-                        textBaseline: TextBaseline.alphabetic,
-                        children: [
-                          Text(
-                            controller.changeNumber,
-                            style: AppText.number(
-                              40.sp,
-                            ).copyWith(color: k.text),
-                          ),
-                          SizedBox(width: 6.sp),
-                          Text(
-                            controller.unit,
-                            style: AppText.title.copyWith(
-                              fontSize: 16.sp,
-                              color: k.muted,
+                      if (controller.noChange)
+                        Padding(
+                          padding: EdgeInsets.symmetric(vertical: 6.sp),
+                          child: Text(
+                            'No change yet',
+                            style: AppText.h2.copyWith(
+                              fontSize: 26.sp,
+                              color: k.text,
                             ),
                           ),
-                        ],
-                      ),
+                        )
+                      else
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                          textBaseline: TextBaseline.alphabetic,
+                          children: [
+                            Text(
+                              controller.changeNumber,
+                              style: AppText.number(40.sp)
+                                  .copyWith(color: k.text),
+                            ),
+                            SizedBox(width: 6.sp),
+                            Text(
+                              controller.unit,
+                              style: AppText.title.copyWith(
+                                fontSize: 16.sp,
+                                color: k.muted,
+                              ),
+                            ),
+                          ],
+                        ),
                       if (controller.changeLine.isNotEmpty) ...[
                         SizedBox(height: 4.sp),
                         Text(
@@ -488,7 +500,11 @@ class _DosesCard extends StatelessWidget {
           SizedBox(height: 10.sp),
           Row(
             children: [
-              stat(controller.onTimeValue, controller.onTimeSub, lime: true),
+              stat(
+                controller.onTimeValue,
+                controller.onTimeSub,
+                lime: controller.onTimeGood,
+              ),
               SizedBox(width: 8.sp),
               stat(controller.currentDose, controller.currentDoseSince),
               SizedBox(width: 8.sp),
@@ -688,9 +704,8 @@ class _BarsCard extends StatelessWidget {
                                     child: Text(
                                       Dates.sameDay(b.date, today)
                                           ? 'Tdy'
-                                          : Dates.weekdayShort(
-                                              b.date.weekday,
-                                            ).substring(0, 1),
+                                          : Dates.weekdayShort(b.date.weekday)
+                                                .substring(0, 1),
                                       style: AppText.tiny.copyWith(
                                         fontSize: 11.sp,
                                         fontWeight: FontWeight.w800,

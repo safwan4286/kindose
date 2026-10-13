@@ -81,7 +81,7 @@ class HeightPage extends GetView<OnboardingController> {
               () => KSegmented<bool>(
                 options: const [true, false],
                 selected: controller.heightInCm.value,
-                onChanged: (v) => controller.heightInCm.value = v,
+                onChanged: controller.setHeightInCm,
                 labelOf: (v) => v ? 'cm' : 'ft · in',
               ),
             ),

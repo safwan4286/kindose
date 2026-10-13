@@ -60,7 +60,7 @@ class SexPage extends GetView<OnboardingController> {
         mainAxisSize: MainAxisSize.min,
         children: [
           const PrivacyNote(
-            'Stays on this phone. You can change or remove it in Me.',
+            'Private to your account, and only used for your goals.',
           ).enter(motion, delay: 420, dy: 0.1),
           SizedBox(height: 10.sp),
           const TapHint('Tap one to continue').enter(motion, delay: 480, dy: 0),

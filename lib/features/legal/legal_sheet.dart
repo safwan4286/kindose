@@ -81,10 +81,11 @@ class LegalSheet extends StatelessWidget {
                     body: 'Kindose is for people aged 18 or older.',
                   ),
                   const _Block(
-                    title: 'Your data stays on this phone',
+                    title: 'Where your data lives',
                     body:
-                        'There is no account and no server. What you log is stored only on this device. '
-                        'You can export it or delete all of it at any time from Me.',
+                        'What you log is saved on this phone and backed up to your Kindose account, so a new phone '
+                        'only needs a sign-in. We never sell your data. From Me you can export it, or delete your '
+                        'account and its backup, at any time.',
                   ),
                   const _Block(
                     title: 'Medicine names',

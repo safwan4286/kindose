@@ -13,8 +13,8 @@ import '../../resources/app_links.dart';
 class ReviewService {
   ReviewService._();
 
-  /// When to ask.
-  static const String onboarding = 'onboarding';
+  /// When to ask. Not during onboarding: nobody has used the app yet, and
+  /// that ask's [minGap] would block the first-dose one.
   static const String firstDose = 'firstDose';
 
   static const Duration minGap = Duration(days: 3);

@@ -9,6 +9,7 @@ import '../../services/theme/theme.dart';
 import '../../widgets/buttons.dart';
 import '../../widgets/entrance.dart';
 import '../../widgets/k_widgets.dart';
+import '../plus/plus_screen.dart';
 import 'offer_controller.dart';
 
 /// One-time discount after closing the paywall (canvas E2). Close and
@@ -98,14 +99,20 @@ class OfferScreen extends GetView<OfferController> {
                     ),
                     SizedBox(height: 8.sp),
                     KBottomPadding(
-                      child: Text(
-                        c.finePrint,
-                        textAlign: TextAlign.center,
-                        style: AppText.small.copyWith(
-                          fontSize: 12.5.sp,
-                          height: 1.4,
-                          color: k.muted,
-                        ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            controller.finePrint,
+                            textAlign: TextAlign.center,
+                            style: AppText.small.copyWith(
+                              fontSize: 12.5.sp,
+                              height: 1.4,
+                              color: k.muted,
+                            ),
+                          ),
+                          const PaywallLinks(),
+                        ],
                       ),
                     ),
                     // LinkButton(label: 'No thanks', onTap: controller.close, color: k.muted),
@@ -286,7 +293,7 @@ class _PriceCard extends StatelessWidget {
           ),
           SizedBox(height: 4.sp),
           Text(
-            c.priceNote,
+            controller.priceNote,
             style: AppText.small.copyWith(
               fontSize: 13.sp,
               fontWeight: FontWeight.w700,

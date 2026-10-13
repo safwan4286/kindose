@@ -133,6 +133,13 @@ class ProgressController extends GetxController {
   double get startKg => tracker.startWeightKg;
   double? get latestKg => tracker.latestWeightKg;
 
+  /// Weighed, but within 0.05 of the start (shown as "No change yet").
+  bool get noChange {
+    final now = latestKg;
+    if (now == null || startKg <= 0) return false;
+    return shown(now - startKg).abs() <= 0.05;
+  }
+
   /// "−7.8" (sign + number, no unit).
   String get changeNumber {
     final now = latestKg;
@@ -145,6 +152,7 @@ class ProgressController extends GetxController {
   String get changeLine {
     final now = latestKg;
     if (now == null || startKg <= 0) return '';
+    if (noChange) return 'Same as your start, ${fmt(now)} $unit';
     final pct = (now - startKg).abs() / startKg * 100;
     return '${fmt(startKg)} → ${fmt(now)} $unit · ${pct.toStringAsFixed(1)}% of your start';
   }
@@ -212,8 +220,19 @@ class ProgressController extends GetxController {
   /// daily plans days taken out of days since the first dose ("5/6"),
   /// never counting days before treatment started.
   String get onTimeValue {
+    final (ok, total) = _onTime;
+    return total == 0 ? '0' : '$ok/$total';
+  }
+
+  /// Worth celebrating: at least 3 in 4 on time (highlighted tile).
+  bool get onTimeGood {
+    final (ok, total) = _onTime;
+    return total > 0 && ok / total >= 0.75;
+  }
+
+  (int, int) get _onTime {
     final p = profile;
-    if (p == null || tracker.doses.isEmpty) return '0';
+    if (p == null || tracker.doses.isEmpty) return (0, 0);
     final start = rangeStart;
     final today = Dates.dateOnly(DateTime.now());
     if (p.isDaily) {
@@ -224,7 +243,7 @@ class ProgressController extends GetxController {
       for (var i = 0; i < days; i++) {
         if (tracker.doseOn(Dates.addDays(today, -i)) != null) taken++;
       }
-      return '$taken/$days';
+      return (taken, days);
     }
     final list = tracker.doses.reversed.toList(); // oldest first
     var ok = 0;
@@ -240,7 +259,7 @@ class ProgressController extends GetxController {
       final gap = Dates.daysBetween(list[i - 1].takenAt, list[i].takenAt);
       if ((gap - p.everyDays).abs() <= 1) ok++;
     }
-    return total == 0 ? '0' : '$ok/$total';
+    return (ok, total);
   }
 
   String get onTimeSub => isDaily ? 'days taken' : 'on time';

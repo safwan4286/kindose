@@ -473,6 +473,10 @@ class _NextDoseCard extends GetView<OnboardingController> {
     return Obx(() {
       // nextDosePreview reads the date, time and frequency, so Obx rebuilds on each.
       final next = controller.nextDosePreview;
+      final first = !controller.asksLastDose;
+      // Starting today at a time that has already gone by.
+      final passed =
+          first && next != null && next.isBefore(DateTime.now());
       return AnimatedSwitcher(
         duration: const Duration(milliseconds: 250),
         transitionBuilder: (child, anim) => FadeTransition(
@@ -492,7 +496,7 @@ class _NextDoseCard extends GetView<OnboardingController> {
                   Semantics(
                     liveRegion: true,
                     label:
-                        'Next dose ${Dates.shortWithDay(next)} at ${Dates.time(next)}',
+                        '${first ? 'First' : 'Next'} dose ${Dates.shortWithDay(next)} at ${Dates.time(next)}',
                     excludeSemantics: true,
                     child: Container(
                       padding: EdgeInsets.fromLTRB(16.sp, 16.sp, 18.sp, 16.sp),
@@ -539,7 +543,7 @@ class _NextDoseCard extends GetView<OnboardingController> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'NEXT DOSE',
+                                  first ? 'FIRST DOSE' : 'NEXT DOSE',
                                   style: AppText.caps.copyWith(
                                     fontSize: 12.sp,
                                     letterSpacing: 1,
@@ -564,12 +568,18 @@ class _NextDoseCard extends GetView<OnboardingController> {
                   Padding(
                     padding: EdgeInsets.fromLTRB(4.sp, 12.sp, 4.sp, 0),
                     child: Text(
-                      '${_rhythm(controller.everyDays, next)} You can move it any time.',
+                      passed
+                          ? '${Dates.time(next)} has already passed today. Pick a later time or day, or log the dose on Home once you take it.'
+                          : '${_rhythm(controller.everyDays, next)} You can move it any time.',
                       style: AppText.small.copyWith(
                         fontSize: 12.sp,
                         height: 1.45,
-                        fontWeight: FontWeight.w500,
-                        color: k.faint,
+                        fontWeight: passed ? FontWeight.w700 : FontWeight.w500,
+                        color: passed
+                            ? (dark
+                                  ? const Color(0xFFF0B44C)
+                                  : AppColors.amberText)
+                            : k.faint,
                       ),
                     ),
                   ),

@@ -33,7 +33,7 @@ class WeightPage extends GetView<OnboardingController> {
             kg: controller.weightKg.value,
             useKg: controller.useKg.value,
             onKg: controller.setWeight,
-            onUnit: (v) => controller.useKg.value = v,
+            onUnit: controller.setUseKg,
             typeTitle: 'Weight today',
             minKg: OnboardingController.minWeightKg,
             maxKg: OnboardingController.maxWeightKg,

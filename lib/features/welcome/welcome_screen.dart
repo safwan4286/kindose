@@ -425,6 +425,9 @@ class _Phone extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
+    // Sample dose 3 days out, so the countdown matches the date shown.
+    final dose = Dates.atMinutes(Dates.addDays(now, 3), 9 * 60);
+    final left = dose.difference(now);
     final dark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: width,
@@ -524,14 +527,14 @@ class _Phone extends StatelessWidget {
                       ),
                       SizedBox(height: 4.sp),
                       Text(
-                        '2d 14h',
+                        '${left.inDays}d ${left.inHours % 24}h',
                         style: AppText.number(
                           28.sp,
                         ).copyWith(color: AppColors.lime, letterSpacing: -1.sp),
                       ),
                       SizedBox(height: 5.sp),
                       Text(
-                        'Sunday · 9:00 AM · left belly',
+                        '${Dates.weekdayName(dose.weekday)} · 9:00 AM · left belly',
                         style: AppText.tiny.copyWith(
                           fontSize: 8.sp,
                           color: const Color(0xFFE8E7F5),

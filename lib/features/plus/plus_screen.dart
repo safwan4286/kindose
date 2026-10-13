@@ -118,11 +118,7 @@ class PlusScreen extends GetView<PlusController> {
                             ),
                           ),
                           SizedBox(height: 2.sp),
-                          _FooterLinks(
-                            onTerms: () => AppLinks.open(AppLinks.termsUrl),
-                            onPrivacy: () => AppLinks.open(AppLinks.privacyUrl),
-                            onRestore: controller.restore,
-                          ),
+                          PaywallLinks(onRestore: controller.restore),
                           LinkButton(
                             label: controller.secondary,
                             color: k.text,
@@ -414,17 +410,12 @@ class _Perks extends StatelessWidget {
 
 // ------------------------------------------------------------ footer links
 
-/// "Terms · Privacy · Restore" under the button, as the stores expect.
-class _FooterLinks extends StatelessWidget {
-  const _FooterLinks({
-    required this.onTerms,
-    required this.onPrivacy,
-    required this.onRestore,
-  });
+/// "Terms · Privacy · Restore" under a buy button, as the stores expect.
+/// Also used by the offer screen (without Restore).
+class PaywallLinks extends StatelessWidget {
+  const PaywallLinks({super.key, this.onRestore});
 
-  final VoidCallback onTerms;
-  final VoidCallback onPrivacy;
-  final VoidCallback onRestore;
+  final VoidCallback? onRestore;
 
   @override
   Widget build(BuildContext context) {
@@ -451,11 +442,10 @@ class _FooterLinks extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        link('Terms', onTerms),
+        link('Terms', () => AppLinks.open(AppLinks.termsUrl)),
         dot(),
-        link('Privacy', onPrivacy),
-        dot(),
-        link('Restore', onRestore),
+        link('Privacy', () => AppLinks.open(AppLinks.privacyUrl)),
+        if (onRestore != null) ...[dot(), link('Restore', onRestore!)],
       ],
     );
   }

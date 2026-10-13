@@ -67,12 +67,16 @@ class StepInputPanel extends StatelessWidget {
     required this.child,
     required this.onContinue,
     this.continueLabel = 'Continue',
+    this.error,
   });
 
   final String? label;
   final Widget child;
   final VoidCallback? onContinue;
   final String continueLabel;
+
+  /// Why Continue is off ("Enter 100 mg or less"), under the field.
+  final String? error;
 
   @override
   Widget build(BuildContext context) {
@@ -93,6 +97,23 @@ class StepInputPanel extends StatelessWidget {
             ),
           ),
         child,
+        if (error != null)
+          Padding(
+            padding: EdgeInsets.only(left: 4.sp, top: 8.sp),
+            child: Semantics(
+              liveRegion: true,
+              child: Text(
+                error!,
+                style: AppText.small.copyWith(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w700,
+                  color: context.k.selectedBorder == AppColors.lime
+                      ? const Color(0xFFFF8A80)
+                      : AppColors.danger,
+                ),
+              ),
+            ),
+          ),
         SizedBox(height: 12.sp),
         KBottomPadding(
           child: PillButton(label: continueLabel, onPressed: onContinue),

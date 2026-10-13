@@ -228,6 +228,7 @@ class _CustomDosePanel extends GetView<OnboardingController> {
     return Obx(
       () => StepInputPanel(
         label: 'Your dose',
+        error: controller.customDoseError,
         onContinue: controller.customDoseMg != null
             ? controller.confirmCustomDose
             : null,

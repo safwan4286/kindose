@@ -63,6 +63,40 @@ class OfferController extends GetxController {
     return '${PurchaseService.monthlyOf(intro?.priceString ?? p.priceString, intro?.price ?? p.price)}/mo';
   }
 
+  /// What the offer renews at, from the store. With a one-year intro
+  /// price that is the product's own price; with no intro the product
+  /// simply renews at the price paid. Null until the store loads, or for
+  /// any other intro shape (then the config text is used).
+  ({String today, String renews})? get _terms {
+    final p = _offer?.storeProduct;
+    if (p == null) return null;
+    final intro = p.introductoryPrice;
+    if (intro == null) return (today: p.priceString, renews: p.priceString);
+    final oneYear =
+        (intro.periodUnit == PeriodUnit.year &&
+            intro.periodNumberOfUnits * intro.cycles == 1) ||
+        (intro.periodUnit == PeriodUnit.month &&
+            intro.periodNumberOfUnits * intro.cycles == 12);
+    return oneYear ? (today: intro.priceString, renews: p.priceString) : null;
+  }
+
+  /// Under the price. Built from store prices so the renewal price shown
+  /// is always the one that will be charged.
+  String get priceNote {
+    final t = _terms;
+    if (t == null) return config.priceNote;
+    return t.today == t.renews
+        ? 'a year, renews at the same price'
+        : 'for your first year, then ${t.renews}/year';
+  }
+
+  String get finePrint {
+    final t = _terms;
+    if (t == null) return config.finePrint;
+    return '${t.today} today for 12 months, then ${t.renews}/year. '
+        'Cancel anytime.';
+  }
+
   Future<void> claim() async {
     if (busy.value) return;
     final ps = _purchases;

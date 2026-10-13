@@ -60,16 +60,18 @@ class PlusPerk {
 /// (AccessService). Purchases go through RevenueCat ([PurchaseService]);
 /// plan prices come from the store, [fallbackPlans] only until they load.
 class PlusController extends GetxController {
+  /// Keep in step with the App Store prices (US), so nothing jumps when
+  /// the real ones load.
   static const List<PlusPlan> fallbackPlans = [
     PlusPlan(
       'year',
       'Yearly',
-      '\$4.17 a month',
-      '\$49.99',
+      '\$6.67 a month',
+      '\$79.99',
       'a year',
-      badge: 'SAVE 72%',
+      badge: 'SAVE 33%',
     ),
-    PlusPlan('month', 'Monthly', 'Cancel anytime', '\$14.99', 'a month'),
+    PlusPlan('month', 'Monthly', 'Cancel anytime', '\$9.99', 'a month'),
   ];
 
   static const List<PlusPerk> perks = [
@@ -114,10 +116,6 @@ class PlusController extends GetxController {
   /// PlusScreen is a GetView (stateless, no initState/dispose). GetX calls
   /// onClose when the page is removed, so it is always disposed.
   final ScrollController scrollController = ScrollController();
-
-  /// True once the list has scrolled a little. Only flips when the value
-  /// changes, so the screen doesn't rebuild on every pixel.
-  final RxBool scrolled = false.obs;
 
   @override
   void onInit() {

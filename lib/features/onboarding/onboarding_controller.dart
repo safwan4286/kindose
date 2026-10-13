@@ -6,11 +6,11 @@ import '../../resources/catalog.dart';
 import '../../resources/date_utils.dart';
 import '../../resources/routes.dart';
 import '../../resources/water_units.dart';
+import '../../widgets/k_ruler.dart';
 import '../../widgets/no_internet_sheet.dart';
 import '../../services/backend/backend_service.dart';
 import '../../services/haptics/haptics.dart';
 import '../../services/region/region.dart';
-import '../../services/review/review_service.dart';
 import '../../services/notifications/notif_prefs.dart';
 import '../../services/notifications/notification_service.dart';
 import '../../services/tracker_service.dart';
@@ -145,6 +145,23 @@ class OnboardingController extends GetxController {
   final RxnDouble heightCm = RxnDouble();
   final RxBool heightInCm = (!Region.prefersFeet).obs;
 
+  /// True once the weight unit was picked by hand; until then it follows
+  /// the height unit (ft · in → lb, cm → kg).
+  bool _weightUnitPicked = false;
+
+  void setHeightInCm(bool cm) {
+    heightInCm.value = cm;
+    if (!_weightUnitPicked && useKg.value != cm) {
+      useKg.value = cm;
+      _defaultWeightFromSex();
+    }
+  }
+
+  void setUseKg(bool kg) {
+    _weightUnitPicked = true;
+    useKg.value = kg;
+  }
+
   final RxInt proteinGoal = 100.obs;
   final RxBool proteinTouched = false.obs;
 
@@ -271,6 +288,7 @@ class OnboardingController extends GetxController {
       doseDate.value = Dates.dateOnly(last.takenAt);
     }
     useKg.value = p.useKg;
+    _weightUnitPicked = true;
     useOz.value = p.useOz;
     weightKg.value = p.startWeightKg;
     weightTouched.value = true;
@@ -338,13 +356,6 @@ class OnboardingController extends GetxController {
   void _go(int index) {
     final from = page.value;
     page.value = index;
-    // "Your plan is ready": a good moment to ask for a rating (once).
-    if (!editMode && steps[index] == OnboardingStep.plan) {
-      ReviewService.maybeAsk(
-        ReviewService.onboarding,
-        delay: const Duration(seconds: 2),
-      );
-    }
     if (!pageController.hasClients) return;
     // Long jumps (plan ⇄ dose edit) skip the pages in between, then slide
     // the last step so it still feels like normal navigation.
@@ -503,9 +514,7 @@ class OnboardingController extends GetxController {
     DateTime day;
     if (!needsDoseDate) {
       final nowMinutes = DateTime.now().hour * 60 + DateTime.now().minute;
-      day = nowMinutes < shotMinutes.value
-          ? today
-          : Dates.addDays(today, 1);
+      day = nowMinutes < shotMinutes.value ? today : Dates.addDays(today, 1);
     } else {
       final picked = doseDate.value;
       if (picked == null) return null;
@@ -727,6 +736,15 @@ class OnboardingController extends GetxController {
     return (v * 1000).round() / 1000;
   }
 
+  /// Shown under the field once something is typed that can't be saved.
+  String? get customDoseError {
+    final t = customDose.value.trim();
+    if (t.isEmpty || t == '.' || t == ',' || customDoseMg != null) return null;
+    final v = double.tryParse(t.replaceAll(',', '.'));
+    if (v != null && v > 100) return 'Enter 100 mg or less';
+    return 'Enter an amount above 0 mg';
+  }
+
   void confirmCustomDose() {
     final mg = customDoseMg;
     if (mg == null || current != OnboardingStep.dose) return;
@@ -751,18 +769,30 @@ class OnboardingController extends GetxController {
   /// Ruler start before the user touches it.
   void _defaultWeightFromSex() {
     if (weightTouched.value) return;
-    weightKg.value = switch (sex.value) {
-      'female' => 68,
-      'male' => 80,
-      _ => 72,
-    };
+    // A round number in the unit on screen, so the ruler starts on a tick.
+    weightKg.value = useKg.value
+        ? switch (sex.value) {
+            'female' => 68,
+            'male' => 80,
+            _ => 72,
+          }
+        : switch (sex.value) {
+                'female' => 150,
+                'male' => 175,
+                _ => 160,
+              } /
+              Imperial.lbPerKg;
   }
 
   void confirmWeight() {
     if (current != OnboardingStep.weight) return;
     weightTouched.value = true;
     if (!goalTouched.value) {
-      goalDraftKg.value = ((weightKg.value * 0.9) * 2).round() / 2;
+      // 10% below, rounded in the unit on screen (½ kg or whole lb).
+      final goal = weightKg.value * 0.9;
+      goalDraftKg.value = useKg.value
+          ? (goal * 2).round() / 2
+          : (goal * Imperial.lbPerKg).round() / Imperial.lbPerKg;
     }
     Haptics.instance.lightImpact();
     next();
@@ -899,9 +929,7 @@ class OnboardingController extends GetxController {
           return;
         case BackendResult.notReady:
         case BackendResult.failed:
-          showToast(
-            'Sign-in didn’t work this time. You can sign in later in Me.',
-          );
+          showToast('Sign-in didn’t work this time. Please try again.');
           return;
       }
       final check = await backend.checkBackup();
