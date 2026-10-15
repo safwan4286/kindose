@@ -41,7 +41,8 @@ class LogSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final k = context.k;
     final motion = !MediaQuery.disableAnimationsOf(context);
-    return KSafeArea(
+    return KSheetSafeArea(
+      color: k.bg,
       child: Container(
         decoration: BoxDecoration(
           color: k.bg,

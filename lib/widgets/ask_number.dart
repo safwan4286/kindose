@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
@@ -171,8 +173,11 @@ class _NumberSheetState extends State<_NumberSheet> {
   Widget build(BuildContext context) {
     final k = context.k;
     final inset = MediaQuery.viewInsetsOf(context).bottom;
+    // Android is edge to edge: keep the buttons above the navigation bar
+    // (the sheet's colour still runs under it).
+    final bar = Platform.isAndroid ? MediaQuery.paddingOf(context).bottom : 0.0;
     return Padding(
-      padding: EdgeInsets.fromLTRB(20.sp, 12.sp, 20.sp, 16.sp + inset),
+      padding: EdgeInsets.fromLTRB(20.sp, 12.sp, 20.sp, 16.sp + inset + bar),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,

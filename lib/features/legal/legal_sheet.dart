@@ -23,8 +23,14 @@ class LegalSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final k = context.k;
-    return KSafeArea(
-      child: ConstrainedBox(
+    return KSheetSafeArea(
+      color: k.bg,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: k.bg,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28.sp)),
+        ),
+        child: ConstrainedBox(
         constraints: BoxConstraints(
           maxHeight: MediaQuery.sizeOf(context).height * 0.85,
         ),
@@ -122,6 +128,7 @@ class LegalSheet extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }

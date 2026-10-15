@@ -38,7 +38,8 @@ class _EditTodaySheetState extends State<_EditTodaySheet> {
   @override
   Widget build(BuildContext context) {
     final k = context.k;
-    return KSafeArea(
+    return KSheetSafeArea(
+      color: k.bg,
       child: Container(
         decoration: BoxDecoration(
           color: k.bg,

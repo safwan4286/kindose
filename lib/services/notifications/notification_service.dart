@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui' show Color;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -34,6 +35,10 @@ class NotificationService {
     importance: Importance.high,
     priority: Priority.high,
     category: AndroidNotificationCategory.reminder,
+    // Flat drop silhouette (res/drawable/ic_stat_kindose.xml); Android
+    // can't use the colour app icon here. The colour tints it in the shade.
+    icon: 'ic_stat_kindose',
+    color: Color(0xFF7FA11C),
   );
 
   static const NotificationDetails _details = NotificationDetails(
@@ -48,7 +53,7 @@ class NotificationService {
   Future<void> init() async {
     if (_ready) return;
     try {
-      const android = AndroidInitializationSettings('@mipmap/ic_launcher');
+      const android = AndroidInitializationSettings('ic_stat_kindose');
       // Don't ask at start-up; we ask on the reminders screen, after the why.
       const darwin = DarwinInitializationSettings(
         requestAlertPermission: false,
