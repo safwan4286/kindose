@@ -8,6 +8,7 @@ import '../../resources/colors.dart';
 import '../../services/responsiveness/device_manager.dart';
 import '../../widgets/press_scale.dart';
 import '../me/me_screen.dart';
+import '../doses/doses_screen.dart';
 import '../progress/progress_screen.dart';
 import '../report/report_screen.dart';
 import '../today/today_screen.dart';
@@ -35,6 +36,7 @@ class HomeScreen extends GetView<HomeController> {
                   // Soft paywall (6 Oct): Progress and Report stay open after
                   // the free week; Plus-only actions inside open the paywall.
                   // Old lock: LockedTab from today/widgets/free_week.dart.
+                  const DosesScreen(),
                   const ProgressScreen(),
                   const ReportScreen(),
                   const MeScreen(),
@@ -51,6 +53,24 @@ class HomeScreen extends GetView<HomeController> {
               child: _FloatingNav(controller: controller),
             ),
           ),
+          // The + sits above the bar, bottom right, so the bar has room
+          // for five tabs.
+          Positioned(
+            right: 22.sp,
+            bottom: _navBottom(context) + _navHeight + 14,
+            child: _HideWithKeyboard(
+              open: keyboardOpen,
+              child: Obx(
+                () => _ShowLogButton(
+                  visible: controller.showLogButton,
+                  child: _LogButton(
+                    open: controller.logOpen.value,
+                    onTap: controller.openLogSheet,
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -58,6 +78,39 @@ class HomeScreen extends GetView<HomeController> {
 }
 
 const double _navHeight = 68;
+
+/// Space under the bar: the gesture area, at least 12.
+double _navBottom(BuildContext context) =>
+    math.max(12.0, MediaQuery.viewPaddingOf(context).bottom);
+
+/// Pops the + in and out when switching to and from tabs that show it.
+class _ShowLogButton extends StatelessWidget {
+  const _ShowLogButton({required this.visible, required this.child});
+
+  final bool visible;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final motion = !MediaQuery.disableAnimationsOf(context);
+    return IgnorePointer(
+      ignoring: !visible,
+      child: ExcludeSemantics(
+        excluding: !visible,
+        child: AnimatedScale(
+          scale: visible ? 1 : 0.6,
+          duration: Duration(milliseconds: motion ? 220 : 0),
+          curve: visible ? Curves.easeOutBack : Curves.easeIn,
+          child: AnimatedOpacity(
+            opacity: visible ? 1 : 0,
+            duration: Duration(milliseconds: motion ? 160 : 0),
+            child: child,
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 /// Slides the nav down out of the way while the keyboard is open, so it
 /// never covers the field being typed in (the screen above already moves
@@ -91,9 +144,10 @@ class _HideWithKeyboard extends StatelessWidget {
   }
 }
 
-/// Bottom padding every tab adds so its content can scroll above the nav.
+/// Bottom padding every tab adds so its content can scroll above the nav
+/// and the round + above it.
 double get kNavClearance =>
-    _navHeight + math.max(12.0, DeviceManager.instance.bottomBarHeight) + 40;
+    _navHeight + math.max(12.0, DeviceManager.instance.bottomBarHeight) + 100;
 
 /// Quick fade + lift when the tab changes. Keeps the [IndexedStack]
 /// (and each tab's scroll position) alive.
@@ -185,15 +239,14 @@ class _FloatingNav extends StatelessWidget {
           return Row(
             children: [
               item(HomeTab.today, PhosphorIconsBold.house, 'Today'),
-              item(HomeTab.progress, PhosphorIconsBold.chartLineUp, 'Progress'),
-              Expanded(
-                child: Center(
-                  child: _LogButton(
-                    open: controller.logOpen.value,
-                    onTap: controller.openLogSheet,
-                  ),
-                ),
+              item(
+                HomeTab.doses,
+                controller.isTablet
+                    ? PhosphorIconsBold.pill
+                    : PhosphorIconsBold.syringe,
+                controller.isTablet ? 'Tablets' : 'Doses',
               ),
+              item(HomeTab.progress, PhosphorIconsBold.chartLineUp, 'Progress'),
               item(HomeTab.report, PhosphorIconsBold.fileText, 'Doctor report'),
               item(HomeTab.me, PhosphorIconsBold.userCircle, 'Me'),
             ],
@@ -283,9 +336,7 @@ class _LogButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final k = context.k;
     final motion = !MediaQuery.disableAnimationsOf(context);
-    return Transform.translate(
-      offset: const Offset(0, -14),
-      child: Semantics(
+    return Semantics(
         button: true,
         label: open ? 'Close log' : 'Log something',
         excludeSemantics: true,
@@ -315,7 +366,6 @@ class _LogButton extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 }
