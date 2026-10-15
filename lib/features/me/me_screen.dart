@@ -509,6 +509,8 @@ class _DebugAccess extends StatelessWidget {
           ),
           chip('Test reminders', controller.debugTestReminders),
           chip('Show planned', controller.debugShowPlanned),
+          chip('Fill test data', controller.debugFillTestData),
+          chip('Remove test data', controller.debugClearTestData),
         ],
       ),
     );

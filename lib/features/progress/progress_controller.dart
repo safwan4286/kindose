@@ -183,8 +183,9 @@ class ProgressController extends GetxController {
     final g = profile?.goalWeightKg;
     final pts = points;
     if (g == null || pts.isEmpty) return false;
+    // The chart itself also leaves it out when it would squash the line.
     final lo = pts.map((p) => p.kg).reduce(math.min);
-    return range.value == ProgressRange.all || (lo - g) < 4;
+    return (lo - g) < 4;
   }
 
   /// Dose strength changes inside the range.
@@ -198,7 +199,7 @@ class ProgressController extends GetxController {
         out.add(
           DoseMarker(
             Dates.dateOnly(d.takenAt),
-            '${Catalog.mgLabel(d.strengthMg)} from here',
+            Catalog.mgLabel(d.strengthMg),
           ),
         );
       }

@@ -28,6 +28,7 @@ import '../../widgets/no_internet_sheet.dart';
 import '../../widgets/toast.dart';
 import '../legal/legal_sheet.dart';
 import 'widgets/me_sheets.dart';
+import '../../services/debug/test_data.dart';
 
 /// Me tab: plan, goals, reminders, units and theme, backup, export,
 /// delete and legal. Everything is read from [TrackerService], so edits
@@ -164,6 +165,22 @@ class MeController extends GetxController {
       reasons: Get.find<ReminderService>().debugReasons(),
     );
   }
+
+  /// Debug: 16 weeks of test logs for Progress / Doses / Report. Never
+  /// backed up; "Real data" puts the phone's own logs back.
+  Future<void> debugFillTestData() async {
+    Haptics.instance.mediumImpact();
+    await TestData.fill(tracker);
+    showToast('Test data on · backups paused');
+  }
+
+  Future<void> debugClearTestData() async {
+    Haptics.instance.selectionClick();
+    final ok = await TestData.clear(tracker);
+    showToast(ok ? 'Your real data is back' : 'No test data to remove');
+  }
+
+  bool get testDataOn => TestData.isOn;
 
   /// Act as a paying Plus user (debug builds only).
   Future<void> debugTogglePlus() async {

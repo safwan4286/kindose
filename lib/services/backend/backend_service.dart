@@ -12,6 +12,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../resources/backend_keys.dart';
 import '../app_info.dart';
 import '../app_status/app_status_service.dart';
+import '../debug/test_data.dart';
 import '../plus/access_service.dart';
 import '../offers/offer_service.dart';
 import '../notifications/notif_prefs.dart';
@@ -113,6 +114,8 @@ class BackendService extends GetxService {
     'reviewLastAt',
     'guideHoldSecs',
     'refillAt',
+    TestData.onKey,
+    'debugRealData',
   };
 
   /// Changes on this phone that aren't in the cloud yet (offline, or the
@@ -415,6 +418,8 @@ class BackendService extends GetxService {
     final id = user.value?.id;
     if (id == null || !hasLocalData) return;
     if (!ownsLocal) throw StateError('Phone data belongs to another account');
+    // Debug test data must never replace the real cloud backup.
+    if (TestData.isOn) throw StateError('Test data on this phone');
     final data = tracker.backupData();
     await _db.from('backups').upsert({
       'user_id': id,
