@@ -70,7 +70,7 @@ class LiquidDropPainter extends CustomPainter {
 
       Path surface(double ph, double amp) {
         final p = Path()..moveTo(18, 100);
-        for (var x = 18.0; x <= 82; x += 2) {
+        for (var x = 18.0; x <= 82; x += 1) {
           p.lineTo(x, level + amp * math.sin(x / 64 * 2 * math.pi + ph));
         }
         return p
@@ -98,7 +98,7 @@ class LiquidDropPainter extends CustomPainter {
       if (wave > 0.2) {
         final line = Path()
           ..moveTo(18, level + wave * math.sin(18 / 64 * 2 * math.pi + phase));
-        for (var x = 20.0; x <= 82; x += 2) {
+        for (var x = 19.0; x <= 82; x += 1) {
           line.lineTo(x, level + wave * math.sin(x / 64 * 2 * math.pi + phase));
         }
         canvas.drawPath(

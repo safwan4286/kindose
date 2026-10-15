@@ -15,7 +15,13 @@ import 'splash_controller.dart';
 /// outline centred on ink, 120 pt. A drip forms under the tip and falls,
 /// the drop fills with liquid (two waves, a few bubbles), settles with a
 /// soft spring, smiles, then lifts as the wordmark wipes in.
-/// 2 s the first time, 1.3 s once there is a plan; a tap skips it.
+/// 2.2 s the first time, 1.5 s once there is a plan; a tap skips it.
+///
+/// Smoothness: it starts only after the first frame is on screen (that
+/// frame matches the native launch image, so the short hold is invisible
+/// while start-up work finishes), every stage starts and ends at rest
+/// (ease-in-out, no sudden speed), and stages overlap instead of
+/// switching hard.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -42,7 +48,7 @@ class _SplashScreenState extends State<SplashScreen>
     _anim =
         AnimationController(
           vsync: this,
-          duration: Duration(milliseconds: _controller.returning ? 1300 : 2000),
+          duration: Duration(milliseconds: _controller.returning ? 1500 : 2200),
         )..addStatusListener((s) {
           if (s == AnimationStatus.completed) _controller.goNext();
         });
@@ -60,7 +66,13 @@ class _SplashScreenState extends State<SplashScreen>
         _controller.goNext,
       );
     } else {
-      _anim.forward();
+      // Wait for the first frame, then a beat: the app is still busy right
+      // after launch, and starting then drops the opening frames.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Future<void>.delayed(const Duration(milliseconds: 120), () {
+          if (mounted && !_anim.isAnimating) _anim.forward();
+        });
+      });
     }
   }
 
@@ -83,32 +95,34 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   // ------------------------------------------------------------ timeline
-  // 0.00–0.08 drip forms · 0.08–0.20 falls · 0.20–0.62 fills ·
-  // 0.62–0.76 spring + face · 0.72–0.92 rise · 0.74–0.97 words.
+  // 0.00–0.09 drip forms · 0.09–0.21 falls · 0.21–0.64 fills ·
+  // 0.62–0.84 swell + face · 0.74–0.95 rise · 0.78–1.00 words.
 
   static double _drip(double t) {
-    if (t >= 0.20) return 0;
-    return _seg(t, 0, 0.08, Curves.easeOut);
+    if (t >= 0.21) return 0;
+    return _seg(t, 0, 0.09, Curves.easeOutCubic);
   }
 
   static double _dripY(double t) =>
-      22 + 56 * _seg(t, 0.08, 0.20, Curves.easeIn);
+      22 + 56 * _seg(t, 0.09, 0.21, Curves.easeInQuad);
 
-  static double _fill(double t) => _seg(t, 0.20, 0.62, Curves.easeInOutCubic);
+  /// Moves straight away when the drip lands, then slows into full.
+  static double _fill(double t) => _seg(t, 0.21, 0.64, Curves.ease);
 
-  /// Waves build fast after the drip lands, then calm down as it fills.
+  /// Waves build after the drip lands, then calm down as it fills.
   static double _wave(double t) {
-    if (t < 0.20) return 0;
-    final grow = _seg(t, 0.20, 0.28, Curves.easeOut);
-    final calm = 1 - _seg(t, 0.40, 0.66, Curves.easeInOut);
+    if (t < 0.21) return 0;
+    final grow = _seg(t, 0.21, 0.31, Curves.easeOut);
+    final calm = 1 - _seg(t, 0.42, 0.70, Curves.easeInOut);
     return 4.2 * grow * calm;
   }
 
-  /// Soft spring once full: a small swell that settles (exactly 1 outside).
+  /// One soft swell and a small settle once full. Starts and ends at rest
+  /// (no jump in speed), exactly 1 outside.
   static double _pulse(double t) {
-    final p = _seg(t, 0.62, 0.80);
+    final p = _seg(t, 0.62, 0.84, Curves.easeInOut);
     if (p <= 0 || p >= 1) return 1;
-    return 1 + 0.07 * math.sin(p * math.pi * 2.4) * math.exp(-3.2 * p);
+    return 1 + 0.06 * math.sin(p * math.pi * 2) * (1 - p);
   }
 
   @override
@@ -127,21 +141,24 @@ class _SplashScreenState extends State<SplashScreen>
               animation: _anim,
               builder: (context, _) {
                 final t = _anim.value;
-                final dropY = -_rise * _seg(t, 0.72, 0.92, Curves.easeOutCubic);
-                final glow = _seg(t, 0.50, 0.85, Curves.easeOut);
-                final word = _seg(t, 0.74, 0.92, Curves.easeOutCubic);
-                final tag = _seg(t, 0.84, 0.97, Curves.easeOut);
+                // Ease in and out: the drop starts lifting gently instead of
+                // jumping to full speed.
+                final dropY =
+                    -_rise * _seg(t, 0.74, 0.95, Curves.easeInOutCubic);
+                final glow = _seg(t, 0.45, 0.85, Curves.easeInOut);
+                final word = _seg(t, 0.78, 0.96, Curves.easeOutCubic);
+                final tag = _seg(t, 0.86, 1.0, Curves.easeOut);
                 final pulse = _pulse(t);
 
                 return SizedBox.expand(
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      // Soft lime glow that blooms as the drop fills.
-                      Transform.translate(
-                        offset: Offset(0, dropY),
-                        child: Opacity(
-                          opacity: glow,
+                      // Soft lime glow that blooms as the drop fills. Fades
+                      // through its own colour (no Opacity layer per frame).
+                      if (glow > 0)
+                        Transform.translate(
+                          offset: Offset(0, dropY),
                           child: Container(
                             width: 420.sp,
                             height: 420.sp,
@@ -149,7 +166,7 @@ class _SplashScreenState extends State<SplashScreen>
                               shape: BoxShape.circle,
                               gradient: RadialGradient(
                                 colors: [
-                                  AppColors.lime.withValues(alpha: 0.18),
+                                  AppColors.lime.withValues(alpha: 0.18 * glow),
                                   AppColors.lime.withValues(alpha: 0),
                                 ],
                                 stops: const [0, 0.62],
@@ -157,7 +174,6 @@ class _SplashScreenState extends State<SplashScreen>
                             ),
                           ),
                         ),
-                      ),
                       // The drop, centred like the native launch image.
                       Transform.translate(
                         offset: Offset(0, dropY),
@@ -173,10 +189,10 @@ class _SplashScreenState extends State<SplashScreen>
                                 wave: _wave(t),
                                 // About three and a half wave cycles in all.
                                 phase: t * math.pi * 7,
-                                splash: _seg(t, 0.20, 0.42, Curves.easeOut),
-                                bubbles: _seg(t, 0.24, 0.66),
-                                shine: _seg(t, 0.64, 0.76, Curves.easeOut),
-                                smile: _seg(t, 0.66, 0.80, Curves.easeOut),
+                                splash: _seg(t, 0.21, 0.45, Curves.easeOut),
+                                bubbles: _seg(t, 0.25, 0.68),
+                                shine: _seg(t, 0.64, 0.78, Curves.easeInOut),
+                                smile: _seg(t, 0.66, 0.84, Curves.easeInOutCubic),
                               ),
                             ),
                           ),
