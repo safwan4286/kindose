@@ -191,7 +191,7 @@ class SaveDataScreen extends GetView<SaveDataController> {
                       SizedBox(height: 12.sp),
                       KBottomPadding(
                         child: Text(
-                          'Only your name and email are shared with Kindose.\nWe never sell your data.',
+                          'Only your name and email are shared with Kindose.',
                           textAlign: TextAlign.center,
                           style: AppText.small.copyWith(
                             fontSize: 12.sp,

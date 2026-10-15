@@ -407,14 +407,10 @@ class StagePage extends GetView<OnboardingController> {
 
     return StepScaffold(
       title: 'Where are you on your GLP-1 journey?',
-      subtitle: 'This shapes your plan. You can change it anytime.',
+      subtitle: 'Takes about 2 minutes. You can change anything later.',
       cta: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const PrivacyNote(
-            'About 2 minutes. At the end you save your plan to your account. We never sell your data.',
-          ).enter(motion, delay: 420, dy: 0.1),
-          SizedBox(height: 10.sp),
           const TapHint(
             'Tap an option to continue',
           ).enter(motion, delay: 480, dy: 0),

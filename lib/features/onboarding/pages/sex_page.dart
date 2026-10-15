@@ -59,10 +59,6 @@ class SexPage extends GetView<OnboardingController> {
       cta: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const PrivacyNote(
-            'Private to your account, and only used for your goals.',
-          ).enter(motion, delay: 420, dy: 0.1),
-          SizedBox(height: 10.sp),
           const TapHint('Tap one to continue').enter(motion, delay: 480, dy: 0),
         ],
       ),

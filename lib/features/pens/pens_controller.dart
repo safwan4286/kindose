@@ -6,13 +6,13 @@ import '../../resources/catalog.dart';
 import '../../resources/date_utils.dart';
 import '../../resources/routes.dart';
 import '../../services/haptics/haptics.dart';
-import '../../services/notifications/notification_service.dart';
 import '../../services/plus/access_service.dart';
 import '../../services/plus/plus_access.dart';
 import '../../services/supply/supply_service.dart';
 import '../../services/tracker_service.dart';
 import '../../widgets/ask_number.dart';
 import '../../widgets/toast.dart';
+import '../notifications/notification_permission.dart';
 import 'widgets/pens_sheets.dart';
 
 /// Pens & cost (Plus). The numbers live in [SupplyService]; this adds the
@@ -185,10 +185,7 @@ class PensController extends GetxController {
 
   Future<void> setRefillReminder(bool on) async {
     if (!_allow()) return;
-    if (on && !await NotificationService.instance.requestPermission()) {
-      showToast('Allow notifications for Kindose in your phone settings.');
-      return;
-    }
+    if (on && !await askForNotifications()) return;
     Haptics.instance.selectionClick();
     await supply.setRefillReminder(on);
   }

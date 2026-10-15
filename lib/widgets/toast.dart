@@ -45,6 +45,42 @@ void showToast(String message) {
   );
 }
 
+/// Toast with one button, e.g. "Settings". [onTap] runs at most once.
+void showActionToast(
+  String message,
+  String action,
+  Future<void> Function() onTap,
+) {
+  var done = false;
+  _shownMessage = null;
+  Get.closeCurrentSnackbar();
+  Get.rawSnackbar(
+    messageText: Text(
+      message,
+      style: AppText.bodyStrong.copyWith(color: AppColors.white),
+    ),
+    mainButton: TextButton(
+      onPressed: () async {
+        if (done) return;
+        done = true;
+        Get.closeCurrentSnackbar();
+        await onTap();
+      },
+      style: TextButton.styleFrom(
+        foregroundColor: AppColors.lime,
+        minimumSize: const Size(64, 44),
+      ),
+      child: Text(action, style: AppText.title.copyWith(color: AppColors.lime)),
+    ),
+    backgroundColor: AppColors.ink,
+    borderRadius: 18,
+    margin: const EdgeInsets.fromLTRB(16, 0, 16, 104),
+    duration: const Duration(milliseconds: 4000),
+    animationDuration: const Duration(milliseconds: 300),
+    snackPosition: SnackPosition.BOTTOM,
+  );
+}
+
 /// Toast with an Undo button. [onUndo] runs at most once.
 void showUndoToast(String message, Future<void> Function() onUndo) {
   var done = false;

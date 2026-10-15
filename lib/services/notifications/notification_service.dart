@@ -1,7 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:timezone/timezone.dart' as tz;
 
 /// Local reminders (dose day, daily tablet). No server involved.
@@ -106,6 +108,22 @@ class NotificationService {
       // A plugin error must never block onboarding; reminders stay off.
       return false;
     }
+  }
+
+  static const MethodChannel _settings = MethodChannel('kindose/settings');
+
+  /// Opens Kindose's notification settings on the phone (Android: the
+  /// app's notification page, MainActivity.kt; iOS: Kindose in Settings).
+  /// False when it couldn't.
+  Future<bool> openSettings() async {
+    try {
+      if (Platform.isAndroid) {
+        return await _settings.invokeMethod<bool>('openNotificationSettings') ??
+            false;
+      }
+      if (Platform.isIOS) return await launchUrl(Uri.parse('app-settings:'));
+    } catch (_) {}
+    return false;
   }
 
   /// Whether the phone currently lets Kindose show notifications. Null

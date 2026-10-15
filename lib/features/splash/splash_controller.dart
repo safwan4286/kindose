@@ -15,6 +15,9 @@ class SplashController extends GetxController {
   final TrackerService _tracker = Get.find<TrackerService>();
   bool _left = false;
 
+  /// Someone who already has a plan gets the short version of the splash.
+  bool get returning => _tracker.hasProfile;
+
   /// Called by the screen when the animation ends (or right away when the
   /// user has "reduce motion" on). Safe to call more than once.
   void goNext() {

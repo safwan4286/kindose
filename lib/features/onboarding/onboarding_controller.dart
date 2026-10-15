@@ -67,7 +67,8 @@ class OnboardingController extends GetxController {
     return [
       for (final s in OnboardingStep.values)
         if (s != OnboardingStep.welcome &&
-            !(starting && s == OnboardingStep.treatmentStart))
+            !(starting && s == OnboardingStep.treatmentStart) &&
+            !(s == OnboardingStep.reminders && _notifAllowed.value))
           s,
     ];
   }
@@ -182,6 +183,11 @@ class OnboardingController extends GetxController {
   final RxBool remindersOn = false.obs;
   final RxBool askingReminders = false.obs;
 
+  /// The phone already lets Kindose notify (asked before, or Android 12
+  /// and older where it's on by default). Then the reminders screen has
+  /// nothing to ask: it's left out and reminders start on.
+  final RxBool _notifAllowed = false.obs;
+
   /// Extra nudges picked on the reminders page (off by default). Saved to
   /// [NotifPrefs] only when notifications are allowed.
   final RxBool wantWater = false.obs;
@@ -233,6 +239,17 @@ class OnboardingController extends GetxController {
     super.onInit();
     final p = _tracker.profile.value;
     if (p != null) _loadFrom(p);
+    _checkNotifications();
+  }
+
+  Future<void> _checkNotifications() async {
+    if (editMode) return;
+    final allowed = await NotificationService.instance.areEnabled() == true;
+    if (!allowed || isClosed) return;
+    // Only before the user gets there, so no page they've passed moves.
+    if (page.value >= steps.indexOf(OnboardingStep.reminders)) return;
+    remindersOn.value = true;
+    _notifAllowed.value = true;
   }
 
   @override

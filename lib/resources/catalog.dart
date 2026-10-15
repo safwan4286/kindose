@@ -5,6 +5,11 @@ import 'images.dart';
 /// Static reference data used across the app. Strengths are the doses on
 /// each product's label. Kindose only records what the user's doctor
 /// prescribed. It never suggests a dose.
+///
+/// Medicines checked against the FDA labels on 15 Oct 2026 (Mounjaro and
+/// Zepbound: single-dose pen, 4-dose KwikPen, single- and multi-dose vial;
+/// Wegovy incl. HD 7.2 mg and the pill; Ozempic pen and pill; Foundayo).
+/// Re-check when a label changes.
 
 /// Sections on the medication question.
 enum MedGroup { tirzepatide, semaglutide, other, notListed }
@@ -156,7 +161,7 @@ class Catalog {
       id: 'mounjaro',
       name: 'Mounjaro',
       mark: '®',
-      sub: 'Weekly pen',
+      sub: 'Weekly pen or vial',
       group: MedGroup.tirzepatide,
       strengths: _tirzepatide,
       color: Color(0xFF8B7CFF),
@@ -191,6 +196,19 @@ class Catalog {
       color: Color(0xFF7BD8B0),
       dark: Color(0xFF2E9C6D),
     ),
+    // US name (2026) of the newer Rybelsus tablets: 1.5, 4 and 9 mg.
+    Medicine(
+      id: 'ozempicpill',
+      name: 'Ozempic pill',
+      mark: '®',
+      sub: 'Daily tablet',
+      group: MedGroup.semaglutide,
+      strengths: [1.5, 4, 9],
+      form: 'tablet',
+      everyDays: 1,
+      color: Color(0xFF7BD8B0),
+      dark: Color(0xFF2E9C6D),
+    ),
     Medicine(
       id: 'wegovy',
       name: 'Wegovy',
@@ -212,6 +230,8 @@ class Catalog {
       everyDays: 1,
     ),
     Medicine(
+      // Newer tablets 1.5 / 4 / 9 mg (UK, EU; "Ozempic pill" in the US),
+      // original US tablets 3 / 7 / 14 mg.
       id: 'rybelsus',
       name: 'Rybelsus',
       mark: '®',
@@ -317,7 +337,8 @@ class Catalog {
   /// Forms to offer on the dose question when the medicine comes in more
   /// than one. Empty means the medicine's own form is used.
   static List<String> formsFor(String medicineId) => switch (medicineId) {
-    'zepbound' => const ['pen', 'vial'],
+    // Both labels list pens (single-dose and 4-dose KwikPen) and vials.
+    'mounjaro' || 'zepbound' => const ['pen', 'vial'],
     Catalog.other || Catalog.undecided => const ['pen', 'vial', 'tablet'],
     _ => const [],
   };

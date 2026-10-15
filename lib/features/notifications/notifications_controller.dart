@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../resources/date_utils.dart';
 import '../../resources/routes.dart';
@@ -13,6 +12,7 @@ import '../../services/plus/plus_access.dart';
 import '../../services/supply/supply_service.dart';
 import '../../services/tracker_service.dart';
 import '../../widgets/toast.dart';
+import 'notification_permission.dart';
 
 class NotificationsBinding extends Bindings {
   @override
@@ -200,21 +200,18 @@ class NotificationsController extends GetxController
 
   // ----------------------------------------------------- phone permission
 
-  /// iOS opens Kindose in Settings. Android asks again (shows the system
-  /// prompt unless it was blocked for good).
+  /// Android asks again first (the system prompt shows unless it was
+  /// blocked for good). Otherwise opens Kindose's notification settings;
+  /// coming back re-checks (didChangeAppLifecycleState).
   Future<void> openSystemSettings() async {
     Haptics.instance.lightImpact();
-    if (Platform.isIOS) {
-      try {
-        if (await launchUrl(Uri.parse('app-settings:'))) return;
-      } catch (_) {}
-    } else {
-      if (await NotificationService.instance.requestPermission()) {
-        await _checkSystem();
-        return;
-      }
+    final notes = NotificationService.instance;
+    if (Platform.isAndroid && await notes.requestPermission()) {
+      await _checkSystem();
+      return;
     }
-    showToast('Open Settings › Apps › Kindose › Notifications and turn them on.');
+    if (await notes.openSettings()) return;
+    showToast('Open Settings › Kindose › Notifications and turn them on.');
   }
 
   // -------------------------------------------------------------- helpers
@@ -237,11 +234,8 @@ class NotificationsController extends GetxController
   }
 
   Future<bool> _allow() async {
-    final granted = await NotificationService.instance.requestPermission();
+    final granted = await askForNotifications();
     await _checkSystem();
-    if (!granted) {
-      showToast('Allow notifications for Kindose in your phone settings.');
-    }
     return granted;
   }
 

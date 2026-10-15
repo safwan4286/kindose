@@ -20,6 +20,7 @@ import '../../widgets/k_ruler.dart';
 import '../../widgets/toast.dart';
 import '../home/home_controller.dart';
 import '../home/weight_sheet.dart';
+import '../notifications/notification_permission.dart';
 import '../log_dose/log_dose_controller.dart' show logMissedDose;
 import 'next_bite.dart';
 import 'weekly_summary.dart';
@@ -99,8 +100,12 @@ class TodayLogRow {
 
 /// Everything on the Today tab. Values are getters over [TrackerService],
 /// so reading them inside `Obx` keeps the screen live.
-class TodayController extends GetxController {
+class TodayController extends GetxController with WidgetsBindingObserver {
   final TrackerService tracker = Get.find<TrackerService>();
+
+  /// Whether the phone lets Kindose notify (null = can't tell). Checked on
+  /// start and whenever the app comes back, e.g. from phone Settings.
+  final RxnBool systemNotifications = RxnBool();
 
   /// Ticks every 30 s so the countdown and greeting stay current.
   final Rx<DateTime> now = DateTime.now().obs;
@@ -119,18 +124,36 @@ class TodayController extends GetxController {
       const Duration(seconds: 30),
       (_) => now.value = DateTime.now(),
     );
+    WidgetsBinding.instance.addObserver(this);
+    _checkNotifications();
   }
 
   @override
   void onClose() {
+    WidgetsBinding.instance.removeObserver(this);
     _ticker?.cancel();
     super.onClose();
   }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _checkNotifications();
+  }
+
+  Future<void> _checkNotifications() async {
+    systemNotifications.value = await NotificationService.instance
+        .areEnabled();
+  }
+
+  /// Dose reminders are on in Kindose and the phone lets them through.
+  bool get remindersWork =>
+      (profile?.remindersOn ?? false) && systemNotifications.value != false;
 
   /// Touch every reactive source the screen depends on (call inside Obx).
   void watch() {
     access.endsAt.value;
     access.started.value;
+    systemNotifications.value;
     now.value;
     tracker.profile.value;
     tracker.doses.length;
@@ -698,11 +721,7 @@ class TodayController extends GetxController {
       tracker.days.values.any((d) => d.proteinG > 0),
       openProtein,
     ),
-    SetupItem(
-      'Turn on reminders',
-      profile?.remindersOn ?? false,
-      turnOnReminders,
-    ),
+    SetupItem('Turn on reminders', remindersWork, turnOnReminders),
   ];
 
   bool get showSetup =>
@@ -730,11 +749,9 @@ class TodayController extends GetxController {
   Future<void> turnOnReminders() async {
     final p = profile;
     if (p == null) return;
-    final granted = await NotificationService.instance.requestPermission();
-    if (!granted) {
-      showToast('Allow notifications for Kindose in your phone settings.');
-      return;
-    }
+    final granted = await askForNotifications();
+    await _checkNotifications();
+    if (!granted) return;
     Haptics.instance.mediumImpact();
     await tracker.saveProfile(p.copyWith(remindersOn: true));
     showToast('Reminders are on');
