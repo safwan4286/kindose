@@ -1,5 +1,7 @@
 import 'dart:math' as math;
 
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -49,23 +51,23 @@ Future<void> main() async {
   await CrashReporting.init();
 
   /// notification setup
-  // try {
-  //   /// Notification setup
-  //   await Firebase.initializeApp();
-  //
-  //   if (kDebugMode) {
-  //     await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(false);
-  //   }
-  //
-  //   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-  //   devPrint('Firebase initialized and background handler set.');
-  // } catch (e, stackTrace) {
-  //   devPrint('Error initializing Firebase or setting background handler: $e');
-  // }
-  // if (!kIsWeb) {
-  //   await setupFlutterNotifications();
-  //   initializeNotifications();
-  // }
+  try {
+    /// Notification setup
+    await Firebase.initializeApp();
+
+    if (kDebugMode) {
+      await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(false);
+    }
+
+    // FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    devPrint('Firebase initialized and background handler set.');
+  } catch (e, stackTrace) {
+    devPrint('Error initializing Firebase or setting background handler: $e');
+  }
+  if (!kIsWeb) {
+    // await setupFlutterNotifications();
+    // initializeNotifications();
+  }
 
   singletonsSetup();
 

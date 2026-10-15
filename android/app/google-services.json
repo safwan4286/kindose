@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "742604804840",
+    "project_id": "kindose-96ea8",
+    "storage_bucket": "kindose-96ea8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:742604804840:android:edd650426467e599a0af5d",
+        "android_client_info": {
+          "package_name": "com.kindose.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "742604804840-9m7t6l343ebjbhlvntvj478oj7j17tet.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC5fstqWlcr043AwyvWHoiSzj_y63g0f7g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "742604804840-9m7t6l343ebjbhlvntvj478oj7j17tet.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "742604804840-uacmtnmgr2firv2bb5d5ahv3ed35e394.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.kindose.app"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
