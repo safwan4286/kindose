@@ -558,6 +558,9 @@ class MeController extends GetxController {
           if (rr == BackendResult.ok) {
             showToast('Backup restored');
           } else {
+            // Like the other sign-in flows: back to a guest, so the next
+            // try can choose again and nothing auto-uploads over it.
+            await backend.signOut();
             _explain(rr);
           }
           return;
@@ -820,7 +823,8 @@ class MeController extends GetxController {
       final xfiles = <XFile>[];
       for (final e in files.entries) {
         final f = File('${dir.path}/${e.key}');
-        await f.writeAsString(e.value, flush: true);
+        // UTF-8 BOM so Excel opens accents and non-English text correctly.
+        await f.writeAsString('\uFEFF${e.value}', flush: true);
         xfiles.add(XFile(f.path));
       }
       final size = Get.size;

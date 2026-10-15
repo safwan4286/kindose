@@ -137,10 +137,17 @@ class AccessService extends GetxService with WidgetsBindingObserver {
     return real;
   }
 
+  /// When the first dose was *logged* (dose ids are the creation time in
+  /// µs), not when it was taken: someone already on treatment logs a last
+  /// dose from days ago in onboarding, and their week must still be 7 days.
   DateTime? get _firstDose {
     DateTime? first;
     for (final d in _tracker.doses) {
-      if (first == null || d.takenAt.isBefore(first)) first = d.takenAt;
+      final us = int.tryParse(d.id);
+      final at = us == null
+          ? d.takenAt
+          : DateTime.fromMicrosecondsSinceEpoch(us);
+      if (first == null || at.isBefore(first)) first = at;
     }
     return first;
   }
@@ -232,6 +239,12 @@ class AccessService extends GetxService with WidgetsBindingObserver {
     if (PlusAccess.unlocked) return true;
     Haptics.instance.lightImpact();
     await Get.toNamed<void>(Routes.plus);
+    // Closing the paywall can hand over to the one-time offer screen (it
+    // replaces the route, which ends the wait above early). Wait for that
+    // screen too, so buying there still continues the save.
+    while (!PlusAccess.unlocked && Get.currentRoute == Routes.offer) {
+      await Future<void>.delayed(const Duration(milliseconds: 250));
+    }
     return PlusAccess.unlocked;
   }
 

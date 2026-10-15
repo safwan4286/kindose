@@ -18,8 +18,18 @@ import '../guide/guide_controller.dart';
 import 'widgets/dose_sheets.dart';
 import '../../widgets/k_date_picker.dart';
 
-/// When the dose was taken: right now, earlier today, or a picked date.
-enum DoseTime { now, earlier, pick }
+/// When the dose was taken: on the day it was due (overdue card only),
+/// right now, earlier today, or a picked date.
+enum DoseTime { due, now, earlier, pick }
+
+/// Route argument from the overdue card ("Did you take Friday's dose?").
+/// Starts on the day it was due, at the usual time: most people took it
+/// and just didn't log it. "Now" and "Pick" are there for a late dose.
+class LogDueDose {
+  const LogDueDose(this.due);
+
+  final DateTime due;
+}
 
 /// Route argument: open Log dose on "Pick date & time" for a dose that
 /// wasn't logged on the day (Today → ⋯ → Log a missed dose).
@@ -51,6 +61,9 @@ class LogDoseController extends GetxController {
   /// Late dose: keep the usual weekday (true) or count from this dose.
   final RxBool keepDay = true.obs;
 
+  /// When the dose was due, when opened from the overdue card.
+  final Rxn<DateTime> dueAt = Rxn<DateTime>();
+
   @override
   void onInit() {
     super.onInit();
@@ -59,6 +72,15 @@ class LogDoseController extends GetxController {
     final arg = Get.arguments;
     if (arg is DoseLog) _startEditing(arg);
     if (arg is DateTime) _startOnDay(arg);
+    if (arg is LogDueDose) _startOnDue(arg.due);
+  }
+
+  void _startOnDue(DateTime due) {
+    final now = DateTime.now();
+    final at = due.isAfter(now) ? now : due;
+    dueAt.value = at;
+    takenAt.value = at;
+    timeMode.value = DoseTime.due;
   }
 
   /// "Log a missed dose": straight to the date and time pickers.
@@ -142,7 +164,11 @@ class LogDoseController extends GetxController {
   /// "DOSE 16 · WEEK 16" (or "DAY 38" for daily tablets).
   String get eyebrow {
     final e = editing.value;
-    final n = e == null ? tracker.doses.length + 1 : tracker.doseNumberOf(e.id);
+    // Position by date, so a forgotten older dose gets its real number.
+    final n = e == null
+        ? tracker.doses.where((d) => d.takenAt.isBefore(takenAt.value)).length +
+              1
+        : tracker.doseNumberOf(e.id);
     final week = _treatmentWeek;
     if (profile?.isDaily ?? false) {
       final start = profile?.treatmentStartedAt;
@@ -173,7 +199,21 @@ class LogDoseController extends GetxController {
 
   // ------------------------------------------------------------------ time
 
+  /// Choices on the When row. From the overdue card the due day comes
+  /// first instead of "Earlier today".
+  List<DoseTime> get timeModes => dueAt.value == null
+      ? const [DoseTime.now, DoseTime.earlier, DoseTime.pick]
+      : const [DoseTime.due, DoseTime.now, DoseTime.pick];
+
+  /// "Friday" for the due-day choice.
+  String get dueDayName =>
+      Dates.weekdayName((dueAt.value ?? DateTime.now()).weekday);
+
   String timeSub(DoseTime t) => switch (t) {
+    DoseTime.due =>
+      timeMode.value == DoseTime.due
+          ? Dates.time(takenAt.value)
+          : Dates.time(dueAt.value ?? DateTime.now()),
     DoseTime.now => Dates.time(DateTime.now()),
     DoseTime.earlier =>
       timeMode.value == DoseTime.earlier ? Dates.time(takenAt.value) : 'Today',
@@ -187,6 +227,28 @@ class LogDoseController extends GetxController {
     Haptics.instance.selectionClick();
     final now = DateTime.now();
     switch (t) {
+      case DoseTime.due:
+        final due = dueAt.value ?? now;
+        // Already on the due day: a second tap sets the time on that day.
+        if (timeMode.value == DoseTime.due) {
+          final time = await showTimePicker(
+            context: context,
+            initialTime: TimeOfDay.fromDateTime(takenAt.value),
+            helpText: 'What time on $dueDayName?',
+          );
+          if (time == null) return;
+          final picked = DateTime(
+            due.year,
+            due.month,
+            due.day,
+            time.hour,
+            time.minute,
+          );
+          takenAt.value = picked.isAfter(now) ? now : picked;
+        } else {
+          takenAt.value = due;
+        }
+        timeMode.value = t;
       case DoseTime.now:
         takenAt.value = now;
         timeMode.value = t;
@@ -354,6 +416,20 @@ class LogDoseController extends GetxController {
   }
 
   String get usualDayName => Dates.weekdayName(profile?.shotWeekday ?? 1);
+
+  /// "6 days after your usual Friday", or after the moved date when the
+  /// dose was moved ("2 days after Monday, the day you moved it to").
+  String get lateTitle {
+    final late = lateDays;
+    final moved = tracker.nextDoseOverride.value;
+    final last = tracker.lastDose;
+    // Same rule as nextDoseAt: a moved date only counts after the last dose.
+    if (moved != null &&
+        (last == null || moved.isAfter(Dates.dateOnly(last.takenAt)))) {
+      return '$late days after ${Dates.weekdayName(moved.weekday)}, the day you moved it to';
+    }
+    return '$late days after your usual $usualDayName';
+  }
   String get todayDayName => Dates.weekdayName(takenAt.value.weekday);
 
   String get nextIfKeep => _fmtNext(tracker.nextDoseAfter(takenAt.value));
@@ -389,6 +465,11 @@ class LogDoseController extends GetxController {
   Future<void> save() async {
     if (saving.value) return;
     if (!await AccessService.ensure()) return;
+    // "Now" means when Save is tapped, not when the screen opened (the
+    // guide or a long pause can take a while, even past midnight).
+    if (timeMode.value == DoseTime.now && !isEditing) {
+      takenAt.value = DateTime.now();
+    }
     final close = _closeDose;
     if (close != null) {
       final choice = await showCloseDoseSheet(
@@ -421,6 +502,7 @@ class LogDoseController extends GetxController {
       }
 
       final before = profile;
+      final movedBefore = tracker.nextDoseOverride.value;
       final late = lateDays > 0 && !keepDay.value;
       final dose = await tracker.addDose(
         takenAt: takenAt.value,
@@ -437,6 +519,15 @@ class LogDoseController extends GetxController {
           ),
         );
       }
+      final after = tracker.profile.value;
+      tracker.lastLogUndo = DoseUndo(
+        doseId: dose.id,
+        profileBefore: before != after ? before : null,
+        profileAfter: before != after ? after : null,
+        movedBefore: movedBefore != tracker.nextDoseOverride.value
+            ? movedBefore
+            : null,
+      );
       Haptics.instance.mediumImpact();
       unawaited(
         Get.offNamed<void>(

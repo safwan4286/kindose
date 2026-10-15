@@ -241,8 +241,11 @@ class TrackerService extends GetxService {
       pain: pain,
       note: _cleanNote(note),
     );
+    // A moved date is used up by the dose it was moved for. A forgotten
+    // older dose filled in from Day view must not clear it.
+    final newest = lastDose == null || !takenAt.isBefore(lastDose!.takenAt);
     await _doses.put(log.id, log.toMap());
-    if (nextDoseOverride.value != null) await moveNextDose(null);
+    if (newest && nextDoseOverride.value != null) await moveNextDose(null);
     doses.add(log);
     doses.sort((a, b) => b.takenAt.compareTo(a.takenAt));
     return log;
@@ -267,6 +270,39 @@ class TrackerService extends GetxService {
   Future<void> removeDose(String id) async {
     await _doses.delete(id);
     doses.removeWhere((d) => d.id == id);
+  }
+
+  /// What logging the newest dose changed besides the dose itself (a new
+  /// dose day or usual strength, a moved date it used up), so removing it
+  /// soon after puts those back too. Memory only; set by Log dose.
+  DoseUndo? lastLogUndo;
+
+  /// Removes [id]. When it's the dose just logged, also restores what
+  /// logging it changed. Returns that record for [restoreDose].
+  Future<DoseUndo?> removeDoseAndRestore(String id) async {
+    final u = lastLogUndo?.doseId == id ? lastLogUndo : null;
+    await removeDose(id);
+    if (u == null) return null;
+    // Only if nothing changed them since (a later Edit plan or Move date
+    // wins over this old undo record).
+    if (u.profileBefore != null && identical(profile.value, u.profileAfter)) {
+      await saveProfile(u.profileBefore!);
+    }
+    if (u.movedBefore != null && nextDoseOverride.value == null) {
+      await moveNextDose(u.movedBefore);
+    }
+    lastLogUndo = null;
+    return u;
+  }
+
+  /// Undo of [removeDoseAndRestore]: the same record back, and what it had
+  /// changed applied again.
+  Future<void> restoreDose(DoseLog d, DoseUndo? u) async {
+    await updateDose(d);
+    if (u == null) return;
+    if (u.profileAfter != null) await saveProfile(u.profileAfter!);
+    if (u.movedBefore != null) await moveNextDose(null);
+    lastLogUndo = u;
   }
 
   DoseLog? get lastDose => doses.isEmpty ? null : doses.first;
@@ -308,8 +344,10 @@ class TrackerService extends GetxService {
 
     if (last == null &&
         planned != null &&
-        !Dates.dateOnly(planned).isBefore(today)) {
+        (!p.isDaily || !Dates.dateOnly(planned).isBefore(today))) {
       // Starting or restarting: the first dose is on the day they chose.
+      // If that day passed without a log, it shows as overdue ("Did you
+      // take Monday's dose?") instead of quietly moving to next week.
       day = Dates.dateOnly(planned);
     } else if (p.isDaily) {
       day = (last != null && Dates.sameDay(last.takenAt, now))
@@ -359,20 +397,44 @@ class TrackerService extends GetxService {
         doseOn(now) == null;
   }
 
+  /// A dose at [cur] came on schedule after the one at [prev]: within a
+  /// day of the plan's interval, or within a day of the date the app asked
+  /// for (weekly plans snap back to the usual weekday after a late dose,
+  /// so the dose after a late one is still on time).
+  /// [weekday]: the dose day that applied then, when it has changed since.
+  bool onTimeAfter(DateTime prev, DateTime cur, {int? weekday}) {
+    final p = profile.value;
+    if (p == null) return false;
+    final gap = Dates.daysBetween(prev, cur);
+    if ((gap - p.everyDays).abs() <= 1) return true;
+    final due = nextDoseAfter(prev, weekday: weekday);
+    return due != null && Dates.daysBetween(due, cur).abs() <= 1;
+  }
+
   /// How many doses in a row were taken within a day of plan.
   int get onTimeStreak {
     final p = profile.value;
     if (p == null || doses.isEmpty) return 0;
     var streak = 1;
     for (var i = 0; i < doses.length - 1; i++) {
-      final gap = Dates.daysBetween(doses[i + 1].takenAt, doses[i].takenAt);
-      if ((gap - p.everyDays).abs() <= 1) {
+      if (onTimeAfter(doses[i + 1].takenAt, doses[i].takenAt)) {
         streak++;
       } else {
         break;
       }
     }
     return streak;
+  }
+
+  /// "I skipped it" on an overdue dose due on [due]: the next planned day
+  /// from today on, counted from the skipped one.
+  DateTime nextPlannedAfterSkip(DateTime due) {
+    final today = Dates.dateOnly(DateTime.now());
+    var day = due;
+    for (var i = 0; i < 400 && Dates.dateOnly(day).isBefore(today); i++) {
+      day = nextDoseAfter(day) ?? Dates.addDays(day, 7);
+    }
+    return Dates.dateOnly(day);
   }
 
   // ------------------------------------------------------------------ days
@@ -417,10 +479,22 @@ class TrackerService extends GetxService {
       d.copyWith(
         proteinG: kind == 'protein' ? math.max(0, d.proteinG + amount) : null,
         waterMl: kind == 'water' ? math.max(0, d.waterMl + amount) : null,
-        entries: [...d.entries, entry],
+        entries: _insertByTime(d.entries, entry),
       ),
     );
     return entry.id;
+  }
+
+  /// [entry] placed by its time, so an Undo puts an older entry back where
+  /// it was instead of at the end (entries are shown in this order).
+  static List<LogEntry> _insertByTime(List<LogEntry> list, LogEntry entry) {
+    final out = [...list];
+    var i = out.length;
+    while (i > 0 && out[i - 1].at.isAfter(entry.at)) {
+      i--;
+    }
+    out.insert(i, entry);
+    return out;
   }
 
   /// Protein foods the user logs most often, as (name, grams), most used
@@ -527,6 +601,17 @@ class TrackerService extends GetxService {
     weights.sort((a, b) => a.date.compareTo(b.date));
   }
 
+  /// Deletes the weigh-in saved for [day], if any. Returns it for Undo.
+  Future<WeightEntry?> removeWeight(DateTime day) async {
+    final key = WeightEntry(date: Dates.dateOnly(day), kg: 0).key;
+    final i = weights.indexWhere((w) => w.key == key);
+    if (i == -1) return null;
+    final old = weights[i];
+    await _weights.delete(key);
+    weights.removeAt(i);
+    return old;
+  }
+
   double get startWeightKg => weights.isNotEmpty
       ? weights.first.kg
       : (profile.value?.startWeightKg ?? 0);
@@ -561,6 +646,8 @@ class TrackerService extends GetxService {
     lastAppointment.value = next;
     nextAppointment.value = null;
     reportQuestions.clear();
+    // Saved too, or the old questions come back after a restart.
+    await _settings.put('reportQuestions', <String>[]);
     await _settings.put('lastAppointment', next.millisecondsSinceEpoch);
     await _settings.delete('nextAppointment');
   }
@@ -685,4 +772,19 @@ T? _firstOrNull<T>(Iterable<T> items, bool Function(T) test) {
     if (test(item)) return item;
   }
   return null;
+}
+
+/// See [TrackerService.lastLogUndo].
+class DoseUndo {
+  const DoseUndo({
+    required this.doseId,
+    this.profileBefore,
+    this.profileAfter,
+    this.movedBefore,
+  });
+
+  final String doseId;
+  final UserProfile? profileBefore;
+  final UserProfile? profileAfter;
+  final DateTime? movedBefore;
 }

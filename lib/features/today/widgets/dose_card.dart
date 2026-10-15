@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 import '../../../resources/colors.dart';
+import '../../../resources/date_utils.dart';
 import '../../../services/haptics/haptics.dart';
 import '../../../services/responsiveness/device_manager.dart';
 import '../../../services/theme/theme.dart';
@@ -503,87 +504,64 @@ class _Overdue extends GetView<TodayController> {
     return _build(context);
   });
 
+  /// Same dark card as the other dose states: how late, when it was due,
+  /// one button. Log dose opens on the due day (Now / Pick are there for a
+  /// late dose), so the card itself needs no explaining.
   Widget _build(BuildContext context) {
-    final k = context.k;
     final next = controller.nextDoseAt;
-    final day = next == null
-        ? 'your last'
-        : '${controller.nextDoseWhen.split(' · ').first}’s';
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(18.sp),
-      decoration: BoxDecoration(
-        color: k.card,
-        borderRadius: BorderRadius.circular(24.sp),
-        border: Border.all(color: AppColors.tangerine, width: 2),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 10.sp,
-                height: 10.sp,
-                decoration: const BoxDecoration(
-                  color: AppColors.tangerine,
-                  shape: BoxShape.circle,
+    final late = -controller.daysUntilNext;
+    final headline = late <= 1 ? '1 day overdue' : '$late days overdue';
+    final due = next == null
+        ? ''
+        : 'Was due ${Dates.shortWithDay(next)} · ${Dates.time(next)}';
+    return Semantics(
+      container: true,
+      label: '$headline. $due',
+      child: _InkCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text('NEXT DOSE', style: _caps(AppColors.heroMuted)),
+                SizedBox(width: 12.sp),
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: _MedicineLine(color: AppColors.heroMuted),
+                  ),
                 ),
-              ),
-              SizedBox(width: 8.sp),
+              ],
+            ),
+            SizedBox(height: 8.sp),
+            Text(headline, style: _big(AppColors.tangerine)),
+            if (due.isNotEmpty) ...[
+              SizedBox(height: 4.sp),
               Text(
-                controller.daysUntilNext == -1
-                    ? 'DUE YESTERDAY'
-                    : 'DUE ${-controller.daysUntilNext} DAYS AGO',
-                style: _caps(AppColors.tangerineText),
-              ),
-            ],
-          ),
-          SizedBox(height: 10.sp),
-          Text(
-            'Did you take $day dose?',
-            style: AppText.h1.copyWith(
-              fontSize: 24.sp,
-              height: 1.1,
-              color: k.text,
-            ),
-          ),
-          SizedBox(height: 6.sp),
-          Text(
-            'Log it with the real time, so your schedule stays right.',
-            style: AppText.bodyText.copyWith(
-              fontSize: 13.5.sp,
-              height: 1.45,
-              color: k.muted,
-            ),
-          ),
-          SizedBox(height: 14.sp),
-          Row(
-            children: [
-              Expanded(
-                child: PillButton(
-                  label: 'Yes, log it',
-                  onPressed: controller.logDose,
+                due,
+                style: AppText.bodyStrong.copyWith(
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.white,
                 ),
               ),
-              SizedBox(width: 8.sp),
-              _TextLink(
-                'Move date',
-                () => controller.moveDate(context),
-                color: k.text,
-              ),
             ],
-          ),
-          SizedBox(height: 6.sp),
-          Text(
-            'Missed a dose? Check your medicine leaflet or ask your doctor what to do.',
-            style: AppText.small.copyWith(
-              fontSize: 12.sp,
-              height: 1.45,
-              color: k.faint,
+            SizedBox(height: 18.sp),
+            PillButton(
+              label: controller.isTablet ? 'Log my tablet' : 'Log dose',
+              lime: true,
+              onPressed: controller.logOverdueDose,
             ),
-          ),
-        ],
+            // Skipped it? Moving the date covers that too.
+            Center(
+              child: _TextLink(
+                'Change next dose date ›',
+                () => controller.moveDate(context),
+                color: AppColors.heroMuted,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

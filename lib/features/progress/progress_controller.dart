@@ -238,10 +238,14 @@ class ProgressController extends GetxController {
     if (p.isDaily) {
       final first = Dates.dateOnly(tracker.doses.last.takenAt);
       final from = first.isAfter(start) ? first : start;
-      final days = Dates.daysBetween(from, today) + 1;
+      // Today counts once its tablet is logged, not before, so a perfect
+      // week doesn't read "6/7" every morning.
+      var days = Dates.daysBetween(from, today) + 1;
+      final skip = days > 1 && tracker.doseOn(today) == null ? 1 : 0;
+      days -= skip;
       var taken = 0;
       for (var i = 0; i < days; i++) {
-        if (tracker.doseOn(Dates.addDays(today, -i)) != null) taken++;
+        if (tracker.doseOn(Dates.addDays(today, -(i + skip))) != null) taken++;
       }
       return (taken, days);
     }
@@ -256,8 +260,10 @@ class ProgressController extends GetxController {
         ok++;
         continue;
       }
-      final gap = Dates.daysBetween(list[i - 1].takenAt, list[i].takenAt);
-      if ((gap - p.everyDays).abs() <= 1) ok++;
+      // Same rule as the streak: on the interval, or on the day the app
+      // asked for (weekly plans snap back to the usual day after a late
+      // one, so that next dose isn't "late" too).
+      if (tracker.onTimeAfter(list[i - 1].takenAt, list[i].takenAt)) ok++;
     }
     return (ok, total);
   }
@@ -327,8 +333,9 @@ class ProgressController extends GetxController {
     return [('Belly', belly), ('Thighs', thigh), ('Arms', arm)];
   }
 
+  /// Any injection plan, daily pens (Saxenda) too; never tablets.
   bool get showSites =>
-      !isDaily && profile?.form != 'tablet' && siteAreas.any((a) => a.$2 > 0);
+      profile?.form != 'tablet' && siteAreas.any((a) => a.$2 > 0);
 
   String get sitesNote {
     final areas = siteAreas;

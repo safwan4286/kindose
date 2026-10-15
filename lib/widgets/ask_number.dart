@@ -218,7 +218,9 @@ class _NumberSheetState extends State<_NumberSheet> {
                       FilteringTextInputFormatter.allow(
                         widget.fields[i].decimals > 0
                             ? RegExp(r'^\d{0,4}([.,]\d{0,2})?')
-                            : RegExp(r'^\d{0,3}'),
+                            // Whole numbers up to 5 digits (e.g. 2000 ml);
+                            // the range check on Save does the rest.
+                            : RegExp(r'^\d{0,5}'),
                       ),
                     ],
                     onChanged: (_) {

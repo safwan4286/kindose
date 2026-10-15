@@ -12,6 +12,7 @@ import '../../../services/theme/theme.dart';
 import '../../../widgets/drop_mark.dart';
 import '../../../widgets/k_widgets.dart';
 import '../../../widgets/press_scale.dart';
+import '../../../widgets/toast.dart';
 import '../today_controller.dart';
 
 /// White rounded card used by every Today section.
@@ -251,16 +252,9 @@ class TodayHeader extends GetView<TodayController> {
   }
 
   void _showStreak(int n) {
-    Get.rawSnackbar(
-      messageText: Text(
-        '$n ${n == 1 ? 'day' : 'days'} in a row with something logged. Keep it going!',
-        style: AppText.bodyStrong.copyWith(color: AppColors.white),
-      ),
-      backgroundColor: AppColors.ink,
-      borderRadius: 18,
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 104),
+    showToast(
+      '$n ${n == 1 ? 'day' : 'days'} in a row with something logged. Keep it going!',
       duration: const Duration(milliseconds: 2400),
-      snackPosition: SnackPosition.BOTTOM,
     );
   }
 }

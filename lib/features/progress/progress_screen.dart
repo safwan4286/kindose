@@ -53,7 +53,17 @@ class ProgressScreen extends GetView<ProgressController> {
             _WeightCard(controller: controller).enter(motion, delay: 60),
             SizedBox(height: 12.sp),
             if (controller.hasDoses) ...[
-              _DosesCard(controller: controller).enter(motion, delay: 100),
+              // Locked ranges (3 months / all time) cover the doses card
+              // too, not only the chart.
+              Stack(
+                children: [
+                  _DosesCard(controller: controller),
+                  if (controller.locked)
+                    Positioned.fill(
+                      child: _LockOverlay(onTap: controller.openPlus),
+                    ),
+                ],
+              ).enter(motion, delay: 100),
               SizedBox(height: 12.sp),
             ],
             _BarsCard(

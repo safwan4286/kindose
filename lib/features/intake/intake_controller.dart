@@ -314,7 +314,8 @@ class IntakeController extends GetxController with DayNav {
 
   /// Removes [e] and offers Undo, which puts it back at the same time.
   Future<void> removeWithUndo(LogEntry e) async {
-    await removeEntry(e);
+    // Nothing removed (paywall closed): no "Removed" toast, no Undo.
+    if (!await removeEntry(e)) return;
     if (isToday) _today?.forgetBite(e.label);
     final title = entryTitle(e);
     showUndoToast('Removed $title', () async {
@@ -405,7 +406,11 @@ class IntakeController extends GetxController with DayNav {
       return;
     }
     if (name.isNotEmpty && saveCustom.value) {
-      final id = 'my${DateTime.now().microsecondsSinceEpoch}';
+      // Same name again: update that My food instead of adding a twin.
+      final same = tracker.myFoods.firstWhereOrNull(
+        (f) => f.name.trim().toLowerCase() == name.toLowerCase(),
+      );
+      final id = same?.id ?? 'my${DateTime.now().microsecondsSinceEpoch}';
       await tracker.saveMyFood(
         Food(id, name, grams, Img3d.bowl, portion: portionText, cat: 'mine'),
       );
@@ -497,17 +502,18 @@ class IntakeController extends GetxController with DayNav {
 
   String timeOf(DateTime d) => Dates.time(d);
 
-  Future<void> removeEntry(LogEntry e) async {
-    if (!await AccessService.ensure()) return;
+  /// True when it was removed.
+  Future<bool> removeEntry(LogEntry e) async {
+    if (!await AccessService.ensure()) return false;
     Haptics.instance.lightImpact();
     await tracker.removeEntry(Dates.key(e.at), e.id);
+    return true;
   }
 
   Future<void> undoLast(String kind) async {
     final list = entriesFor(kind);
     if (list.isEmpty) return;
-    await removeEntry(list.first);
-    showToast('Removed');
+    if (await removeEntry(list.first)) showToast('Removed');
   }
 
   Future<void> _add(

@@ -14,6 +14,7 @@ import '../../widgets/press_scale.dart';
 import '../../widgets/safe_bottom.dart';
 import '../../widgets/toast.dart';
 import 'day_controller.dart';
+import '../../services/plus/access_service.dart';
 
 /// One day at a glance. Past days: the last 4 weeks free, older with Plus.
 class DayScreen extends GetView<DayController> {
@@ -631,6 +632,8 @@ class _Swipe extends StatelessWidget {
     return Dismissible(
       key: ValueKey(id),
       direction: DismissDirection.endToStart,
+      // Paywall before the row slides away; a locked swipe springs back.
+      confirmDismiss: (_) => AccessService.ensure(),
       onDismissed: (_) => onRemove(),
       background: Container(
         alignment: Alignment.centerRight,

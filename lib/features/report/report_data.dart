@@ -64,6 +64,8 @@ class ReportData {
     required this.proteinDaysHit,
     required this.loggedDays,
     required this.avgWaterMl,
+    required this.waterDays,
+    required this.scheduleOutOf,
     required this.notes,
     required this.questions,
     required this.onSchedule,
@@ -108,16 +110,37 @@ class ReportData {
       }
     }
 
-    // On schedule: within a day of the plan (daily: one per day).
+    // On schedule. Daily: days with a dose out of the days in the period
+    // since the first dose (missed days show). Otherwise: each dose within
+    // a day of the plan, same rule as the app (TrackerService.onTimeAfter).
     var onSchedule = 0;
-    for (final d in doses) {
-      final i = allDoses.indexOf(d);
-      if (i <= 0 || p == null) {
-        onSchedule++;
-        continue;
+    var scheduleOutOf = doses.length;
+    if (p != null && p.isDaily) {
+      final takenDays = {for (final d in doses) Dates.key(d.takenAt)};
+      onSchedule = takenDays.length;
+      final first = allDoses.isEmpty
+          ? start
+          : Dates.dateOnly(allDoses.first.takenAt);
+      final from = first.isAfter(start) ? first : start;
+      var last = Dates.dateOnly(to);
+      // Today counts once its dose is logged (no "6 of 7" every morning).
+      final todayDate = Dates.dateOnly(DateTime.now());
+      if (Dates.sameDay(last, todayDate) && !takenDays.contains(Dates.key(last))) {
+        last = Dates.addDays(last, -1);
       }
-      final gap = Dates.daysBetween(allDoses[i - 1].takenAt, d.takenAt);
-      if ((gap - p.everyDays).abs() <= 1) onSchedule++;
+      scheduleOutOf = from.isAfter(last)
+          ? 0
+          : Dates.daysBetween(from, last) + 1;
+      if (scheduleOutOf < onSchedule) scheduleOutOf = onSchedule;
+    } else {
+      for (final d in doses) {
+        final i = allDoses.indexOf(d);
+        if (i <= 0 || p == null) {
+          onSchedule++;
+          continue;
+        }
+        if (t.onTimeAfter(allDoses[i - 1].takenAt, d.takenAt)) onSchedule++;
+      }
     }
 
     // Side effects: days, strongest level, usual day after the dose.
@@ -175,9 +198,9 @@ class ReportData {
           'Mood: mostly "${Catalog.moods[top.key].label}" (${top.value} of ${moods.length})';
     }
 
-    final withFood = days
-        .where((d) => d.proteinG > 0 || d.waterMl > 0)
-        .toList();
+    // Each average only over the days that logged it, like Progress.
+    final withFood = days.where((d) => d.proteinG > 0).toList();
+    final withWater = days.where((d) => d.waterMl > 0).toList();
     final goal = p?.proteinGoalG ?? 100;
     final firstDose = allDoses.isEmpty ? null : allDoses.first.takenAt;
 
@@ -205,9 +228,12 @@ class ReportData {
           : withFood.fold<int>(0, (s, d) => s + d.proteinG) ~/ withFood.length,
       proteinDaysHit: withFood.where((d) => d.proteinG >= goal).length,
       loggedDays: withFood.length,
-      avgWaterMl: withFood.isEmpty
+      avgWaterMl: withWater.isEmpty
           ? 0
-          : withFood.fold<int>(0, (s, d) => s + d.waterMl) ~/ withFood.length,
+          : withWater.fold<int>(0, (s, d) => s + d.waterMl) ~/
+                withWater.length,
+      waterDays: withWater.length,
+      scheduleOutOf: scheduleOutOf,
       notes: days
           .where((d) => d.note != null)
           .map((d) => '${Dates.short(d.date)}: ${d.note}')
@@ -279,6 +305,12 @@ class ReportData {
   final int proteinDaysHit;
   final int loggedDays;
   final int avgWaterMl;
+
+  /// Days with water logged (the water average is over these).
+  final int waterDays;
+
+  /// Doses in the period, or for daily plans the days since the first dose.
+  final int scheduleOutOf;
   final List<String> notes;
   final List<String> questions;
   final int onSchedule;
@@ -317,6 +349,8 @@ class ReportData {
   String get medicineLine {
     final p = profile;
     if (p == null) return '';
+    // No medicine picked yet: don't print made-up catalog defaults.
+    if (p.medicineId == Catalog.undecided) return 'Medicine not added yet';
     final m = Catalog.medicine(p.medicineId);
     final name = Catalog.medicineName(p.medicineId, p.customMedicine);
     final molecule = m.molecule;
@@ -355,7 +389,7 @@ class ReportData {
     return '${weight(first)} to ${weight(last)} $unit$since';
   }
 
-  String get dosesValue => '$onSchedule of ${doses.length}';
+  String get dosesValue => '$onSchedule of $scheduleOutOf';
 
   bool get isDaily => profile?.isDaily ?? false;
 }

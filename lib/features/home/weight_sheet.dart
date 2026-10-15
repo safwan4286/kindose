@@ -108,6 +108,19 @@ class _WeightScreenState extends State<WeightScreen> {
     }
   }
 
+  /// Deletes this day's weigh-in; Undo puts it back.
+  Future<void> _delete() async {
+    if (!await AccessService.ensure()) return;
+    final old = await _t.removeWeight(_day);
+    if (old == null || !mounted) return;
+    Haptics.instance.mediumImpact();
+    setState(() {});
+    showUndoToast('Weigh-in deleted', () async {
+      await _t.addWeight(old.kg, old.date);
+      if (mounted) setState(() {});
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final k = context.k;
@@ -162,13 +175,35 @@ class _WeightScreenState extends State<WeightScreen> {
                 children: [
               if (replaces != null) ...[
                 SizedBox(height: 6.sp),
-                Text(
-                  'Replaces the ${_fmt(replaces.kg)} $_unit saved for this day.',
-                  style: AppText.small.copyWith(
-                    fontSize: 12.5.sp,
-                    fontWeight: FontWeight.w600,
-                    color: k.muted,
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Replaces the ${_fmt(replaces.kg)} $_unit saved for this day.',
+                        style: AppText.small.copyWith(
+                          fontSize: 12.5.sp,
+                          fontWeight: FontWeight.w600,
+                          color: k.muted,
+                        ),
+                      ),
+                    ),
+                    // A weigh-in saved on the wrong day can be removed.
+                    TextButton(
+                      onPressed: _delete,
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.danger,
+                        minimumSize: const Size(56, 40),
+                      ),
+                      child: Text(
+                        'Delete',
+                        style: AppText.small.copyWith(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.danger,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
               SizedBox(height: 16.sp),

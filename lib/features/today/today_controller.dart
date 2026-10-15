@@ -21,7 +21,7 @@ import '../../widgets/toast.dart';
 import '../home/home_controller.dart';
 import '../home/weight_sheet.dart';
 import '../notifications/notification_permission.dart';
-import '../log_dose/log_dose_controller.dart' show logMissedDose;
+import '../log_dose/log_dose_controller.dart' show LogDueDose, logMissedDose;
 import 'next_bite.dart';
 import 'weekly_summary.dart';
 import 'widgets/next_bite_card.dart';
@@ -137,7 +137,11 @@ class TodayController extends GetxController with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) _checkNotifications();
+    if (state == AppLifecycleState.resumed) {
+      // Back after a while (maybe past midnight): show the real today now.
+      now.value = DateTime.now();
+      _checkNotifications();
+    }
   }
 
   Future<void> _checkNotifications() async {
@@ -187,7 +191,7 @@ class TodayController extends GetxController with WidgetsBindingObserver {
   }
 
   Future<void> addBite(BiteIdea idea) async {
-    if (!AccessService.allow()) return;
+    if (!await AccessService.ensure()) return;
     Haptics.instance.lightImpact();
     final key = Dates.key(now.value);
     final entryId = await tracker.addProtein(idea.grams, null, idea.label);
@@ -372,6 +376,14 @@ class TodayController extends GetxController with WidgetsBindingObserver {
     await Get.toNamed<void>(Routes.logDose);
   }
 
+  /// Overdue card "Yes, log it": opens Log dose on the day it was due.
+  Future<void> logOverdueDose() async {
+    final due = nextDoseAt;
+    if (due == null) return logDose();
+    Haptics.instance.lightImpact();
+    await Get.toNamed<void>(Routes.logDose, arguments: LogDueDose(due));
+  }
+
   /// "Walk me through it" on the dose-day card, for people who said
   /// injections make them nervous.
   bool get showGuideLink =>
@@ -385,7 +397,7 @@ class TodayController extends GetxController with WidgetsBindingObserver {
   /// One-tap "Taken" is for tablets only. Daily injections open Log dose,
   /// so the injection spot is recorded and rotation keeps working.
   Future<void> markTaken() async {
-    if (!AccessService.allow()) return;
+    if (!await AccessService.ensure()) return;
     if (!isTablet) {
       await logDose();
       return;
@@ -406,8 +418,8 @@ class TodayController extends GetxController with WidgetsBindingObserver {
     final d = doseToday;
     if (d == null) return;
     Haptics.instance.selectionClick();
-    await tracker.removeDose(d.id);
-    showUndoToast('Dose removed', () => tracker.updateDose(d));
+    final u = await tracker.removeDoseAndRestore(d.id);
+    showUndoToast('Dose removed', () => tracker.restoreDose(d, u));
   }
 
   // ------------------------------------------------ after a dose is logged
@@ -460,7 +472,11 @@ class TodayController extends GetxController with WidgetsBindingObserver {
           ? first
           : Dates.dateOnly(current),
       firstDate: first,
-      lastDate: Dates.addDays(today, 21),
+      // Long plans (up to 30 days) must still be able to move later.
+      lastDate: Dates.addDays(
+        today,
+        (profile?.everyDays ?? 7) + 14 < 21 ? 21 : (profile?.everyDays ?? 7) + 14,
+      ),
       title: 'Move this dose to',
       note: 'Only the reminder moves. Check your leaflet or doctor if unsure.',
     );
@@ -480,7 +496,7 @@ class TodayController extends GetxController with WidgetsBindingObserver {
   List<Food> get quickFoods => Catalog.quickFoods(profile?.diet);
 
   Future<void> addProtein(int grams, [String? label]) async {
-    if (!AccessService.allow()) return;
+    if (!await AccessService.ensure()) return;
     Haptics.instance.lightImpact();
     await tracker.addProtein(grams, null, label);
     showToast(
@@ -498,8 +514,8 @@ class TodayController extends GetxController with WidgetsBindingObserver {
   /// Glasses shown: enough for the goal, and always one more empty "+"
   /// glass so days above the goal can be logged too (6 per row, max 4 rows).
   int get glassCount {
-    final goal = (waterGoal / glassMl).ceil().clamp(4, 18);
-    return (glassesFull + 1 > goal ? glassesFull + 1 : goal).clamp(4, 24);
+    final goal = (waterGoal / glassMl).ceil().clamp(4, 30);
+    return (glassesFull + 1 > goal ? glassesFull + 1 : goal).clamp(4, 36);
   }
 
   /// Glasses that make up the goal ("5 of 12 glasses").
@@ -525,11 +541,16 @@ class TodayController extends GetxController with WidgetsBindingObserver {
   String get waterGoalLitres => Water.total(waterGoal);
 
   /// Tap an empty glass to fill up to it; tap the last full one to empty it.
-  void tapGlass(int i) {
-    if (!AccessService.allow()) return;
-    final full = glassesFull;
+  Future<void> tapGlass(int i) async {
+    // Waits for the paywall: after buying, this tap still counts.
+    if (!await AccessService.ensure()) return;
+    // The real today (not the last 30 s tick), so a tap just after
+    // midnight never copies yesterday's total onto today.
+    now.value = DateTime.now();
+    final current = tracker.today.waterMl;
+    final full = (current / glassMl).floor();
     final ml = (i == full - 1) ? i * glassMl : (i + 1) * glassMl;
-    if (ml > day.waterMl) {
+    if (ml > current) {
       Haptics.instance.lightImpact();
     } else {
       Haptics.instance.selectionClick();
@@ -543,7 +564,7 @@ class TodayController extends GetxController with WidgetsBindingObserver {
   String get unit => useKg ? 'kg' : 'lb';
   String fmtWeight(double kg) => useKg
       ? kg.toStringAsFixed(1)
-      : (kg * Imperial.lbPerKg).toStringAsFixed(0);
+      : (kg * Imperial.lbPerKg).toStringAsFixed(1);
 
   double? get latestKg => tracker.latestWeightKg;
   double get startKg => tracker.startWeightKg;
@@ -599,7 +620,7 @@ class TodayController extends GetxController with WidgetsBindingObserver {
   }
 
   Future<void> pickFace(int face) async {
-    if (!AccessService.allow()) return;
+    if (!await AccessService.ensure()) return;
     Haptics.instance.selectionClick();
     await tracker.setMood(4 - face);
   }
@@ -697,7 +718,7 @@ class TodayController extends GetxController with WidgetsBindingObserver {
   Future<void> removeRow(TodayLogRow row) async {
     final id = row.entryId;
     if (id == null) return;
-    if (!AccessService.allow()) return;
+    if (!await AccessService.ensure()) return;
     Haptics.instance.mediumImpact();
     await tracker.removeEntry(day.key, id);
     showToast('${row.title} removed');

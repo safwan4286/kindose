@@ -20,6 +20,34 @@ mixin DayNav on GetxController {
   /// Called after the day changes (clear open rows, etc.).
   void onDayChanged() {}
 
+  /// "Today" as it was when last checked, to notice midnight passing.
+  DateTime _knownToday = Dates.dateOnly(DateTime.now());
+  AppLifecycleListener? _life;
+
+  @override
+  void onInit() {
+    super.onInit();
+    _life = AppLifecycleListener(onResume: _followToday);
+  }
+
+  @override
+  void onClose() {
+    _life?.dispose();
+    super.onClose();
+  }
+
+  /// Left open on "Today" overnight: come back on the new today, so a
+  /// morning log doesn't land on yesterday. A past day picked on purpose
+  /// stays.
+  void _followToday() {
+    final wasToday = Dates.sameDay(day.value, _knownToday);
+    _knownToday = today;
+    if (wasToday && !isToday) {
+      day.value = today;
+      onDayChanged();
+    }
+  }
+
   DateTime get today => Dates.dateOnly(DateTime.now());
   bool get isToday => Dates.sameDay(day.value, today);
   /// Oldest day that can be opened.

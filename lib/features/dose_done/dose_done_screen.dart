@@ -85,7 +85,7 @@ class DoseDoneScreen extends GetView<DoseDoneController> {
                               SizedBox(width: 10.sp),
                               Expanded(
                                 child: _StatBox(
-                                  label: 'ON TIME',
+                                  label: controller.streakLabel,
                                   value: controller.streakValue,
                                   sub: controller.streakSub,
                                   lime: true,

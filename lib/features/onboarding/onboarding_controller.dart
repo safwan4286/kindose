@@ -14,6 +14,7 @@ import '../../services/region/region.dart';
 import '../../services/notifications/notif_prefs.dart';
 import '../../services/notifications/notification_service.dart';
 import '../../services/tracker_service.dart';
+import '../../services/supply/supply_service.dart';
 import '../../widgets/social_button.dart';
 import '../../widgets/toast.dart';
 import '../me/widgets/me_sheets.dart';
@@ -505,14 +506,24 @@ class OnboardingController extends GetxController {
 
   /// Already taking: we ask for the last dose. Starting or restarting: the
   /// first dose.
-  bool get asksLastDose => stage.value.isEmpty || stage.value == 'taking';
+  /// Editing a plan that already has doses logged: always the last dose,
+  /// even for people who started as "starting".
+  bool get asksLastDose =>
+      stage.value.isEmpty ||
+      stage.value == 'taking' ||
+      (editMode && _tracker.lastDose != null);
 
   /// Daily medicine and already taking: only the time matters.
   bool get needsDoseDate => !(asksLastDose && everyDays == 1);
 
   bool get scheduleReady => !needsDoseDate || doseDate.value != null;
 
+  /// The date on the schedule step was changed in this run (edit mode
+  /// only acts on a date the user actually changed).
+  bool _doseDateTouched = false;
+
   void pickDoseDate(DateTime day) {
+    _doseDateTouched = true;
     final d = Dates.dateOnly(day);
     if (doseDate.value != d) Haptics.instance.selectionClick();
     doseDate.value = d;
@@ -1061,6 +1072,12 @@ class OnboardingController extends GetxController {
   UserProfile _build({required bool remindersOn}) {
     final old = _tracker.profile.value;
     if (editMode && old != null) {
+      // Only a date the user changed here, or daily → weekly (the old
+      // weekday is just a default then). Otherwise a late dose kept on
+      // "Keep Fridays" would quietly move the dose day.
+      final changed =
+          _doseDateTouched || (old.everyDays == 1 && everyDays != 1);
+      final picked = needsDoseDate && changed ? doseDate.value : null;
       return old.copyWith(
         medicineId: medicineId.value,
         customMedicine: _customMedicineOrNull,
@@ -1068,8 +1085,12 @@ class OnboardingController extends GetxController {
         strengthMg: _savedStrength,
         everyDays: everyDays,
         frequencyUnsure: frequency.value == 'unsure',
-        shotWeekday: shotWeekday.value,
+        // The dose day follows the date on the schedule step (e.g. daily →
+        // weekly: the weekday of the last dose, not an old default).
+        shotWeekday: picked?.weekday ?? shotWeekday.value,
         shotMinutes: shotMinutes.value,
+        // No dose logged yet: the first-dose date picked here.
+        plannedFirstDose: !asksLastDose && picked != null ? picked : null,
       );
     }
     return UserProfile(
@@ -1119,12 +1140,49 @@ class OnboardingController extends GetxController {
     );
   }
 
+  /// Edit plan, "When was your last dose?": a different day there means
+  /// the logged last dose was on that day, so its date is corrected
+  /// (time of day kept).
+  Future<void> _fixLastDoseDate() async {
+    final last = _tracker.lastDose;
+    final picked = doseDate.value;
+    if (!_doseDateTouched ||
+        !asksLastDose ||
+        !needsDoseDate ||
+        last == null ||
+        picked == null) {
+      return;
+    }
+    if (Dates.sameDay(last.takenAt, picked)) return;
+    final t = last.takenAt;
+    await _tracker.updateDose(
+      last.copyWith(
+        takenAt: DateTime(picked.year, picked.month, picked.day, t.hour, t.minute),
+      ),
+    );
+  }
+
+  /// Pen/vial ↔ tablet in Edit plan: a pack of 4 pens isn't a pack of 30
+  /// tablets, so Pens & cost starts from the new form's usual pack size
+  /// (and says so) instead of counting tablets as pen doses.
+  Future<void> _resetPackForNewForm(UserProfile? before, UserProfile now) async {
+    if (before == null) return;
+    final wasTablet = before.form == 'tablet';
+    final isTablet = now.form == 'tablet';
+    if (wasTablet == isTablet || !Get.isRegistered<SupplyService>()) return;
+    final supply = Get.find<SupplyService>();
+    if (!supply.isSetUp) return;
+    await supply.setDosesPerPack(isTablet ? 30 : 4);
+    showToast('Check your pack size in Pens & cost');
+  }
+
   /// [remindersOn] overrides the answer from the reminders screen (the old
   /// plan page still passes it).
   Future<void> finish({bool? remindersOn}) async {
     if (saving.value) return;
     saving.value = true;
     try {
+      final before = _tracker.profile.value;
       final profile = _build(
         remindersOn: remindersOn ?? this.remindersOn.value,
       );
@@ -1132,6 +1190,16 @@ class OnboardingController extends GetxController {
       if (!editMode) {
         await _tracker.addWeight(profile.startWeightKg);
         await _logLastDose();
+        // Last dose long ago: the plan preview said "next dose today", so
+        // Today shows it as due today, not as many days overdue.
+        final next = _tracker.nextDoseAt();
+        final today = Dates.dateOnly(DateTime.now());
+        if (asksLastDose && next != null && next.isBefore(today)) {
+          await _tracker.moveNextDose(today);
+        }
+      } else {
+        await _fixLastDoseDate();
+        await _resetPackForNewForm(before, profile);
       }
       if (editMode) {
         popRoute();

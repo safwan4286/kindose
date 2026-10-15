@@ -10,6 +10,7 @@ import '../../resources/routes.dart';
 import '../../resources/water_units.dart';
 import '../../services/haptics/haptics.dart';
 import '../../services/plus/access_service.dart';
+import '../today/today_controller.dart';
 import '../../services/plus/plus_access.dart';
 import '../../services/tracker_service.dart';
 import '../../widgets/toast.dart';
@@ -122,9 +123,13 @@ class DayController extends GetxController with DayNav {
 
   /// Swipe to remove. Undo puts it back at the same time.
   Future<void> removeEntry(LogEntry e) async {
-    if (!AccessService.allow()) return;
+    if (!await AccessService.ensure()) return;
     Haptics.instance.mediumImpact();
     await tracker.removeEntry(log.key, e.id);
+    // Today's Next bite can suggest that food again.
+    if (isToday && Get.isRegistered<TodayController>()) {
+      Get.find<TodayController>().forgetBite(e.label);
+    }
     showUndoToast('${entryName(e)} removed', () async {
       Haptics.instance.selectionClick();
       if (e.isProtein) {
@@ -234,11 +239,14 @@ class DayController extends GetxController with DayNav {
   int get glassesGoal => (waterGoal / glassMl).ceil().clamp(1, 12);
   int get glassesDone => (log.waterMl / glassMl).floor().clamp(0, glassesGoal);
 
+  /// Uses the real goal (the glass icons stop at 12, the words don't).
   String get waterLine {
     final left = waterGoal - log.waterMl;
     if (left <= 0) return 'Goal reached';
     final g = (left / glassMl).ceil();
-    return '$glassesDone of $glassesGoal glasses · about $g more to go';
+    final done = (log.waterMl / glassMl).floor();
+    final goal = (waterGoal / glassMl).ceil();
+    return '$done of $goal glasses · about $g more to go';
   }
 
   static const Set<String> _plainWater = {

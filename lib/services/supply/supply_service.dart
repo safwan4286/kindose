@@ -330,8 +330,10 @@ class SupplyService extends GetxService {
 
   /// "$1,079" / "£23.50".
   String money(double v) {
-    final whole = v.truncate();
-    final cents = ((v - whole) * 100).round();
+    // Round to cents first: 9.999 shows "10", never "9.100".
+    final total = (v * 100).round();
+    final whole = total ~/ 100;
+    final cents = total % 100;
     final digits = whole.toString();
     final buf = StringBuffer();
     for (var i = 0; i < digits.length; i++) {

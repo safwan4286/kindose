@@ -2,11 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../models/user_profile.dart';
 import '../../resources/catalog.dart';
 import '../../resources/date_utils.dart';
 import '../../resources/routes.dart';
+import '../../features/log_dose/log_dose_controller.dart' show LogDueDose;
 import '../../features/home/home_controller.dart';
 import '../plus/access_service.dart';
 import '../plus/plus_access.dart';
@@ -34,10 +36,14 @@ class ReminderService extends GetxService {
 
   static const int _doseId = 100;
   static const int _followUpId = 101;
+  static const int _missedId = 102;
   static const int _dailyFirstId = 110;
   static const int _dailyCount = 7;
   static const int _visitId = 120;
   static const int _refillId = 130;
+
+  /// When the refill reminder of the current low spell is (settings).
+  static const String _refillAtKey = 'refillAt';
   static const int _freeWeekId = 140;
   static const int _waterFirstId = 150;
   static const int _waterMax = 30;
@@ -55,6 +61,7 @@ class ReminderService extends GetxService {
   static List<int> get _allIds => [
     _doseId,
     _followUpId,
+    _missedId,
     _visitId,
     _refillId,
     _freeWeekId,
@@ -182,7 +189,15 @@ class ReminderService extends GetxService {
     }
     if (payload != logDosePayload || tracker.profile.value == null) return;
     if (Get.currentRoute == Routes.logDose) return;
-    Get.toNamed<void>(Routes.logDose);
+    // Overdue: open on the day it was due (most people took it and just
+    // didn't log it); Now and Pick are there for a late dose.
+    final due = tracker.nextDoseAt();
+    final overdue = due != null &&
+        Dates.dateOnly(due).isBefore(Dates.dateOnly(DateTime.now()));
+    Get.toNamed<void>(
+      Routes.logDose,
+      arguments: overdue ? LogDueDose(due!) : null,
+    );
   }
 
   /// Cancels every reminder and schedules the current ones. Dose and visit
@@ -234,6 +249,16 @@ class ReminderService extends GetxService {
           payload: logDosePayload,
         );
       }
+      // The morning after dose day, in case it's never logged. Cancelled
+      // by the next sync once the dose is logged (or moved).
+      if (_prefs.missedOn.value) {
+        await _scheduleMissed(
+          next,
+          _prefs.outsideQuiet(
+            Dates.atMinutes(Dates.addDays(next, 1), 9 * 60),
+          ),
+        );
+      }
       return;
     }
 
@@ -249,25 +274,43 @@ class ReminderService extends GetxService {
             'Took it already? Tap to log it. Taking it another day? You can move it in the app.',
         payload: logDosePayload,
       );
+      if (_prefs.missedOn.value) {
+        await _scheduleMissed(
+          next,
+          _prefs.outsideQuiet(
+            Dates.atMinutes(Dates.addDays(next, 1), 9 * 60),
+          ),
+        );
+      }
       return;
     }
 
-    // Overdue and not logged: one calm nudge the next morning, only while
-    // it is at most 3 days late.
+    // Overdue and not logged: one calm nudge in the morning (today if it's
+    // still before 9, else tomorrow), only while it is at most 3 days late.
     if (!_prefs.missedOn.value) return;
     final lateDays = Dates.daysBetween(next, now);
     if (lateDays > 3) return;
-    final tomorrow = Dates.atMinutes(Dates.addDays(now, 1), p.shotMinutes);
-    await _notes.scheduleAt(
-      id: _followUpId,
-      when: tomorrow,
-      title: 'Did you take your dose?',
-      body:
-          'It was due ${Dates.weekdayName(next.weekday)}. Log it if you took it. '
-          'If you missed it, check your medicine leaflet or ask your doctor.',
-      payload: logDosePayload,
+    final todayNine = Dates.atMinutes(now, 9 * 60);
+    await _scheduleMissed(
+      next,
+      _prefs.outsideQuiet(
+        todayNine.isAfter(now)
+            ? todayNine
+            : Dates.atMinutes(Dates.addDays(now, 1), 9 * 60),
+      ),
     );
   }
+
+  Future<void> _scheduleMissed(DateTime due, DateTime when) =>
+      _notes.scheduleAt(
+        id: _missedId,
+        when: when,
+        title: 'Did you take your dose?',
+        body:
+            'It was due ${Dates.weekdayName(due.weekday)}. Log it if you took it. '
+            'If you missed it, check your medicine leaflet or ask your doctor.',
+        payload: logDosePayload,
+      );
 
   /// 1, 3 or 7 days (Notifications) before the next appointment, 9 AM:
   /// the report is ready.
@@ -275,13 +318,27 @@ class ReminderService extends GetxService {
     final appt = tracker.nextAppointment.value;
     if (appt == null) return;
     final day = Dates.dateOnly(appt);
-    final when = _prefs.outsideQuiet(
+    final now = DateTime.now();
+    var when = _prefs.outsideQuiet(
       Dates.atMinutes(Dates.addDays(day, -_prefs.visitDays.value), 9 * 60),
     );
+    // Visit added closer than the lead time: the next 9 AM instead of
+    // nothing, as long as that's not after the visit day.
+    if (!when.isAfter(now)) {
+      final todayNine = Dates.atMinutes(now, 9 * 60);
+      when = _prefs.outsideQuiet(
+        todayNine.isAfter(now)
+            ? todayNine
+            : Dates.atMinutes(Dates.addDays(now, 1), 9 * 60),
+      );
+      if (Dates.dateOnly(when).isAfter(day)) return;
+    }
     await _notes.scheduleAt(
       id: _visitId,
       when: when,
-      title: 'Doctor visit on ${Dates.weekdayName(day.weekday)}',
+      title: Dates.sameDay(when, day)
+          ? 'Doctor visit today'
+          : 'Doctor visit on ${Dates.weekdayName(day.weekday)}',
       body:
           'Your one-page report is ready. Tap to check it and add any questions.',
       payload: reportPayload,
@@ -295,11 +352,28 @@ class ReminderService extends GetxService {
     // Debug builds too, like the Pens screen, so it can be tested.
     final plus = PlusAccess.unlocked || kDebugMode;
     if (!plus || !supply.refillReminder.value) return;
-    if (!supply.runningLow) return;
-    final last = tracker.lastDose?.takenAt ?? DateTime.now();
-    final when = _prefs.outsideQuiet(
-      Dates.atMinutes(Dates.addDays(last, 1), 10 * 60),
-    );
+    final settings = Hive.box<dynamic>('settings');
+    if (!supply.runningLow) {
+      // Topped up: the next low spell gets its own reminder.
+      if (settings.get(_refillAtKey) != null) {
+        await settings.delete(_refillAtKey);
+      }
+      return;
+    }
+    // Once per low spell: the time is fixed when it first runs low, so
+    // later daily tablets don't push it back again and again (a past time
+    // is simply skipped by scheduleAt).
+    final saved = settings.get(_refillAtKey);
+    final DateTime when;
+    if (saved is int) {
+      when = DateTime.fromMillisecondsSinceEpoch(saved);
+    } else {
+      final last = tracker.lastDose?.takenAt ?? DateTime.now();
+      when = _prefs.outsideQuiet(
+        Dates.atMinutes(Dates.addDays(last, 1), 10 * 60),
+      );
+      await settings.put(_refillAtKey, when.millisecondsSinceEpoch);
+    }
     final left = supply.dosesLeft;
     await _notes.scheduleAt(
       id: _refillId,

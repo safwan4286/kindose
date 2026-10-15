@@ -89,6 +89,7 @@ class BackendService extends GetxService {
 
   static const String _ownerKey = 'dataOwner';
   static const String _pendingKey = 'syncPending';
+  static const String _ownerMigratedKey = 'ownerMigrated';
 
   Box<dynamic> get _settings => Hive.box<dynamic>('settings');
 
@@ -97,6 +98,7 @@ class BackendService extends GetxService {
   static const Set<String> _phoneOnlyKeys = {
     _ownerKey,
     _pendingKey,
+    _ownerMigratedKey,
     'installedAt',
     'clockSeen',
     'accessConfig',
@@ -110,6 +112,7 @@ class BackendService extends GetxService {
     'reviewAsked',
     'reviewLastAt',
     'guideHoldSecs',
+    'refillAt',
   };
 
   /// Changes on this phone that aren't in the cloud yet (offline, or the
@@ -187,8 +190,20 @@ class BackendService extends GetxService {
     user.value = _db.auth.currentUser;
     pending.value = _settings.get(_pendingKey) == true;
     // Phones from before ownership existed: a signed-in user's data with
-    // no owner yet is theirs.
-    if (signedIn && dataOwner == null) unawaited(claimLocal());
+    // no owner yet is theirs — once, on the first start of this version.
+    // After that, signed in without an owner means the "Restore / Keep
+    // this phone" choice was never finished (app killed): sign out (the
+    // phone's data stays) so nothing overwrites the cloud copy unasked.
+    final migrated = _settings.get(_ownerMigratedKey) == true;
+    if (signedIn && dataOwner == null) {
+      if (migrated) {
+        _log('Sign-in choice was not finished; signing out, data kept');
+        unawaited(signOut());
+      } else {
+        unawaited(claimLocal());
+      }
+    }
+    if (!migrated) unawaited(_settings.put(_ownerMigratedKey, true));
     if (signedIn && !ownsLocal) {
       _log('Phone data belongs to another account; automatic backup is off');
     }

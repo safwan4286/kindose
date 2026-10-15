@@ -277,8 +277,22 @@ class _PurchaseSheetState extends State<_PurchaseSheet> {
   }
 
   double? get _priceValue {
-    final v = double.tryParse(_price.text.trim().replaceAll(',', ''));
+    final v = double.tryParse(_normalPrice(_price.text.trim()));
     return v == null || v < 0 || v > 10000000 ? null : v;
+  }
+
+  /// "250,50" (comma decimals) → 250.50; "1,250" and "1,250.50" keep the
+  /// comma as a thousands mark; "1.250,50" → 1250.50.
+  static String _normalPrice(String s) {
+    final comma = s.lastIndexOf(',');
+    final dot = s.lastIndexOf('.');
+    if (comma > dot) {
+      final after = s.length - comma - 1;
+      if (dot != -1 || after <= 2) {
+        return s.replaceAll('.', '').replaceAll(',', '.');
+      }
+    }
+    return s.replaceAll(',', '');
   }
 
   Future<void> _pickDate() async {

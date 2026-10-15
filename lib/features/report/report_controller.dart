@@ -46,14 +46,20 @@ class ReportController extends GetxController {
     'Are my side effects expected?',
   ];
 
+  AppLifecycleListener? _life;
+
   @override
   void onInit() {
     super.onInit();
     tracker.rollAppointment();
+    // The tab lives for the whole session: a visit that passes while the
+    // app sits in the background becomes "last visit" on return.
+    _life = AppLifecycleListener(onResume: tracker.rollAppointment);
   }
 
   @override
   void onClose() {
+    _life?.dispose();
     nameCtrl.dispose();
     dobCtrl.dispose();
     questionCtrl.dispose();
@@ -89,6 +95,7 @@ class ReportController extends GetxController {
     if (a == null) return 'Add your next appointment';
     final days = Dates.daysBetween(DateTime.now(), a);
     final when = switch (days) {
+      < 0 => 'passed',
       0 => 'today',
       1 => 'tomorrow',
       _ => 'in $days days',

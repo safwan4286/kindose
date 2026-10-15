@@ -269,10 +269,10 @@ class ReportPdf {
         ),
         _tile(
           'WATER',
-          r.loggedDays == 0
+          r.waterDays == 0
               ? '—'
               : '${water(r.avgWaterMl)}/day',
-          'goal ${water(waterGoal)} · avg of ${_days(r.loggedDays)} logged',
+          'goal ${water(waterGoal)} · avg of ${_days(r.waterDays)} logged',
         ),
       ],
     ];
@@ -389,10 +389,12 @@ class ReportPdf {
                       style: const pw.TextStyle(fontSize: 7, color: _faint),
                     ),
                   ),
-                for (final m in markers)
+                // Alternate two label rows, so changes a few weeks apart
+                // don't print on top of each other.
+                for (final (i, m) in markers.indexed)
                   pw.Positioned(
                     left: math.min(x(m.$1) + 3, w - 70),
-                    top: 0,
+                    top: i.isOdd ? 9 : 0,
                     child: pw.Text(
                       '${Catalog.mgLabel(m.$2)} from ${Dates.short(m.$1)}',
                       style: pw.TextStyle(

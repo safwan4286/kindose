@@ -78,21 +78,54 @@ class DoseDoneController extends GetxController {
     return parts.join(' · ');
   }
 
+  /// A dose logged for a day long past: the one after it is already due.
+  bool get nextAlreadyDue {
+    final next = tracker.nextDoseAt();
+    return next != null &&
+        Dates.dateOnly(next).isBefore(Dates.dateOnly(DateTime.now()));
+  }
+
   String get nextDate {
     final next = tracker.nextDoseAt();
     if (next == null) return '—';
+    if (nextAlreadyDue) return 'Already due';
     return Dates.relativeDay(next, DateTime.now()) == 'Tomorrow'
         ? 'Tomorrow'
         : Dates.shortWithDay(next);
   }
 
-  String get nextSub => isTablet
+  String get nextSub => nextAlreadyDue
+      ? 'Was ${Dates.shortWithDay(tracker.nextDoseAt()!)}'
+      : isTablet
       ? Dates.time(tracker.nextDoseAt() ?? DateTime.now())
       : '${Catalog.siteName(tracker.nextSiteId)} next';
 
   int get streak => tracker.onTimeStreak;
 
+  /// This dose came a day or more off schedule after the one before it,
+  /// so the on-time streak starts again from here.
+  bool get wasLate {
+    final d = dose;
+    final p = profile;
+    if (d == null || p == null) return false;
+    final i = tracker.doses.indexWhere((x) => x.id == d.id);
+    if (i < 0 || i + 1 >= tracker.doses.length) return false;
+    final prev = tracker.doses[i + 1].takenAt;
+    // Only late counts here; an early dose isn't a "fresh start".
+    // "Count from this dose" already moved the dose day to this one;
+    // judge against the day that applied when it was due.
+    return Dates.daysBetween(prev, d.takenAt) > p.everyDays &&
+        !tracker.onTimeAfter(
+          prev,
+          d.takenAt,
+          weekday: _args?.profileBefore?.shotWeekday,
+        );
+  }
+
+  String get streakLabel => wasLate ? 'STREAK' : 'ON TIME';
+
   String get streakValue {
+    if (wasLate) return 'Fresh start';
     final n = streak;
     final unit = switch (profile?.everyDays ?? 7) {
       1 => n == 1 ? 'day' : 'days',
@@ -102,13 +135,18 @@ class DoseDoneController extends GetxController {
     return '$n $unit';
   }
 
-  String get streakSub => streak <= 1 ? 'streak started' : 'in a row';
+  String get streakSub {
+    if (wasLate) return 'next one on time counts';
+    return streak <= 1 ? 'streak started' : 'in a row';
+  }
 
   /// "Thu 8:00 AM", or null when reminders are off.
   String? get reminderLine {
     final p = profile;
     final next = tracker.nextDoseAt();
-    if (p == null || !p.remindersOn || next == null) return null;
+    if (p == null || !p.remindersOn || next == null || nextAlreadyDue) {
+      return null;
+    }
     return '${Dates.weekdayShort(next.weekday)} ${Dates.time(next)}';
   }
 
@@ -169,9 +207,10 @@ class DoseDoneController extends GetxController {
     busy.value = true;
     try {
       Haptics.instance.mediumImpact();
-      await tracker.removeDose(d.id);
+      // Also puts back a changed dose day / usual dose and a moved date.
+      final u = await tracker.removeDoseAndRestore(d.id);
       final before = _args?.profileBefore;
-      if (before != null) await tracker.saveProfile(before);
+      if (u == null && before != null) await tracker.saveProfile(before);
       popRoute();
       showToast('Dose removed');
     } finally {

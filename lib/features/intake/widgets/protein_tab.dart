@@ -15,6 +15,7 @@ import '../../../widgets/press_scale.dart';
 import '../../today/next_bite.dart';
 import '../intake_controller.dart';
 import 'intake_parts.dart';
+import '../../../services/plus/access_service.dart';
 
 /// Protein screen: one top card (progress + today's log with Undo),
 /// search + Custom, then Suggested / My foods / All foods.
@@ -378,6 +379,8 @@ class _LogRow extends GetView<IntakeController> {
     return Dismissible(
       key: ValueKey('log-${entry.id}'),
       direction: DismissDirection.endToStart,
+      // Paywall before the row slides away; a locked swipe springs back.
+      confirmDismiss: (_) => AccessService.ensure(),
       onDismissed: (_) => controller.removeWithUndo(entry),
       background: Container(
         alignment: Alignment.centerRight,

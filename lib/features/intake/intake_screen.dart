@@ -20,6 +20,7 @@ import 'intake_controller.dart';
 import 'widgets/water_drop.dart';
 import 'widgets/intake_parts.dart';
 import 'widgets/protein_tab.dart';
+import '../../services/plus/access_service.dart';
 
 /// Protein and water. One tap adds, every add can be undone.
 class IntakeScreen extends GetView<IntakeController> {
@@ -144,6 +145,8 @@ class _EntryList extends GetView<IntakeController> {
           Dismissible(
             key: ValueKey(e.id),
             direction: DismissDirection.endToStart,
+            // Paywall before the row slides away; a locked swipe springs back.
+            confirmDismiss: (_) => AccessService.ensure(),
             onDismissed: (_) => controller.removeEntry(e),
             background: Container(
               alignment: Alignment.centerRight,

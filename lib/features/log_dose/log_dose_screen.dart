@@ -80,9 +80,11 @@ class LogDoseScreen extends GetView<LogDoseController> {
                         onTap: controller.openGuide,
                       ).enter(motion, delay: 80),
                     ],
-                    const _LateCard(),
                     _Label('When').enter(motion, delay: 110),
                     const _WhenRow().enter(motion, delay: 130),
+                    const _DueHint(),
+                    // After When: it depends on the time picked there.
+                    const _LateCard(),
                     if (!controller.isTablet) ...[
                       _Label(
                         'Where · ${Catalog.sites.length} spots',
@@ -276,7 +278,7 @@ class _LateCard extends GetView<LogDoseController> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
-                        '$late days after your usual ${controller.usualDayName}',
+                        controller.lateTitle,
                         style: AppText.title.copyWith(
                           fontSize: 14.5.sp,
                           color: k.text,
@@ -376,10 +378,41 @@ class _LateOption extends StatelessWidget {
   }
 }
 
+/// Under When, only from the overdue card: says what the due-day choice
+/// means, so nobody logs a dose they took on Friday as taken today.
+class _DueHint extends GetView<LogDoseController> {
+  const _DueHint();
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    return Obx(() {
+      if (controller.dueAt.value == null) return const SizedBox.shrink();
+      final day = controller.dueDayName;
+      final text = controller.timeMode.value == DoseTime.due
+          ? 'Took it on $day but didn’t log it? Leave this as is. '
+                'Took it later? Pick Now or the day you took it.'
+          : 'Logging it as taken late. Took it on $day after all? Tap $day.';
+      return Padding(
+        padding: EdgeInsets.fromLTRB(4.sp, 10.sp, 4.sp, 0),
+        child: Text(
+          text,
+          style: AppText.small.copyWith(
+            fontSize: 12.5.sp,
+            height: 1.45,
+            color: k.muted,
+          ),
+        ),
+      );
+    });
+  }
+}
+
 class _WhenRow extends GetView<LogDoseController> {
   const _WhenRow();
 
   static const Map<DoseTime, String> _labels = {
+    DoseTime.due: 'Due day',
     DoseTime.now: 'Now',
     DoseTime.earlier: 'Earlier',
     DoseTime.pick: 'Pick',
@@ -390,21 +423,24 @@ class _WhenRow extends GetView<LogDoseController> {
     final k = context.k;
     return Obx(() {
       final mode = controller.timeMode.value;
+      final modes = controller.timeModes;
+      String label(DoseTime t) =>
+          t == DoseTime.due ? controller.dueDayName : _labels[t] ?? '';
       return Row(
         children: [
-          for (final t in DoseTime.values) ...[
-            if (t != DoseTime.now) SizedBox(width: 8.sp),
+          for (final t in modes) ...[
+            if (t != modes.first) SizedBox(width: 8.sp),
             Expanded(
               child: ChoiceBox(
                 selected: t == mode,
                 height: 56.sp,
-                semanticLabel: '${_labels[t]}, ${controller.timeSub(t)}',
+                semanticLabel: '${label(t)}, ${controller.timeSub(t)}',
                 onTap: () => controller.pickTime(context, t),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      _labels[t] ?? '',
+                      label(t),
                       style: AppText.title.copyWith(
                         fontSize: 14.5.sp,
                         color: k.text,
