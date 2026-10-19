@@ -9,6 +9,7 @@ import '../../services/haptics/haptics.dart';
 import '../../services/plus/access_service.dart';
 import '../../services/tracker_service.dart';
 import '../../widgets/toast.dart';
+import '../log_dose/log_dose_controller.dart' show logMissedDose;
 
 /// History filter on the Doses tab.
 enum DoseRange { month, quarter, all, custom }
@@ -214,6 +215,13 @@ class DosesController extends GetxController {
   }
 
   // -------------------------------------------------------------- actions
+
+  /// A dose that wasn't logged on the day: Log dose opens on picking the
+  /// earlier date and time.
+  void logPastDose() {
+    Haptics.instance.selectionClick();
+    Get.toNamed<void>(Routes.logDose, arguments: logMissedDose);
+  }
 
   void edit(DoseLog d) {
     Haptics.instance.selectionClick();

@@ -62,19 +62,23 @@ class DosesScreen extends GetView<DosesController> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Expanded(
-                  child: Semantics(
-                    header: true,
-                    child: Text(
-                      'History',
-                      style: AppText.h2.copyWith(
-                        fontSize: 21.sp,
-                        color: k.text,
-                      ),
-                    ),
+                Semantics(
+                  header: true,
+                  child: Text(
+                    'History',
+                    style: AppText.h2.copyWith(fontSize: 21.sp, color: k.text),
                   ),
                 ),
-                if (hasAny) _Count(controller: controller),
+                SizedBox(width: 10.sp),
+                Expanded(
+                  child: hasAny
+                      ? Padding(
+                          padding: EdgeInsets.only(bottom: 2.sp),
+                          child: _Count(controller: controller),
+                        )
+                      : const SizedBox.shrink(),
+                ),
+                _PastDoseButton(onTap: controller.logPastDose),
               ],
             ).enter(motion, delay: 100),
             SizedBox(height: 10.sp),
@@ -114,12 +118,58 @@ class DosesScreen extends GetView<DosesController> {
                   ),
                 ),
                 for (final d in doses)
-                  _DoseTile(key: ValueKey(d.id), dose: d, controller: controller),
+                  _DoseTile(
+                    key: ValueKey(d.id),
+                    dose: d,
+                    controller: controller,
+                  ),
               ],
             ],
           ],
         );
       }),
+    );
+  }
+}
+
+/// "+ Past dose": a dose that wasn't logged on the day. Opens Log dose on
+/// picking the earlier date.
+class _PastDoseButton extends StatelessWidget {
+  const _PastDoseButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    return PressScale(
+      semanticLabel: 'Log a past dose',
+      onTap: onTap,
+      child: ExcludeSemantics(
+        child: Container(
+          height: 36.sp,
+          padding: EdgeInsets.symmetric(horizontal: 14.sp),
+          decoration: BoxDecoration(
+            color: k.card,
+            borderRadius: BorderRadius.circular(18.sp),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              PhosphorIcon(PhosphorIconsBold.plus, size: 14.sp, color: k.text),
+              SizedBox(width: 6.sp),
+              Text(
+                'Past dose',
+                style: AppText.small.copyWith(
+                  fontSize: 13.5.sp,
+                  fontWeight: FontWeight.w800,
+                  color: k.text,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
