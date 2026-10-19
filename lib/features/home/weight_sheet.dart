@@ -22,10 +22,11 @@ import '../../widgets/weight_input.dart';
 import '../common/day_nav.dart';
 
 /// Opens the Log weight screen (it was a bottom sheet before 10 Oct; the
-/// name stays so callers don't change).
-Future<void> showWeightSheet() async {
+/// name stays so callers don't change). [day] opens on that day, starting
+/// from its weigh-in when there is one (edit or delete it there).
+Future<void> showWeightSheet({DateTime? day}) async {
   Haptics.instance.lightImpact();
-  await Get.toNamed<void>(Routes.logWeight);
+  await Get.toNamed<void>(Routes.logWeight, arguments: day);
 }
 
 /// Log weight screen: date, ruler, change since last and since start, a
@@ -47,6 +48,16 @@ class _WeightScreenState extends State<WeightScreen> {
   /// ‹ Today › in the header, the same switcher as Water and Protein.
   late final _WeightDayNav _nav = _WeightDayNav(onChanged: _onDayChanged);
   DateTime get _day => _nav.day.value;
+
+  @override
+  void initState() {
+    super.initState();
+    if (Get.arguments is DateTime) {
+      _nav.initDay(Get.arguments);
+      final existing = _sameDay;
+      if (existing != null) _kg = existing.kg;
+    }
+  }
 
   /// A day that already has a weigh-in starts from that number.
   void _onDayChanged() {

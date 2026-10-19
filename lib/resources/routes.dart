@@ -32,6 +32,8 @@ import '../features/report/report_preview_screen.dart';
 import '../features/splash/splash_binding.dart';
 import '../features/splash/splash_screen.dart';
 import '../features/welcome/welcome_binding.dart';
+import '../features/weigh_ins/weigh_ins_binding.dart';
+import '../features/weigh_ins/weigh_ins_screen.dart';
 import '../features/welcome/welcome_screen.dart';
 
 class Routes {
@@ -50,6 +52,7 @@ class Routes {
 
   /// Weigh-in (was a bottom sheet).
   static const String logWeight = '/log-weight';
+  static const String weighIns = '/weigh-ins';
 
   /// Pass a DoseDoneArgs.
   static const String doseDone = '/dose-done';
@@ -157,6 +160,12 @@ class AppPages {
     GetPage<dynamic>(
       name: Routes.logWeight,
       page: () => const WeightScreen(),
+    ),
+    GetPage<dynamic>(
+      name: Routes.weighIns,
+      page: () => const WeighInsScreen(),
+      binding: WeighInsBinding(),
+      // Open for browsing; changes ask for Plus (AccessService.ensure).
     ),
     GetPage<dynamic>(
       name: Routes.notifications,

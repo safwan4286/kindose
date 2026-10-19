@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
+
 import '../../resources/colors.dart';
 import '../../resources/date_utils.dart';
 import '../../resources/images.dart';
@@ -52,6 +53,8 @@ class ProgressScreen extends GetView<ProgressController> {
             SizedBox(height: 14.sp),
             _WeightCard(controller: controller).enter(motion, delay: 60),
             SizedBox(height: 12.sp),
+            _WeighInsLink(controller: controller).enter(motion, delay: 80),
+            SizedBox(height: 12.sp),
             if (controller.hasDoses) ...[
               // Locked ranges (3 months / all time) cover the doses card
               // too, not only the chart.
@@ -74,6 +77,7 @@ class ProgressScreen extends GetView<ProgressController> {
                 water: false,
               ),
               bars: controller.proteinBars,
+              onDayTap: controller.openDay,
               color: AppColors.tangerine,
               valueLabel: (v) => '${v.round()} g',
             ).enter(motion, delay: 140),
@@ -87,6 +91,7 @@ class ProgressScreen extends GetView<ProgressController> {
                 water: true,
               ),
               bars: controller.waterBars,
+              onDayTap: controller.openDay,
               color: AppColors.aqua,
               valueLabel: (v) => Water.totalWithUnit(v.round()),
             ).enter(motion, delay: 170),
@@ -606,16 +611,79 @@ class _DosesCard extends StatelessWidget {
   }
 }
 
+/// One row under the weight chart: opens the Weigh-ins screen (every
+/// entry, edit, delete, add a past one).
+class _WeighInsLink extends StatelessWidget {
+  const _WeighInsLink({required this.controller});
+
+  final ProgressController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    return Semantics(
+      button: true,
+      label: 'Weigh-ins, ${controller.weighInsSummary}',
+      excludeSemantics: true,
+      child: PressScale(
+        pressedScale: 0.98,
+        onTap: controller.openWeighIns,
+        child: Container(
+          padding: EdgeInsets.fromLTRB(16.sp, 14.sp, 14.sp, 14.sp),
+          decoration: BoxDecoration(
+            color: k.card,
+            borderRadius: BorderRadius.circular(20.sp),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Weigh-ins',
+                      style: AppText.title.copyWith(
+                        fontSize: 15.sp,
+                        color: k.text,
+                      ),
+                    ),
+                    Text(
+                      controller.weighInsSummary,
+                      style: AppText.small.copyWith(
+                        fontSize: 12.5.sp,
+                        fontWeight: FontWeight.w600,
+                        color: k.muted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              PhosphorIcon(
+                PhosphorIconsBold.caretRight,
+                size: 16.sp,
+                color: k.faint,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _BarsCard extends StatelessWidget {
   const _BarsCard({
     required this.title,
     required this.goalLabel,
     required this.headline,
     required this.bars,
+    required this.onDayTap,
     required this.color,
     required this.valueLabel,
   });
 
+  /// A bar opens that day's view.
+  final void Function(DateTime day) onDayTap;
   final String title;
   final String goalLabel;
   final String headline;
@@ -657,6 +725,7 @@ class _BarsCard extends StatelessWidget {
               for (final b in bars)
                 '${Dates.weekdayName(b.date.weekday)} ${valueLabel(b.value)}',
             ].join(', '),
+            hint: 'Tap a day to open it',
             excludeSemantics: true,
             child: SizedBox(
               height: chartH + 24.sp,
@@ -677,10 +746,9 @@ class _BarsCard extends StatelessWidget {
                       for (final (i, b) in bars.indexed) ...[
                         if (i > 0) SizedBox(width: 6.sp),
                         Expanded(
-                          child: Tooltip(
-                            message:
-                                '${Dates.weekdayShort(b.date.weekday)}: ${valueLabel(b.value)}',
-                            triggerMode: TooltipTriggerMode.tap,
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () => onDayTap(b.date),
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [

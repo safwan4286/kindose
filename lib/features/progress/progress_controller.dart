@@ -99,6 +99,27 @@ class ProgressController extends GetxController {
 
   void logWeight() => showWeightSheet();
 
+  // ------------------------------------------------------------ weigh-ins
+
+  /// "27 entries · last Mon, 19 Oct" for the Weigh-ins row.
+  String get weighInsSummary {
+    final w = tracker.weights;
+    if (w.isEmpty) return 'None yet · add past ones here';
+    final n = w.length;
+    return '$n ${n == 1 ? 'entry' : 'entries'} · last ${Dates.shortWithDay(w.last.date)}';
+  }
+
+  void openWeighIns() {
+    Haptics.instance.selectionClick();
+    Get.toNamed<void>(Routes.weighIns);
+  }
+
+  /// A protein or water bar: that day's view.
+  void openDay(DateTime day) {
+    Haptics.instance.selectionClick();
+    Get.toNamed<void>(Routes.day, arguments: day);
+  }
+
   // ---------------------------------------------------------------- weight
 
   bool get useKg => profile?.useKg ?? true;
