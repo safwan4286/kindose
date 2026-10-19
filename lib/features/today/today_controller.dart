@@ -21,7 +21,8 @@ import '../../widgets/toast.dart';
 import '../home/home_controller.dart';
 import '../home/weight_sheet.dart';
 import '../notifications/notification_permission.dart';
-import '../log_dose/log_dose_controller.dart' show LogDueDose, logMissedDose;
+import '../log_dose/log_dose_controller.dart' show LogDueDose;
+import '../log_dose/log_dose_controller.dart' as log_dose show logMissedDose;
 import 'next_bite.dart';
 import 'weekly_summary.dart';
 import 'widgets/next_bite_card.dart';
@@ -455,7 +456,8 @@ class TodayController extends GetxController with WidgetsBindingObserver {
   /// A dose from an earlier day that wasn't logged (past only).
   void logMissedDose() {
     Haptics.instance.selectionClick();
-    Get.toNamed<void>(Routes.logDose, arguments: logMissedDose);
+    // Prefixed: a bare logMissedDose here is this method, not the flag.
+    Get.toNamed<void>(Routes.logDose, arguments: log_dose.logMissedDose);
   }
 
   Future<void> moveDate(BuildContext context) async {

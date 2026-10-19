@@ -996,6 +996,13 @@ class _Daily extends GetView<TodayController> {
                     ],
                   ),
           ),
+          // A day in the strip that was taken but not logged.
+          const _Divider(),
+          _TextLink(
+            controller.isTablet ? 'Log a missed tablet ›' : 'Log a missed dose ›',
+            controller.logMissedDose,
+            color: AppColors.heroMuted,
+          ),
         ],
       ),
     );
