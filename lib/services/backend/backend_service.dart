@@ -126,6 +126,19 @@ class BackendService extends GetxService {
   /// [pending] is expected and nothing needs the user.
   final RxBool autoQueued = false.obs;
 
+  /// The last sync attempt failed for lack of internet (false: the server
+  /// or something else refused it, so waiting to go online won't help).
+  final RxBool lastFailOffline = true.obs;
+
+  /// Why changes can't be synced at all right now, or null. Retrying
+  /// won't help until this is sorted.
+  String? get syncBlocked {
+    if (!signedIn || !hasLocalData) return null;
+    if (TestData.isOn) return 'Test data is on this phone. Remove it to sync';
+    if (!ownsLocal) return 'This phone’s data belongs to another account';
+    return null;
+  }
+
   StreamSubscription<List<ConnectivityResult>>? _netSub;
 
   /// Account id the phone's data belongs to, or null for a guest.
@@ -294,6 +307,7 @@ class BackendService extends GetxService {
       await _upload();
     } catch (e) {
       // Quiet: offline or a hiccup. The next change or start tries again.
+      lastFailOffline.value = _isOffline(e);
       _log('Auto backup skipped: $e');
     } finally {
       _autoRunning = false;
@@ -408,7 +422,10 @@ class BackendService extends GetxService {
       return BackendResult.ok;
     } catch (e) {
       _log('Backup failed: $e');
-      return _isOffline(e) ? BackendResult.offline : BackendResult.failed;
+      lastFailOffline.value = _isOffline(e);
+      return lastFailOffline.value
+          ? BackendResult.offline
+          : BackendResult.failed;
     } finally {
       busy.value = false;
     }
@@ -429,6 +446,7 @@ class BackendService extends GetxService {
       'size_bytes': utf8.encode(jsonEncode(data)).length,
     });
     await _setPending(false);
+    lastFailOffline.value = true;
     await refreshBackupInfo();
     _log(
       'Backup saved ✓ ${(utf8.encode(jsonEncode(data)).length / 1024).toStringAsFixed(1)} KB · '

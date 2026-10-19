@@ -77,6 +77,8 @@ class MeController extends GetxController {
     backend.lastBackupAt.value;
     backend.busy.value;
     backend.pending.value;
+    backend.autoQueued.value;
+    backend.lastFailOffline.value;
   }
 
   bool get isPlus => PlusAccess.active.value;
@@ -190,6 +192,7 @@ class MeController extends GetxController {
       PlusAccess.debugPlus.value ? 'Debug: Plus is on' : 'Debug: Plus is off',
     );
   }
+
   bool get useKg => tracker.profile.value?.useKg ?? true;
   ThemeMode get themeMode => tracker.themeMode.value;
 
@@ -518,8 +521,26 @@ class MeController extends GetxController {
   }
 
   /// "Backed up today, 9:41 PM" / "Not backed up yet".
+  /// Changes can't sync until the user sorts something out (see
+  /// BackendService.syncBlocked), so there is no point offering Retry.
+  String? get syncBlocked => backend.syncBlocked;
+
+  /// Second line under [backupLine].
+  String get backupSub {
+    final blocked = syncBlocked;
+    if (blocked != null) return blocked;
+    if (syncSoon) return 'Saved on this phone';
+    if (syncWaiting) {
+      return backend.lastFailOffline.value
+          ? 'Saved on this phone · syncs when you’re online'
+          : 'Saved on this phone · couldn’t reach the backup';
+    }
+    return 'Syncs by itself after changes';
+  }
+
   String get backupLine {
     if (backend.busy.value) return 'Syncing…';
+    if (syncBlocked != null) return 'Not syncing';
     if (backend.pending.value) {
       return syncSoon ? 'Syncing in a moment' : 'Changes waiting to sync';
     }
@@ -791,7 +812,8 @@ class MeController extends GetxController {
       'kindose-weights.csv': weights.toString(),
       'kindose-food-and-water.csv': log.toString(),
       'kindose-plan.csv': _planCsv(esc),
-      if (tracker.myFoods.isNotEmpty) 'kindose-my-foods.csv': myFoods.toString(),
+      if (tracker.myFoods.isNotEmpty)
+        'kindose-my-foods.csv': myFoods.toString(),
       if (supply.purchases.isNotEmpty)
         'kindose-purchases.csv': purchases.toString(),
     });
@@ -895,7 +917,6 @@ class MeController extends GetxController {
   }
 
   bool get canContact => AppLinks.supportEmail.isNotEmpty;
-
 
   /// Always shown: opens the store page, or the rating dialog until the
   /// App Store id is known (ReviewService.openStore).

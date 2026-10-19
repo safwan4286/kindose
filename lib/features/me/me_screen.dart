@@ -694,7 +694,9 @@ class _SignedInBackup extends StatelessWidget {
                 width: 10.sp,
                 height: 10.sp,
                 decoration: BoxDecoration(
-                  color: controller.syncWaiting && !controller.syncSoon
+                  color: controller.syncBlocked != null
+                      ? (dark ? const Color(0xFFFF8A80) : AppColors.danger)
+                      : controller.syncWaiting && !controller.syncSoon
                       ? const Color(0xFFF0B44C)
                       : const Color(0xFF5DBB63),
                   shape: BoxShape.circle,
@@ -716,11 +718,7 @@ class _SignedInBackup extends StatelessWidget {
                       ),
                       SizedBox(height: 2.sp),
                       Text(
-                        controller.syncSoon
-                            ? 'Saved on this phone'
-                            : controller.syncWaiting
-                            ? 'Saved on this phone · syncs when you’re online'
-                            : 'Syncs by itself after changes',
+                        controller.backupSub,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: AppText.small.copyWith(
@@ -733,7 +731,7 @@ class _SignedInBackup extends StatelessWidget {
                   ),
                 ),
               ),
-              if (controller.syncWaiting) ...[
+              if (controller.syncWaiting && controller.syncBlocked == null) ...[
                 SizedBox(width: 8.sp),
                 SoftButton(
                   label: busy
