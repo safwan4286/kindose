@@ -69,7 +69,7 @@ class HeightPage extends GetView<OnboardingController> {
       subtitle: 'Used for your BMI and goals.',
       cta: KBottomPadding(
         child: PillButton(
-          label: 'Continue',
+          label: controller.continueLabel,
           onPressed: controller.confirmHeight,
         ),
       ),

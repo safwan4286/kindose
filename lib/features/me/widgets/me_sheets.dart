@@ -608,3 +608,75 @@ class _EmailFallbackSheet extends StatelessWidget {
     );
   }
 }
+
+
+/// After a new activity level: offer goals that match it. Returns true to
+/// use them.
+Future<bool?> showGoalsUpdateSheet({
+  required String protein,
+  required String water,
+}) {
+  return Get.bottomSheet<bool>(
+    _GoalsUpdateSheet(protein: protein, water: water),
+    isScrollControlled: true,
+  );
+}
+
+class _GoalsUpdateSheet extends StatelessWidget {
+  const _GoalsUpdateSheet({required this.protein, required this.water});
+
+  final String protein;
+  final String water;
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    final dark = k.selectedBorder == AppColors.lime;
+    Widget row(String label, String value) => Padding(
+      padding: EdgeInsets.symmetric(vertical: 6.sp),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: AppText.title.copyWith(fontSize: 15.sp, color: k.text),
+            ),
+          ),
+          Text(
+            value,
+            style: AppText.bodyStrong.copyWith(fontSize: 15.sp, color: k.text),
+          ),
+        ],
+      ),
+    );
+    return KSheetFrame(
+      title: 'Update your daily goals?',
+      sub: 'Your activity changed. These goals fit it better. General '
+          'guidance only, change them any time.',
+      children: [
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 16.sp, vertical: 8.sp),
+          decoration: BoxDecoration(
+            color: k.card,
+            borderRadius: BorderRadius.circular(16.sp),
+          ),
+          child: Column(
+            children: [row('Protein', protein), row('Water', water)],
+          ),
+        ),
+        SizedBox(height: 14.sp),
+        PillButton(
+          label: 'Use these goals',
+          ink: !dark,
+          onPressed: () => Navigator.of(context).pop(true),
+        ),
+        SizedBox(height: 8.sp),
+        SoftButton(
+          label: 'Keep my goals',
+          height: 50,
+          onPressed: () => Navigator.of(context).pop(false),
+        ),
+      ],
+    );
+  }
+}

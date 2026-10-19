@@ -42,12 +42,31 @@ enum OnboardingStep {
 }
 
 /// Holds the answers while the user moves through onboarding, then saves
-/// them as one [UserProfile]. In edit mode only the medicine, dose, frequency and schedule steps
-/// are shown and the rest of the profile is kept.
+/// them as one [UserProfile]. In edit mode (opened from Me) only
+/// [editSteps] are shown, only their answers are saved and the rest of the
+/// profile is kept.
 class OnboardingController extends GetxController {
-  OnboardingController({this.editMode = false});
+  OnboardingController({this.editMode = false, List<OnboardingStep>? editSteps})
+    : editSteps = editSteps ?? planSteps;
 
   final bool editMode;
+
+  /// Steps shown in edit mode.
+  final List<OnboardingStep> editSteps;
+
+  /// Medicine & dose, then schedule: the original "Edit plan" flow.
+  static const List<OnboardingStep> planSteps = [
+    OnboardingStep.medicine,
+    OnboardingStep.dose,
+    OnboardingStep.frequency,
+    OnboardingStep.schedule,
+  ];
+
+  bool _edits(OnboardingStep s) => editMode && editSteps.contains(s);
+
+  /// Last step of an edit saves, so its button says so.
+  String get continueLabel =>
+      editMode && page.value == steps.length - 1 ? 'Save changes' : 'Continue';
   final TrackerService _tracker = Get.find<TrackerService>();
   final PageController pageController = PageController();
 
@@ -57,11 +76,19 @@ class OnboardingController extends GetxController {
   /// the first answer changes the flow.
   List<OnboardingStep> get steps {
     if (editMode) {
-      return const [
-        OnboardingStep.medicine,
-        OnboardingStep.dose,
-        OnboardingStep.frequency,
-        OnboardingStep.schedule,
+      // A different medicine brings its usual schedule, so let the user
+      // check how often and when before saving.
+      final medicineChanged =
+          editSteps.contains(OnboardingStep.medicine) &&
+          !editSteps.contains(OnboardingStep.frequency) &&
+          _loadedMedicineId != null &&
+          medicineId.value != _loadedMedicineId;
+      return [
+        ...editSteps,
+        if (medicineChanged) ...[
+          OnboardingStep.frequency,
+          OnboardingStep.schedule,
+        ],
       ];
     }
     final starting = stage.value == 'starting';
@@ -261,7 +288,11 @@ class OnboardingController extends GetxController {
     super.onClose();
   }
 
+  /// Medicine saved before this edit, to spot a change.
+  String? _loadedMedicineId;
+
   void _loadFrom(UserProfile p) {
+    _loadedMedicineId = p.medicineId;
     stage.value = p.stage;
     medicineId.value = p.medicineId;
     customMedicine.value = p.customMedicine ?? '';
@@ -270,9 +301,8 @@ class OnboardingController extends GetxController {
     strength.value = p.strengthMg;
     if (p.strengthMg <= 0) {
       doseMode.value = 'unsure';
-    } else if (Catalog.medicine(
-      p.medicineId,
-    ).strengths.contains(p.strengthMg)) {
+    } else if (Catalog.medicine(p.medicineId).strengths
+        .contains(p.strengthMg)) {
       doseMode.value = 'label';
     } else {
       doseMode.value = 'custom';
@@ -433,6 +463,8 @@ class OnboardingController extends GetxController {
     }
     // A dose picked for another medicine shouldn't look answered.
     if (changed && doseMode.value == 'label') doseMode.value = '';
+    // Re-picking the saved medicine keeps the user's form and schedule.
+    if (editMode && !changed) return;
     form.value = m.form;
     frequency.value = m.everyDays == 1 ? 'daily' : 'weekly';
     if (changed) frequencyAnswered.value = false;
@@ -857,28 +889,31 @@ class OnboardingController extends GetxController {
 
   /// 1.2 g per kg rounded to 5 g, a common general guideline shown as a
   /// starting point the user can change.
-  int get suggestedProtein {
+  int get suggestedProtein => suggestProtein(weightKg.value, activity.value);
+
+  static int suggestProtein(double kg, String? activity) {
     // A little more for people who train hard. General guidance only.
-    final perKg = activity.value == 'active' || activity.value == 'athlete'
-        ? 1.4
-        : 1.2;
-    final g = (weightKg.value * perKg / 5).round() * 5;
+    final perKg = activity == 'active' || activity == 'athlete' ? 1.4 : 1.2;
+    final g = (kg * perKg / 5).round() * 5;
     return g.clamp(60, 180);
   }
 
   /// About 35 ml per kg, plus some for activity, rounded to 250 ml and kept
   /// between 2 and 4 litres. General guidance only.
-  int get suggestedWaterMl {
-    final extra = switch (activity.value) {
+  int get suggestedWaterMl =>
+      suggestWaterMl(weightKg.value, activity.value, oz: useOz.value);
+
+  static int suggestWaterMl(double kg, String? activity, {required bool oz}) {
+    final extra = switch (activity) {
       'mod' => 250,
       'active' => 500,
       'athlete' => 750,
       _ => 0,
     };
-    final ml = weightKg.value * 35 + extra;
+    final ml = kg * 35 + extra;
     final rounded = ((ml / 250).round() * 250).clamp(2000, 4000);
     // Ounce people get whole glasses of 8 fl oz (64, 72, 80 … fl oz).
-    if (!useOz.value) return rounded;
+    if (!oz) return rounded;
     return Water.fromOz((Water.toOz(rounded) / 8).round() * 8.0);
   }
 
@@ -1078,19 +1113,40 @@ class OnboardingController extends GetxController {
       final changed =
           _doseDateTouched || (old.everyDays == 1 && everyDays != 1);
       final picked = needsDoseDate && changed ? doseDate.value : null;
-      return old.copyWith(
-        medicineId: medicineId.value,
-        customMedicine: _customMedicineOrNull,
-        form: form.value,
-        strengthMg: _savedStrength,
-        everyDays: everyDays,
-        frequencyUnsure: frequency.value == 'unsure',
-        // The dose day follows the date on the schedule step (e.g. daily →
-        // weekly: the weekday of the last dose, not an old default).
-        shotWeekday: picked?.weekday ?? shotWeekday.value,
-        shotMinutes: shotMinutes.value,
-        // No dose logged yet: the first-dose date picked here.
-        plannedFirstDose: !asksLastDose && picked != null ? picked : null,
+      final plan = editSteps.any(planSteps.contains);
+      final p = !plan
+          ? old
+          : old.copyWith(
+              medicineId: medicineId.value,
+              customMedicine: _customMedicineOrNull,
+              form: form.value,
+              strengthMg: _savedStrength,
+              everyDays: everyDays,
+              frequencyUnsure: frequency.value == 'unsure',
+              // The dose day follows the date on the schedule step (e.g. daily →
+              // weekly: the weekday of the last dose, not an old default).
+              shotWeekday: picked?.weekday ?? shotWeekday.value,
+              shotMinutes: shotMinutes.value,
+              // No dose logged yet: the first-dose date picked here.
+              plannedFirstDose: !asksLastDose && picked != null ? picked : null,
+            );
+      return p.copyWith(
+        treatmentStartedAt: _edits(OnboardingStep.treatmentStart)
+            ? treatmentStart.value
+            : null,
+        clearTreatmentStart:
+            _edits(OnboardingStep.treatmentStart) &&
+            treatmentStart.value == null,
+        sex: _edits(OnboardingStep.sex) && sex.value.isNotEmpty
+            ? sex.value
+            : null,
+        birthDate: _edits(OnboardingStep.birth) ? birthDate : null,
+        heightCm: _edits(OnboardingStep.height) ? heightCm.value : null,
+        heightInCm: _edits(OnboardingStep.height) ? heightInCm.value : null,
+        activity: _edits(OnboardingStep.activity) && activity.value.isNotEmpty
+            ? activity.value
+            : null,
+        focus: _edits(OnboardingStep.focus) ? focus.toList() : null,
       );
     }
     return UserProfile(
@@ -1157,7 +1213,13 @@ class OnboardingController extends GetxController {
     final t = last.takenAt;
     await _tracker.updateDose(
       last.copyWith(
-        takenAt: DateTime(picked.year, picked.month, picked.day, t.hour, t.minute),
+        takenAt: DateTime(
+          picked.year,
+          picked.month,
+          picked.day,
+          t.hour,
+          t.minute,
+        ),
       ),
     );
   }
@@ -1165,7 +1227,10 @@ class OnboardingController extends GetxController {
   /// Pen/vial ↔ tablet in Edit plan: a pack of 4 pens isn't a pack of 30
   /// tablets, so Pens & cost starts from the new form's usual pack size
   /// (and says so) instead of counting tablets as pen doses.
-  Future<void> _resetPackForNewForm(UserProfile? before, UserProfile now) async {
+  Future<void> _resetPackForNewForm(
+    UserProfile? before,
+    UserProfile now,
+  ) async {
     if (before == null) return;
     final wasTablet = before.form == 'tablet';
     final isTablet = now.form == 'tablet';

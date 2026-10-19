@@ -127,8 +127,13 @@ class _StepHeader extends GetView<OnboardingController> {
             child: Obx(
               () => AnimatedOpacity(
                 duration: const Duration(milliseconds: 200),
-                // Wrap-up screens keep the back button but drop the bar.
-                opacity: controller.isWrapUp ? 0 : 1,
+                // Wrap-up screens and one-question edits keep the back
+                // button but drop the bar.
+                opacity:
+                    controller.isWrapUp ||
+                        (controller.editMode && controller.stepCount == 1)
+                    ? 0
+                    : 1,
                 child: _ProgressBar(
                   value: controller.progress,
                   label:

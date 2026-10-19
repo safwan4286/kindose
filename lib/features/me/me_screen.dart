@@ -50,6 +50,18 @@ class MeScreen extends GetView<MeController> {
             _label(context, 'Treatment'),
             KGroup(
               children: [
+                if (c.hasMedicine) ...[
+                  _NavRow(
+                    label: 'Medicine & dose',
+                    value: c.medicineTitle,
+                    onTap: c.editMedicine,
+                  ),
+                  _NavRow(
+                    label: 'Schedule',
+                    value: c.scheduleLabel,
+                    onTap: c.editSchedule,
+                  ),
+                ],
                 _NavRow(
                   label: c.pensLabel,
                   sub: 'What’s left, refills and spend',
@@ -88,8 +100,39 @@ class MeScreen extends GetView<MeController> {
                   value: c.dietLabel,
                   onTap: c.editDiet,
                 ),
+                _NavRow(
+                  label: 'Help me with',
+                  value: c.focusLabel,
+                  onTap: c.editFocus,
+                ),
               ],
             ).enter(motion, delay: 100),
+            _label(context, 'About me'),
+            KGroup(
+              children: [
+                _NavRow(
+                  label: 'Treatment started',
+                  value: c.treatmentStartLabel,
+                  onTap: c.editTreatmentStart,
+                ),
+                _NavRow(
+                  label: 'Height',
+                  value: c.heightLabel,
+                  onTap: c.editHeight,
+                ),
+                _NavRow(label: 'Sex', value: c.sexLabel, onTap: c.editSex),
+                _NavRow(
+                  label: 'Date of birth',
+                  value: c.birthLabel,
+                  onTap: c.editBirth,
+                ),
+                _NavRow(
+                  label: 'Activity',
+                  value: c.activityLabel,
+                  onTap: c.editActivity,
+                ),
+              ],
+            ).enter(motion, delay: 120),
             _label(context, 'Reminders'),
             KGroup(
               children: [
@@ -354,16 +397,6 @@ class _PlanCard extends StatelessWidget {
                   ],
                 ),
               ),
-              if (c.hasMedicine) ...[
-                SizedBox(width: 8.sp),
-                CircleIconButton(
-                  icon: PhosphorIconsBold.pencilSimple,
-                  label: 'Edit plan',
-                  size: 40.sp,
-                  background: k.cardAlt,
-                  onTap: c.editPlan,
-                ),
-              ],
             ],
           ),
           SizedBox(height: 16.sp),

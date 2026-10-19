@@ -31,7 +31,7 @@ class BirthPage extends GetView<OnboardingController> {
       cta: Obx(
         () => KBottomPadding(
           child: PillButton(
-            label: 'Continue',
+            label: controller.continueLabel,
             onPressed: controller.isAdult ? controller.confirmBirth : null,
           ),
         ),

@@ -9,12 +9,18 @@ class OnboardingBinding extends Bindings {
   }
 }
 
-/// Same screens, opened from Me to change medicine, dose or shot day.
+/// Same screens, opened from Me to change answers. Pass the steps to show
+/// as the route arguments (a List<OnboardingStep>); none = the plan steps.
 class EditPlanBinding extends Bindings {
   @override
   void dependencies() {
     Get.lazyPut<OnboardingController>(
-      () => OnboardingController(editMode: true),
+      () => OnboardingController(
+        editMode: true,
+        editSteps: Get.arguments is List<OnboardingStep>
+            ? Get.arguments as List<OnboardingStep>
+            : null,
+      ),
     );
   }
 }

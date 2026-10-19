@@ -108,6 +108,7 @@ class UserProfile {
     int? shotMinutes,
     DateTime? plannedFirstDose,
     DateTime? treatmentStartedAt,
+    bool clearTreatmentStart = false,
     String? sex,
     DateTime? birthDate,
     bool? heightInCm,
@@ -121,6 +122,8 @@ class UserProfile {
     int? waterGoalMl,
     bool? remindersOn,
     bool? useOz,
+    double? heightCm,
+    List<String>? focus,
   }) {
     return UserProfile(
       stage: stage,
@@ -133,7 +136,9 @@ class UserProfile {
       shotWeekday: shotWeekday ?? this.shotWeekday,
       shotMinutes: shotMinutes ?? this.shotMinutes,
       plannedFirstDose: plannedFirstDose ?? this.plannedFirstDose,
-      treatmentStartedAt: treatmentStartedAt ?? this.treatmentStartedAt,
+      treatmentStartedAt: clearTreatmentStart
+          ? null
+          : (treatmentStartedAt ?? this.treatmentStartedAt),
       sex: sex ?? this.sex,
       birthDate: birthDate ?? this.birthDate,
       heightInCm: heightInCm ?? this.heightInCm,
@@ -144,11 +149,11 @@ class UserProfile {
       goalWeightKg: clearGoalWeight
           ? null
           : (goalWeightKg ?? this.goalWeightKg),
-      heightCm: heightCm,
+      heightCm: heightCm ?? this.heightCm,
       proteinGoalG: proteinGoalG ?? this.proteinGoalG,
       waterGoalMl: waterGoalMl ?? this.waterGoalMl,
       vegDiet: vegDiet ?? this.vegDiet,
-      focus: focus,
+      focus: focus ?? this.focus,
       remindersOn: remindersOn ?? this.remindersOn,
       useOz: useOz ?? this.useOz,
       startedAt: startedAt,

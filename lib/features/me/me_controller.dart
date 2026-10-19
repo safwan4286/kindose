@@ -12,6 +12,7 @@ import '../../resources/catalog.dart';
 import '../../resources/date_utils.dart';
 import '../../resources/routes.dart';
 import '../../resources/water_units.dart';
+import '../../models/user_profile.dart';
 import '../../services/backend/backend_service.dart';
 import '../../services/haptics/haptics.dart';
 import '../../services/notifications/notif_prefs.dart';
@@ -23,10 +24,12 @@ import '../../services/purchases/purchase_service.dart';
 import '../../services/review/review_service.dart';
 import '../../services/supply/supply_service.dart';
 import '../../services/tracker_service.dart';
+import '../../widgets/k_ruler.dart';
 import '../../widgets/mood_row.dart';
 import '../../widgets/no_internet_sheet.dart';
 import '../../widgets/toast.dart';
 import '../legal/legal_sheet.dart';
+import '../onboarding/onboarding_controller.dart';
 import 'widgets/me_sheets.dart';
 import '../../services/debug/test_data.dart';
 
@@ -290,6 +293,101 @@ class MeController extends GetxController {
     Haptics.instance.selectionClick();
     Get.toNamed<void>(Routes.editPlan);
   }
+
+  /// Reopens the onboarding questions for [steps] with the saved answers.
+  /// A new activity level then offers matching protein and water goals.
+  Future<void> _editAnswers(List<OnboardingStep> steps) async {
+    Haptics.instance.selectionClick();
+    final before = tracker.profile.value;
+    await Get.toNamed<void>(Routes.editPlan, arguments: steps);
+    final after = tracker.profile.value;
+    if (before == null || after == null) return;
+    if (after.activity != before.activity) await _offerGoalUpdate(after);
+  }
+
+  void editMedicine() =>
+      _editAnswers(const [OnboardingStep.medicine, OnboardingStep.dose]);
+
+  void editSchedule() =>
+      _editAnswers(const [OnboardingStep.frequency, OnboardingStep.schedule]);
+
+  void editTreatmentStart() =>
+      _editAnswers(const [OnboardingStep.treatmentStart]);
+  void editHeight() => _editAnswers(const [OnboardingStep.height]);
+  void editSex() => _editAnswers(const [OnboardingStep.sex]);
+  void editBirth() => _editAnswers(const [OnboardingStep.birth]);
+  void editActivity() => _editAnswers(const [OnboardingStep.activity]);
+  void editFocus() => _editAnswers(const [OnboardingStep.focus]);
+
+  Future<void> _offerGoalUpdate(UserProfile p) async {
+    final kg = tracker.latestWeightKg ?? p.startWeightKg;
+    final protein = OnboardingController.suggestProtein(kg, p.activity);
+    final water = OnboardingController.suggestWaterMl(
+      kg,
+      p.activity,
+      oz: p.useOz,
+    );
+    if (protein == p.proteinGoalG && water == p.waterGoalMl) return;
+    final ok = await showGoalsUpdateSheet(
+      protein: '$protein g a day',
+      water: '${Water.totalWithUnit(water)} a day',
+    );
+    if (ok != true) return;
+    final now = tracker.profile.value;
+    if (now == null) return;
+    await tracker.saveProfile(
+      now.copyWith(proteinGoalG: protein, waterGoalMl: water),
+    );
+    showToast('Goals updated');
+  }
+
+  // ------------------------------------------------------------ about me
+
+  String _monthYear(DateTime d) => '${Dates.monthShort(d.month)} ${d.year}';
+
+  String get treatmentStartLabel {
+    final d = tracker.profile.value?.treatmentStartedAt;
+    return d == null ? 'Not set' : _monthYear(d);
+  }
+
+  String get heightLabel {
+    final p = tracker.profile.value;
+    final cm = p?.heightCm;
+    if (p == null || cm == null || cm <= 0) return 'Not set';
+    return p.heightInCm
+        ? '${cm.round()} cm'
+        : Imperial.feetInches(cm / Imperial.cmPerInch);
+  }
+
+  String get sexLabel => switch (tracker.profile.value?.sex) {
+    'female' => 'Female',
+    'male' => 'Male',
+    'other' => 'Other',
+    'none' => 'Prefer not to say',
+    _ => 'Not set',
+  };
+
+  String get birthLabel {
+    final d = tracker.profile.value?.birthDate;
+    return d == null ? 'Not set' : '${Dates.short(d)} ${d.year}';
+  }
+
+  String get activityLabel => switch (tracker.profile.value?.activity) {
+    'sed' => 'Mostly sitting',
+    'light' => 'Lightly active',
+    'mod' => 'Moderately active',
+    'active' => 'Very active',
+    'athlete' => 'Athlete level',
+    _ => 'Not set',
+  };
+
+  String get focusLabel {
+    final n = tracker.profile.value?.focus.length ?? 0;
+    return n == 0 ? 'Not set' : '$n picked';
+  }
+
+  /// "Fridays · 8:00 AM" for the Schedule row.
+  String get scheduleLabel => '$scheduleDay · $scheduleTime';
 
   /// Paywall, or for Plus users the store's subscription page (change
   /// plan, cancel). RevenueCat's Customer Center needs a paid RevenueCat

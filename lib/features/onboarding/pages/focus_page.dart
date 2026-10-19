@@ -57,7 +57,7 @@ class FocusPage extends GetView<OnboardingController> {
             SizedBox(height: 8.sp),
             KBottomPadding(
               child: PillButton(
-                label: 'Continue',
+                label: controller.continueLabel,
                 onPressed: n == 0 ? null : controller.confirmFocus,
               ),
             ),
