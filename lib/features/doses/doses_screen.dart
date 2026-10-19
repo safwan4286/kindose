@@ -57,7 +57,8 @@ class DosesScreen extends GetView<DosesController> {
               ),
             ).enter(motion),
             SizedBox(height: 16.sp),
-            const DoseCard().enter(motion, delay: 60),
+            // History has its own "+ Past dose" button.
+            const DoseCard(showMissedDose: false).enter(motion, delay: 60),
             SizedBox(height: 24.sp),
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,

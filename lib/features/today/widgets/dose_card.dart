@@ -15,8 +15,12 @@ import '../../../widgets/toast.dart';
 import '../today_controller.dart';
 
 /// The top card on Today. One widget, many states (see [DoseCardState]).
+/// [showMissedDose] false hides "Log a missed dose" (the Doses tab has its
+/// own "+ Past dose" next to the history).
 class DoseCard extends GetView<TodayController> {
-  const DoseCard({super.key});
+  const DoseCard({super.key, this.showMissedDose = true});
+
+  final bool showMissedDose;
 
   @override
   Widget build(BuildContext context) => Obx(() {
@@ -25,7 +29,7 @@ class DoseCard extends GetView<TodayController> {
   });
 
   Widget _build(BuildContext context) {
-    return AnimatedSwitcher(
+    final card = AnimatedSwitcher(
       duration: const Duration(milliseconds: 300),
       switchInCurve: Curves.easeOutCubic,
       transitionBuilder: (child, a) => FadeTransition(
@@ -48,8 +52,20 @@ class DoseCard extends GetView<TodayController> {
         },
       ),
     );
+    return showMissedDose ? card : _NoMissedDose(child: card);
   }
 }
+
+/// Marks a [DoseCard] that leaves out "Log a missed dose".
+class _NoMissedDose extends InheritedWidget {
+  const _NoMissedDose({required super.child});
+
+  @override
+  bool updateShouldNotify(_NoMissedDose oldWidget) => false;
+}
+
+bool _showsMissedDose(BuildContext context) =>
+    context.dependOnInheritedWidgetOfExactType<_NoMissedDose>() == null;
 
 // ------------------------------------------------------------------ pieces
 
@@ -788,10 +804,20 @@ class _MoreButton extends StatelessWidget {
 }
 
 /// Edit · Move next dose · Log a missed dose · Remove.
-Future<void> _showDoseActions(BuildContext context, TodayController c) {
+/// [daily]: no "Move next dose" (it's always tomorrow).
+Future<void> _showDoseActions(
+  BuildContext context,
+  TodayController c, {
+  bool daily = false,
+}) {
   Haptics.instance.selectionClick();
   return Get.bottomSheet<void>(
-    _DoseActionsSheet(controller: c, cardContext: context),
+    _DoseActionsSheet(
+      controller: c,
+      cardContext: context,
+      showMissedDose: _showsMissedDose(context),
+      showMove: !daily,
+    ),
     isScrollControlled: true,
   );
 }
@@ -800,9 +826,13 @@ class _DoseActionsSheet extends StatelessWidget {
   const _DoseActionsSheet({
     required this.controller,
     required this.cardContext,
+    required this.showMissedDose,
+    required this.showMove,
   });
 
   final TodayController controller;
+  final bool showMissedDose;
+  final bool showMove;
 
   /// Context of the card under the sheet, for the date picker after the
   /// sheet closes.
@@ -893,20 +923,22 @@ class _DoseActionsSheet extends StatelessWidget {
           'Time, spot, strength, how it felt, note',
           controller.editDoseToday,
         ),
-        row(
-          PhosphorIconsBold.calendarBlank,
-          'Move next dose',
-          'Only the reminder moves',
-          () {
-            if (cardContext.mounted) controller.moveDate(cardContext);
-          },
-        ),
-        row(
-          Icons.history_rounded,
-          'Log a missed dose',
-          'One you took on an earlier day',
-          controller.logMissedDose,
-        ),
+        if (showMove)
+          row(
+            PhosphorIconsBold.calendarBlank,
+            'Move next dose',
+            'Only the reminder moves',
+            () {
+              if (cardContext.mounted) controller.moveDate(cardContext);
+            },
+          ),
+        if (showMissedDose)
+          row(
+            Icons.history_rounded,
+            'Log a missed dose',
+            'One you took on an earlier day',
+            controller.logMissedDose,
+          ),
         row(
           PhosphorIconsBold.trash,
           'Remove this dose',
@@ -988,20 +1020,21 @@ class _Daily extends GetView<TodayController> {
                           ),
                         ),
                       ),
-                      _TextLink(
-                        'Undo',
-                        controller.undoDoseToday,
-                        color: AppColors.lime,
-                      ),
+                      // Undo for a few minutes after logging, then "⋯"
+                      // (edit, log a missed one, remove), like the weekly card.
+                      if (controller.canQuickUndo)
+                        _TextLink(
+                          'Undo',
+                          controller.undoDoseToday,
+                          color: AppColors.lime,
+                        )
+                      else
+                        _MoreButton(
+                          onTap: () =>
+                              _showDoseActions(context, controller, daily: true),
+                        ),
                     ],
                   ),
-          ),
-          // A day in the strip that was taken but not logged.
-          const _Divider(),
-          _TextLink(
-            controller.isTablet ? 'Log a missed tablet ›' : 'Log a missed dose ›',
-            controller.logMissedDose,
-            color: AppColors.heroMuted,
           ),
         ],
       ),
