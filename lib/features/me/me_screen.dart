@@ -204,7 +204,11 @@ class MeScreen extends GetView<MeController> {
               SoftButton(
                 label: 'Sign out',
                 icon: Icons.logout_rounded,
-                background: context.k.card,
+                background: k.card,
+                // Same red as the danger rows (lighter in dark mode).
+                foreground: k.selectedBorder == AppColors.lime
+                    ? const Color(0xFFFF8A80)
+                    : AppColors.danger,
                 height: 52,
                 onPressed: c.backend.busy.value ? null : c.signOut,
               ),
