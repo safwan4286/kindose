@@ -150,7 +150,7 @@ class MeScreen extends GetView<MeController> {
                 _SettingRow(
                   label: 'Weight',
                   child: SizedBox(
-                    width: 120.sp,
+                    width: 140.sp,
                     child: KSegmented<bool>(
                       options: const [true, false],
                       selected: c.useKg,
@@ -161,9 +161,22 @@ class MeScreen extends GetView<MeController> {
                   ),
                 ),
                 _SettingRow(
+                  label: 'Height',
+                  child: SizedBox(
+                    width: 140.sp,
+                    child: KSegmented<bool>(
+                      options: const [true, false],
+                      selected: c.heightInCm,
+                      onChanged: c.setHeightInCm,
+                      labelOf: (v) => v ? 'cm' : 'ft · in',
+                      dense: true,
+                    ),
+                  ),
+                ),
+                _SettingRow(
                   label: 'Water',
                   child: SizedBox(
-                    width: 120.sp,
+                    width: 140.sp,
                     child: KSegmented<bool>(
                       options: const [false, true],
                       selected: c.useOz,

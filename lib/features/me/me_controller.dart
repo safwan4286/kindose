@@ -578,6 +578,15 @@ class MeController extends GetxController {
     await tracker.saveProfile(p.copyWith(useKg: v));
   }
 
+  /// Height in cm (true) or feet and inches (false).
+  bool get heightInCm => tracker.profile.value?.heightInCm ?? true;
+
+  Future<void> setHeightInCm(bool v) async {
+    final p = tracker.profile.value;
+    if (p == null || p.heightInCm == v) return;
+    await tracker.saveProfile(p.copyWith(heightInCm: v));
+  }
+
   bool get useOz => tracker.profile.value?.useOz ?? false;
 
   Future<void> setUseOz(bool v) async {
