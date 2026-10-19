@@ -930,6 +930,17 @@ class MeController extends GetxController {
     }
   }
 
+  /// Me → Suggest a feature: an in-app form saved to the feedback table,
+  /// so it works without a mail app.
+  Future<void> suggestFeature() async {
+    Haptics.instance.selectionClick();
+    final sent = await showFeedbackSheet(
+      send: (kind, message) =>
+          backend.sendFeedback(kind: kind, message: message),
+    );
+    if (sent == true) showToast('Thanks! Your idea was sent.');
+  }
+
   /// Email to support with the app version and phone type filled in (no
   /// health data), so a reply doesn't need a round of questions first.
   Future<void> contactSupport() async {
@@ -947,7 +958,8 @@ class MeController extends GetxController {
     final uri = Uri.parse(
       'mailto:${AppLinks.supportEmail}?subject=$subject&body=$body',
     );
-    if (!await _launch(uri)) showToast('Email us at ${AppLinks.supportEmail}');
+    if (!await _launch(uri))
+      await showEmailFallbackSheet(AppLinks.supportEmail);
   }
 
   Future<void> rateApp() async {

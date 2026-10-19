@@ -566,6 +566,31 @@ class BackendService extends GetxService {
     }
   }
 
+  // -------------------------------------------------------------- feedback
+
+  /// Saves an idea from Me → Suggest a feature. [kind] is 'feature' or
+  /// 'improvement'. Works signed out too.
+  Future<BackendResult> sendFeedback({
+    required String kind,
+    required String message,
+  }) async {
+    if (!ready) return BackendResult.notReady;
+    try {
+      await _db.from('feedback').insert({
+        'user_id': user.value?.id,
+        'kind': kind,
+        'message': message,
+        'app_version': _appVersion,
+        'platform': Platform.operatingSystem,
+      });
+      _log('Feedback sent ($kind)');
+      return BackendResult.ok;
+    } catch (e) {
+      _log('Feedback failed: $e');
+      return _isOffline(e) ? BackendResult.offline : BackendResult.failed;
+    }
+  }
+
   // ---------------------------------------------------------------- config
 
   /// Loads app_config rows (discount offer for now). Keeps defaults on

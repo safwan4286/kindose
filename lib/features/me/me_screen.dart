@@ -185,6 +185,11 @@ class MeScreen extends GetView<MeController> {
                 _NavRow(label: 'Privacy policy', onTap: c.openLegal),
                 _NavRow(label: 'Terms of use', onTap: c.openLegal),
                 _NavRow(label: 'Help & FAQ', onTap: c.openHelp),
+                _NavRow(
+                  label: 'Suggest a feature',
+                  sub: 'Ideas and improvements, we read them all',
+                  onTap: c.suggestFeature,
+                ),
                 if (c.canContact)
                   _NavRow(label: 'Contact support', onTap: c.contactSupport),
                 if (c.canRate) _NavRow(label: 'Rate Kindose', onTap: c.rateApp),

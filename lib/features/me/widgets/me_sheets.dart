@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../../resources/colors.dart';
@@ -10,7 +11,9 @@ import '../../../services/responsiveness/device_manager.dart';
 import '../../../services/theme/theme.dart';
 import '../../../widgets/buttons.dart';
 import '../../../widgets/k_sheet.dart';
+import '../../../widgets/k_text_field.dart';
 import '../../../widgets/k_widgets.dart';
+import '../../../widgets/toast.dart';
 
 /// "How I eat" picker. Returns the diet id, or null when dismissed.
 Future<String?> showDietSheet(String? current) {
@@ -435,6 +438,172 @@ class _PlannedSheet extends StatelessWidget {
         else
           for (final r in rows) Text(r, style: line(k.text)),
         SizedBox(height: 8.sp),
+      ],
+    );
+  }
+}
+
+
+/// Me → Suggest a feature. [send] saves the idea; the sheet stays open
+/// (text kept) when it fails. Returns true once sent.
+Future<bool?> showFeedbackSheet({
+  required Future<BackendResult> Function(String kind, String message) send,
+}) {
+  return Get.bottomSheet<bool>(
+    _FeedbackSheet(send: send),
+    isScrollControlled: true,
+  );
+}
+
+class _FeedbackSheet extends StatefulWidget {
+  const _FeedbackSheet({required this.send});
+
+  final Future<BackendResult> Function(String kind, String message) send;
+
+  @override
+  State<_FeedbackSheet> createState() => _FeedbackSheetState();
+}
+
+class _FeedbackSheetState extends State<_FeedbackSheet> {
+  final _text = TextEditingController();
+  String _kind = 'feature';
+  bool _sending = false;
+
+  bool get _valid => _text.text.trim().length >= 3;
+
+  @override
+  void dispose() {
+    _text.dispose();
+    super.dispose();
+  }
+
+  Future<void> _send() async {
+    if (!_valid || _sending) return;
+    FocusScope.of(context).unfocus();
+    setState(() => _sending = true);
+    final r = await widget.send(_kind, _text.text.trim());
+    if (!mounted) return;
+    setState(() => _sending = false);
+    switch (r) {
+      case BackendResult.ok:
+        Haptics.instance.mediumImpact();
+        Navigator.of(context).pop(true);
+      case BackendResult.offline:
+        showToast('No internet. Your idea is still here, try again.');
+      case BackendResult.cancelled:
+        return;
+      case BackendResult.notReady:
+      case BackendResult.failed:
+        showToast("Couldn't send. Please try again.");
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    final dark = k.selectedBorder == AppColors.lime;
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+      child: KSheetFrame(
+        title: 'Suggest a feature',
+        sub: 'What would make Kindose better for you? We read every idea.',
+        children: [
+          KSegmented<String>(
+            options: const ['feature', 'improvement'],
+            selected: _kind,
+            onChanged: (v) => setState(() => _kind = v),
+            labelOf: (v) => v == 'feature' ? 'New feature' : 'Improvement',
+          ),
+          SizedBox(height: 10.sp),
+          KTextField(
+            controller: _text,
+            hint: _kind == 'feature'
+                ? 'I wish Kindose could…'
+                : 'It would be better if…',
+            autofocus: true,
+            minLines: 4,
+            maxLines: 8,
+            maxLength: 1000,
+            keyboardType: TextInputType.multiline,
+            textInputAction: TextInputAction.newline,
+            textCapitalization: TextCapitalization.sentences,
+            onChanged: (_) => setState(() {}),
+          ),
+          SizedBox(height: 8.sp),
+          Text(
+            'Please leave out health details you’d rather keep private.',
+            style: AppText.small.copyWith(fontSize: 12.sp, color: k.faint),
+          ),
+          SizedBox(height: 14.sp),
+          PillButton(
+            label: 'Send idea',
+            ink: !dark,
+            busy: _sending,
+            onPressed: _valid && !_sending ? _send : null,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Contact support when no mail app opened (none installed, or the
+/// Simulator): shows the address with a copy button.
+Future<void> showEmailFallbackSheet(String email) {
+  return Get.bottomSheet<void>(
+    _EmailFallbackSheet(email: email),
+    isScrollControlled: true,
+  );
+}
+
+class _EmailFallbackSheet extends StatelessWidget {
+  const _EmailFallbackSheet({required this.email});
+
+  final String email;
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    final dark = k.selectedBorder == AppColors.lime;
+    return KSheetFrame(
+      icon: KIconTile(
+        icon: Icons.mail_outline_rounded,
+        bg: k.cardAlt,
+        fg: k.text,
+      ),
+      title: 'Email us',
+      sub: 'No mail app opened on this phone. Copy our address and write to '
+          'us from any email app.',
+      children: [
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 16.sp, vertical: 16.sp),
+          decoration: BoxDecoration(
+            color: k.card,
+            borderRadius: BorderRadius.circular(16.sp),
+          ),
+          child: SelectableText(
+            email,
+            textAlign: TextAlign.center,
+            style: AppText.title.copyWith(fontSize: 16.sp, color: k.text),
+          ),
+        ),
+        SizedBox(height: 14.sp),
+        PillButton(
+          label: 'Copy address',
+          ink: !dark,
+          onPressed: () async {
+            await Clipboard.setData(ClipboardData(text: email));
+            Haptics.instance.selectionClick();
+            if (context.mounted) Navigator.of(context).pop();
+            showToast('Email address copied');
+          },
+        ),
+        SizedBox(height: 8.sp),
+        SoftButton(
+          label: 'Close',
+          height: 50,
+          onPressed: () => Navigator.of(context).pop(),
+        ),
       ],
     );
   }

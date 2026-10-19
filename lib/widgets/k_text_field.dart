@@ -20,6 +20,8 @@ class KTextField extends StatelessWidget {
     this.textInputAction = TextInputAction.done,
     this.inputFormatters,
     this.maxLength,
+    this.minLines,
+    this.maxLines = 1,
     this.onChanged,
     this.onSubmitted,
   });
@@ -34,6 +36,10 @@ class KTextField extends StatelessWidget {
   final TextInputAction textInputAction;
   final List<TextInputFormatter>? inputFormatters;
   final int? maxLength;
+
+  /// Set [maxLines] above 1 (and [minLines]) for a note or message box.
+  final int? minLines;
+  final int? maxLines;
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
 
@@ -49,6 +55,8 @@ class KTextField extends StatelessWidget {
       textInputAction: textInputAction,
       inputFormatters: inputFormatters,
       maxLength: maxLength,
+      minLines: minLines,
+      maxLines: maxLines,
       maxLengthEnforcement: maxLength == null
           ? null
           : MaxLengthEnforcement.enforced,
