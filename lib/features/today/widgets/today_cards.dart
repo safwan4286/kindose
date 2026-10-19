@@ -50,11 +50,10 @@ TextStyle _value(Color c) => AppText.h1.copyWith(
 );
 
 class _ValueText extends StatelessWidget {
-  const _ValueText(this.value, this.suffix, {this.color});
+  const _ValueText(this.value, this.suffix);
 
   final String value;
   final String suffix;
-  final Color? color;
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +61,7 @@ class _ValueText extends StatelessWidget {
     return Text.rich(
       TextSpan(
         children: [
-          TextSpan(text: value, style: _value(color ?? k.text)),
+          TextSpan(text: value, style: _value(k.text)),
           TextSpan(
             text: ' $suffix',
             style: AppText.bodyStrong.copyWith(fontSize: 14.sp, color: k.faint),
@@ -798,83 +797,137 @@ class WeightCard extends GetView<TodayController> {
 
   Widget _build(BuildContext context) {
     final k = context.k;
-    final now = controller.latestKg;
-    final goal = controller.goalKg;
-    Widget col(String label, String value, {Color? color}) => Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: AppText.small.copyWith(
-              fontSize: 12.5.sp,
-              fontWeight: FontWeight.w700,
-              color: k.muted,
-            ),
-          ),
-          _ValueText(value, controller.unit, color: color),
-        ],
-      ),
+    final c = controller;
+    final now = c.latestKg;
+    final goal = c.goalKg;
+    final dark = k.selectedBorder == AppColors.lime;
+    final change = c.changeSinceStart;
+    final down = change.startsWith('−');
+    TextStyle small(Color color) => AppText.small.copyWith(
+      fontSize: 12.5.sp,
+      fontWeight: FontWeight.w700,
+      color: color,
     );
     return TodaySection(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              col('Now', now == null ? '—' : controller.fmtWeight(now)),
-              if (goal != null)
-                col(
-                  'Goal',
-                  controller.fmtWeight(goal),
-                  color: k.selectedBorder == AppColors.lime
-                      ? AppColors.lime
-                      : AppColors.limeText,
-                ),
-              CircleIconButton(
-                icon: PhosphorIconsBold.plus,
-                label: 'Log weight',
-                size: 44.sp,
-                background: k.selectedBorder == AppColors.lime
-                    ? AppColors.lime
-                    : AppColors.ink,
-                foreground: k.selectedBorder == AppColors.lime
-                    ? AppColors.ink
-                    : AppColors.lime,
-                onTap: controller.logWeight,
-              ),
-            ],
-          ),
-          if (goal != null) ...[
-            SizedBox(height: 12.sp),
-            _Bar(
-              value: controller.goalProgress,
-              track: k.border,
-              fill: k.selectedBorder,
-            ),
-          ],
-          SizedBox(height: 8.sp),
+          // Title, when, and a light "+ Log".
           Row(
             children: [
               Expanded(
-                child: Text(
-                  controller.changeSinceStart,
-                  style: AppText.small.copyWith(
-                    fontSize: 12.5.sp,
-                    fontWeight: FontWeight.w700,
-                    color: k.muted,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Weight',
+                      style: AppText.bodyStrong.copyWith(
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w800,
+                        color: k.text,
+                      ),
+                    ),
+                    Text(c.lastWeighIn, style: small(k.faint)),
+                  ],
                 ),
               ),
-              Text(
-                controller.lastWeighIn,
-                style: AppText.small.copyWith(
-                  fontSize: 12.5.sp,
-                  fontWeight: FontWeight.w700,
-                  color: k.muted,
+              PressScale(
+                semanticLabel: 'Log weight',
+                onTap: c.logWeight,
+                child: ExcludeSemantics(
+                  child: Container(
+                    height: 36.sp,
+                    padding: EdgeInsets.symmetric(horizontal: 14.sp),
+                    decoration: BoxDecoration(
+                      color: k.bg,
+                      borderRadius: BorderRadius.circular(18.sp),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        PhosphorIcon(
+                          PhosphorIconsBold.plus,
+                          size: 14.sp,
+                          color: k.text,
+                        ),
+                        SizedBox(width: 6.sp),
+                        Text(
+                          'Log',
+                          style: AppText.small.copyWith(
+                            fontSize: 13.5.sp,
+                            fontWeight: FontWeight.w800,
+                            color: k.text,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
+          SizedBox(height: 12.sp),
+          // Now, and the change since the first weigh-in.
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              _ValueText(now == null ? '—' : c.fmtWeight(now), c.unit),
+              SizedBox(width: 10.sp),
+              if (change.isNotEmpty)
+                Flexible(
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 10.sp,
+                      vertical: 5.sp,
+                    ),
+                    decoration: BoxDecoration(
+                      color: down
+                          ? (dark
+                                ? AppColors.lime.withValues(alpha: 0.16)
+                                : AppColors.limeSoft)
+                          : k.bg,
+                      borderRadius: BorderRadius.circular(12.sp),
+                    ),
+                    child: Text(
+                      change,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: small(
+                        down
+                            ? (dark ? AppColors.lime : AppColors.limeText)
+                            : k.muted,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          // Start → goal, with how far along.
+          if (goal != null) ...[
+            SizedBox(height: 14.sp),
+            _Bar(
+              value: c.goalProgress,
+              track: k.bg,
+              fill: dark ? AppColors.lime : AppColors.ink,
+            ),
+            SizedBox(height: 6.sp),
+            Row(
+              children: [
+                Text(
+                  'Start ${c.fmtWeight(c.startKg)}',
+                  style: small(k.faint),
+                ),
+                Expanded(
+                  child: Text(
+                    '${(c.goalProgress * 100).round()}% there',
+                    textAlign: TextAlign.center,
+                    style: small(k.muted),
+                  ),
+                ),
+                Text('Goal ${c.fmtWeight(goal)}', style: small(k.faint)),
+              ],
+            ),
+          ],
         ],
       ),
     );
