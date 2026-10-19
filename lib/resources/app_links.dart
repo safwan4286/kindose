@@ -5,12 +5,15 @@ import 'package:url_launcher/url_launcher.dart';
 class AppLinks {
   AppLinks._();
 
-  /// Support inbox for "Contact support" and privacy requests.
-  static const String supportEmail = 'safwanbolwala.dev@gmail.com';
+  /// Kindose inboxes (Cloudflare Email Routing → the team Gmail), so users
+  /// only ever see Kindose addresses, whoever publishes in the stores.
+  static const String supportEmail = 'support@kindose.app';
+  static const String privacyEmail = 'privacy@kindose.app';
 
-  /// Legal pages (repo folder `hosting/`, Firebase Hosting). Swap the base
-  /// for a custom domain later; the paths stay the same.
-  static const String webBase = 'https://kindose-96ea8.web.app';
+  /// Website (repo folder `hosting/`, Firebase Hosting on kindose.app).
+  /// kindose-96ea8.web.app keeps working too.
+  static const String webBase = 'https://kindose.app';
+  static const String supportUrl = '$webBase/support';
   static const String privacyUrl = '$webBase/privacy';
   static const String termsUrl = '$webBase/terms';
   static const String deleteAccountUrl = '$webBase/delete-account';

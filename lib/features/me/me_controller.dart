@@ -901,10 +901,31 @@ class MeController extends GetxController {
   /// App Store id is known (ReviewService.openStore).
   bool get canRate => true;
 
+  /// Help & FAQ page on kindose.app.
+  Future<void> openHelp() async {
+    Haptics.instance.selectionClick();
+    if (!await AppLinks.open(AppLinks.supportUrl)) {
+      showToast("Couldn't open the help page.");
+    }
+  }
+
+  /// Email to support with the app version and phone type filled in (no
+  /// health data), so a reply doesn't need a round of questions first.
   Future<void> contactSupport() async {
     Haptics.instance.selectionClick();
     final subject = Uri.encodeComponent('Kindose ${version.value} support');
-    final uri = Uri.parse('mailto:${AppLinks.supportEmail}?subject=$subject');
+    final os = Platform.isIOS
+        ? 'iOS'
+        : Platform.isAndroid
+        ? 'Android'
+        : Platform.operatingSystem;
+    final body = Uri.encodeComponent(
+      '\n\n\n—\nKindose ${version.value} · $os ${Platform.operatingSystemVersion}\n'
+      "Please don't include health details you'd rather keep private.",
+    );
+    final uri = Uri.parse(
+      'mailto:${AppLinks.supportEmail}?subject=$subject&body=$body',
+    );
     if (!await _launch(uri)) showToast('Email us at ${AppLinks.supportEmail}');
   }
 

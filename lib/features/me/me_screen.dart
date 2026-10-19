@@ -41,7 +41,9 @@ class MeScreen extends GetView<MeController> {
               ),
             ),
             SizedBox(height: 16.sp),
-            _PlanCard(controller: c).enter(motion),
+            _BackupCard(controller: c).enter(motion),
+            SizedBox(height: 12.sp),
+            _PlanCard(controller: c).enter(motion, delay: 30),
             SizedBox(height: 12.sp),
             _PlusCard(controller: c).enter(motion, delay: 60),
             if (kDebugMode) _DebugAccess(controller: c),
@@ -151,8 +153,6 @@ class MeScreen extends GetView<MeController> {
                 ),
               ],
             ).enter(motion, delay: 170),
-            _label(context, c.signedIn ? 'Account' : 'Backup'),
-            _BackupCard(controller: c).enter(motion, delay: 200),
             _label(context, 'Your data'),
             KGroup(
               children: [
@@ -161,21 +161,22 @@ class MeScreen extends GetView<MeController> {
                   sub: 'Spreadsheet files for Excel or Google Sheets',
                   onTap: c.exporting.value ? null : c.export,
                 ),
+                // Signed in: deleting the account also erases the cloud
+                // backup and this phone. Signed out: only the phone.
                 if (c.signedIn)
                   _NavRow(
                     label: 'Delete my account',
-                    sub: 'Removes your account and cloud backup',
+                    sub: 'Erases your account and all your data',
                     danger: true,
                     onTap: c.deleteAccount,
+                  )
+                else
+                  _NavRow(
+                    label: 'Delete all my data',
+                    sub: 'Erases everything on this phone',
+                    danger: true,
+                    onTap: c.confirmDeleteAll,
                   ),
-                _NavRow(
-                  label: 'Delete all my data',
-                  sub: c.signedIn
-                      ? 'Erases this phone and signs out. Cloud backup stays'
-                      : 'Erases everything on this phone',
-                  danger: true,
-                  onTap: c.confirmDeleteAll,
-                ),
               ],
             ),
             _label(context, 'About'),
@@ -183,6 +184,7 @@ class MeScreen extends GetView<MeController> {
               children: [
                 _NavRow(label: 'Privacy policy', onTap: c.openLegal),
                 _NavRow(label: 'Terms of use', onTap: c.openLegal),
+                _NavRow(label: 'Help & FAQ', onTap: c.openHelp),
                 if (c.canContact)
                   _NavRow(label: 'Contact support', onTap: c.contactSupport),
                 if (c.canRate) _NavRow(label: 'Rate Kindose', onTap: c.rateApp),
@@ -192,6 +194,16 @@ class MeScreen extends GetView<MeController> {
                 ),
               ],
             ),
+            if (c.signedIn) ...[
+              SizedBox(height: 24.sp),
+              SoftButton(
+                label: 'Sign out',
+                icon: Icons.logout_rounded,
+                background: context.k.card,
+                height: 52,
+                onPressed: c.backend.busy.value ? null : c.signOut,
+              ),
+            ],
             SizedBox(height: 18.sp),
             Text(
               '${c.version.value.isEmpty ? 'Kindose' : 'Kindose ${c.version.value}'}\n'
@@ -734,13 +746,6 @@ class _SignedInBackup extends StatelessWidget {
               ],
             ],
           ),
-          SizedBox(height: 6.sp),
-          Center(
-            child: LinkButton(
-              label: 'Sign out',
-              onTap: busy ? null : controller.signOut,
-            ),
-          ),
         ],
       ),
     );
@@ -816,11 +821,15 @@ class _NavRow extends StatelessWidget {
                 ),
                 if (value != null) ...[
                   SizedBox(width: 8.sp),
-                  Flexible(
+                  // Capped, not Flexible, so the label keeps the free space
+                  // and every value sits flush against the arrow.
+                  ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: 170.sp),
                     child: Text(
                       value!,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.right,
                       style: AppText.small.copyWith(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w700,
