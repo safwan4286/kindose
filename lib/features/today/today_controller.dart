@@ -130,6 +130,18 @@ class TodayController extends GetxController with WidgetsBindingObserver {
   }
 
   @override
+  void onReady() {
+    super.onReady();
+    // A fresh idea's icon is on screen the frame it slides in, not a beat
+    // later.
+    final ctx = Get.context;
+    if (ctx == null) return;
+    for (final icon in {for (final i in NextBite.pool) i.icon}) {
+      precacheImage(AssetImage(icon), ctx);
+    }
+  }
+
+  @override
   void onClose() {
     WidgetsBinding.instance.removeObserver(this);
     _ticker?.cancel();
@@ -146,8 +158,7 @@ class TodayController extends GetxController with WidgetsBindingObserver {
   }
 
   Future<void> _checkNotifications() async {
-    systemNotifications.value = await NotificationService.instance
-        .areEnabled();
+    systemNotifications.value = await NotificationService.instance.areEnabled();
   }
 
   /// Dose reminders are on in Kindose and the phone lets them through.
@@ -188,19 +199,34 @@ class TodayController extends GetxController with WidgetsBindingObserver {
       for (final k in biteAdded)
         if (k.startsWith('$key|')) k.substring(key.length + 1),
     };
-    return NextBite.build(tracker, now.value, skip: skip);
+    var b = NextBite.build(tracker, now.value, skip: skip);
+    // Same day and situation: ideas on screen keep their slots.
+    final ctx = '$key|${b.mode}|${b.slot}|${tracker.profile.value?.diet}';
+    if (ctx == _shownFor) b = b.keeping(_shown, skip);
+    _shownFor = ctx;
+    _shown = [for (final i in b.ideas) i.id];
+    return b;
   }
+
+  /// Idea ids on screen by slot, and the situation they were picked for.
+  String _shownFor = '';
+  List<String> _shown = [];
 
   Future<void> addBite(BiteIdea idea) async {
     if (!await AccessService.ensure()) return;
     Haptics.instance.lightImpact();
     final key = Dates.key(now.value);
-    final entryId = await tracker.addProtein(idea.grams, null, idea.label);
+    final slot = _shown.indexOf(idea.id);
     final tag = '$key|${idea.id}';
+    // Total and the swapped idea change in the same frame.
+    final added = tracker.addProtein(idea.grams, null, idea.label);
     biteAdded.add(tag);
+    final entryId = await added;
     showUndoToast('Added ${idea.name} · ${idea.grams} g', () async {
-      await tracker.removeEntry(key, entryId);
+      // Undo puts the idea back in the slot it was added from.
+      if (slot >= 0 && slot < _shown.length) _shown[slot] = idea.id;
       biteAdded.remove(tag);
+      await tracker.removeEntry(key, entryId);
     });
   }
 
@@ -341,9 +367,7 @@ class TodayController extends GetxController with WidgetsBindingObserver {
   List<(String letter, String state)> get weekStrip {
     final next = nextDoseAt;
     final today = Dates.dateOnly(now.value);
-    final end = next == null
-        ? Dates.addDays(today, 6)
-        : Dates.dateOnly(next);
+    final end = next == null ? Dates.addDays(today, 6) : Dates.dateOnly(next);
     final start = Dates.addDays(end, -6);
     return [
       for (var i = 0; i < 7; i++)
@@ -464,9 +488,7 @@ class TodayController extends GetxController with WidgetsBindingObserver {
     Haptics.instance.selectionClick();
     final today = Dates.dateOnly(now.value);
     // Once today's dose is logged, the next one can't also be today.
-    final first = doseToday == null
-        ? today
-        : Dates.addDays(today, 1);
+    final first = doseToday == null ? today : Dates.addDays(today, 1);
     final current = nextDoseAt;
     final picked = await showKDatePicker(
       context: context,
@@ -477,7 +499,9 @@ class TodayController extends GetxController with WidgetsBindingObserver {
       // Long plans (up to 30 days) must still be able to move later.
       lastDate: Dates.addDays(
         today,
-        (profile?.everyDays ?? 7) + 14 < 21 ? 21 : (profile?.everyDays ?? 7) + 14,
+        (profile?.everyDays ?? 7) + 14 < 21
+            ? 21
+            : (profile?.everyDays ?? 7) + 14,
       ),
       title: 'Move this dose to',
       note: 'Only the reminder moves. Check your leaflet or doctor if unsure.',

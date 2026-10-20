@@ -6,6 +6,7 @@ import '../../../resources/colors.dart';
 import '../../../resources/images.dart';
 import '../../../services/responsiveness/device_manager.dart';
 import '../../../services/theme/theme.dart';
+import '../../../widgets/entrance.dart';
 import '../../../widgets/k_sheet.dart';
 import '../../../widgets/k_widgets.dart';
 import '../../../widgets/press_scale.dart';
@@ -190,23 +191,12 @@ class NextBiteCard extends GetView<TodayController> {
                 children: [
                   for (final (n, i) in shown.indexed) ...[
                     if (n > 0) SizedBox(height: 8.sp),
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 280),
-                      transitionBuilder: (child, a) => FadeTransition(
-                        opacity: a,
-                        child: SlideTransition(
-                          position: Tween<Offset>(
-                            begin: const Offset(0.08, 0),
-                            end: Offset.zero,
-                          ).animate(a),
-                          child: child,
-                        ),
-                      ),
-                      child: _IdeaRow(
-                        key: ValueKey<String>(i.id),
-                        idea: i,
-                        onAdd: () => controller.addBite(i),
-                      ),
+                    // Keyed by slot: the tile stays put and only its
+                    // content swaps when an added idea is replaced.
+                    _IdeaRow(
+                      key: ValueKey<int>(n),
+                      idea: i,
+                      onAdd: () => controller.addBite(i),
                     ),
                   ],
                 ],
@@ -248,9 +238,7 @@ class NextBiteCard extends GetView<TodayController> {
                 ),
                 SizedBox(width: 8.sp),
                 // Opens the Protein screen: search, My foods, all foods.
-                Expanded(
-                  child: _OtherFoodChip(onTap: controller.openProtein),
-                ),
+                Expanded(child: _OtherFoodChip(onTap: controller.openProtein)),
               ],
             ),
           SizedBox(height: 10.sp),
@@ -383,65 +371,70 @@ class _IdeaRow extends StatelessWidget {
             color: k.bg,
             borderRadius: BorderRadius.circular(18.sp),
           ),
-          child: Row(
-            children: [
-              Container(
-                width: 40.sp,
-                height: 40.sp,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: k.card,
-                  borderRadius: BorderRadius.circular(13.sp),
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 320),
+            transitionBuilder: swapTransition,
+            child: Row(
+              key: ValueKey<String>(idea.id),
+              children: [
+                Container(
+                  width: 40.sp,
+                  height: 40.sp,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: k.card,
+                    borderRadius: BorderRadius.circular(13.sp),
+                  ),
+                  child: ThreeD(idea.icon, size: 26.sp),
                 ),
-                child: ThreeD(idea.icon, size: 26.sp),
-              ),
-              SizedBox(width: 12.sp),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      idea.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppText.title.copyWith(
-                        fontSize: 14.5.sp,
-                        color: k.text,
+                SizedBox(width: 12.sp),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        idea.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppText.title.copyWith(
+                          fontSize: 14.5.sp,
+                          color: k.text,
+                        ),
                       ),
-                    ),
-                    Text(
-                      idea.portion,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppText.small.copyWith(
-                        fontSize: 12.5.sp,
-                        fontWeight: FontWeight.w600,
-                        color: k.muted,
+                      Text(
+                        idea.portion,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppText.small.copyWith(
+                          fontSize: 12.5.sp,
+                          fontWeight: FontWeight.w600,
+                          color: k.muted,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(width: 8.sp),
-              // Amount and action in one button: "+ 30 g".
-              Container(
-                height: 36.sp,
-                padding: EdgeInsets.symmetric(horizontal: 12.sp),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: dark ? AppColors.lime : AppColors.ink,
-                  borderRadius: BorderRadius.circular(18.sp),
-                ),
-                child: Text(
-                  '+ ${idea.grams} g',
-                  style: AppText.small.copyWith(
-                    fontSize: 13.5.sp,
-                    fontWeight: FontWeight.w800,
-                    color: dark ? AppColors.ink : AppColors.lime,
+                    ],
                   ),
                 ),
-              ),
-            ],
+                SizedBox(width: 8.sp),
+                // Amount and action in one button: "+ 30 g".
+                Container(
+                  height: 36.sp,
+                  padding: EdgeInsets.symmetric(horizontal: 12.sp),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: dark ? AppColors.lime : AppColors.ink,
+                    borderRadius: BorderRadius.circular(18.sp),
+                  ),
+                  child: Text(
+                    '+ ${idea.grams} g',
+                    style: AppText.small.copyWith(
+                      fontSize: 13.5.sp,
+                      fontWeight: FontWeight.w800,
+                      color: dark ? AppColors.ink : AppColors.lime,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

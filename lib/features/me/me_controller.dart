@@ -27,6 +27,7 @@ import '../../services/tracker_service.dart';
 import '../../widgets/k_ruler.dart';
 import '../../widgets/mood_row.dart';
 import '../../widgets/no_internet_sheet.dart';
+import '../../widgets/sign_in_sheet.dart';
 import '../../widgets/toast.dart';
 import '../legal/legal_sheet.dart';
 import '../onboarding/onboarding_controller.dart';
@@ -659,7 +660,7 @@ class MeController extends GetxController {
     return 'All synced · ${day == 'Today' || day == 'Tomorrow' ? day.toLowerCase() : day}, ${Dates.time(at)}';
   }
 
-  /// Signed out: sign in with Google, then back up (or restore a backup
+  /// Signed out: sign in (Apple or Google), then back up (or restore a backup
   /// found in the cloud).
   Future<void> backup() async {
     Haptics.instance.selectionClick();
@@ -671,9 +672,14 @@ class MeController extends GetxController {
       await backupNow();
       return;
     }
+    final provider = await chooseSignIn(
+      title: 'Back up your data',
+      sub: 'Sign in so your history is safe if you change phones.',
+    );
+    if (provider == null) return;
     backend.autoPaused = true;
     try {
-      final r = await backend.signInWithGoogle();
+      final r = await backend.signIn(provider);
       if (r != BackendResult.ok) {
         _explain(r);
         return;

@@ -81,6 +81,37 @@ class NextBite {
   int get left => (goal - have).clamp(0, 999);
   bool get goalHit => have >= goal;
 
+  /// The same card with the ideas in [shown] (ids, by slot) kept where they
+  /// were while they are still on offer. Adding food changes the ranking;
+  /// without this every row reshuffles (a flicker) instead of only the
+  /// added idea being swapped for a fresh one.
+  NextBite keeping(List<String> shown, Set<String> skip) {
+    if (shown.isEmpty) return this;
+    final byId = {for (final i in pool) i.id: i};
+    final kept = [for (final id in shown) skip.contains(id) ? null : byId[id]];
+    final fresh = ideas
+        .where((i) => !kept.any((k) => k != null && k.name == i.name))
+        .iterator;
+    final out = <BiteIdea>[
+      for (final k in kept)
+        if (k != null) k else if (fresh.moveNext()) fresh.current,
+    ];
+    while (out.length < ideas.length && fresh.moveNext()) {
+      out.add(fresh.current);
+    }
+    return NextBite(
+      have: have,
+      goal: goal,
+      mode: mode,
+      slot: slot,
+      context: context,
+      lead: lead,
+      tip: tip,
+      ideas: out,
+      reasons: reasons,
+    );
+  }
+
   static const Set<MealSlot> _all = {
     MealSlot.breakfast,
     MealSlot.lunch,

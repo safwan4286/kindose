@@ -167,80 +167,32 @@ class _Hero extends GetView<IntakeController> {
                 ],
               ),
             ),
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 220),
-              transitionBuilder: (child, a) => SizeTransition(
-                sizeFactor: a,
-                axisAlignment: -1,
-                child: FadeTransition(opacity: a, child: child),
-              ),
-              child: last == null
-                  ? const SizedBox(
-                      width: double.infinity,
-                      key: ValueKey('none'),
-                    )
-                  : Padding(
-                      key: ValueKey(last.id),
-                      padding: EdgeInsets.only(top: 14.sp),
-                      child: _LastAdded(entry: last),
-                    ),
-            ),
-            if (entries.length > 1)
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Semantics(
-                  button: true,
-                  expanded: open,
-                  label: open
-                      ? 'Hide today\'s list'
-                      : 'See all ${entries.length} entries',
-                  excludeSemantics: true,
-                  child: PressScale(
-                    onTap: controller.toggleLog,
-                    child: Padding(
-                      padding: EdgeInsets.only(
-                        top: 12.sp,
-                        bottom: 2.sp,
-                        right: 12.sp,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            open
-                                ? 'Hide'
-                                : 'See all ${entries.length} ${controller.isToday ? 'today' : 'that day'}',
-                            style: AppText.title.copyWith(
-                              fontSize: 13.5.sp,
-                              color: k.text,
-                            ),
-                          ),
-                          SizedBox(width: 4.sp),
-                          AnimatedRotation(
-                            turns: open ? 0.5 : 0,
-                            duration: const Duration(milliseconds: 200),
-                            child: Icon(
-                              PhosphorIconsBold.caretDown,
-                              size: 14.sp,
-                              color: k.text,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+            // Today's log: the newest entry with Undo, the rest on demand.
             AnimatedSize(
-              duration: const Duration(milliseconds: 220),
+              duration: const Duration(milliseconds: 260),
               curve: Curves.easeOutCubic,
               alignment: Alignment.topCenter,
-              child: !open
+              child: last == null
                   ? const SizedBox(width: double.infinity)
                   : Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        SizedBox(height: 6.sp),
-                        for (final e in entries) _LogRow(entry: e),
+                        SizedBox(height: 16.sp),
+                        Divider(height: 1, thickness: 1, color: k.border),
+                        SizedBox(height: 12.sp),
+                        _LogHeader(count: entries.length, open: open),
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 300),
+                          transitionBuilder: swapTransition,
+                          child: _EntryRow(
+                            key: ValueKey(last.id),
+                            entry: last,
+                            latest: true,
+                          ),
+                        ),
+                        if (open)
+                          for (final e in entries.skip(1))
+                            _EntryRow(key: ValueKey(e.id), entry: e),
                       ],
                     ),
             ),
@@ -287,22 +239,90 @@ class _Bar extends StatelessWidget {
   }
 }
 
-/// Newest entry with a one-tap Undo, so a wrong tap is fixed right here.
-class _LastAdded extends GetView<IntakeController> {
-  const _LastAdded({required this.entry});
+/// "TODAY'S LOG · 3" with See all / Show less on the right.
+class _LogHeader extends GetView<IntakeController> {
+  const _LogHeader({required this.count, required this.open});
+
+  final int count;
+  final bool open;
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    final title = controller.isToday ? 'TODAY\'S LOG' : 'THAT DAY';
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            count > 1 ? '$title · $count' : title,
+            style: intakeCaps(
+              context,
+            ).copyWith(fontSize: 11.sp, color: k.faint),
+          ),
+        ),
+        if (count > 1)
+          Semantics(
+            button: true,
+            expanded: open,
+            label: open ? 'Show less' : 'See all $count entries',
+            excludeSemantics: true,
+            child: PressScale(
+              onTap: controller.toggleLog,
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 4.sp),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      open ? 'Show less' : 'See all',
+                      style: AppText.title.copyWith(
+                        fontSize: 13.sp,
+                        color: k.text,
+                      ),
+                    ),
+                    SizedBox(width: 4.sp),
+                    AnimatedRotation(
+                      turns: open ? 0.5 : 0,
+                      duration: const Duration(milliseconds: 200),
+                      child: Icon(
+                        PhosphorIconsBold.caretDown,
+                        size: 13.sp,
+                        color: k.text,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// One entry: food name on top, portion and time below, grams on the
+/// right. The newest gets Undo; older ones a quiet × (swipe works too).
+class _EntryRow extends GetView<IntakeController> {
+  const _EntryRow({super.key, required this.entry, this.latest = false});
 
   final LogEntry entry;
+  final bool latest;
 
   @override
   Widget build(BuildContext context) {
     final k = context.k;
     final title = controller.entryTitle(entry);
-    return Container(
-      padding: EdgeInsets.fromLTRB(14.sp, 10.sp, 8.sp, 10.sp),
+    // Labels read "Greek yogurt, 1 cup, 170 g": name, then the portion.
+    final cut = title.indexOf(', ');
+    final name = cut < 0 ? title : title.substring(0, cut);
+    final portion = cut < 0 ? '' : title.substring(cut + 2);
+    final time = controller.timeOf(entry.at);
+    final row = Container(
       decoration: BoxDecoration(
-        color: k.bg,
-        borderRadius: BorderRadius.circular(16.sp),
+        color: k.card,
+        border: latest ? null : Border(top: BorderSide(color: k.border)),
       ),
+      padding: EdgeInsets.symmetric(vertical: 10.sp),
       child: Row(
         children: [
           Expanded(
@@ -310,72 +330,67 @@ class _LastAdded extends GetView<IntakeController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'LAST ADDED · ${controller.timeOf(entry.at)}',
-                  style: intakeCaps(
-                    context,
-                  ).copyWith(fontSize: 10.5.sp, color: k.faint),
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.title.copyWith(
+                    fontSize: 14.5.sp,
+                    color: k.text,
+                  ),
                 ),
                 SizedBox(height: 2.sp),
                 Text(
-                  title,
+                  portion.isEmpty ? time : '$portion · $time',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppText.bodyStrong.copyWith(
-                    fontSize: 14.sp,
-                    color: k.text,
+                  style: AppText.small.copyWith(
+                    fontSize: 12.5.sp,
+                    fontWeight: FontWeight.w600,
+                    color: k.muted,
                   ),
                 ),
               ],
             ),
           ),
-          SizedBox(width: 8.sp),
+          SizedBox(width: 10.sp),
           Text(
             '+${entry.amount} g',
-            style: AppText.title.copyWith(fontSize: 14.sp, color: k.text),
+            style: AppText.title.copyWith(fontSize: 14.5.sp, color: k.text),
           ),
           SizedBox(width: 10.sp),
-          Semantics(
-            button: true,
-            label: 'Undo $title',
-            excludeSemantics: true,
-            child: PressScale(
-              pressedScale: 0.92,
+          if (latest)
+            _UndoPill(
+              label: 'Undo $title',
               onTap: () => controller.removeWithUndo(entry),
-              child: Container(
-                height: 36.sp,
-                padding: EdgeInsets.symmetric(horizontal: 14.sp),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: k.card,
-                  borderRadius: BorderRadius.circular(18.sp),
-                  border: Border.all(color: k.text, width: 1.5),
-                ),
-                child: Text(
-                  'Undo',
-                  style: AppText.title.copyWith(
-                    fontSize: 13.5.sp,
-                    color: k.text,
+            )
+          else
+            Semantics(
+              button: true,
+              label: 'Remove $title',
+              excludeSemantics: true,
+              child: PressScale(
+                pressedScale: 0.85,
+                onTap: () => controller.removeWithUndo(entry),
+                child: SizedBox(
+                  // Lines up with the Undo pill above.
+                  width: 64.sp,
+                  height: 34.sp,
+                  child: Align(
+                    alignment: Alignment.center,
+                    child: Icon(
+                      PhosphorIconsBold.x,
+                      size: 15.sp,
+                      color: k.faint,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );
-  }
-}
-
-/// One entry in the open list: × to remove (swipe works too).
-class _LogRow extends GetView<IntakeController> {
-  const _LogRow({required this.entry});
-
-  final LogEntry entry;
-
-  @override
-  Widget build(BuildContext context) {
-    final k = context.k;
-    final title = controller.entryTitle(entry);
+    // The newest row swaps with an animation, so only older rows swipe.
+    if (latest) return row;
     return Dismissible(
       key: ValueKey('log-${entry.id}'),
       direction: DismissDirection.endToStart,
@@ -392,47 +407,50 @@ class _LogRow extends GetView<IntakeController> {
           color: AppColors.danger,
         ),
       ),
-      child: Container(
-        decoration: BoxDecoration(
-          color: k.card,
-          border: Border(top: BorderSide(color: k.border)),
-        ),
-        padding: EdgeInsets.symmetric(vertical: 6.sp),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 64.sp,
-              child: Text(
-                controller.timeOf(entry.at),
-                style: AppText.small.copyWith(fontSize: 12.sp, color: k.faint),
+      child: row,
+    );
+  }
+}
+
+class _UndoPill extends StatelessWidget {
+  const _UndoPill({required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    return Semantics(
+      button: true,
+      label: label,
+      excludeSemantics: true,
+      child: PressScale(
+        pressedScale: 0.92,
+        onTap: onTap,
+        child: Container(
+          width: 64.sp,
+          height: 34.sp,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: k.bg,
+            borderRadius: BorderRadius.circular(17.sp),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                PhosphorIconsBold.arrowCounterClockwise,
+                size: 13.sp,
+                color: k.text,
               ),
-            ),
-            Expanded(
-              child: Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppText.bodyStrong.copyWith(
-                  fontSize: 13.5.sp,
-                  color: k.text,
-                ),
+              SizedBox(width: 4.sp),
+              Text(
+                'Undo',
+                style: AppText.title.copyWith(fontSize: 13.sp, color: k.text),
               ),
-            ),
-            SizedBox(width: 8.sp),
-            Text(
-              '+${entry.amount} g',
-              style: AppText.title.copyWith(fontSize: 13.5.sp, color: k.text),
-            ),
-            SizedBox(width: 6.sp),
-            CircleIconButton(
-              icon: PhosphorIconsBold.x,
-              label: 'Remove $title',
-              size: 34.sp,
-              background: k.bg,
-              foreground: k.muted,
-              onTap: () => controller.removeWithUndo(entry),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -654,17 +672,8 @@ class _Suggested extends GetView<IntakeController> {
                 for (final (i, idea) in ideas.indexed)
                   AnimatedSwitcher(
                     key: ValueKey('slot$i'),
-                    duration: const Duration(milliseconds: 260),
-                    transitionBuilder: (child, a) => FadeTransition(
-                      opacity: a,
-                      child: SlideTransition(
-                        position: Tween(
-                          begin: const Offset(0.08, 0),
-                          end: Offset.zero,
-                        ).animate(a),
-                        child: child,
-                      ),
-                    ),
+                    duration: const Duration(milliseconds: 320),
+                    transitionBuilder: swapTransition,
                     child: FoodRow(
                       key: ValueKey(idea.id),
                       food: _asFood(idea),

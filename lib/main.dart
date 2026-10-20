@@ -156,6 +156,11 @@ class KindoseApp extends StatelessWidget {
         initialRoute: initialRoute,
         getPages: AppPages.pages,
         defaultTransition: Transition.cupertino,
+        // iOS timing. The Cupertino slide brings its own easing; GetX's
+        // default curve (easeOutQuad) on top of it made pushes feel uneven
+        // and swipe-back lag the finger, so the base curve stays linear.
+        transitionDuration: const Duration(milliseconds: 400),
+        onInit: () => Get.rootController.defaultTransitionCurve = Curves.linear,
         // Screen name for crash reports (route only, never arguments).
         routingCallback: (r) => CrashReporting.setScreen(r?.current),
         builder: (context, child) {

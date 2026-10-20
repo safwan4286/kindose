@@ -169,7 +169,7 @@ class AppStatusService extends GetxService {
     }
     if (Platform.isAndroid) {
       return AppLinks.playStoreUrl.isEmpty
-          ? 'https://play.google.com/store/apps/details?id=com.kindose.app'
+          ? 'https://play.google.com/store/apps/details?id=app.kindose'
           : AppLinks.playStoreUrl;
     }
     return null;

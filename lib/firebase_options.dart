@@ -51,7 +51,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyC5fstqWlcr043AwyvWHoiSzj_y63g0f7g',
-    appId: '1:742604804840:android:edd650426467e599a0af5d',
+    appId: '1:742604804840:android:c88a8dd5cda8ffd2a0af5d',
     messagingSenderId: '742604804840',
     projectId: 'kindose-96ea8',
     storageBucket: 'kindose-96ea8.firebasestorage.app',
@@ -59,12 +59,12 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyCjI2082W-BPiNlMmWqpzYr6UZ_Qzo3Wnw',
-    appId: '1:742604804840:ios:a926ad857635060ea0af5d',
+    appId: '1:742604804840:ios:69555a530ae85a7ca0af5d',
     messagingSenderId: '742604804840',
     projectId: 'kindose-96ea8',
     storageBucket: 'kindose-96ea8.firebasestorage.app',
-    androidClientId: '742604804840-j5bhmotd3b43iqt065037vlimqlg6sm1.apps.googleusercontent.com',
-    iosClientId: '742604804840-uacmtnmgr2firv2bb5d5ahv3ed35e394.apps.googleusercontent.com',
-    iosBundleId: 'com.kindose.app',
+    androidClientId: '742604804840-dde12dqcsg980643ca2rfam3tsk4p9mr.apps.googleusercontent.com',
+    iosClientId: '742604804840-7f6qucnpl9c2g9gc7p7dl2geofaor4t4.apps.googleusercontent.com',
+    iosBundleId: 'app.kindose',
   );
 }

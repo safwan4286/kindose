@@ -1,4 +1,4 @@
-package com.kindose.app
+package app.kindose
 
 import android.content.Intent
 import android.net.Uri

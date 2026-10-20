@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 
 import '../../resources/routes.dart';
 import '../../widgets/no_internet_sheet.dart';
+import '../../widgets/sign_in_sheet.dart';
 import '../../services/backend/backend_service.dart';
 import '../../services/haptics/haptics.dart';
 import '../../widgets/toast.dart';
@@ -20,16 +21,21 @@ class WelcomeController extends GetxController {
     )?.whenComplete(() => _navigating = false);
   }
 
-  /// "I already have an account": sign in with Google and bring the
+  /// "I already have an account": sign in (Apple or Google) and bring the
   /// cloud backup to this phone. No backup yet → normal set-up.
   Future<void> signIn() async {
     if (_navigating) return;
     Haptics.instance.lightImpact();
+    final provider = await chooseSignIn(
+      title: 'Welcome back',
+      sub: 'Sign in with the account you backed up to.',
+    );
+    if (provider == null) return;
     final backend = Get.find<BackendService>();
     _navigating = true;
     backend.autoPaused = true;
     try {
-      final r = await backend.signInWithGoogle();
+      final r = await backend.signIn(provider);
       switch (r) {
         case BackendResult.ok:
           break;

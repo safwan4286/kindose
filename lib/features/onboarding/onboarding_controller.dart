@@ -965,23 +965,17 @@ class OnboardingController extends GetxController {
   /// Which sign-in is running, for the button spinner. Null when idle.
   final Rxn<SocialProvider> signingIn = Rxn<SocialProvider>();
 
-  /// Google sign-in (Supabase). If this account already has a backup
-  /// (new phone), offer to restore it; otherwise finish and the first
-  /// backup runs by itself. Apple sign-in comes with the Apple account.
+  /// Apple or Google sign-in (Supabase). If this account already has a
+  /// backup (new phone), offer to restore it; otherwise finish and the
+  /// first backup runs by itself.
   Future<void> signInWith(SocialProvider provider) async {
     if (signingIn.value != null || current != OnboardingStep.save) return;
     Haptics.instance.lightImpact();
-    if (provider == SocialProvider.apple) {
-      showToast(
-        'Sign in with Apple is coming soon. Use Google or tap Not now.',
-      );
-      return;
-    }
     final backend = Get.find<BackendService>();
     signingIn.value = provider;
     backend.autoPaused = true;
     try {
-      final r = await backend.signInWithGoogle();
+      final r = await backend.signIn(provider);
       switch (r) {
         case BackendResult.ok:
           break;

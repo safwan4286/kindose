@@ -3,13 +3,16 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../resources/backend_keys.dart';
+import '../../widgets/social_button.dart';
 import '../app_info.dart';
 import '../app_status/app_status_service.dart';
 import '../debug/test_data.dart';
@@ -369,6 +372,65 @@ class BackendService extends GetxService {
       return BackendResult.offline;
     } catch (e) {
       _log('Google sign-in failed: $e');
+      return _isOffline(e) ? BackendResult.offline : BackendResult.failed;
+    } finally {
+      busy.value = false;
+    }
+  }
+
+  Future<BackendResult> signIn(SocialProvider provider) =>
+      provider == SocialProvider.apple ? signInWithApple() : signInWithGoogle();
+
+  /// Sign in with Apple (iOS only; the button is hidden on Android).
+  /// Supabase checks the nonce, so the token can't be replayed.
+  Future<BackendResult> signInWithApple() async {
+    if (!ready || !Platform.isIOS) return BackendResult.notReady;
+    if (busy.value) return BackendResult.failed;
+    busy.value = true;
+    try {
+      _log('Apple sign-in started');
+      final rawNonce = _db.auth.generateRawNonce();
+      final credential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+        nonce: sha256.convert(utf8.encode(rawNonce)).toString(),
+      );
+      final idToken = credential.identityToken;
+      if (idToken == null) {
+        _log('Apple returned no ID token');
+        return BackendResult.failed;
+      }
+      final res = await _db.auth.signInWithIdToken(
+        provider: OAuthProvider.apple,
+        idToken: idToken,
+        nonce: rawNonce,
+      );
+      _log('Signed in ✓ ${_mask(res.user?.email)} · id ${res.user?.id}');
+      // Apple sends the name only the first time; keep it on the account.
+      final name = [
+        credential.givenName,
+        credential.familyName,
+      ].whereType<String>().where((s) => s.isNotEmpty).join(' ');
+      if (name.isNotEmpty) {
+        try {
+          await _db.auth.updateUser(UserAttributes(data: {'full_name': name}));
+        } catch (_) {
+          // Signed in anyway; the name is a nice-to-have.
+        }
+      }
+      await refreshBackupInfo();
+      return BackendResult.ok;
+    } on SignInWithAppleAuthorizationException catch (e) {
+      _log('Apple sign-in stopped: ${e.code.name}');
+      return e.code == AuthorizationErrorCode.canceled
+          ? BackendResult.cancelled
+          : BackendResult.failed;
+    } on SocketException {
+      return BackendResult.offline;
+    } catch (e) {
+      _log('Apple sign-in failed: $e');
       return _isOffline(e) ? BackendResult.offline : BackendResult.failed;
     } finally {
       busy.value = false;

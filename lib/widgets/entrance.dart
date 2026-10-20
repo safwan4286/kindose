@@ -71,3 +71,23 @@ class _EntranceState extends State<_Entrance> {
         );
   }
 }
+
+/// AnimatedSwitcher transition for one item replacing another in place:
+/// the old one fades out first, then the new one fades and slides in, so
+/// the two are never drawn on top of each other (which reads as a flicker).
+Widget swapTransition(Widget child, Animation<double> animation) {
+  final t = CurvedAnimation(
+    parent: animation,
+    curve: const Interval(0.5, 1, curve: Curves.easeOutCubic),
+  );
+  return FadeTransition(
+    opacity: t,
+    child: SlideTransition(
+      position: Tween<Offset>(
+        begin: const Offset(0.04, 0),
+        end: Offset.zero,
+      ).animate(t),
+      child: child,
+    ),
+  );
+}

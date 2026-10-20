@@ -15,7 +15,7 @@ class BackendKeys {
   static const String googleWebClientId =
       '742604804840-9m7t6l343ebjbhlvntvj478oj7j17tet.apps.googleusercontent.com';
   static const String googleIosClientId =
-      '742604804840-uacmtnmgr2firv2bb5d5ahv3ed35e394.apps.googleusercontent.com';
+      '742604804840-7f6qucnpl9c2g9gc7p7dl2geofaor4t4.apps.googleusercontent.com';
 
   // RevenueCat public SDK keys (safe in the app, like the publishable key).
   // The Test Store key is used in debug builds only; release builds use

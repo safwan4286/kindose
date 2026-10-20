@@ -7,6 +7,42 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:742604804840:android:c88a8dd5cda8ffd2a0af5d",
+        "android_client_info": {
+          "package_name": "app.kindose"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "742604804840-9m7t6l343ebjbhlvntvj478oj7j17tet.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC5fstqWlcr043AwyvWHoiSzj_y63g0f7g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "742604804840-9m7t6l343ebjbhlvntvj478oj7j17tet.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "742604804840-7f6qucnpl9c2g9gc7p7dl2geofaor4t4.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "app.kindose"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:742604804840:android:edd650426467e599a0af5d",
         "android_client_info": {
           "package_name": "com.kindose.app"
@@ -31,10 +67,10 @@
               "client_type": 3
             },
             {
-              "client_id": "742604804840-uacmtnmgr2firv2bb5d5ahv3ed35e394.apps.googleusercontent.com",
+              "client_id": "742604804840-7f6qucnpl9c2g9gc7p7dl2geofaor4t4.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.kindose.app"
+                "bundle_id": "app.kindose"
               }
             }
           ]

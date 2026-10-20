@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -641,7 +643,7 @@ class _SignedOutBackup extends StatelessWidget {
                     ),
                     SizedBox(height: 2.sp),
                     Text(
-                      'If you lose or change your phone, your history goes with it. Back up free with Google.',
+                      'If you lose or change your phone, your history goes with it. Back up free with your ${Platform.isIOS ? 'Apple or Google' : 'Google'} account.',
                       style: AppText.small.copyWith(
                         fontSize: 12.5.sp,
                         height: 1.45,

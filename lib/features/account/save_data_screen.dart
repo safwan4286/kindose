@@ -35,16 +35,10 @@ class SaveDataController extends GetxController {
   Future<void> signIn(SocialProvider provider) async {
     if (signingIn.value != null) return;
     Haptics.instance.lightImpact();
-    if (provider == SocialProvider.apple) {
-      showToast(
-        'Sign in with Apple is coming soon. Please use Google for now.',
-      );
-      return;
-    }
     signingIn.value = provider;
     backend.autoPaused = true;
     try {
-      final r = await backend.signInWithGoogle();
+      final r = await backend.signIn(provider);
       switch (r) {
         case BackendResult.ok:
           break;

@@ -3,11 +3,11 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>742604804840-uacmtnmgr2firv2bb5d5ahv3ed35e394.apps.googleusercontent.com</string>
+	<string>742604804840-7f6qucnpl9c2g9gc7p7dl2geofaor4t4.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.742604804840-uacmtnmgr2firv2bb5d5ahv3ed35e394</string>
+	<string>com.googleusercontent.apps.742604804840-7f6qucnpl9c2g9gc7p7dl2geofaor4t4</string>
 	<key>ANDROID_CLIENT_ID</key>
-	<string>742604804840-j5bhmotd3b43iqt065037vlimqlg6sm1.apps.googleusercontent.com</string>
+	<string>742604804840-dde12dqcsg980643ca2rfam3tsk4p9mr.apps.googleusercontent.com</string>
 	<key>API_KEY</key>
 	<string>AIzaSyCjI2082W-BPiNlMmWqpzYr6UZ_Qzo3Wnw</string>
 	<key>GCM_SENDER_ID</key>
@@ -15,7 +15,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.kindose.app</string>
+	<string>app.kindose</string>
 	<key>PROJECT_ID</key>
 	<string>kindose-96ea8</string>
 	<key>STORAGE_BUCKET</key>
@@ -31,6 +31,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:742604804840:ios:a926ad857635060ea0af5d</string>
+	<string>1:742604804840:ios:69555a530ae85a7ca0af5d</string>
 </dict>
 </plist>

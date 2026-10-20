@@ -59,6 +59,8 @@ dependencies:
   firebase_crashlytics: ^5.4.0
   in_app_review: ^2.0.12
   firebase_analytics: ^12.6.0
+  sign_in_with_apple: ^8.2.0
+  crypto: ^3.0.7
 
 dev_dependencies:
   flutter_test:

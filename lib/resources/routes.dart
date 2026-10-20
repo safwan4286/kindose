@@ -1,5 +1,5 @@
+import 'package:flutter/animation.dart';
 import 'package:get/get.dart';
-
 
 import '../features/account/save_data_screen.dart';
 import '../features/update/update_screen.dart';
@@ -80,6 +80,11 @@ class Routes {
 class AppPages {
   AppPages._();
 
+  /// Fades and the Plus sheet slide set their own easing; the app-wide
+  /// default curve is linear for the Cupertino slide (see main.dart).
+  static const Curve _ease = Curves.easeOutCubic;
+  static const Duration _fade = Duration(milliseconds: 300);
+
   static final List<GetPage<dynamic>> pages = [
     GetPage<dynamic>(
       name: Routes.splash,
@@ -93,6 +98,7 @@ class AppPages {
       binding: WelcomeBinding(),
       transition: Transition.fadeIn,
       transitionDuration: const Duration(milliseconds: 350),
+      curve: _ease,
     ),
     GetPage<dynamic>(
       name: Routes.onboarding,
@@ -109,29 +115,38 @@ class AppPages {
       page: () => const PlusScreen(),
       binding: PlusBinding(),
       transition: Transition.downToUp,
+      curve: _ease,
     ),
     GetPage<dynamic>(
       name: Routes.offer,
       page: () => const OfferScreen(),
       binding: OfferBinding(),
       transition: Transition.fadeIn,
+      transitionDuration: _fade,
+      curve: _ease,
     ),
     GetPage<dynamic>(
       name: Routes.update,
       page: () => const UpdateScreen(),
       transition: Transition.fadeIn,
+      transitionDuration: _fade,
+      curve: _ease,
     ),
     GetPage<dynamic>(
       name: Routes.saveData,
       page: () => const SaveDataScreen(),
       binding: SaveDataBinding(),
       transition: Transition.fadeIn,
+      transitionDuration: _fade,
+      curve: _ease,
     ),
     GetPage<dynamic>(
       name: Routes.home,
       page: () => const HomeScreen(),
       binding: HomeBinding(),
       transition: Transition.fadeIn,
+      transitionDuration: _fade,
+      curve: _ease,
     ),
     GetPage<dynamic>(
       name: Routes.logDose,
@@ -144,6 +159,8 @@ class AppPages {
       page: () => const DoseDoneScreen(),
       binding: DoseDoneBinding(),
       transition: Transition.fadeIn,
+      transitionDuration: _fade,
+      curve: _ease,
     ),
     GetPage<dynamic>(
       name: Routes.addIntake,
@@ -157,10 +174,7 @@ class AppPages {
       binding: DayBinding(),
       // Open for browsing; Plus actions inside ask (soft paywall).
     ),
-    GetPage<dynamic>(
-      name: Routes.logWeight,
-      page: () => const WeightScreen(),
-    ),
+    GetPage<dynamic>(name: Routes.logWeight, page: () => const WeightScreen()),
     GetPage<dynamic>(
       name: Routes.weighIns,
       page: () => const WeighInsScreen(),

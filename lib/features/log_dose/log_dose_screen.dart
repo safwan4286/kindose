@@ -559,7 +559,9 @@ class _SiteCard extends GetView<LogDoseController> {
                             ),
                             for (var i = 0; i < recent.length; i++)
                               Text(
-                                '${i + 1} · ${Catalog.siteName(recent[i].site)} · ${Dates.short(recent[i].takenAt)}',
+                                // Non-breaking: "belly · 2 Oct" wraps as one
+                                // piece instead of splitting the date.
+                                '${i + 1} · ${Catalog.siteName(recent[i].site)} · ${Dates.short(recent[i].takenAt).replaceAll(' ', ' ')}',
                                 style: AppText.small.copyWith(
                                   fontSize: 12.sp,
                                   fontWeight: FontWeight.w600,
