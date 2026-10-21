@@ -9,6 +9,7 @@ import '../../services/backend/backend_service.dart';
 import '../../services/haptics/haptics.dart';
 import '../../services/responsiveness/device_manager.dart';
 import '../../services/theme/theme.dart';
+import '../../widgets/buttons.dart';
 import '../../widgets/entrance.dart';
 import '../../widgets/no_internet_sheet.dart';
 import '../../widgets/safe_bottom.dart';
@@ -31,6 +32,14 @@ class SaveDataController extends GetxController {
 
   /// Which sign-in is running, for the button spinner.
   final Rxn<SocialProvider> signingIn = Rxn<SocialProvider>();
+
+  /// "Not now": keep using the app with data on this phone only.
+  Future<void> skip() async {
+    if (signingIn.value != null) return;
+    Haptics.instance.selectionClick();
+    await backend.choosePhoneOnly();
+    Get.offAllNamed<void>(Routes.home);
+  }
 
   Future<void> signIn(SocialProvider provider) async {
     if (signingIn.value != null) return;
@@ -182,7 +191,11 @@ class SaveDataScreen extends GetView<SaveDataController> {
                             ? null
                             : () => controller.signIn(SocialProvider.google),
                       ),
-                      SizedBox(height: 12.sp),
+                      SizedBox(height: 4.sp),
+                      LinkButton(
+                        label: 'Not now, keep it on this phone',
+                        onTap: busy != null ? null : controller.skip,
+                      ),
                       KBottomPadding(
                         child: Text(
                           'Only your name and email are shared with Kindose.',

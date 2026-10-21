@@ -119,7 +119,11 @@ class SavePage extends GetView<OnboardingController> {
                       ? null
                       : () => controller.signInWith(SocialProvider.google),
                 ),
-                SizedBox(height: 12.sp),
+                SizedBox(height: 4.sp),
+                LinkButton(
+                  label: 'Not now, keep it on this phone',
+                  onTap: busy != null || saving ? null : controller.skipSignIn,
+                ),
                 KBottomPadding(
                   child: Text(
                     'Only your name and email are shared with Kindose.',

@@ -37,7 +37,11 @@ class SplashController extends GetxController {
         ? Get.find<BackendService>()
         : null;
     // Without a backend (keys missing) the app still works on the phone.
-    final needsAccount = backend != null && backend.ready && !backend.signedIn;
+    final needsAccount =
+        backend != null &&
+        backend.ready &&
+        !backend.signedIn &&
+        !backend.phoneOnly;
     Get.offAllNamed<void>(needsAccount ? Routes.saveData : Routes.home);
   }
 }

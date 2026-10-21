@@ -103,6 +103,7 @@ class BackendService extends GetxService {
     _ownerKey,
     _pendingKey,
     _ownerMigratedKey,
+    _phoneOnlyChoiceKey,
     'installedAt',
     'clockSeen',
     'accessConfig',
@@ -192,6 +193,15 @@ class BackendService extends GetxService {
 
   bool get ready => _initialised;
   bool get signedIn => user.value != null;
+
+  static const String _phoneOnlyChoiceKey = 'phoneOnly';
+
+  /// The user chose "Not now" on sign-in: the app works with data on this
+  /// phone only, and doesn't ask again at start-up (Me → Back up still
+  /// offers it).
+  bool get phoneOnly => _settings.get(_phoneOnlyChoiceKey) == true;
+
+  Future<void> choosePhoneOnly() => _settings.put(_phoneOnlyChoiceKey, true);
   String? get email => user.value?.email;
 
   /// 'google' or 'apple' (how the user signed in), or null.

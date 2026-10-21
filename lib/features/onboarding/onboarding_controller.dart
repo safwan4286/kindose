@@ -1037,6 +1037,16 @@ class OnboardingController extends GetxController {
       ? Get.find<BackendService>().email
       : null;
 
+  /// "Not now": finish set-up with data on this phone only.
+  Future<void> skipSignIn() async {
+    if (signingIn.value != null || current != OnboardingStep.save) return;
+    Haptics.instance.selectionClick();
+    if (Get.isRegistered<BackendService>()) {
+      await Get.find<BackendService>().choosePhoneOnly();
+    }
+    await finish();
+  }
+
   Future<void> continueSignedIn() async {
     if (signingIn.value != null || current != OnboardingStep.save) return;
     Haptics.instance.lightImpact();
