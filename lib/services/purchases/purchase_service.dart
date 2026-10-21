@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
 import '../../resources/backend_keys.dart';
+import '../analytics/analytics.dart';
 import '../backend/backend_service.dart';
 import '../plus/plus_access.dart';
 
@@ -145,9 +146,12 @@ class PurchaseService extends GetxService {
     try {
       final r = await Purchases.purchase(PurchaseParams.package(p));
       _apply(r.customerInfo);
-      return PlusAccess.active.value
-          ? PurchaseOutcome.success
-          : PurchaseOutcome.pending;
+      if (!PlusAccess.active.value) return PurchaseOutcome.pending;
+      Analytics.plusPurchase(
+        plan: p.identifier,
+        offering: p.presentedOfferingContext.offeringIdentifier,
+      );
+      return PurchaseOutcome.success;
     } on PlatformException catch (e) {
       final code = PurchasesErrorHelper.getErrorCode(e);
       _log('Purchase error: $code');
@@ -167,6 +171,7 @@ class PurchaseService extends GetxService {
     busy.value = true;
     try {
       _apply(await Purchases.restorePurchases());
+      if (PlusAccess.active.value) Analytics.plusRestore();
       return PlusAccess.active.value;
     } on PlatformException catch (e) {
       _log('Restore error: ${PurchasesErrorHelper.getErrorCode(e)}');

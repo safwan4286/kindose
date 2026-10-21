@@ -18,6 +18,7 @@ import '../../services/supply/supply_service.dart';
 import '../../widgets/social_button.dart';
 import '../../widgets/toast.dart';
 import '../me/widgets/me_sheets.dart';
+import '../../services/analytics/analytics.dart';
 
 enum OnboardingStep {
   welcome,
@@ -1273,6 +1274,11 @@ class OnboardingController extends GetxController {
       if (editMode) {
         popRoute();
       } else {
+        Analytics.onboardingDone(
+          signedIn:
+              Get.isRegistered<BackendService>() &&
+              Get.find<BackendService>().signedIn,
+        );
         Get.offAllNamed<void>(Routes.plus, arguments: true);
       }
     } finally {

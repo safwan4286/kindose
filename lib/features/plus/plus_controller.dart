@@ -14,6 +14,7 @@ import '../../services/purchases/purchase_service.dart';
 import '../offer/offer_controller.dart';
 import '../../services/tracker_service.dart';
 import '../../widgets/toast.dart';
+import '../../services/analytics/analytics.dart';
 
 class PlusPlan {
   const PlusPlan(
@@ -121,6 +122,7 @@ class PlusController extends GetxController {
   void onInit() {
     super.onInit();
     scrollController.addListener(_onScroll);
+    Analytics.paywallView(fromOnboarding: fromOnboarding);
   }
 
   void _onScroll() {

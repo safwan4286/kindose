@@ -12,7 +12,9 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../resources/backend_keys.dart';
+import '../../widgets/offline_notice.dart';
 import '../../widgets/social_button.dart';
+import '../analytics/analytics.dart';
 import '../app_info.dart';
 import '../app_status/app_status_service.dart';
 import '../debug/test_data.dart';
@@ -251,9 +253,13 @@ class BackendService extends GetxService {
     unawaited(loadConfig());
     if (signedIn) unawaited(_startupBackup());
 
-    // Back online with changes waiting: back them up.
+    // Back online: fresh config and Plus prices (a start without internet
+    // only had the cached ones), and any waiting backup.
+    var wasOnline = true;
     _netSub = Connectivity().onConnectivityChanged.listen((r) {
       final online = r.any((c) => c != ConnectivityResult.none);
+      if (online && !wasOnline) unawaited(OfflineNotice.refresh());
+      wasOnline = online;
       if (online && pending.value) unawaited(_autoBackup());
     });
 
@@ -388,8 +394,13 @@ class BackendService extends GetxService {
     }
   }
 
-  Future<BackendResult> signIn(SocialProvider provider) =>
-      provider == SocialProvider.apple ? signInWithApple() : signInWithGoogle();
+  Future<BackendResult> signIn(SocialProvider provider) async {
+    final r = provider == SocialProvider.apple
+        ? await signInWithApple()
+        : await signInWithGoogle();
+    if (r == BackendResult.ok) Analytics.signIn(provider.name);
+    return r;
+  }
 
   /// Sign in with Apple (iOS only; the button is hidden on Android).
   /// Supabase checks the nonce, so the token can't be replayed.

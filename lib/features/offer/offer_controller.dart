@@ -7,6 +7,7 @@ import '../../services/offers/offer_config.dart';
 import '../../services/offers/offer_service.dart';
 import '../../services/purchases/purchase_service.dart';
 import '../../widgets/toast.dart';
+import '../../services/analytics/analytics.dart';
 
 /// Passed to [Routes.offer].
 class OfferArgs {
@@ -28,6 +29,12 @@ class OfferController extends GetxController {
   /// Blocks double taps while a purchase runs.
   final RxBool busy = false.obs;
   bool _closing = false;
+
+  @override
+  void onInit() {
+    super.onInit();
+    Analytics.offerView();
+  }
 
   /// Never claim "one time only" unless the rules really make it so.
   String get subtitle {

@@ -4,6 +4,7 @@ import '../../resources/routes.dart';
 import '../../services/app_status/app_status_service.dart';
 import '../../services/backend/backend_service.dart';
 import '../../services/tracker_service.dart';
+import '../../widgets/offline_notice.dart';
 
 /// Decides where the app goes after the splash animation.
 ///
@@ -31,6 +32,7 @@ class SplashController extends GetxController {
     }
     if (!_tracker.hasProfile) {
       Get.offAllNamed<void>(Routes.welcome);
+      OfflineNotice.atLaunch();
       return;
     }
     final backend = Get.isRegistered<BackendService>()
@@ -43,5 +45,6 @@ class SplashController extends GetxController {
         !backend.signedIn &&
         !backend.phoneOnly;
     Get.offAllNamed<void>(needsAccount ? Routes.saveData : Routes.home);
+    OfflineNotice.atLaunch();
   }
 }

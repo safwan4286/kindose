@@ -17,6 +17,7 @@ import 'package:kindose/services/theme/theme.dart';
 
 import 'resources/routes.dart';
 import 'services/backend/backend_service.dart';
+import 'services/analytics/analytics.dart';
 import 'services/crash/crash_reporting.dart';
 import 'services/notifications/notif_prefs.dart';
 import 'services/notifications/reminder_service.dart';
@@ -162,7 +163,10 @@ class KindoseApp extends StatelessWidget {
         transitionDuration: const Duration(milliseconds: 400),
         onInit: () => Get.rootController.defaultTransitionCurve = Curves.linear,
         // Screen name for crash reports (route only, never arguments).
-        routingCallback: (r) => CrashReporting.setScreen(r?.current),
+        routingCallback: (r) {
+          CrashReporting.setScreen(r?.current);
+          Analytics.screen(r?.current);
+        },
         builder: (context, child) {
           final dark = Theme.of(context).brightness == Brightness.dark;
           final mq = MediaQuery.of(context);
