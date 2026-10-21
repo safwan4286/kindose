@@ -66,10 +66,10 @@ class PlusController extends GetxController {
     PlusPlan(
       'year',
       'Yearly',
-      '\$6.67 a month',
-      '\$79.99',
+      '\$4.17 a month',
+      '\$49.99',
       'a year',
-      badge: 'SAVE 33%',
+      badge: 'SAVE 58%',
     ),
     PlusPlan('month', 'Monthly', 'Cancel anytime', '\$9.99', 'a month'),
   ];

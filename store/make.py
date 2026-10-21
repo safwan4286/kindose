@@ -40,6 +40,8 @@ THEMES = {
 # W, H, headline px, headline top, phone width (share of W), phone top
 SIZES = {
     'appstore': (1290, 2796, 124, 236, 0.82, 720),
+    # iPhone 6.1"/6.3" slot (medium display), same layout scaled down.
+    'appstore-6.3': (1206, 2622, 116, 221, 0.82, 673),
     'play': (1080, 1920, 96, 150, 0.74, 470),
 }
 

@@ -1,10 +1,8 @@
-Put the official sign-in logos here (download them yourself from the brand kits,
-don't redraw them):
+Official sign-in logos. ic_apple.svg and ic_google.svg are the sources; the
+PNGs (1x, 2.0x/, 3.0x/) are rendered from them at 20 pt for the buttons:
 
-- apple_logo_white.png, apple_logo_black.png — Apple "Sign in with Apple" resources
-  (developer.apple.com/design/resources)
-- google_g.png — Google Sign-In branding guidelines
-  (developers.google.com/identity/branding-guidelines)
+- apple_logo_white.png: Apple logo on the black button (light mode)
+- apple_logo_black.png: Apple logo on the white button (dark mode)
+- google_g.png: Google "G"
 
-Use @2x/@3x variants in 2.0x/ and 3.0x/ subfolders if you have them. Missing files
-just hide the logo, the buttons still work.
+Don't redraw or recolour them beyond Apple's black/white versions.
