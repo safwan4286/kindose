@@ -322,7 +322,7 @@ class ReportPdf {
     final showGoal =
         goal != null && goal >= lo - dataSpan * 0.6 && goal <= hi + dataSpan;
     if (showGoal) {
-      lo = math.min(lo, goal!);
+      lo = math.min(lo, goal);
       hi = math.max(hi, goal);
     }
     final ticks = _ticks(lo - 0.2, hi + 0.2);
@@ -442,7 +442,7 @@ class ReportPdf {
                         ..setStrokeColor(_limeText)
                         ..setLineWidth(0.9)
                         ..setLineDashPattern([3, 3])
-                        ..moveTo(0, y(goal!))
+                        ..moveTo(0, y(goal))
                         ..lineTo(w, y(goal))
                         ..strokePath();
                     }
@@ -484,7 +484,7 @@ class ReportPdf {
                 if (showGoal)
                   pw.Positioned(
                     left: 2,
-                    top: h - y(goal!) - 10,
+                    top: h - y(goal) - 10,
                     child: pw.Text(
                       'Goal ${_tick(goal)}',
                       style: pw.TextStyle(

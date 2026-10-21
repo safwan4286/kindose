@@ -1,4 +1,4 @@
-library local_storage;
+library;
 
 import 'dart:convert';
 import 'dart:io';

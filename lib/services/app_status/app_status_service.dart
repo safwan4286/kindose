@@ -110,8 +110,9 @@ class AppStatusService extends GetxService {
     final min = raw['min_version'];
     final title = raw['update_title'];
     final message = raw['update_message'];
-    if (title is String && title.trim().isNotEmpty)
+    if (title is String && title.trim().isNotEmpty) {
       updateTitle.value = title.trim();
+    }
     if (message is String && message.trim().isNotEmpty) {
       updateMessage.value = message.trim();
     }

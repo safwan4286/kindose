@@ -404,8 +404,9 @@ class LogDoseController extends GetxController {
   /// on time, daily, editing, or no plan yet.
   int get lateDays {
     final p = profile;
-    if (p == null || isEditing || !(p.everyDays == 7 || p.everyDays == 14))
+    if (p == null || isEditing || !(p.everyDays == 7 || p.everyDays == 14)) {
       return 0;
+    }
     final due = tracker.nextDoseAt(takenAt.value);
     if (due == null) return 0;
     final d = Dates.daysBetween(

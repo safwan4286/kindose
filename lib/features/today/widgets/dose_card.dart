@@ -80,7 +80,7 @@ TextStyle _caps(Color c) =>
     AppText.caps.copyWith(fontSize: 12.sp, letterSpacing: 1.1, color: c);
 
 class _InkCard extends StatelessWidget {
-  const _InkCard({required this.child, this.color = AppColors.hero});
+  const _InkCard({required this.child}) : color = AppColors.hero;
 
   final Widget child;
   final Color color;

@@ -10,7 +10,7 @@ class OnboardingBinding extends Bindings {
 }
 
 /// Same screens, opened from Me to change answers. Pass the steps to show
-/// as the route arguments (a List<OnboardingStep>); none = the plan steps.
+/// as the route arguments (a `List<OnboardingStep>`); none = the plan steps.
 class EditPlanBinding extends Bindings {
   @override
   void dependencies() {

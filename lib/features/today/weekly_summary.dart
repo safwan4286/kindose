@@ -124,8 +124,9 @@ class WeeklySummary {
   static int? _weekOf(TrackerService t, UserProfile p, DateTime start) {
     final began =
         p.treatmentStartedAt ?? (t.doses.isEmpty ? null : t.doses.last.takenAt);
-    if (began == null || began.isAfter(Dates.addDays(start, 6)))
+    if (began == null || began.isAfter(Dates.addDays(start, 6))) {
       return null;
+    }
     final days = Dates.daysBetween(began, start);
     return days < 0 ? 1 : days ~/ 7 + 1;
   }

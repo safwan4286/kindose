@@ -101,8 +101,9 @@ class _FloatyState extends State<Floaty> with SingleTickerProviderStateMixin {
       duration: const Duration(milliseconds: 2600),
     );
     Future<void>.delayed(Duration(milliseconds: widget.delayMs), () {
-      if (mounted && !MediaQuery.disableAnimationsOf(context))
+      if (mounted && !MediaQuery.disableAnimationsOf(context)) {
         _c.repeat(reverse: true);
+      }
     });
   }
 

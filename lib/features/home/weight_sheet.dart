@@ -107,8 +107,9 @@ class _WeightScreenState extends State<WeightScreen> {
     try {
       await _t.addWeight(_kg, _day);
       final p = _t.profile.value;
-      if (p != null && p.useKg != _useKg)
+      if (p != null && p.useKg != _useKg) {
         await _t.saveProfile(p.copyWith(useKg: _useKg));
+      }
       Haptics.instance.mediumImpact();
       popRoute();
       showToast('Weight saved: ${_fmt(_kg)} $_unit');

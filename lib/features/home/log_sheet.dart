@@ -307,9 +307,8 @@ class _Tile extends StatelessWidget {
     required this.bg,
     required this.subColor,
     required this.onTap,
-    this.titleColor = AppColors.ink,
     this.accent,
-  });
+  }) : titleColor = AppColors.ink;
 
   final String icon;
   final String title;

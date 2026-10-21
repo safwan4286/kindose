@@ -63,8 +63,9 @@ class WhenPage extends GetView<OnboardingController> {
       initialTime: TimeOfDay(hour: m ~/ 60, minute: m % 60),
       helpText: 'Usual time',
     );
-    if (picked != null)
+    if (picked != null) {
       controller.pickDoseTime(picked.hour * 60 + picked.minute);
+    }
   }
 
   @override

@@ -133,6 +133,8 @@ class RemindersPage extends GetView<OnboardingController> {
 
 /// Optional water and protein nudges, off by default. They need the same
 /// permission, so they are saved only with "Turn on reminders".
+// Parked: its call in the page above is commented out for now.
+// ignore: unused_element
 class _ExtraNudges extends StatelessWidget {
   const _ExtraNudges({required this.controller});
 

@@ -85,7 +85,7 @@ class SocialButton extends StatelessWidget {
                       height: 20.sp,
                       excludeFromSemantics: true,
                       // Logo not added yet: show the text alone.
-                      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                      errorBuilder: (_, _, _) => const SizedBox.shrink(),
                     ),
                     SizedBox(width: 10.sp),
                     Flexible(

@@ -28,8 +28,12 @@ class UpdateScreen extends StatelessWidget {
       return;
     }
     try {
-      if (await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication))
+      if (await launchUrl(
+        Uri.parse(url),
+        mode: LaunchMode.externalApplication,
+      )) {
         return;
+      }
     } catch (_) {}
     showToast('Open your app store to update Kindose.');
   }

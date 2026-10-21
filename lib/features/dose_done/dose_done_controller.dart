@@ -169,8 +169,9 @@ class DoseDoneController extends GetxController {
   String get penLine {
     final left = supply.leftInPack;
     final word = isTablet ? 'tablet' : 'dose';
-    if (left > 0)
+    if (left > 0) {
       return '$left ${left == 1 ? word : '${word}s'} left in this $_pack';
+    }
     final spare = supply.spareLeft;
     return spare == 0
         ? 'That was the last $word in this $_pack. No spare ${_pack}s at home.'

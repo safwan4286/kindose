@@ -183,8 +183,9 @@ class ReminderService extends GetxService {
       return;
     }
     if (payload == reportPayload) {
-      if (Get.isRegistered<HomeController>())
+      if (Get.isRegistered<HomeController>()) {
         Get.find<HomeController>().select(HomeTab.report);
+      }
       return;
     }
     if (payload != logDosePayload || tracker.profile.value == null) return;
@@ -196,13 +197,39 @@ class ReminderService extends GetxService {
         Dates.dateOnly(due).isBefore(Dates.dateOnly(DateTime.now()));
     Get.toNamed<void>(
       Routes.logDose,
-      arguments: overdue ? LogDueDose(due!) : null,
+      arguments: overdue ? LogDueDose(due) : null,
     );
   }
 
+  Future<void>? _running;
+  bool _again = false;
+
   /// Cancels every reminder and schedules the current ones. Dose and visit
   /// reminders are switched on and off separately in Me.
+  /// One run at a time: a change during a run plans again once it ends, so
+  /// an older run can't add a stale reminder after a newer one cancelled.
   Future<void> sync() async {
+    if (_running != null) {
+      _again = true;
+      return _running;
+    }
+    final run = _syncLoop();
+    _running = run;
+    try {
+      await run;
+    } finally {
+      _running = null;
+    }
+  }
+
+  Future<void> _syncLoop() async {
+    do {
+      _again = false;
+      await _plan();
+    } while (_again);
+  }
+
+  Future<void> _plan() async {
     await _notes.cancelIds(_allIds);
     final p = tracker.profile.value;
     if (p == null) return;
@@ -265,15 +292,16 @@ class ReminderService extends GetxService {
     // Due earlier today and not logged yet: keep the evening follow-up.
     final evening = DateTime(now.year, now.month, now.day, 20);
     if (Dates.sameDay(next, now) && evening.isAfter(now)) {
-      if (!_prefs.followUpOn.value) return;
-      await _notes.scheduleAt(
-        id: _followUpId,
-        when: evening,
-        title: 'Still to log: your dose',
-        body:
-            'Took it already? Tap to log it. Taking it another day? You can move it in the app.',
-        payload: logDosePayload,
-      );
+      if (_prefs.followUpOn.value) {
+        await _notes.scheduleAt(
+          id: _followUpId,
+          when: evening,
+          title: 'Still to log: your dose',
+          body:
+              'Took it already? Tap to log it. Taking it another day? You can move it in the app.',
+          payload: logDosePayload,
+        );
+      }
       if (_prefs.missedOn.value) {
         await _scheduleMissed(
           next,
@@ -392,8 +420,11 @@ class ReminderService extends GetxService {
   Future<void> _planFreeWeek() async {
     if (!Get.isRegistered<AccessService>()) return;
     final a = Get.find<AccessService>();
-    if (PlusAccess.active.value || !a.config.value.gatingOn || !a.started.value)
+    if (PlusAccess.active.value ||
+        !a.config.value.gatingOn ||
+        !a.started.value) {
       return;
+    }
     final end = a.endsAt.value;
     final when = _prefs.outsideQuiet(
       Dates.atMinutes(Dates.addDays(end, -1), 10 * 60),

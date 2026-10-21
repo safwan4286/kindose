@@ -1,4 +1,4 @@
-part of local_storage;
+part of 'local_storage.dart';
 
 class HiveBox {
   static const String user = "user";

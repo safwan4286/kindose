@@ -93,8 +93,9 @@ class ProgressController extends GetxController {
 
   void openReport() {
     Haptics.instance.selectionClick();
-    if (Get.isRegistered<HomeController>())
+    if (Get.isRegistered<HomeController>()) {
       Get.find<HomeController>().select(HomeTab.report);
+    }
   }
 
   void logWeight() => showWeightSheet();
@@ -446,8 +447,9 @@ class ProgressController extends GetxController {
 
   String get feelHeadline {
     final cells = feelCells.where((c) => c.level >= 0).toList();
-    if (cells.isEmpty)
+    if (cells.isEmpty) {
       return 'Check in a few times to see how you feel over time.';
+    }
     final avg = cells.fold<int>(0, (s, c) => s + c.level) / cells.length;
     final word = avg < 0.5
         ? 'Mostly fine'

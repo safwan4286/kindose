@@ -125,7 +125,8 @@ class ReportData {
       var last = Dates.dateOnly(to);
       // Today counts once its dose is logged (no "6 of 7" every morning).
       final todayDate = Dates.dateOnly(DateTime.now());
-      if (Dates.sameDay(last, todayDate) && !takenDays.contains(Dates.key(last))) {
+      if (Dates.sameDay(last, todayDate) &&
+          !takenDays.contains(Dates.key(last))) {
         last = Dates.addDays(last, -1);
       }
       scheduleOutOf = from.isAfter(last)
@@ -280,8 +281,9 @@ class ReportData {
     ];
     String name(int d) => d == 0 ? 'Dose day' : 'Day $d';
     if (top.length == 1) return name(top.first);
-    if (top.length == 2 && top[1] == top[0] + 1 && top[0] > 0)
+    if (top.length == 2 && top[1] == top[0] + 1 && top[0] > 0) {
       return 'Day ${top[0]}–${top[1]}';
+    }
     return null;
   }
 

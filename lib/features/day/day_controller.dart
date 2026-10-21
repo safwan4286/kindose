@@ -206,8 +206,9 @@ class DayController extends GetxController with DayNav {
     final n = proteinList.length;
     final foods = n == 0 ? '' : ' · $n ${n == 1 ? 'food' : 'foods'}';
     if (total == proteinGoal) return 'Right on your goal$foods';
-    if (total > proteinGoal)
+    if (total > proteinGoal) {
       return '${total - proteinGoal} g over your goal$foods';
+    }
     return '${proteinGoal - total} g short of your goal$foods';
   }
 

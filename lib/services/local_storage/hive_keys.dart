@@ -1,4 +1,4 @@
-part of local_storage;
+part of 'local_storage.dart';
 
 class HiveKeys {
   static const String preferredLanguage = "preferred_language";

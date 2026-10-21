@@ -204,8 +204,9 @@ class PlusController extends GetxController {
 
   /// The free-week line in the hero.
   String get freeLine {
-    if (_access.locked)
+    if (_access.locked) {
       return 'Your free week has ended.\nYour data is safe. Pick a plan to keep logging.';
+    }
     if (!_access.started.value) {
       return 'Your first week is free. No card needed.\nIt starts with your first dose.';
     }

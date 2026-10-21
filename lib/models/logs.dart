@@ -119,8 +119,9 @@ class LogEntry {
     final at = raw.date('at');
     final id = raw.str('id');
     final kind = raw.str('kind');
-    if (at == null || id.isEmpty || (kind != 'protein' && kind != 'water'))
+    if (at == null || id.isEmpty || (kind != 'protein' && kind != 'water')) {
       return null;
+    }
     return LogEntry(
       id: id,
       at: at,

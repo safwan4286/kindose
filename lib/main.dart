@@ -39,46 +39,23 @@ Future<void> main() async {
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   await KSystemUi.enableEdgeToEdge();
 
-  FlutterError.onError = (FlutterErrorDetails details) {
-    FlutterError.dumpErrorToConsole(details);
-    if (kReleaseMode) {
-      // Send errors to a logging service or print errors
-      devPrint(details.toString()); // Only temporary for debugging
-    }
-  };
+  FlutterError.onError = FlutterError.dumpErrorToConsole;
 
   // Crash reports (Firebase Crashlytics), release builds only. Wraps the
-  // handler above, so console printing still works.
+  // handler above, so console printing still works. Also starts Firebase.
   await CrashReporting.init();
 
-  /// notification setup
   try {
-    /// Notification setup
-    await Firebase.initializeApp();
-
+    if (Firebase.apps.isEmpty) await Firebase.initializeApp();
     if (kDebugMode) {
       await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(false);
     }
-
-    // FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-    devPrint('Firebase initialized and background handler set.');
-  } catch (e, stackTrace) {
-    devPrint('Error initializing Firebase or setting background handler: $e');
-  }
-  if (!kIsWeb) {
-    // await setupFlutterNotifications();
-    // initializeNotifications();
+  } catch (e) {
+    devPrint('Firebase init failed: $e');
   }
 
   singletonsSetup();
-
-  // local storage initilization
   await getIt<LocalStorage>().initHive();
-
-  /// firebase token logic
-
-  // await DeviceInfo().get();
-
   await AppInfo().get();
 
   final tracker = await Get.putAsync<TrackerService>(

@@ -167,7 +167,7 @@ class ReportController extends GetxController {
     final t = tracker;
     final started = t.profile.value?.treatmentStartedAt;
     final candidates = <DateTime>[
-      if (started != null) started,
+      ?started,
       if (t.doses.isNotEmpty) t.doses.last.takenAt,
       if (t.weights.isNotEmpty) t.weights.first.date,
     ];

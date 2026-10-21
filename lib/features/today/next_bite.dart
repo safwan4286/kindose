@@ -520,8 +520,9 @@ class NextBite {
       if (mode == BiteMode.normal) s += i.grams ~/ 8;
       if (favourites.any(
         (f) => f.startsWith(i.name.toLowerCase().split(' ').first),
-      ))
+      )) {
         s += 2;
+      }
       return s;
     }
 

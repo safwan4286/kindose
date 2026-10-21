@@ -373,8 +373,9 @@ class OnboardingController extends GetxController {
   /// back to the plan instead.
   bool _leaveEditToPlan(int to) {
     if (!_returnToPlan) return false;
-    if (to >= 0 && to < steps.length && _planEditSteps.contains(steps[to]))
+    if (to >= 0 && to < steps.length && _planEditSteps.contains(steps[to])) {
       return false;
+    }
     _returnToPlan = false;
     _go(steps.indexOf(OnboardingStep.plan));
     return true;
@@ -500,8 +501,9 @@ class OnboardingController extends GetxController {
   /// on. "Another schedule" opens the every-N-days stepper instead.
   void pickFrequency(String id) {
     if (id == 'custom') {
-      if (!(frequencyAnswered.value && frequency.value == 'custom'))
+      if (!(frequencyAnswered.value && frequency.value == 'custom')) {
         Haptics.instance.selectionClick();
+      }
       frequency.value = 'custom';
       frequencyAnswered.value = true;
       return;
@@ -520,8 +522,9 @@ class OnboardingController extends GetxController {
   }
 
   void confirmCustomFrequency() {
-    if (frequency.value != 'custom' || current != OnboardingStep.frequency)
+    if (frequency.value != 'custom' || current != OnboardingStep.frequency) {
       return;
+    }
     Haptics.instance.lightImpact();
     next();
   }
@@ -668,8 +671,9 @@ class OnboardingController extends GetxController {
     final y = year ?? birthYear.value;
     final m = month ?? birthMonth.value;
     final d = (day ?? birthDay.value).clamp(1, daysInMonth(y, m));
-    if (y == birthYear.value && m == birthMonth.value && d == birthDay.value)
+    if (y == birthYear.value && m == birthMonth.value && d == birthDay.value) {
       return;
+    }
     Haptics.instance.selectionClick();
     birthYear.value = y;
     birthMonth.value = m;

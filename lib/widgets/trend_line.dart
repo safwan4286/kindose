@@ -76,7 +76,7 @@ class _TrendPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (values.isEmpty) return;
     final g = goal;
-    final all = [...values, if (g != null) g];
+    final all = [...values, ?g];
     final lo = all.reduce(math.min) - 1;
     final hi = all.reduce(math.max) + 1;
     const pad = 8.0;

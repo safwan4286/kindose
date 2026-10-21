@@ -521,18 +521,19 @@ class BackendService extends GetxService {
     // Debug test data must never replace the real cloud backup.
     if (TestData.isOn) throw StateError('Test data on this phone');
     final data = tracker.backupData();
+    final size = utf8.encode(jsonEncode(data)).length;
     await _db.from('backups').upsert({
       'user_id': id,
       'data': data,
       'app_version': _appVersion,
       'platform': Platform.operatingSystem,
-      'size_bytes': utf8.encode(jsonEncode(data)).length,
+      'size_bytes': size,
     });
     await _setPending(false);
     lastFailOffline.value = true;
     await refreshBackupInfo();
     _log(
-      'Backup saved ✓ ${(utf8.encode(jsonEncode(data)).length / 1024).toStringAsFixed(1)} KB · '
+      'Backup saved ✓ ${(size / 1024).toStringAsFixed(1)} KB · '
       '${tracker.doses.length} doses · ${tracker.days.length} days · ${tracker.weights.length} weigh-ins',
     );
   }
@@ -619,6 +620,7 @@ class BackendService extends GetxService {
 
   Future<void> _clearPhone() async {
     _autoTimer?.cancel();
+    autoQueued.value = false;
     await tracker.deleteAll();
     pending.value = false;
     if (Get.isRegistered<SupplyService>()) Get.find<SupplyService>().load();

@@ -153,8 +153,9 @@ class TrackerService extends GetxService {
     if (id is! String ||
         name is! String ||
         name.trim().isEmpty ||
-        grams is! int)
+        grams is! int) {
       return null;
+    }
     final portion = m['portion'];
     return Food(
       id,
@@ -568,8 +569,9 @@ class TrackerService extends GetxService {
   int get logStreak {
     bool active(DateTime day) {
       final d = days[Dates.key(day)];
-      if (d != null && (d.proteinG > 0 || d.waterMl > 0 || d.hasCheckIn))
+      if (d != null && (d.proteinG > 0 || d.waterMl > 0 || d.hasCheckIn)) {
         return true;
+      }
       if (doseOn(day) != null) return true;
       return weights.any((w) => Dates.sameDay(w.date, day));
     }
@@ -641,8 +643,9 @@ class TrackerService extends GetxService {
   Future<void> rollAppointment() async {
     final next = nextAppointment.value;
     if (next == null ||
-        !Dates.dateOnly(next).isBefore(Dates.dateOnly(DateTime.now())))
+        !Dates.dateOnly(next).isBefore(Dates.dateOnly(DateTime.now()))) {
       return;
+    }
     lastAppointment.value = next;
     nextAppointment.value = null;
     reportQuestions.clear();

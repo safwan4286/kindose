@@ -838,8 +838,8 @@ class _NavRow extends StatelessWidget {
       enabled: onTap != null,
       label: [
         label,
-        if (value != null) value!,
-        if (sub != null) sub!,
+        ?value,
+        ?sub,
       ].join(', '),
       excludeSemantics: true,
       child: Material(

@@ -65,8 +65,9 @@ mixin DayNav on GetxController {
   /// "Today", "Yesterday" or "Mon, 28 Sep".
   String get dayTitle {
     if (isToday) return 'Today';
-    if (Dates.sameDay(day.value, Dates.addDays(today, -1)))
+    if (Dates.sameDay(day.value, Dates.addDays(today, -1))) {
       return 'Yesterday';
+    }
     return Dates.shortWithDay(day.value);
   }
 
@@ -115,8 +116,10 @@ mixin DayNav on GetxController {
   bool hasLogOn(DateTime d) {
     final t = Get.find<TrackerService>();
     final log = t.days[Dates.key(d)];
-    if (log != null && (log.proteinG > 0 || log.waterMl > 0 || log.hasCheckIn))
+    if (log != null &&
+        (log.proteinG > 0 || log.waterMl > 0 || log.hasCheckIn)) {
       return true;
+    }
     if (t.doseOn(d) != null) return true;
     return t.weights.any((w) => Dates.sameDay(w.date, d));
   }

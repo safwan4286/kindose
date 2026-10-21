@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 
 import '../resources/colors.dart';
 import '../services/haptics/haptics.dart';
-import '../services/theme/theme.dart';
 import 'buttons.dart';
 import 'k_sheet.dart';
 

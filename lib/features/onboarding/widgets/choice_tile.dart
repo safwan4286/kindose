@@ -52,7 +52,7 @@ class ChoiceTile extends StatelessWidget {
       label: [
         title,
         if (tag != null) tag!.toLowerCase(),
-        if (sub != null) sub!,
+        ?sub,
       ].join('. '),
       excludeSemantics: true,
       child: PressScale(

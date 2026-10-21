@@ -127,10 +127,11 @@ class IntakeController extends GetxController with DayNav {
 
   String get proteinLine {
     final left = proteinLeft;
-    if (left == 0)
+    if (left == 0) {
       return isToday
           ? 'Goal reached today. Nice work.'
           : 'Goal reached that day.';
+    }
     if (!isToday) return '$left g short of the goal that day';
     final meals = (left / 25).ceil();
     return '$left g to go · about $meals protein-first ${meals == 1 ? 'meal' : 'meals'}';
@@ -151,8 +152,11 @@ class IntakeController extends GetxController with DayNav {
     final allowed = Catalog.foodsFor(_diet).map((f) => f.id).toSet();
     final out = <Food>[];
     void addIfNew(Food? f) {
-      if (f != null && allowed.contains(f.id) && out.every((o) => o.id != f.id))
+      if (f != null &&
+          allowed.contains(f.id) &&
+          out.every((o) => o.id != f.id)) {
         out.add(f);
+      }
     }
 
     for (final (label, _) in tracker.favouriteFoods(3)) {
@@ -451,8 +455,9 @@ class IntakeController extends GetxController with DayNav {
 
   String get waterLine {
     final left = waterGoal - waterToday;
-    if (left <= 0)
+    if (left <= 0) {
       return isToday ? 'Goal reached today.' : 'Goal reached that day.';
+    }
     if (!isToday) return '${Water.amount(left)} short of the goal that day';
     final glasses = (left / Water.glassMl).ceil();
     return 'About $glasses more ${glasses == 1 ? 'glass' : 'glasses'} to go';

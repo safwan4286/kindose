@@ -110,7 +110,7 @@ class _WeightChartState extends State<WeightChart> {
         final span = math.max(1.0, hi - lo);
         final showGoal = g != null && g >= lo - span * 0.6 && g <= hi + span;
         if (showGoal) {
-          lo = math.min(lo, g!);
+          lo = math.min(lo, g);
           hi = math.max(hi, g);
         }
         final ticks = _ticks(lo - 0.2, hi + 0.2);
@@ -195,7 +195,7 @@ class _WeightChartState extends State<WeightChart> {
                         gridYs: [for (final t in ticks) y(t)],
                         plotWidth: w,
                         plotBottom: bottom,
-                        goalY: showGoal ? y(g!) : null,
+                        goalY: showGoal ? y(g) : null,
                         markerXs: [for (final m in markers) x(m.$1)],
                         markerTop: top - 4,
                         touchX: sel == null ? null : xs[sel],
@@ -246,7 +246,7 @@ class _WeightChartState extends State<WeightChart> {
                   if (showGoal)
                     Positioned(
                       left: 2,
-                      top: y(g!) - 17.sp,
+                      top: y(g) - 17.sp,
                       child: Text(
                         'Goal ${_fmtTick(g)}',
                         style: tickStyle.copyWith(

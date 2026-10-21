@@ -42,7 +42,7 @@ class ChoiceBlock extends StatelessWidget {
       button: true,
       selected: selected,
       inMutuallyExclusiveGroup: true,
-      label: semanticLabel ?? [label, if (sub != null) sub!].join(' '),
+      label: semanticLabel ?? [label, ?sub].join(' '),
       excludeSemantics: true,
       child: PressScale(
         onTap: onTap,

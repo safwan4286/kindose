@@ -284,8 +284,9 @@ class MeController extends GetxController {
     final now = DateTime.now();
     final next = tracker.nextDoseAt(now);
     if (next == null) return '';
-    if (Dates.dateOnly(next).isBefore(Dates.dateOnly(now)))
+    if (Dates.dateOnly(next).isBefore(Dates.dateOnly(now))) {
       return 'Dose was due ${Dates.shortWithDay(next)}';
+    }
     final day = Dates.relativeDay(next, now);
     return 'Next dose ${day == 'Today' || day == 'Tomorrow' ? day.toLowerCase() : day}';
   }
@@ -405,8 +406,9 @@ class MeController extends GetxController {
         if (await launchUrl(
           Uri.parse(url),
           mode: LaunchMode.externalApplication,
-        ))
+        )) {
           return;
+        }
       } catch (_) {}
     }
     showToast('Manage Plus in your App Store or Google Play subscriptions.');
@@ -1071,8 +1073,9 @@ class MeController extends GetxController {
     final uri = Uri.parse(
       'mailto:${AppLinks.supportEmail}?subject=$subject&body=$body',
     );
-    if (!await _launch(uri))
+    if (!await _launch(uri)) {
       await showEmailFallbackSheet(AppLinks.supportEmail);
+    }
   }
 
   Future<void> rateApp() async {

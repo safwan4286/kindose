@@ -321,8 +321,9 @@ class TodayController extends GetxController with WidgetsBindingObserver {
 
   DoseCardState get doseState {
     final p = profile;
-    if (p == null || p.medicineId == Catalog.undecided)
+    if (p == null || p.medicineId == Catalog.undecided) {
       return DoseCardState.noMedicine;
+    }
     if (p.isDaily) return DoseCardState.daily;
     if (doseToday != null) return DoseCardState.takenToday;
     final next = nextDoseAt;
@@ -687,8 +688,9 @@ class TodayController extends GetxController with WidgetsBindingObserver {
   /// Icon for the tip card (focus → 3D image), chosen in the widget.
   String get tipFocus {
     final state = doseState;
-    if (state == DoseCardState.doseDay || state == DoseCardState.takenToday)
+    if (state == DoseCardState.doseDay || state == DoseCardState.takenToday) {
       return 'nausea';
+    }
     final focus = (profile?.focus ?? const <String>[])
         .where(Catalog.tips.containsKey)
         .toList();
