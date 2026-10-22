@@ -9,6 +9,7 @@ import 'package:kindose/features/progress/progress_controller.dart';
 import 'package:kindose/models/logs.dart';
 import 'package:kindose/models/user_profile.dart';
 import 'package:kindose/resources/date_utils.dart';
+import 'package:kindose/services/plus/plus_access.dart';
 import 'package:kindose/services/tracker_service.dart';
 
 void main() {
@@ -201,7 +202,7 @@ void main() {
   group('how you felt', () {
     test('no check-ins', () async {
       await start();
-      expect(c.feelHeadline, startsWith('Check in a few times'));
+      expect(c.feelHeadline, startsWith('No check-ins yet'));
     });
 
     test('nausea "None" counts as a fine day', () async {
@@ -214,6 +215,36 @@ void main() {
       await start();
       await dose(0);
       expect(c.patternLine, isNull);
+    });
+
+    test('earlier weeks: back only while older logs exist', () async {
+      PlusAccess.freeWeek.value = true;
+      await start();
+      expect(c.canFeelBack, isFalse);
+      final start0 = c.feelStart;
+      await t.saveDay(
+        DayLog(key: Dates.key(Dates.addDays(start0, -3)), nausea: -1),
+      );
+      expect(c.canFeelBack, isTrue);
+      c.feelBack();
+      expect(c.feelStart, Dates.addDays(start0, -28));
+      expect(c.feelCells.first.date, c.feelStart);
+      expect(c.canFeelBack, isFalse);
+      c.feelForward();
+      expect(c.feelPage.value, 0);
+    });
+
+    test('earlier weeks need Plus once past the free history', () async {
+      PlusAccess.active.value = false;
+      PlusAccess.freeWeek.value = false;
+      await start();
+      await t.saveDay(
+        DayLog(key: Dates.key(Dates.addDays(c.feelStart, -40)), nausea: -1),
+      );
+      c.feelBack();
+      expect(c.feelLocked, isTrue);
+      expect(c.canFeelBack, isFalse);
+      PlusAccess.freeWeek.value = true;
     });
   });
 }

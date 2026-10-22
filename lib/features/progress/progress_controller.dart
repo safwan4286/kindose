@@ -71,7 +71,63 @@ class ProgressController extends GetxController {
     tracker.nextDoseOverride.value; // "Move date" changes the next dose
     range.value;
     selected.value;
+    feelPage.value;
     PlusAccess.unlocked;
+  }
+
+  // ------------------------------------------------------------ feel paging
+
+  /// How many 4-week periods back the "How you felt" grid shows (0 = now).
+  final RxInt feelPage = 0.obs;
+
+  /// Monday of the first week in the period shown.
+  DateTime get feelStart {
+    final today = Dates.dateOnly(DateTime.now());
+    final monday = Dates.addDays(today, -(today.weekday - 1));
+    return Dates.addDays(monday, -21 - 28 * feelPage.value);
+  }
+
+  DateTime get feelEnd => Dates.addDays(feelStart, 27);
+
+  /// "28 Sep – 25 Oct".
+  String get feelRange => '${Dates.short(feelStart)} – ${Dates.short(feelEnd)}';
+
+  /// Free history is the last 28 days, which the current period covers;
+  /// earlier periods need Plus.
+  bool get feelLocked => feelPage.value > 0 && !PlusAccess.unlocked;
+
+  /// Older periods while there is any log before them (or one locked step).
+  bool get canFeelBack {
+    if (feelLocked) return false;
+    final first = tracker.days.keys.isEmpty && tracker.doses.isEmpty
+        ? null
+        : _firstLogDay;
+    return first != null && first.isBefore(feelStart);
+  }
+
+  DateTime? get _firstLogDay {
+    DateTime? first;
+    for (final d in tracker.days.values) {
+      final day = Dates.parseKey(d.key);
+      if (day != null && (first == null || day.isBefore(first))) first = day;
+    }
+    for (final d in tracker.doses) {
+      final day = Dates.dateOnly(d.takenAt);
+      if (first == null || day.isBefore(first)) first = day;
+    }
+    return first;
+  }
+
+  void feelBack() {
+    if (!canFeelBack) return;
+    Haptics.instance.selectionClick();
+    feelPage.value++;
+  }
+
+  void feelForward() {
+    if (feelPage.value == 0) return;
+    Haptics.instance.selectionClick();
+    feelPage.value--;
   }
 
   UserProfile? get profile => tracker.profile.value;
@@ -219,10 +275,7 @@ class ProgressController extends GetxController {
       if (d.strengthMg != list[i - 1].strengthMg &&
           !d.takenAt.isBefore(rangeStart)) {
         out.add(
-          DoseMarker(
-            Dates.dateOnly(d.takenAt),
-            Catalog.mgLabel(d.strengthMg),
-          ),
+          DoseMarker(Dates.dateOnly(d.takenAt), Catalog.mgLabel(d.strengthMg)),
         );
       }
     }
@@ -425,11 +478,10 @@ class ProgressController extends GetxController {
 
   static int dayLevel(DayLog log) => FeelPattern.dayLevel(log);
 
-  /// 4 weeks, Monday first, ending with the current week.
+  /// 4 weeks, Monday first: the current period, or [feelPage] back.
   List<FeelCell> get feelCells {
     final today = Dates.dateOnly(DateTime.now());
-    final monday = Dates.addDays(today, -(today.weekday - 1));
-    final start = Dates.addDays(monday, -21);
+    final start = feelStart;
     return [
       for (var i = 0; i < 28; i++)
         () {
@@ -445,10 +497,20 @@ class ProgressController extends GetxController {
     ];
   }
 
+  /// Today's check-in is saved (hides "Check in today").
+  bool get checkedInToday => tracker.today.hasCheckIn;
+
+  void openCheckIn() {
+    Haptics.instance.selectionClick();
+    Get.toNamed<void>(Routes.checkIn);
+  }
+
   String get feelHeadline {
     final cells = feelCells.where((c) => c.level >= 0).toList();
     if (cells.isEmpty) {
-      return 'Check in a few times to see how you feel over time.';
+      return feelPage.value == 0
+          ? 'No check-ins yet. One a day builds your picture.'
+          : 'No check-ins in these weeks.';
     }
     final avg = cells.fold<int>(0, (s, c) => s + c.level) / cells.length;
     final word = avg < 0.5

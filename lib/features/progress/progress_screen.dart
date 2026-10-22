@@ -4,13 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
-
+import '../../resources/catalog.dart';
 import '../../resources/colors.dart';
 import '../../resources/date_utils.dart';
 import '../../resources/images.dart';
 import '../../resources/water_units.dart';
+import '../../services/haptics/haptics.dart';
 import '../../services/responsiveness/device_manager.dart';
 import '../../services/theme/theme.dart';
+import '../../widgets/buttons.dart';
 import '../../widgets/entrance.dart';
 import '../../widgets/k_widgets.dart';
 import '../../widgets/press_scale.dart';
@@ -671,7 +673,7 @@ class _WeighInsLink extends StatelessWidget {
   }
 }
 
-class _BarsCard extends StatelessWidget {
+class _BarsCard extends StatefulWidget {
   const _BarsCard({
     required this.title,
     required this.goalLabel,
@@ -682,7 +684,7 @@ class _BarsCard extends StatelessWidget {
     required this.valueLabel,
   });
 
-  /// A bar opens that day's view.
+  /// "Open day" on a selected bar opens that day's view.
   final void Function(DateTime day) onDayTap;
   final String title;
   final String goalLabel;
@@ -692,14 +694,34 @@ class _BarsCard extends StatelessWidget {
   final String Function(double) valueLabel;
 
   @override
+  State<_BarsCard> createState() => _BarsCardState();
+}
+
+/// Tapping a bar selects it and shows that day's amount in place of the
+/// headline; tapping it again clears it.
+class _BarsCardState extends State<_BarsCard> {
+  int? _sel;
+
+  void _tap(int i) {
+    Haptics.instance.selectionClick();
+    setState(() => _sel = _sel == i ? null : i);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final k = context.k;
+    final bars = widget.bars;
+    final color = widget.color;
+    final valueLabel = widget.valueLabel;
+    final sel = _sel != null && _sel! < bars.length ? bars[_sel!] : null;
     final goal = bars.isEmpty ? 1.0 : bars.first.goal;
-    final maxV = [
-      goal * 1.2,
-      ...bars.map((b) => b.value),
-    ].reduce((a, b) => a > b ? a : b);
+    // A full slot is the goal: hitting it fills the bar, and days over it
+    // stay full (the tick marks them; tapping shows the real amount).
+    final maxV = goal <= 0 ? 1.0 : goal;
     final chartH = 96.sp;
+    final barW = 22.sp;
+    // Space for the goal tick over a bar.
+    final tickH = 16.sp;
     final today = Dates.dateOnly(DateTime.now());
     return _Card(
       child: Column(
@@ -707,100 +729,154 @@ class _BarsCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Expanded(child: Text(title.toUpperCase(), style: _caps(context))),
+              Expanded(
+                child: Text(widget.title.toUpperCase(), style: _caps(context)),
+              ),
               Text(
-                goalLabel,
+                widget.goalLabel,
                 style: AppText.small.copyWith(fontSize: 12.sp, color: k.faint),
               ),
             ],
           ),
           SizedBox(height: 6.sp),
-          Text(
-            headline,
-            style: AppText.title.copyWith(fontSize: 15.sp, color: k.text),
-          ),
+          if (sel == null)
+            Text(
+              widget.headline,
+              style: AppText.title.copyWith(fontSize: 15.sp, color: k.text),
+            )
+          else
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '${Dates.sameDay(sel.date, today) ? 'Today' : Dates.weekdayName(sel.date.weekday)}'
+                    ' · ${valueLabel(sel.value)}${sel.hit ? ' · goal reached' : ''}',
+                    style: AppText.title.copyWith(
+                      fontSize: 15.sp,
+                      color: k.text,
+                    ),
+                  ),
+                ),
+                SizedBox(width: 10.sp),
+                PressScale(
+                  semanticLabel: 'Open this day',
+                  onTap: () => widget.onDayTap(sel.date),
+                  child: Text(
+                    'Open day ›',
+                    style: AppText.title.copyWith(
+                      fontSize: 13.sp,
+                      color: k.muted,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           SizedBox(height: 12.sp),
           Semantics(
             label: [
               for (final b in bars)
                 '${Dates.weekdayName(b.date.weekday)} ${valueLabel(b.value)}',
             ].join(', '),
-            hint: 'Tap a day to open it',
+            hint: 'Tap a day to see its amount',
             excludeSemantics: true,
             child: SizedBox(
-              height: chartH + 24.sp,
-              child: Stack(
+              height: tickH + chartH + 24.sp,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    top: chartH - chartH * goal / maxV,
-                    child: CustomPaint(
-                      size: Size(double.infinity, 2),
-                      painter: _DashPainter(k.faint),
-                    ),
-                  ),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      for (final (i, b) in bars.indexed) ...[
-                        if (i > 0) SizedBox(width: 6.sp),
-                        Expanded(
-                          child: GestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            onTap: () => onDayTap(b.date),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                TweenAnimationBuilder<double>(
-                                  tween: Tween(
-                                    begin: 0,
-                                    end: (b.value / maxV).clamp(0.0, 1.0),
-                                  ),
-                                  duration: Duration(
-                                    milliseconds: 450 + i * 40,
-                                  ),
-                                  curve: Curves.easeOutCubic,
-                                  builder: (_, v, _) => Container(
-                                    height: chartH * v,
-                                    decoration: BoxDecoration(
-                                      color: b.hit
-                                          ? color
-                                          : color.withValues(alpha: 0.4),
-                                      borderRadius: BorderRadius.vertical(
-                                        top: Radius.circular(6.sp),
-                                        bottom: Radius.circular(3.sp),
+                  for (final (i, b) in bars.indexed) ...[
+                    if (i > 0) SizedBox(width: 4.sp),
+                    Expanded(
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => _tap(i),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            // A tick over days that reached the goal.
+                            SizedBox(
+                              height: tickH,
+                              child: b.hit
+                                  ? Icon(
+                                      PhosphorIconsBold.check,
+                                      size: 12.sp,
+                                      color: color.withValues(
+                                        alpha: _sel == null || _sel == i
+                                            ? 1.0
+                                            : 0.35,
                                       ),
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(height: 4.sp),
-                                SizedBox(
-                                  height: 20.sp,
-                                  child: FittedBox(
-                                    fit: BoxFit.scaleDown,
-                                    child: Text(
-                                      Dates.sameDay(b.date, today)
-                                          ? 'Tdy'
-                                          : Dates.weekdayShort(b.date.weekday)
-                                                .substring(0, 1),
-                                      style: AppText.tiny.copyWith(
-                                        fontSize: 11.sp,
-                                        fontWeight: FontWeight.w800,
-                                        color: Dates.sameDay(b.date, today)
-                                            ? k.text
-                                            : k.faint,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
+                                    )
+                                  : null,
                             ),
-                          ),
+                            // Every day has a slot, so empty days read
+                            // as "nothing logged", not as a gap.
+                            Container(
+                              width: barW,
+                              height: chartH,
+                              alignment: Alignment.bottomCenter,
+                              decoration: BoxDecoration(
+                                // Quiet, so the filled days lead.
+                                color: k.border.withValues(alpha: 0.55),
+                                borderRadius: BorderRadius.circular(barW / 2),
+                              ),
+                              child: TweenAnimationBuilder<double>(
+                                tween: Tween(
+                                  begin: 0,
+                                  end: (b.value / maxV).clamp(0.0, 1.0),
+                                ),
+                                duration: Duration(milliseconds: 450 + i * 40),
+                                curve: Curves.easeOutCubic,
+                                builder: (_, v, _) => v <= 0
+                                    ? const SizedBox.shrink()
+                                    : Container(
+                                        // A little still shows as a
+                                        // round dot, not a sliver.
+                                        height: (chartH * v).clamp(
+                                          barW,
+                                          chartH,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          // A selected bar keeps its
+                                          // colour; the others fade back.
+                                          color: color.withValues(
+                                            alpha:
+                                                (b.hit ? 1.0 : 0.62) *
+                                                (_sel == null || _sel == i
+                                                    ? 1.0
+                                                    : 0.35),
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            barW / 2,
+                                          ),
+                                        ),
+                                      ),
+                              ),
+                            ),
+                            SizedBox(height: 4.sp),
+                            SizedBox(
+                              height: 20.sp,
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  Dates.sameDay(b.date, today)
+                                      ? 'Today'
+                                      : Dates.weekdayShort(b.date.weekday)
+                                            .substring(0, 1),
+                                  style: AppText.tiny.copyWith(
+                                    fontSize: 11.sp,
+                                    fontWeight: FontWeight.w800,
+                                    color: Dates.sameDay(b.date, today)
+                                        ? k.text
+                                        : k.faint,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ],
-                  ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -811,261 +887,389 @@ class _BarsCard extends StatelessWidget {
   }
 }
 
-class _DashPainter extends CustomPainter {
-  const _DashPainter(this.color);
-
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final p = Paint()
-      ..color = color
-      ..strokeWidth = 2;
-    for (var x = 0.0; x < size.width; x += 10) {
-      canvas.drawLine(
-        Offset(x, 0),
-        Offset(x + 5 > size.width ? size.width : x + 5, 0),
-        p,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(_DashPainter old) => old.color != color;
-}
-
-class _FeelCard extends StatelessWidget {
+class _FeelCard extends StatefulWidget {
   const _FeelCard({required this.controller});
 
   final ProgressController controller;
 
-  /// Fine → severe, one warm hue light to dark.
+  @override
+  State<_FeelCard> createState() => _FeelCardState();
+}
+
+/// Tap a day to see it in place of the headline; tap it again to clear.
+/// ‹ › step through earlier 4-week periods.
+class _FeelCardState extends State<_FeelCard> {
+  DateTime? _sel;
+
+  ProgressController get controller => widget.controller;
+
+  /// Fine → severe, one warm hue light to dark. "Fine" is tinted enough to
+  /// stand apart from an empty day.
   static const List<Color> _heat = [
-    Color(0xFFFFF4EC),
+    Color(0xFFFCE4D6),
     Color(0xFFF7B895),
     Color(0xFFE3713D),
     Color(0xFF9A3F17),
   ];
+
+  void _tap(FeelCell c) {
+    if (c.inFuture) return;
+    Haptics.instance.selectionClick();
+    setState(
+      () => _sel = _sel != null && Dates.sameDay(_sel!, c.date) ? null : c.date,
+    );
+  }
+
+  void _page(VoidCallback go) {
+    setState(() => _sel = null);
+    go();
+  }
 
   @override
   Widget build(BuildContext context) {
     final k = context.k;
     final cells = controller.feelCells;
     final pattern = controller.patternLine;
+    final today = Dates.dateOnly(DateTime.now());
+    final locked = controller.feelLocked;
+    final sel = _sel == null
+        ? null
+        : cells.firstWhereOrNull((c) => Dates.sameDay(c.date, _sel!));
     const names = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
     return _Card(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('HOW YOU FELT · 4 WEEKS', style: _caps(context)),
-          SizedBox(height: 6.sp),
-          Text(
-            controller.feelHeadline,
-            style: AppText.title.copyWith(fontSize: 15.sp, color: k.text),
-          ),
-          SizedBox(height: 12.sp),
-          ExcludeSemantics(
-            child: Row(
-              children: [
-                for (final (i, n) in names.indexed) ...[
-                  if (i > 0) SizedBox(width: 5.sp),
-                  Expanded(
-                    child: Text(
-                      n,
-                      textAlign: TextAlign.center,
-                      style: AppText.tiny.copyWith(
-                        fontSize: 11.sp,
-                        color: k.faint,
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          SizedBox(height: 5.sp),
-          GridView.count(
-            crossAxisCount: 7,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 5.sp,
-            crossAxisSpacing: 5.sp,
+          Row(
             children: [
-              for (final c in cells)
-                Semantics(
-                  label: c.inFuture
-                      ? ''
-                      : '${Dates.shortWithDay(c.date)}: ${c.level < 0 ? 'no check-in' : ['fine', 'mild', 'moderate', 'severe'][c.level]}${c.doseDay ? ', dose day' : ''}',
-                  excludeSemantics: true,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: c.inFuture || c.level < 0
-                          ? Colors.transparent
-                          : _heat[c.level],
-                      borderRadius: BorderRadius.circular(9.sp),
-                      border: c.inFuture
-                          ? null
-                          : c.level < 0
-                          ? Border.all(color: k.border, width: 1.5)
-                          : (c.level == 0
-                                ? Border.all(color: const Color(0xFFF3DCCD))
-                                : null),
-                    ),
-                    alignment: Alignment.center,
-                    child: c.doseDay
-                        ? Container(
-                            width: 7.sp,
-                            height: 7.sp,
-                            decoration: BoxDecoration(
-                              color: c.level >= 2
-                                  ? AppColors.white
-                                  : AppColors.ink,
-                              shape: BoxShape.circle,
-                            ),
-                          )
-                        : null,
-                  ),
+              Expanded(
+                child: Text(
+                  'HOW YOU FELT · ${controller.feelRange.toUpperCase()}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: _caps(context),
                 ),
+              ),
+              _arrow(
+                context,
+                PhosphorIconsBold.caretLeft,
+                'Earlier weeks',
+                controller.canFeelBack
+                    ? () => _page(controller.feelBack)
+                    : null,
+              ),
+              SizedBox(width: 6.sp),
+              _arrow(
+                context,
+                PhosphorIconsBold.caretRight,
+                'Later weeks',
+                controller.feelPage.value > 0
+                    ? () => _page(controller.feelForward)
+                    : null,
+              ),
             ],
           ),
-          SizedBox(height: 10.sp),
-          ExcludeSemantics(
-            child: Wrap(
-              spacing: 10.sp,
-              runSpacing: 6.sp,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                _legend(context, 'No check-in', border: k.border),
-                for (final (i, l) in [
-                  'Fine',
-                  'Mild',
-                  'Moderate',
-                  'Severe',
-                ].indexed)
-                  _legend(context, l, fill: _heat[i]),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
+          SizedBox(height: 6.sp),
+          if (sel != null)
+            _dayLine(context, sel, today)
+          else
+            Text(
+              locked
+                  ? 'Earlier months are part of Plus.'
+                  : controller.feelHeadline,
+              style: AppText.title.copyWith(fontSize: 15.sp, color: k.text),
+            ),
+          SizedBox(height: 12.sp),
+          if (locked)
+            PillButton(label: 'See Plus', onPressed: controller.openPlus)
+          else ...[
+            ExcludeSemantics(
+              child: Row(
+                children: [
+                  for (final (i, n) in names.indexed) ...[
+                    if (i > 0) SizedBox(width: 5.sp),
+                    Expanded(
+                      child: Text(
+                        n,
+                        textAlign: TextAlign.center,
+                        style: AppText.tiny.copyWith(
+                          fontSize: 11.sp,
+                          color: k.faint,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            SizedBox(height: 5.sp),
+            GridView.count(
+              crossAxisCount: 7,
+              shrinkWrap: true,
+              padding: EdgeInsets.zero,
+              physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: 5.sp,
+              crossAxisSpacing: 5.sp,
+              children: [for (final c in cells) _cell(context, c, today)],
+            ),
+            SizedBox(height: 12.sp),
+            // One line: the scale, then the dose mark.
+            ExcludeSemantics(
+              child: Row(
+                children: [
+                  _legendText(context, 'Fine'),
+                  SizedBox(width: 6.sp),
+                  for (final c in _heat) ...[
                     Container(
-                      width: 7.sp,
-                      height: 7.sp,
+                      width: 14.sp,
+                      height: 10.sp,
+                      decoration: BoxDecoration(
+                        color: c,
+                        borderRadius: BorderRadius.circular(3.sp),
+                      ),
+                    ),
+                    SizedBox(width: 3.sp),
+                  ],
+                  SizedBox(width: 3.sp),
+                  _legendText(context, 'Severe'),
+                  const Spacer(),
+                  if (!controller.isDaily) ...[
+                    Container(
+                      width: 6.sp,
+                      height: 6.sp,
                       decoration: BoxDecoration(
                         color: k.text,
                         shape: BoxShape.circle,
                       ),
                     ),
-                    SizedBox(width: 4.sp),
-                    Text(
-                      'Dose',
-                      style: AppText.tiny.copyWith(
-                        fontSize: 11.5.sp,
-                        color: k.muted,
-                      ),
-                    ),
+                    SizedBox(width: 5.sp),
+                    _legendText(context, 'dose day'),
                   ],
-                ),
-              ],
-            ),
-          ),
-          if (!controller.isDaily) ...[
-            SizedBox(height: 14.sp),
-            PressScale(
-              semanticLabel: controller.isPlus
-                  ? 'Your pattern: ${pattern ?? 'not enough check-ins yet'}'
-                  : 'Your pattern, a Kindose Plus feature. Opens Plus',
-              onTap: controller.isPlus ? () {} : controller.openPlus,
-              child: ExcludeSemantics(
-                child: Container(
-                  padding: EdgeInsets.all(14.sp),
-                  decoration: BoxDecoration(
-                    color: AppColors.hero,
-                    borderRadius: BorderRadius.circular(18.sp),
-                    border: k.selectedBorder == AppColors.lime
-                        ? Border.all(color: k.border)
-                        : null,
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Text(
-                                  'YOUR PATTERN',
-                                  style: AppText.caps.copyWith(
-                                    fontSize: 12.sp,
-                                    letterSpacing: 1,
-                                    color: AppColors.lime,
-                                  ),
-                                ),
-                                SizedBox(width: 8.sp),
-                                const PlusTag(onDark: true),
-                              ],
-                            ),
-                            SizedBox(height: 4.sp),
-                            Text(
-                              controller.isPlus
-                                  ? (pattern ??
-                                        'Check in on 3 dose weeks to see which day is hardest for you.')
-                                  : 'See which day after your dose is hardest for you.',
-                              style: AppText.small.copyWith(
-                                fontSize: 13.5.sp,
-                                color: AppColors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (!controller.isPlus)
-                        Icon(
-                          PhosphorIconsBold.caretRight,
-                          size: 18.sp,
-                          color: AppColors.lime,
-                        ),
-                    ],
-                  ),
-                ),
+                ],
               ),
             ),
+          ],
+          if (controller.feelPage.value == 0 && !controller.checkedInToday) ...[
+            SizedBox(height: 14.sp),
+            PillButton(
+              label: 'Check in today',
+              onPressed: controller.openCheckIn,
+            ),
+          ],
+          if (!controller.isDaily) ...[
+            SizedBox(height: 14.sp),
+            _patternCard(context, pattern),
           ],
         ],
       ),
     );
   }
 
-  Widget _legend(
-    BuildContext context,
-    String label, {
-    Color? fill,
-    Color? border,
-  }) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 12.sp,
-          height: 12.sp,
+  Widget _patternCard(BuildContext context, String? pattern) {
+    final k = context.k;
+    return PressScale(
+      semanticLabel: controller.isPlus
+          ? 'Your pattern: ${pattern ?? 'not enough check-ins yet'}'
+          : 'Your pattern, a Kindose Plus feature. Opens Plus',
+      onTap: controller.isPlus ? () {} : controller.openPlus,
+      child: ExcludeSemantics(
+        child: Container(
+          padding: EdgeInsets.all(14.sp),
           decoration: BoxDecoration(
-            color: fill ?? Colors.transparent,
-            borderRadius: BorderRadius.circular(4.sp),
-            border: border == null
-                ? null
-                : Border.all(color: border, width: 1.5),
+            color: AppColors.hero,
+            borderRadius: BorderRadius.circular(18.sp),
+            border: k.selectedBorder == AppColors.lime
+                ? Border.all(color: k.border)
+                : null,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          'YOUR PATTERN',
+                          style: AppText.caps.copyWith(
+                            fontSize: 12.sp,
+                            letterSpacing: 1,
+                            color: AppColors.lime,
+                          ),
+                        ),
+                        // The badge sells Plus, so only without it.
+                        if (!controller.isPlus) ...[
+                          SizedBox(width: 8.sp),
+                          const PlusTag(onDark: true),
+                        ],
+                      ],
+                    ),
+                    SizedBox(height: 4.sp),
+                    Text(
+                      controller.isPlus
+                          ? (pattern ??
+                                'Check in on 3 dose weeks to see which day is hardest for you.')
+                          : 'See which day after your dose is hardest for you.',
+                      style: AppText.small.copyWith(
+                        fontSize: 13.5.sp,
+                        color: AppColors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (!controller.isPlus)
+                Icon(
+                  PhosphorIconsBold.caretRight,
+                  size: 18.sp,
+                  color: AppColors.lime,
+                ),
+            ],
           ),
         ),
-        SizedBox(width: 4.sp),
-        Text(
-          label,
-          style: AppText.tiny.copyWith(
-            fontSize: 11.5.sp,
-            color: context.k.muted,
+      ),
+    );
+  }
+
+  /// A soft cell with its date: empty days are a quiet tint, check-ins take
+  /// their level's colour, today and the picked day have a ring, and days
+  /// still to come are an outline only. The 1st names its month.
+  Widget _cell(BuildContext context, FeelCell c, DateTime today) {
+    final k = context.k;
+    final isToday = Dates.sameDay(c.date, today);
+    final filled = !c.inFuture && c.level >= 0;
+    final onDark = filled && c.level >= 2;
+    final picked = _sel != null && Dates.sameDay(_sel!, c.date);
+    final faded = _sel != null && !picked;
+    return Semantics(
+      button: !c.inFuture,
+      label: c.inFuture
+          ? ''
+          : '${Dates.shortWithDay(c.date)}: ${c.level < 0 ? 'no check-in' : ['fine', 'mild', 'moderate', 'severe'][c.level]}${c.doseDay ? ', dose day' : ''}',
+      excludeSemantics: true,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => _tap(c),
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 150),
+          opacity: faded ? 0.45 : 1,
+          child: Container(
+            decoration: BoxDecoration(
+              color: c.inFuture
+                  ? Colors.transparent
+                  : (filled
+                        ? _heat[c.level]
+                        : k.border.withValues(alpha: 0.55)),
+              borderRadius: BorderRadius.circular(9.sp),
+              border: isToday || picked
+                  ? Border.all(color: k.text, width: 2)
+                  : (c.inFuture
+                        ? Border.all(color: k.border.withValues(alpha: 0.7))
+                        : null),
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                if (!c.inFuture)
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 2.sp),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        c.date.day == 1
+                            ? '1 ${Dates.monthShort(c.date.month)}'
+                            : '${c.date.day}',
+                        style: AppText.tiny.copyWith(
+                          fontSize: 11.sp,
+                          fontWeight: isToday || c.date.day == 1
+                              ? FontWeight.w800
+                              : FontWeight.w600,
+                          // Dates read on every shade: white on the dark
+                          // ones, deep tangerine on the light ones.
+                          color: onDark
+                              ? AppColors.white
+                              : (filled
+                                    ? AppColors.tangerineText
+                                    : (isToday ? k.text : k.faint)),
+                        ),
+                      ),
+                    ),
+                  ),
+                if (c.doseDay)
+                  Positioned(
+                    bottom: 4.sp,
+                    child: Container(
+                      width: 5.sp,
+                      height: 5.sp,
+                      decoration: BoxDecoration(
+                        color: onDark ? AppColors.white : k.text,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _arrow(
+    BuildContext context,
+    IconData icon,
+    String label,
+    VoidCallback? onTap,
+  ) => CircleIconButton(
+    icon: icon,
+    label: label,
+    size: 30.sp,
+    background: context.k.text.withValues(alpha: 0.06),
+    onTap: onTap,
+  );
+
+  /// "Tue, 13 Oct · Mild · Nausea · dose day" with Open day / Check in.
+  Widget _dayLine(BuildContext context, FeelCell c, DateTime today) {
+    final k = context.k;
+    final log = controller.tracker.dayLog(c.date);
+    final isToday = Dates.sameDay(c.date, today);
+    final parts = <String>[
+      isToday ? 'Today' : Dates.shortWithDay(c.date),
+      c.level < 0
+          ? 'No check-in'
+          : ['Fine', 'Mild', 'Moderate', 'Severe'][c.level],
+      for (final s in log.symptoms.take(2)) Catalog.symptoms[s] ?? s,
+      if (c.doseDay) 'dose day',
+    ];
+    final checkIn = isToday && c.level < 0;
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            parts.join(' · '),
+            style: AppText.title.copyWith(fontSize: 15.sp, color: k.text),
+          ),
+        ),
+        SizedBox(width: 10.sp),
+        PressScale(
+          semanticLabel: checkIn ? 'Check in today' : 'Open this day',
+          onTap: checkIn
+              ? controller.openCheckIn
+              : () => controller.openDay(c.date),
+          child: Text(
+            checkIn ? 'Check in ›' : 'Open day ›',
+            style: AppText.title.copyWith(fontSize: 13.sp, color: k.muted),
           ),
         ),
       ],
     );
   }
+
+  Widget _legendText(BuildContext context, String text) => Text(
+    text,
+    style: AppText.tiny.copyWith(fontSize: 11.5.sp, color: context.k.muted),
+  );
 }
 
 class _ReportNudge extends StatelessWidget {
