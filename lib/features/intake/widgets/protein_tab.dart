@@ -17,7 +17,7 @@ import '../intake_controller.dart';
 import 'intake_parts.dart';
 import '../../../services/plus/access_service.dart';
 
-/// Protein screen: one top card (progress + today's log with Undo),
+/// Protein screen: one top card (progress + today's log),
 /// search + Custom, then Suggested / My foods / All foods.
 class ProteinTab extends GetView<IntakeController> {
   const ProteinTab({super.key});
@@ -167,7 +167,7 @@ class _Hero extends GetView<IntakeController> {
                 ],
               ),
             ),
-            // Today's log: the newest entry with Undo, the rest on demand.
+            // Today's log: the newest entry, the rest on demand.
             AnimatedSize(
               duration: const Duration(milliseconds: 260),
               curve: Curves.easeOutCubic,
@@ -203,36 +203,42 @@ class _Hero extends GetView<IntakeController> {
   }
 }
 
+/// A fully rounded track with a warm gradient fill. A little progress
+/// still shows as a round dot instead of a sliver.
 class _Bar extends StatelessWidget {
   const _Bar({required this.value});
 
   final double value;
 
+  static const Gradient _fill = LinearGradient(
+    colors: [Color(0xFFF7B48F), AppColors.tangerine],
+  );
+
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(6.sp),
-      child: SizedBox(
-        height: 12.sp,
-        child: Stack(
-          children: [
-            Positioned.fill(child: ColoredBox(color: context.k.proteinTrack)),
-            TweenAnimationBuilder<double>(
-              tween: Tween(end: value),
-              duration: const Duration(milliseconds: 500),
-              curve: Curves.easeOutCubic,
-              builder: (_, v, _) => FractionallySizedBox(
-                widthFactor: v,
-                heightFactor: 1,
-                child: const DecoratedBox(
+    final h = 10.sp;
+    final round = BorderRadius.circular(h / 2);
+    return LayoutBuilder(
+      builder: (_, box) => Container(
+        height: h,
+        decoration: BoxDecoration(
+          color: context.k.proteinTrack,
+          borderRadius: round,
+        ),
+        alignment: Alignment.centerLeft,
+        child: TweenAnimationBuilder<double>(
+          tween: Tween(end: value),
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeOutCubic,
+          builder: (_, v, _) => v <= 0
+              ? const SizedBox.shrink()
+              : Container(
+                  width: (box.maxWidth * v).clamp(h, box.maxWidth),
                   decoration: BoxDecoration(
-                    color: AppColors.tangerine,
-                    borderRadius: BorderRadius.all(Radius.circular(6)),
+                    gradient: _fill,
+                    borderRadius: round,
                   ),
                 ),
-              ),
-            ),
-          ],
         ),
       ),
     );
@@ -301,7 +307,7 @@ class _LogHeader extends GetView<IntakeController> {
 }
 
 /// One entry: food name on top, portion and time below, grams on the
-/// right. The newest gets Undo; older ones a quiet × (swipe works too).
+/// right, then a delete icon. Every row can be swiped away too.
 class _EntryRow extends GetView<IntakeController> {
   const _EntryRow({super.key, required this.entry, this.latest = false});
 
@@ -357,43 +363,35 @@ class _EntryRow extends GetView<IntakeController> {
             '+${entry.amount} g',
             style: AppText.title.copyWith(fontSize: 14.5.sp, color: k.text),
           ),
-          SizedBox(width: 10.sp),
-          if (latest)
-            _UndoPill(
-              label: 'Undo $title',
+          SizedBox(width: 4.sp),
+          // Removing shows a toast with Undo, so one quiet icon is enough.
+          Semantics(
+            button: true,
+            label: 'Remove $title',
+            excludeSemantics: true,
+            child: PressScale(
+              pressedScale: 0.85,
               onTap: () => controller.removeWithUndo(entry),
-            )
-          else
-            Semantics(
-              button: true,
-              label: 'Remove $title',
-              excludeSemantics: true,
-              child: PressScale(
-                pressedScale: 0.85,
-                onTap: () => controller.removeWithUndo(entry),
-                child: SizedBox(
-                  // Lines up with the Undo pill above.
-                  width: 64.sp,
-                  height: 34.sp,
-                  child: Align(
-                    alignment: Alignment.center,
-                    child: Icon(
-                      PhosphorIconsBold.x,
-                      size: 15.sp,
-                      color: k.faint,
-                    ),
-                  ),
+              child: SizedBox.square(
+                dimension: 40.sp,
+                child: Icon(
+                  PhosphorIconsBold.trash,
+                  size: 18.sp,
+                  color: k.muted,
                 ),
               ),
             ),
+          ),
         ],
       ),
     );
-    // The newest row swaps with an animation, so only older rows swipe.
-    if (latest) return row;
-    return Dismissible(
+    final dismissible = Dismissible(
       key: ValueKey('log-${entry.id}'),
       direction: DismissDirection.endToStart,
+      // The newest row sits in an AnimatedSwitcher, which keeps it on screen
+      // while the next entry fades in. No collapse for it then: a collapsed
+      // Dismissible left in the tree would throw.
+      resizeDuration: latest ? null : const Duration(milliseconds: 300),
       // Paywall before the row slides away; a locked swipe springs back.
       confirmDismiss: (_) => AccessService.ensure(),
       onDismissed: (_) => controller.removeWithUndo(entry),
@@ -409,51 +407,8 @@ class _EntryRow extends GetView<IntakeController> {
       ),
       child: row,
     );
-  }
-}
-
-class _UndoPill extends StatelessWidget {
-  const _UndoPill({required this.label, required this.onTap});
-
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final k = context.k;
-    return Semantics(
-      button: true,
-      label: label,
-      excludeSemantics: true,
-      child: PressScale(
-        pressedScale: 0.92,
-        onTap: onTap,
-        child: Container(
-          width: 64.sp,
-          height: 34.sp,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: k.bg,
-            borderRadius: BorderRadius.circular(17.sp),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                PhosphorIconsBold.arrowCounterClockwise,
-                size: 13.sp,
-                color: k.text,
-              ),
-              SizedBox(width: 4.sp),
-              Text(
-                'Undo',
-                style: AppText.title.copyWith(fontSize: 13.sp, color: k.text),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+    // Keep the sliding row inside the card instead of over its edge.
+    return ClipRect(child: dismissible);
   }
 }
 
@@ -1084,8 +1039,10 @@ class FoodRow extends GetView<IntakeController> {
                       CircleIconButton(
                         icon: PhosphorIconsBold.minus,
                         label: 'Remove one ${food.name}',
+                        // Same size as +, with a soft tint: clearly the
+                        // quieter action, but never lost on a tinted row.
                         size: 34.sp,
-                        background: k.card,
+                        background: k.text.withValues(alpha: 0.08),
                         onTap: () => controller.removeOneOf(food),
                       ),
                       SizedBox(
@@ -1107,8 +1064,8 @@ class FoodRow extends GetView<IntakeController> {
             semanticLabel: 'Add ${food.name}, ${food.grams} grams',
             onTap: onAdd ?? () => controller.addFood(food),
             child: Container(
-              width: 40.sp,
-              height: 40.sp,
+              width: 34.sp,
+              height: 34.sp,
               decoration: BoxDecoration(
                 color: dark ? AppColors.lime : AppColors.ink,
                 shape: BoxShape.circle,
@@ -1116,7 +1073,7 @@ class FoodRow extends GetView<IntakeController> {
               alignment: Alignment.center,
               child: Icon(
                 PhosphorIconsBold.plus,
-                size: 17.sp,
+                size: 15.sp,
                 color: dark ? AppColors.ink : AppColors.lime,
               ),
             ),

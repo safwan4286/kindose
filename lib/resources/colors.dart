@@ -142,7 +142,7 @@ class KColors extends ThemeExtension<KColors> {
     fabIcon: AppColors.ink,
     tint: Color(0xFFEEEDE7),
     tintText: AppColors.ink,
-    proteinTrack: AppColors.tangerineSoft,
+    proteinTrack: Color(0xFFF8DFD2),
     waterEmpty: Color(0xFFFFFFFF),
     waterEdge: Color(0xFFCFE6F3),
   );
