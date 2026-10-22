@@ -201,18 +201,6 @@ class _BuildingPageState extends State<BuildingPage>
             ],
           ),
         ),
-        Padding(
-          padding: EdgeInsets.fromLTRB(24.sp, 4.sp, 24.sp, 14.sp),
-          child: Text(
-            'Goals are general guidance, not medical advice. Your doctor can adjust them with you.',
-            textAlign: TextAlign.center,
-            style: AppText.small.copyWith(
-              fontSize: 12.5.sp,
-              height: 1.4,
-              color: k.faint,
-            ),
-          ),
-        ),
       ],
     );
   }

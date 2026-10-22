@@ -664,11 +664,6 @@ class _Suggested extends GetView<IntakeController> {
               ),
             ),
           ],
-          SizedBox(height: 10.sp),
-          Text(
-            'Ideas only, not medical advice.',
-            style: AppText.small.copyWith(fontSize: 12.sp, color: k.faint),
-          ),
         ],
       );
     });

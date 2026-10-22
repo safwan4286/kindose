@@ -241,19 +241,6 @@ class NextBiteCard extends GetView<TodayController> {
                 Expanded(child: _OtherFoodChip(onTap: controller.openProtein)),
               ],
             ),
-          SizedBox(height: 10.sp),
-          SizedBox(
-            width: double.infinity,
-            child: Text(
-              'Ideas only, not medical advice',
-              textAlign: TextAlign.center,
-              style: AppText.small.copyWith(
-                fontSize: 11.5.sp,
-                fontWeight: FontWeight.w600,
-                color: k.faint,
-              ),
-            ),
-          ),
         ],
       ),
     );

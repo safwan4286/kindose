@@ -131,15 +131,6 @@ class CheckInScreen extends GetView<CheckInController> {
                           ),
                   ),
                   const _Note(),
-                  SizedBox(height: 12.sp),
-                  Text(
-                    'This is for your own record and your doctor. It isn’t medical advice.',
-                    style: AppText.small.copyWith(
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.w600,
-                      color: k.faint,
-                    ),
-                  ),
                 ],
               ),
             ),
