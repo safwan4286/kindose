@@ -282,7 +282,7 @@ class SetupCard extends GetView<TodayController> {
             children: [
               Expanded(
                 child: Text(
-                  'Get set up',
+                  done == items.length ? 'All set' : 'Get set up',
                   style: AppText.bodyStrong.copyWith(
                     fontSize: 15.sp,
                     fontWeight: FontWeight.w800,

@@ -773,10 +773,18 @@ class TodayController extends GetxController with WidgetsBindingObserver {
     SetupItem('Turn on reminders', remindersWork, turnOnReminders),
   ];
 
-  bool get showSetup =>
-      !locked &&
-      !tracker.setupDismissed.value &&
-      setupItems.any((i) => !i.done);
+  /// The set-up card was on screen this session.
+  bool _setupShown = false;
+
+  /// Once its last step is done the card stays (all ticked) until the next
+  /// start or its ×. Removing it at once made the page jump up under the
+  /// user's finger, e.g. on their first protein.
+  bool get showSetup {
+    if (locked || tracker.setupDismissed.value) return false;
+    final open = setupItems.any((i) => !i.done);
+    if (open) _setupShown = true;
+    return open || _setupShown;
+  }
 
   // ------------------------------------------------------------ free week
 
