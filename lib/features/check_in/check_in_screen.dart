@@ -4,6 +4,7 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 import '../../resources/catalog.dart';
 import '../../resources/colors.dart';
+import '../../services/plus/plus_access.dart';
 import '../../services/responsiveness/device_manager.dart';
 import '../../services/theme/theme.dart';
 import '../../widgets/buttons.dart';
@@ -116,8 +117,19 @@ class CheckInScreen extends GetView<CheckInController> {
                   ),
                   const _SevereCard(),
                   SizedBox(height: 16.sp),
-                  const _PatternTeaser().enter(motion, delay: 220),
-                  SizedBox(height: 12.sp),
+                  // The Plus advert only for people without Plus; they
+                  // see their real pattern on Progress.
+                  Obx(
+                    () => PlusAccess.unlocked
+                        ? const SizedBox.shrink()
+                        : Padding(
+                            padding: EdgeInsets.only(bottom: 12.sp),
+                            child: const _PatternTeaser().enter(
+                              motion,
+                              delay: 220,
+                            ),
+                          ),
+                  ),
                   const _Note(),
                   SizedBox(height: 12.sp),
                   Text(
@@ -462,8 +474,8 @@ class _SevereCard extends GetView<CheckInController> {
   }
 }
 
-/// Plus teaser for "side-effect patterns". Example bars until real
-/// patterns ship with Plus.
+/// Plus teaser for "side-effect patterns" with example bars. Hidden once
+/// Plus is open; the real pattern is on Progress.
 class _PatternTeaser extends GetView<CheckInController> {
   const _PatternTeaser();
 
