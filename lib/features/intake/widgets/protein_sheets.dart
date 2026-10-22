@@ -152,133 +152,130 @@ class _CustomSheet extends GetView<IntakeController> {
   Widget build(BuildContext context) {
     final k = context.k;
     final editing = controller.editing;
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-      child: KSheetFrame(
-        title: editing ? 'Edit food' : 'Add your own',
-        sub: editing
-            ? 'Changes apply next time you add it.'
-            : 'Check the label for "Protein".',
-        children: [
-          Obx(() {
-            final g = controller.customGrams.value;
-            return Row(
-              children: [
-                CircleIconButton(
-                  icon: PhosphorIconsBold.minus,
-                  label: '1 gram less',
-                  size: 52,
-                  background: k.card,
-                  onTap: g <= 1 ? null : () => controller.stepCustom(-1),
+    return KSheetFrame(
+      title: editing ? 'Edit food' : 'Add your own',
+      sub: editing
+          ? 'Changes apply next time you add it.'
+          : 'Check the label for "Protein".',
+      children: [
+        Obx(() {
+          final g = controller.customGrams.value;
+          return Row(
+            children: [
+              CircleIconButton(
+                icon: PhosphorIconsBold.minus,
+                label: '1 gram less',
+                size: 52,
+                background: k.card,
+                onTap: g <= 1 ? null : () => controller.stepCustom(-1),
+              ),
+              Expanded(
+                child: Semantics(
+                  button: true,
+                  label: '$g grams protein. Tap to type',
+                  excludeSemantics: true,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => controller.typeCustom(context),
+                    child: Text(
+                      '$g g',
+                      textAlign: TextAlign.center,
+                      style: AppText.number(44.sp).copyWith(color: k.text),
+                    ),
+                  ),
                 ),
+              ),
+              CircleIconButton(
+                icon: PhosphorIconsBold.plus,
+                label: '1 gram more',
+                size: 52,
+                background: k.card,
+                onTap: g >= 200 ? null : () => controller.stepCustom(1),
+              ),
+            ],
+          );
+        }),
+        SizedBox(height: 10.sp),
+        Obx(() {
+          final g = controller.customGrams.value;
+          return Row(
+            children: [
+              for (final (i, q) in _quick.indexed) ...[
+                if (i > 0) SizedBox(width: 6.sp),
                 Expanded(
-                  child: Semantics(
-                    button: true,
-                    label: '$g grams protein. Tap to type',
-                    excludeSemantics: true,
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () => controller.typeCustom(context),
-                      child: Text(
-                        '$g g',
-                        textAlign: TextAlign.center,
-                        style: AppText.number(44.sp).copyWith(color: k.text),
+                  child: ChoiceBox(
+                    selected: q == g,
+                    height: 38.sp,
+                    radius: 12,
+                    padding: EdgeInsets.zero,
+                    semanticLabel: '$q grams',
+                    onTap: () => controller.setCustom(q),
+                    child: Text(
+                      '$q',
+                      style: AppText.title.copyWith(
+                        fontSize: 14.sp,
+                        color: k.text,
                       ),
                     ),
                   ),
                 ),
-                CircleIconButton(
-                  icon: PhosphorIconsBold.plus,
-                  label: '1 gram more',
-                  size: 52,
-                  background: k.card,
-                  onTap: g >= 200 ? null : () => controller.stepCustom(1),
-                ),
               ],
-            );
-          }),
-          SizedBox(height: 10.sp),
-          Obx(() {
-            final g = controller.customGrams.value;
-            return Row(
-              children: [
-                for (final (i, q) in _quick.indexed) ...[
-                  if (i > 0) SizedBox(width: 6.sp),
-                  Expanded(
-                    child: ChoiceBox(
-                      selected: q == g,
-                      height: 38.sp,
-                      radius: 12,
-                      padding: EdgeInsets.zero,
-                      semanticLabel: '$q grams',
-                      onTap: () => controller.setCustom(q),
-                      child: Text(
-                        '$q',
-                        style: AppText.title.copyWith(
-                          fontSize: 14.sp,
-                          color: k.text,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            );
-          }),
-          SizedBox(height: 16.sp),
-          KTextField(
-            controller: controller.nameCtrl,
-            hint: editing ? 'Name' : 'Name (optional), e.g. Chobani yogurt',
-            textCapitalization: TextCapitalization.sentences,
-            textInputAction: TextInputAction.next,
-            maxLength: 40,
+            ],
+          );
+        }),
+        SizedBox(height: 16.sp),
+        KTextField(
+          controller: controller.nameCtrl,
+          hint: editing ? 'Name' : 'Name (optional), e.g. Chobani yogurt',
+          textCapitalization: TextCapitalization.sentences,
+          textInputAction: TextInputAction.next,
+          maxLength: 40,
+        ),
+        SizedBox(height: 8.sp),
+        KTextField(
+          controller: controller.portionCtrl,
+          hint: 'Portion (optional), e.g. 1 cup',
+          maxLength: 30,
+          onSubmitted: (_) => _submit(context),
+        ),
+        if (!editing) ...[
+          SizedBox(height: 8.sp),
+          Obx(
+            () => SwitchRow(
+              label: 'Save to My foods',
+              sub: 'Saved when it has a name. Add it again with one tap.',
+              value: controller.saveCustom.value,
+              onChanged: (_) => controller.toggleSaveCustom(),
+            ),
           ),
           SizedBox(height: 8.sp),
-          KTextField(
-            controller: controller.portionCtrl,
-            hint: 'Portion (optional), e.g. 1 cup',
-            maxLength: 30,
-            onSubmitted: (_) => _submit(context),
-          ),
-          if (!editing) ...[
-            SizedBox(height: 8.sp),
-            Obx(
-              () => SwitchRow(
-                label: 'Save to My foods',
-                sub: 'Saved when it has a name. Add it again with one tap.',
-                value: controller.saveCustom.value,
-                onChanged: (_) => controller.toggleSaveCustom(),
-              ),
-            ),
-            SizedBox(height: 8.sp),
-            const _SnapSoon(),
-          ],
-          SizedBox(height: 16.sp),
-          Obx(
-            () => SoftButton(
-              label: editing
-                  ? 'Save changes'
-                  : 'Add ${controller.customGrams.value} g',
-              background: k.text,
-              foreground: k.bg,
-              onPressed: () => _submit(context),
-            ),
-          ),
-          if (editing) ...[
-            SizedBox(height: 8.sp),
-            Center(
-              child: LinkButton(
-                label: 'Delete this food',
-                color: AppColors.danger,
-                onTap: () {
-                  Navigator.of(context).pop();
-                  controller.deleteEditing();
-                },
-              ),
-            ),
-          ],
+          const _SnapSoon(),
         ],
-      ),
+        SizedBox(height: 16.sp),
+        Obx(
+          () => SoftButton(
+            label: editing
+                ? 'Save changes'
+                : 'Add ${controller.customGrams.value} g',
+            background: k.text,
+            foreground: k.bg,
+            onPressed: () => _submit(context),
+          ),
+        ),
+        if (editing) ...[
+          SizedBox(height: 8.sp),
+          Center(
+            child: LinkButton(
+              label: 'Delete this food',
+              color: AppColors.danger,
+              onTap: () {
+                Navigator.of(context).pop();
+                controller.deleteEditing();
+              },
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../resources/colors.dart';
@@ -7,6 +9,10 @@ import 'safe_bottom.dart';
 
 /// Standard bottom-sheet body: drag handle, optional icon, title, text,
 /// then [children]. Use inside `Get.bottomSheet(..., isScrollControlled: true)`.
+///
+/// `Get.bottomSheet` already lifts the sheet above the keyboard, so don't
+/// wrap it in `MediaQuery.viewInsets` padding: the sheet would move up twice
+/// and leave a keyboard-sized gap under it.
 class KSheetFrame extends StatelessWidget {
   const KSheetFrame({
     super.key,
@@ -24,55 +30,70 @@ class KSheetFrame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final k = context.k;
-    return KSheetSafeArea(
-      color: k.bg,
-      child: Container(
-        decoration: BoxDecoration(
-          color: k.bg,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28.sp)),
-        ),
-        padding: EdgeInsets.fromLTRB(20.sp, 10.sp, 20.sp, 12.sp),
-        child: KBottomPadding(
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40.sp,
-                    height: 5.sp,
-                    decoration: BoxDecoration(
-                      color: k.border,
-                      borderRadius: BorderRadius.circular(3.sp),
+    // Sheet routes hide the status bar inset, so read it from the view. A
+    // tall sheet (keyboard up, small phone, large text) then stops below the
+    // clock and scrolls instead of sliding under it.
+    final top = MediaQueryData.fromView(View.of(context)).padding.top;
+    final room =
+        MediaQuery.sizeOf(context).height -
+        MediaQuery.viewInsetsOf(context).bottom -
+        top -
+        8.sp;
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: math.max(0.0, room)),
+      child: KSheetSafeArea(
+        color: k.bg,
+        child: Container(
+          decoration: BoxDecoration(
+            color: k.bg,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28.sp)),
+          ),
+          padding: EdgeInsets.fromLTRB(20.sp, 10.sp, 20.sp, 12.sp),
+          child: KBottomPadding(
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40.sp,
+                      height: 5.sp,
+                      decoration: BoxDecoration(
+                        color: k.border,
+                        borderRadius: BorderRadius.circular(3.sp),
+                      ),
                     ),
                   ),
-                ),
-                SizedBox(height: 16.sp),
-                if (icon != null) ...[
-                  Align(alignment: Alignment.centerLeft, child: icon),
-                  SizedBox(height: 12.sp),
-                ],
-                Semantics(
-                  header: true,
-                  child: Text(
-                    title,
-                    style: AppText.h2.copyWith(fontSize: 22.sp, color: k.text),
-                  ),
-                ),
-                if (sub != null) ...[
-                  SizedBox(height: 6.sp),
-                  Text(
-                    sub!,
-                    style: AppText.bodyText.copyWith(
-                      fontSize: 14.sp,
-                      color: k.muted,
+                  SizedBox(height: 16.sp),
+                  if (icon != null) ...[
+                    Align(alignment: Alignment.centerLeft, child: icon),
+                    SizedBox(height: 12.sp),
+                  ],
+                  Semantics(
+                    header: true,
+                    child: Text(
+                      title,
+                      style: AppText.h2.copyWith(
+                        fontSize: 22.sp,
+                        color: k.text,
+                      ),
                     ),
                   ),
+                  if (sub != null) ...[
+                    SizedBox(height: 6.sp),
+                    Text(
+                      sub!,
+                      style: AppText.bodyText.copyWith(
+                        fontSize: 14.sp,
+                        color: k.muted,
+                      ),
+                    ),
+                  ],
+                  SizedBox(height: 16.sp),
+                  ...children,
                 ],
-                SizedBox(height: 16.sp),
-                ...children,
-              ],
+              ),
             ),
           ),
         ),

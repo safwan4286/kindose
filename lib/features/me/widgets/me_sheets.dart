@@ -502,47 +502,44 @@ class _FeedbackSheetState extends State<_FeedbackSheet> {
   Widget build(BuildContext context) {
     final k = context.k;
     final dark = k.selectedBorder == AppColors.lime;
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-      child: KSheetFrame(
-        title: 'Suggest a feature',
-        sub: 'What would make Kindose better for you? We read every idea.',
-        children: [
-          KSegmented<String>(
-            options: const ['feature', 'improvement'],
-            selected: _kind,
-            onChanged: (v) => setState(() => _kind = v),
-            labelOf: (v) => v == 'feature' ? 'New feature' : 'Improvement',
-          ),
-          SizedBox(height: 10.sp),
-          KTextField(
-            controller: _text,
-            hint: _kind == 'feature'
-                ? 'I wish Kindose could…'
-                : 'It would be better if…',
-            autofocus: true,
-            minLines: 4,
-            maxLines: 8,
-            maxLength: 1000,
-            keyboardType: TextInputType.multiline,
-            textInputAction: TextInputAction.newline,
-            textCapitalization: TextCapitalization.sentences,
-            onChanged: (_) => setState(() {}),
-          ),
-          SizedBox(height: 8.sp),
-          Text(
-            'Please leave out health details you’d rather keep private.',
-            style: AppText.small.copyWith(fontSize: 12.sp, color: k.faint),
-          ),
-          SizedBox(height: 14.sp),
-          PillButton(
-            label: 'Send idea',
-            ink: !dark,
-            busy: _sending,
-            onPressed: _valid && !_sending ? _send : null,
-          ),
-        ],
-      ),
+    return KSheetFrame(
+      title: 'Suggest a feature',
+      sub: 'What would make Kindose better for you? We read every idea.',
+      children: [
+        KSegmented<String>(
+          options: const ['feature', 'improvement'],
+          selected: _kind,
+          onChanged: (v) => setState(() => _kind = v),
+          labelOf: (v) => v == 'feature' ? 'New feature' : 'Improvement',
+        ),
+        SizedBox(height: 10.sp),
+        KTextField(
+          controller: _text,
+          hint: _kind == 'feature'
+              ? 'I wish Kindose could…'
+              : 'It would be better if…',
+          autofocus: true,
+          minLines: 4,
+          maxLines: 8,
+          maxLength: 1000,
+          keyboardType: TextInputType.multiline,
+          textInputAction: TextInputAction.newline,
+          textCapitalization: TextCapitalization.sentences,
+          onChanged: (_) => setState(() {}),
+        ),
+        SizedBox(height: 8.sp),
+        Text(
+          'Please leave out health details you’d rather keep private.',
+          style: AppText.small.copyWith(fontSize: 12.sp, color: k.faint),
+        ),
+        SizedBox(height: 14.sp),
+        PillButton(
+          label: 'Send idea',
+          ink: !dark,
+          busy: _sending,
+          onPressed: _valid && !_sending ? _send : null,
+        ),
+      ],
     );
   }
 }

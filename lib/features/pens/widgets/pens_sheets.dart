@@ -332,113 +332,110 @@ class _PurchaseSheetState extends State<_PurchaseSheet> {
     final pack = widget.pack;
     final mg = widget.strengthMg;
     final valid = _priceValue != null && _price.text.trim().isNotEmpty;
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-      child: KSheetFrame(
-        title: 'Add a purchase',
-        sub: mg == null || mg <= 0
-            ? 'For your own records.'
-            : 'For your own records. Strength: ${Catalog.mg(mg)} mg.',
-        children: [
-          PressScale(
-            onTap: _pickDate,
-            semanticLabel: 'Date, ${Dates.shortWithDay(_date)}. Tap to change.',
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 16.sp, vertical: 14.sp),
-              decoration: BoxDecoration(
-                color: k.card,
-                borderRadius: BorderRadius.circular(18.sp),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Date',
-                      style: AppText.title.copyWith(
-                        fontSize: 15.sp,
-                        color: k.text,
-                      ),
-                    ),
-                  ),
-                  Text(
-                    Dates.sameDay(_date, DateTime.now())
-                        ? 'Today'
-                        : Dates.shortWithDay(_date),
-                    style: AppText.bodyStrong.copyWith(
-                      fontSize: 14.5.sp,
+    return KSheetFrame(
+      title: 'Add a purchase',
+      sub: mg == null || mg <= 0
+          ? 'For your own records.'
+          : 'For your own records. Strength: ${Catalog.mg(mg)} mg.',
+      children: [
+        PressScale(
+          onTap: _pickDate,
+          semanticLabel: 'Date, ${Dates.shortWithDay(_date)}. Tap to change.',
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 16.sp, vertical: 14.sp),
+            decoration: BoxDecoration(
+              color: k.card,
+              borderRadius: BorderRadius.circular(18.sp),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Date',
+                    style: AppText.title.copyWith(
+                      fontSize: 15.sp,
                       color: k.text,
                     ),
                   ),
-                  SizedBox(width: 8.sp),
-                  PhosphorIcon(
-                    PhosphorIconsBold.calendarBlank,
-                    size: 17.sp,
-                    color: k.muted,
+                ),
+                Text(
+                  Dates.sameDay(_date, DateTime.now())
+                      ? 'Today'
+                      : Dates.shortWithDay(_date),
+                  style: AppText.bodyStrong.copyWith(
+                    fontSize: 14.5.sp,
+                    color: k.text,
                   ),
-                ],
-              ),
+                ),
+                SizedBox(width: 8.sp),
+                PhosphorIcon(
+                  PhosphorIconsBold.calendarBlank,
+                  size: 17.sp,
+                  color: k.muted,
+                ),
+              ],
             ),
           ),
-          SizedBox(height: 8.sp),
-          StepperRow(
-            label: '${_cap(pack)}s bought',
-            value: _packs,
-            min: 1,
-            max: 99,
-            onChanged: (v) => setState(() => _packs = v),
-          ),
-          SizedBox(height: 14.sp),
-          Text(
-            'Total paid',
-            style: AppText.title.copyWith(fontSize: 15.sp, color: k.text),
-          ),
-          SizedBox(height: 8.sp),
-          Row(
-            children: [
-              Container(
-                height: 56.sp,
-                padding: EdgeInsets.symmetric(horizontal: 16.sp),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: k.card,
-                  borderRadius: BorderRadius.circular(16.sp),
-                ),
-                child: Text(
-                  widget.currency,
-                  style: AppText.h2.copyWith(fontSize: 20.sp, color: k.text),
-                ),
+        ),
+        SizedBox(height: 8.sp),
+        StepperRow(
+          label: '${_cap(pack)}s bought',
+          value: _packs,
+          min: 1,
+          max: 99,
+          onChanged: (v) => setState(() => _packs = v),
+        ),
+        SizedBox(height: 14.sp),
+        Text(
+          'Total paid',
+          style: AppText.title.copyWith(fontSize: 15.sp, color: k.text),
+        ),
+        SizedBox(height: 8.sp),
+        Row(
+          children: [
+            Container(
+              height: 56.sp,
+              padding: EdgeInsets.symmetric(horizontal: 16.sp),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: k.card,
+                borderRadius: BorderRadius.circular(16.sp),
               ),
-              SizedBox(width: 8.sp),
-              Expanded(
-                child: KTextField(
-                  controller: _price,
-                  hint: '0',
-                  large: true,
-                  autofocus: true,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
-                  ],
-                  onChanged: (_) => setState(() {}),
-                  textInputAction: TextInputAction.next,
-                ),
+              child: Text(
+                widget.currency,
+                style: AppText.h2.copyWith(fontSize: 20.sp, color: k.text),
               ),
-            ],
-          ),
-          SizedBox(height: 10.sp),
-          KTextField(
-            controller: _note,
-            hint: 'Where from (optional)',
-            maxLength: 40,
-            textCapitalization: TextCapitalization.sentences,
-            onSubmitted: (_) => _save(),
-          ),
-          SizedBox(height: 12.sp),
-          PillButton(label: 'Add purchase', onPressed: valid ? _save : null),
-        ],
-      ),
+            ),
+            SizedBox(width: 8.sp),
+            Expanded(
+              child: KTextField(
+                controller: _price,
+                hint: '0',
+                large: true,
+                autofocus: true,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+                ],
+                onChanged: (_) => setState(() {}),
+                textInputAction: TextInputAction.next,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 10.sp),
+        KTextField(
+          controller: _note,
+          hint: 'Where from (optional)',
+          maxLength: 40,
+          textCapitalization: TextCapitalization.sentences,
+          onSubmitted: (_) => _save(),
+        ),
+        SizedBox(height: 12.sp),
+        PillButton(label: 'Add purchase', onPressed: valid ? _save : null),
+      ],
     );
   }
 }
