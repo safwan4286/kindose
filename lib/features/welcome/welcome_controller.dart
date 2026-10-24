@@ -6,7 +6,7 @@ import '../../widgets/sign_in_sheet.dart';
 import '../../services/backend/backend_service.dart';
 import '../../services/haptics/haptics.dart';
 import '../../widgets/toast.dart';
-import '../legal/legal_sheet.dart';
+import '../../resources/app_links.dart';
 
 /// First screen for new users: start onboarding or sign in.
 class WelcomeController extends GetxController {
@@ -80,8 +80,13 @@ class WelcomeController extends GetxController {
     }
   }
 
-  void openLegal() {
+  void openTerms() {
     Haptics.instance.selectionClick();
-    showLegalSheet();
+    AppLinks.open(AppLinks.termsUrl);
+  }
+
+  void openPrivacy() {
+    Haptics.instance.selectionClick();
+    AppLinks.open(AppLinks.privacyUrl);
   }
 }

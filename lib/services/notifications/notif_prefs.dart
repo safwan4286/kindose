@@ -60,12 +60,12 @@ class NotifPrefs extends GetxService {
     followUpOn.value = b('followUp', true);
     missedOn.value = b('missed', true);
     waterOn.value = b('water', false);
-    waterEvery.value = i('waterEvery', 2, 2, 3);
+    waterEvery.value = i('waterEvery', 2, 1, 4);
     waterStart.value = i('waterStart', 9 * 60, 0, 1439);
     waterEnd.value = i('waterEnd', 20 * 60, 0, 1439);
     proteinOn.value = b('protein', false);
     final vd = i('visitDays', 3, 1, 7);
-    visitDays.value = const [1, 3, 7].contains(vd) ? vd : 3;
+    visitDays.value = const [1, 2, 3, 7].contains(vd) ? vd : 3;
     offersOn.value = b('offers', true);
     quietOn.value = b('quiet', true);
     quietStart.value = i('quietStart', 22 * 60, 0, 1439);

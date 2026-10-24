@@ -214,7 +214,7 @@ class _DietSheet extends StatelessWidget {
         Img3d.chicken,
       ),
       ('pesc', 'Pescatarian', 'Fish and seafood, no meat', Img3d.fish),
-      ('veg', 'Vegetarian', 'Eggs and dairy, no meat or fish', Img3d.egg),
+      ('veg', 'Vegetarian', 'No meat or fish', Img3d.egg),
       ('vegan', 'Vegan', 'No animal foods at all', Img3d.seedling),
     ];
     return KSheetFrame(

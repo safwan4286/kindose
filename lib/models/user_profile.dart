@@ -115,6 +115,7 @@ class UserProfile {
     String? activity,
     String? diet,
     bool? useKg,
+    double? startWeightKg,
     double? goalWeightKg,
     bool clearGoalWeight = false,
     int? proteinGoalG,
@@ -145,7 +146,7 @@ class UserProfile {
       activity: activity ?? this.activity,
       diet: diet ?? this.diet,
       useKg: useKg ?? this.useKg,
-      startWeightKg: startWeightKg,
+      startWeightKg: startWeightKg ?? this.startWeightKg,
       goalWeightKg: clearGoalWeight
           ? null
           : (goalWeightKg ?? this.goalWeightKg),

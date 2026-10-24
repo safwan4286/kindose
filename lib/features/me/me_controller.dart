@@ -11,6 +11,7 @@ import '../../resources/app_links.dart';
 import '../../resources/catalog.dart';
 import '../../resources/date_utils.dart';
 import '../../resources/routes.dart';
+import '../offer/offer_controller.dart';
 import '../../resources/water_units.dart';
 import '../../models/user_profile.dart';
 import '../../services/backend/backend_service.dart';
@@ -29,7 +30,7 @@ import '../../widgets/mood_row.dart';
 import '../../widgets/no_internet_sheet.dart';
 import '../../widgets/sign_in_sheet.dart';
 import '../../widgets/toast.dart';
-import '../legal/legal_sheet.dart';
+import '../common/goal_edit.dart';
 import '../onboarding/onboarding_controller.dart';
 import 'widgets/me_sheets.dart';
 import '../../services/debug/test_data.dart';
@@ -187,6 +188,17 @@ class MeController extends GetxController {
   }
 
   bool get testDataOn => TestData.isOn;
+
+  /// Debug: the welcome offer screen. It normally shows once, after the
+  /// Plus screen is closed, and only when the store has the intro price
+  /// (the Test Store product has none, so debug builds never get there).
+  Future<void> debugShowOffer() async {
+    Haptics.instance.selectionClick();
+    await Get.toNamed<void>(
+      Routes.offer,
+      arguments: const OfferArgs(fromOnboarding: false),
+    );
+  }
 
   /// Act as a paying Plus user (debug builds only).
   Future<void> debugTogglePlus() async {
@@ -445,6 +457,40 @@ class MeController extends GetxController {
 
   // ----------------------------------------------------------------- goals
 
+  /// The first weigh-in (set in onboarding), which "since you started"
+  /// and the report count from.
+  String get startWeightLabel {
+    final s = tracker.startWeightKg;
+    if (s <= 0) return 'Not set';
+    return useKg
+        ? '${s.toStringAsFixed(1)} kg'
+        : '${(s * _lbPerKg).round()} lb';
+  }
+
+  /// Changes the starting weight: the profile and the oldest weigh-in (on
+  /// its own date), so every "since you started" number follows.
+  Future<void> editStartWeight(BuildContext context) async {
+    final p = tracker.profile.value;
+    if (p == null) return;
+    final kg = p.useKg;
+    final current = tracker.startWeightKg;
+    final v = await askNumber(
+      context,
+      title: 'Starting weight',
+      unit: kg ? 'kg' : 'lb',
+      initial: current <= 0
+          ? null
+          : (kg ? current : (current * _lbPerKg).roundToDouble()),
+      min: kg ? 35 : 77,
+      max: kg ? 300 : 660,
+    );
+    if (v == null || v.isNaN) return;
+    final newKg = kg ? v : v / _lbPerKg;
+    await tracker.saveProfile(p.copyWith(startWeightKg: newKg));
+    final first = tracker.weights.isEmpty ? null : tracker.weights.first;
+    await tracker.addWeight(newKg, first?.date);
+  }
+
   String get goalWeightLabel {
     final g = tracker.profile.value?.goalWeightKg;
     if (g == null) return 'Not set';
@@ -497,41 +543,10 @@ class MeController extends GetxController {
     await tracker.saveProfile(p.copyWith(goalWeightKg: kg ? v : v / _lbPerKg));
   }
 
-  Future<void> editProteinGoal(BuildContext context) async {
-    final p = tracker.profile.value;
-    if (p == null) return;
-    final v = await askNumber(
-      context,
-      title: 'Daily protein goal',
-      unit: 'g',
-      initial: p.proteinGoalG.toDouble(),
-      min: 30,
-      max: 250,
-      decimals: 0,
-    );
-    if (v == null || v.isNaN) return;
-    await tracker.saveProfile(p.copyWith(proteinGoalG: v.round()));
-  }
+  Future<void> editProteinGoal(BuildContext context) =>
+      GoalEdit.protein(context);
 
-  Future<void> editWaterGoal(BuildContext context) async {
-    final p = tracker.profile.value;
-    if (p == null) return;
-    final oz = p.useOz;
-    final v = await askNumber(
-      context,
-      title: 'Daily water goal',
-      unit: oz ? 'fl oz' : 'L',
-      initial: oz
-          ? Water.toOz(p.waterGoalMl).roundToDouble()
-          : p.waterGoalMl / 1000,
-      min: oz ? 34 : 1,
-      max: oz ? 203 : 6,
-      decimals: oz ? 0 : 1,
-    );
-    if (v == null || v.isNaN) return;
-    final ml = oz ? Water.fromOz(v) : (v * 1000).round();
-    await tracker.saveProfile(p.copyWith(waterGoalMl: ml));
-  }
+  Future<void> editWaterGoal(BuildContext context) => GoalEdit.water(context);
 
   Future<void> editDiet() async {
     final p = tracker.profile.value;
@@ -1016,9 +1031,14 @@ class MeController extends GetxController {
 
   // ----------------------------------------------------------------- about
 
-  void openLegal() {
+  void openTerms() {
     Haptics.instance.selectionClick();
-    showLegalSheet();
+    AppLinks.open(AppLinks.termsUrl);
+  }
+
+  void openPrivacy() {
+    Haptics.instance.selectionClick();
+    AppLinks.open(AppLinks.privacyUrl);
   }
 
   void openLicences(BuildContext context) {

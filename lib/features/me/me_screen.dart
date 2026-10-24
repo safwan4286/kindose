@@ -83,6 +83,11 @@ class MeScreen extends GetView<MeController> {
             KGroup(
               children: [
                 _NavRow(
+                  label: 'Starting weight',
+                  value: c.startWeightLabel,
+                  onTap: () => c.editStartWeight(context),
+                ),
+                _NavRow(
                   label: 'Goal weight',
                   value: c.goalWeightLabel,
                   onTap: () => c.editGoalWeight(context),
@@ -135,20 +140,16 @@ class MeScreen extends GetView<MeController> {
                 ),
               ],
             ).enter(motion, delay: 120),
-            _label(context, 'Reminders'),
+            _label(context, 'App'),
             KGroup(
+              padded: true,
               children: [
                 _NavRow(
                   label: 'Notifications',
                   sub: c.notificationsSummary,
                   onTap: c.openNotifications,
+                  inset: false,
                 ),
-              ],
-            ).enter(motion, delay: 140),
-            _label(context, 'App'),
-            KGroup(
-              padded: true,
-              children: [
                 _SettingRow(
                   label: 'Weight',
                   child: SizedBox(
@@ -240,8 +241,8 @@ class MeScreen extends GetView<MeController> {
             _label(context, 'About'),
             KGroup(
               children: [
-                _NavRow(label: 'Privacy policy', onTap: c.openLegal),
-                _NavRow(label: 'Terms of use', onTap: c.openLegal),
+                _NavRow(label: 'Privacy policy', onTap: c.openPrivacy),
+                _NavRow(label: 'Terms of use', onTap: c.openTerms),
                 _NavRow(label: 'Help & FAQ', onTap: c.openHelp),
                 _NavRow(
                   label: 'Suggest a feature',
@@ -251,10 +252,6 @@ class MeScreen extends GetView<MeController> {
                 if (c.canContact)
                   _NavRow(label: 'Contact support', onTap: c.contactSupport),
                 if (c.canRate) _NavRow(label: 'Rate Kindose', onTap: c.rateApp),
-                _NavRow(
-                  label: 'Licences',
-                  onTap: () => c.openLicences(context),
-                ),
               ],
             ),
             if (c.signedIn) ...[
@@ -272,8 +269,43 @@ class MeScreen extends GetView<MeController> {
               ),
             ],
             SizedBox(height: 18.sp),
+            // Open-source licences (packages, icons, fonts) as a quiet link
+            // on the version line rather than a menu row.
+            Semantics(
+              button: true,
+              label: 'Open-source licences',
+              excludeSemantics: true,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => c.openLicences(context),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 6.sp),
+                  child: Text.rich(
+                    TextSpan(
+                      text: c.version.value.isEmpty
+                          ? 'Kindose · '
+                          : 'Kindose ${c.version.value} · ',
+                      children: [
+                        TextSpan(
+                          text: 'Licences',
+                          style: TextStyle(
+                            decoration: TextDecoration.underline,
+                            decorationColor: k.faint,
+                          ),
+                        ),
+                      ],
+                    ),
+                    textAlign: TextAlign.center,
+                    style: AppText.small.copyWith(
+                      fontSize: 12.sp,
+                      height: 1.5,
+                      color: k.faint,
+                    ),
+                  ),
+                ),
+              ),
+            ),
             Text(
-              '${c.version.value.isEmpty ? 'Kindose' : 'Kindose ${c.version.value}'}\n'
               "Kindose helps you keep track. It doesn't give medical advice.",
               textAlign: TextAlign.center,
               style: AppText.small.copyWith(
@@ -580,6 +612,7 @@ class _DebugAccess extends StatelessWidget {
           chip('Show planned', controller.debugShowPlanned),
           chip('Fill test data', controller.debugFillTestData),
           chip('Remove test data', controller.debugClearTestData),
+          chip('Show offer', controller.debugShowOffer),
         ],
       ),
     );
@@ -816,6 +849,7 @@ class _NavRow extends StatelessWidget {
     this.sub,
     this.danger = false,
     this.plus = false,
+    this.inset = true,
   });
 
   final String label;
@@ -826,6 +860,9 @@ class _NavRow extends StatelessWidget {
   /// Shows the Plus tag before the arrow.
   final bool plus;
   final VoidCallback? onTap;
+
+  /// Side padding of its own; off inside a padded group (KGroup.padded).
+  final bool inset;
 
   @override
   Widget build(BuildContext context) {
@@ -848,7 +885,10 @@ class _NavRow extends StatelessWidget {
           onTap: onTap,
           child: Container(
             constraints: BoxConstraints(minHeight: 52.sp),
-            padding: EdgeInsets.symmetric(horizontal: 16.sp, vertical: 12.sp),
+            padding: EdgeInsets.symmetric(
+              horizontal: inset ? 16.sp : 0,
+              vertical: 12.sp,
+            ),
             child: Row(
               children: [
                 Expanded(

@@ -17,20 +17,6 @@ import '../../widgets/toast.dart';
 import '../common/day_nav.dart';
 import '../today/next_bite.dart';
 
-/// Drinks of the same kind logged one after another, shown as one row.
-class DrinkGroup {
-  DrinkGroup(this.name, this.icon, this.each);
-
-  final String name;
-  final String icon;
-  final int each;
-
-  /// Newest first.
-  final List<LogEntry> entries = [];
-
-  int get total => each * entries.length;
-}
-
 /// Everything logged on one day: dose, protein, water, weight and how it
 /// felt. Open with a DateTime (defaults to today).
 class DayController extends GetxController with DayNav {
@@ -83,10 +69,7 @@ class DayController extends GetxController with DayNav {
   /// (today: now).
   void logDoseForDay() {
     Haptics.instance.selectionClick();
-    Get.toNamed<void>(
-      Routes.logDose,
-      arguments: isToday ? null : day.value,
-    );
+    Get.toNamed<void>(Routes.logDose, arguments: isToday ? null : day.value);
   }
 
   void editDose() {
@@ -237,10 +220,6 @@ class DayController extends GetxController with DayNav {
   /// 250 ml, or 8 fl oz for people who see water in ounces.
   int get glassMl => Water.glassMl;
 
-  int get glassesGoal => (waterGoal / glassMl).ceil().clamp(1, 12);
-  int get glassesDone => (log.waterMl / glassMl).floor().clamp(0, glassesGoal);
-
-  /// Uses the real goal (the glass icons stop at 12, the words don't).
   String get waterLine {
     final left = waterGoal - log.waterMl;
     if (left <= 0) return 'Goal reached';
@@ -262,26 +241,11 @@ class DayController extends GetxController with DayNav {
       ? 'Water'
       : label;
 
-  /// Same drink and amount back to back = one row. Newest first.
-  List<DrinkGroup> get waterGroups {
-    final out = <DrinkGroup>[];
-    for (final e in entries('water').reversed) {
-      final name = drinkName(e.label);
-      final last = out.isEmpty ? null : out.last;
-      if (last != null && last.name == name && last.each == e.amount) {
-        last.entries.add(e);
-      } else {
-        out.add(
-          DrinkGroup(
-            name,
-            name == 'Milk' ? Img3d.milk : Img3d.droplet,
-            e.amount,
-          )..entries.add(e),
-        );
-      }
-    }
-    return out;
-  }
+  /// Every drink, newest first: one row each, like the Water screen.
+  List<LogEntry> get waterList => entries('water').reversed.toList();
+
+  String drinkIcon(LogEntry e) =>
+      drinkName(e.label) == 'Milk' ? Img3d.milk : Img3d.droplet;
 
   // ---------------------------------------------------------------- weight
 

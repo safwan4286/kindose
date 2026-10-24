@@ -61,10 +61,15 @@ class ThreeD extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Decoded at the size it's drawn, not the full 256 px file, so a list
+    // of icons opens without a decode hitch.
+    final px = (size * MediaQuery.devicePixelRatioOf(context)).ceil();
     return Image.asset(
       asset,
       width: size,
       height: size,
+      cacheWidth: px,
+      cacheHeight: px,
       filterQuality: FilterQuality.medium,
       excludeFromSemantics: true,
       gaplessPlayback: true,

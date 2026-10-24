@@ -12,15 +12,16 @@ import '../../services/theme/theme.dart';
 import '../../widgets/buttons.dart';
 import '../../widgets/day_switcher.dart';
 import '../../widgets/entrance.dart';
+import '../../widgets/entry_tile.dart';
 import '../../widgets/k_widgets.dart';
 import '../../widgets/press_scale.dart';
 import '../../widgets/safe_bottom.dart';
 import '../../widgets/toast.dart';
+import '../common/goal_edit.dart';
 import 'intake_controller.dart';
 import 'widgets/water_drop.dart';
 import 'widgets/intake_parts.dart';
 import 'widgets/protein_tab.dart';
-import '../../services/plus/access_service.dart';
 
 /// Protein and water. One tap adds, every add can be undone.
 class IntakeScreen extends GetView<IntakeController> {
@@ -142,22 +143,9 @@ class _EntryList extends GetView<IntakeController> {
     return IntakeCard(
       children: [
         for (final e in entries)
-          Dismissible(
-            key: ValueKey(e.id),
-            direction: DismissDirection.endToStart,
-            // Paywall before the row slides away; a locked swipe springs back.
-            confirmDismiss: (_) => AccessService.ensure(),
-            onDismissed: (_) => controller.removeEntry(e),
-            background: Container(
-              alignment: Alignment.centerRight,
-              padding: EdgeInsets.only(right: 18.sp),
-              color: AppColors.dangerSoft,
-              child: Icon(
-                PhosphorIconsBold.trash,
-                size: 20.sp,
-                color: AppColors.danger,
-              ),
-            ),
+          SwipeToRemove(
+            id: e.id,
+            onRemove: () => controller.removeEntry(e),
             child: _EntryRow(entry: e, valueColor: dark ? k.text : valueColor),
           ),
       ],
@@ -165,6 +153,7 @@ class _EntryList extends GetView<IntakeController> {
   }
 }
 
+/// The same tile as the Day screen: icon, name, time, amount.
 class _EntryRow extends GetView<IntakeController> {
   const _EntryRow({required this.entry, required this.valueColor});
 
@@ -174,50 +163,30 @@ class _EntryRow extends GetView<IntakeController> {
   @override
   Widget build(BuildContext context) {
     final k = context.k;
+    final dark = k.selectedBorder == AppColors.lime;
     final amount = entry.isProtein
         ? '${entry.amount} g'
         : Water.amount(entry.amount);
     final title = controller.entryTitle(entry);
+    final milk = title == 'Milk';
+    final icon = entry.isProtein
+        ? Img3d.biceps
+        : (milk ? Img3d.milk : Img3d.droplet);
+    final time = controller.timeOf(entry.at);
     return Semantics(
-      label:
-          '${controller.timeOf(entry.at)}, $title, $amount. Swipe left to remove.',
+      label: '$time, $title, $amount. Swipe left to remove.',
       excludeSemantics: true,
-      child: Container(
-        color: k.card,
-        padding: EdgeInsets.symmetric(horizontal: 16.sp, vertical: 12.sp),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 66.sp,
-              child: Text(
-                controller.timeOf(entry.at),
-                style: AppText.small.copyWith(
-                  fontSize: 12.5.sp,
-                  color: k.faint,
-                ),
-              ),
-            ),
-            Expanded(
-              child: Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppText.bodyStrong.copyWith(
-                  fontSize: 14.5.sp,
-                  color: k.text,
-                ),
-              ),
-            ),
-            SizedBox(width: 8.sp),
-            Text(
-              '+$amount',
-              style: AppText.title.copyWith(
-                fontSize: 14.5.sp,
-                color: valueColor,
-              ),
-            ),
-          ],
-        ),
+      child: EntryTile(
+        divider: false,
+        padding: EdgeInsets.symmetric(horizontal: 16.sp, vertical: 10.sp),
+        icon: icon,
+        tint: dark
+            ? k.cardAlt
+            : (entry.isProtein ? AppColors.tangerineSoft : AppColors.aquaSoft),
+        title: title,
+        sub: time,
+        amount: '+$amount',
+        amountColor: valueColor,
       ),
     );
   }
@@ -243,8 +212,14 @@ class _WaterTab extends GetView<IntakeController> {
           Semantics(
             label:
                 'Water ${controller.dayTitle.toLowerCase()}: ${controller.litres(controller.waterToday)} of ${controller.litres(controller.waterGoal)} ${Water.unitWords}. ${controller.waterLine}',
+            onTapHint: 'change your daily goal',
+            onTap: () => GoalEdit.water(context),
             excludeSemantics: true,
-            child: Container(
+            // The whole card opens the goal, not just "of 3 L".
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => GoalEdit.water(context),
+              child: Container(
               padding: EdgeInsets.fromLTRB(18.sp, 20.sp, 18.sp, 20.sp),
               decoration: BoxDecoration(
                 color: k.card,
@@ -277,15 +252,11 @@ class _WaterTab extends GetView<IntakeController> {
                                 40.sp,
                               ).copyWith(color: k.text),
                             ),
-                            Padding(
-                              padding: EdgeInsets.only(bottom: 3.sp),
-                              child: Text(
-                                'of ${controller.litres(controller.waterGoal)} ${Water.unit}',
-                                style: AppText.title.copyWith(
-                                  fontSize: 15.sp,
-                                  color: k.muted,
-                                ),
-                              ),
+                            GoalLink(
+                              text:
+                                  'of ${controller.litres(controller.waterGoal)} ${Water.unit}',
+                              fontSize: 15,
+                              onTap: () => GoalEdit.water(context),
                             ),
                           ],
                         ),
@@ -302,6 +273,7 @@ class _WaterTab extends GetView<IntakeController> {
                   ),
                 ],
               ),
+            ),
             ),
           ).enter(motion),
           const IntakeLabel('Add water', trailing: 'One tap adds it'),

@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 import '../../models/logs.dart';
 import '../../resources/colors.dart';
+import '../../resources/images.dart';
 import '../../resources/water_units.dart';
 import '../../services/responsiveness/device_manager.dart';
 import '../../services/theme/theme.dart';
 import '../../widgets/day_switcher.dart';
-import '../../widgets/entrance.dart';
+import '../../widgets/entry_tile.dart';
 import '../../widgets/k_widgets.dart';
 import '../../widgets/press_scale.dart';
 import '../../widgets/safe_bottom.dart';
 import '../../widgets/toast.dart';
 import 'day_controller.dart';
-import '../../services/plus/access_service.dart';
 
 /// One day at a glance. Past days: the last 4 weeks free, older with Plus.
 class DayScreen extends GetView<DayController> {
@@ -42,41 +41,38 @@ class DayScreen extends GetView<DayController> {
             Expanded(
               child: Obx(() {
                 controller.watch();
-                return ListView(
-                  padding: EdgeInsets.fromLTRB(20.sp, 4.sp, 20.sp, 24.sp),
-                  children: [
-                    Semantics(
-                      header: true,
-                      child: Text(
-                        controller.longDate,
-                        style: AppText.h1.copyWith(
-                          fontSize: 28.sp,
-                          height: 1.1,
-                          color: k.text,
+                // The page already slides in, so the cards are there at
+                // once (no staggered entrance on top). Switching days
+                // cross-fades instead of jumping.
+                return AnimatedSwitcher(
+                  duration: Duration(milliseconds: motion ? 180 : 0),
+                  child: ListView(
+                    key: ValueKey(controller.day.value),
+                    padding: EdgeInsets.fromLTRB(20.sp, 4.sp, 20.sp, 24.sp),
+                    children: [
+                      Semantics(
+                        header: true,
+                        child: Text(
+                          controller.longDate,
+                          style: AppText.h1.copyWith(
+                            fontSize: 28.sp,
+                            height: 1.1,
+                            color: k.text,
+                          ),
                         ),
                       ),
-                    ).enter(motion),
-                    SizedBox(height: 16.sp),
-                    _DoseSection(
-                      controller: controller,
-                    ).enter(motion, delay: 40),
-                    SizedBox(height: 12.sp),
-                    _ProteinSection(
-                      controller: controller,
-                    ).enter(motion, delay: 80),
-                    SizedBox(height: 12.sp),
-                    _WaterSection(
-                      controller: controller,
-                    ).enter(motion, delay: 120),
-                    SizedBox(height: 12.sp),
-                    _WeightSection(
-                      controller: controller,
-                    ).enter(motion, delay: 160),
-                    SizedBox(height: 12.sp),
-                    _FeelSection(
-                      controller: controller,
-                    ).enter(motion, delay: 200),
-                  ],
+                      SizedBox(height: 16.sp),
+                      _DoseSection(controller: controller),
+                      SizedBox(height: 12.sp),
+                      _ProteinSection(controller: controller),
+                      SizedBox(height: 12.sp),
+                      _WaterSection(controller: controller),
+                      SizedBox(height: 12.sp),
+                      _WeightSection(controller: controller),
+                      SizedBox(height: 12.sp),
+                      _FeelSection(controller: controller),
+                    ],
+                  ),
                 );
               }),
             ),
@@ -98,7 +94,8 @@ class _Section extends StatelessWidget {
     this.trailing,
   });
 
-  final IconData icon;
+  /// A 3D icon (Img3d), the same ones the Log sheet and Today use.
+  final String icon;
   final Color tint;
   final String title;
   final Widget child;
@@ -126,7 +123,7 @@ class _Section extends StatelessWidget {
                   color: tint,
                   borderRadius: BorderRadius.circular(11.sp),
                 ),
-                child: Icon(icon, size: 17.sp, color: AppColors.ink),
+                child: ThreeD(icon, size: 22.sp),
               ),
               SizedBox(width: 10.sp),
               Expanded(
@@ -190,8 +187,8 @@ class _DoseSection extends StatelessWidget {
     final k = context.k;
     final has = controller.dose != null;
     return _Section(
-      icon: PhosphorIconsBold.syringe,
-      tint: AppColors.lime,
+      icon: Img3d.syringe,
+      tint: AppColors.limeSoft,
       title: 'Dose',
       trailing: has
           ? _link(context, 'Edit', controller.editDose)
@@ -261,6 +258,7 @@ class _Total extends StatelessWidget {
   }
 }
 
+/// Fully rounded track and fill; a little progress shows as a dot.
 class _Bar extends StatelessWidget {
   const _Bar({required this.value, required this.track, required this.fill});
 
@@ -270,24 +268,23 @@ class _Bar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(5.sp),
-      child: SizedBox(
-        height: 10.sp,
-        child: Stack(
-          children: [
-            Positioned.fill(child: ColoredBox(color: track)),
-            TweenAnimationBuilder<double>(
-              tween: Tween(end: value.clamp(0.0, 1.0)),
-              duration: const Duration(milliseconds: 500),
-              curve: Curves.easeOutCubic,
-              builder: (_, v, _) => FractionallySizedBox(
-                widthFactor: v,
-                heightFactor: 1,
-                child: ColoredBox(color: fill),
-              ),
-            ),
-          ],
+    final h = 10.sp;
+    final round = BorderRadius.circular(h / 2);
+    return LayoutBuilder(
+      builder: (_, box) => Container(
+        height: h,
+        alignment: Alignment.centerLeft,
+        decoration: BoxDecoration(color: track, borderRadius: round),
+        child: TweenAnimationBuilder<double>(
+          tween: Tween(end: value.clamp(0.0, 1.0)),
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeOutCubic,
+          builder: (_, v, _) => v <= 0
+              ? const SizedBox.shrink()
+              : Container(
+                  width: (box.maxWidth * v).clamp(h, box.maxWidth),
+                  decoration: BoxDecoration(color: fill, borderRadius: round),
+                ),
         ),
       ),
     );
@@ -339,7 +336,7 @@ class _ProteinSection extends StatelessWidget {
     final parts = controller.proteinByPart;
     final best = parts.fold<int>(0, (m, p) => p.$2 > m ? p.$2 : m);
     return _Section(
-      icon: PhosphorIconsBold.egg,
+      icon: Img3d.biceps,
       tint: AppColors.tangerineSoft,
       title: 'Protein',
       trailing: _link(
@@ -423,9 +420,8 @@ class _ProteinSection extends StatelessWidget {
                             g == 0
                                 ? Text(
                                     '—',
-                                    style: AppText.number(
-                                      20.sp,
-                                    ).copyWith(color: k.faint),
+                                    style: AppText.number(20.sp)
+                                        .copyWith(color: k.faint),
                                   )
                                 : NumberUnit('$g', 'g', size: 20.sp),
                           ],
@@ -465,15 +461,15 @@ class _FoodEntryRow extends StatelessWidget {
     final portion = controller.entryPortion(entry);
     final time = controller.entryTime(entry);
     final icon = controller.foodIcon(entry);
-    return _Swipe(
+    return SwipeToRemove(
       id: entry.id,
       onRemove: () => controller.removeEntry(entry),
       child: Semantics(
         label:
             '$name${portion.isEmpty ? '' : ', $portion'}, $time, ${entry.amount} grams. Swipe left to remove.',
         excludeSemantics: true,
-        child: _EntryTile(
-          first: first,
+        child: EntryTile(
+          divider: !first,
           icon: icon,
           tint: dark ? k.cardAlt : DayController.tintFor(icon),
           title: name,
@@ -495,17 +491,16 @@ class _WaterSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final k = context.k;
     final dark = k.selectedBorder == AppColors.lime;
-    final groups = controller.waterGroups;
+    final drinks = controller.waterList;
     final total = controller.log.waterMl;
     final goal = controller.waterGoal;
-    final done = controller.glassesDone;
     return _Section(
-      icon: PhosphorIconsBold.drop,
+      icon: Img3d.droplet,
       tint: AppColors.aquaSoft,
       title: 'Water',
       trailing: _link(
         context,
-        groups.isEmpty ? 'Add' : 'Edit',
+        drinks.isEmpty ? 'Add' : 'Edit',
         () => controller.openIntake('water'),
       ),
       child: Column(
@@ -525,32 +520,15 @@ class _WaterSection extends StatelessWidget {
                   tagBg: AppColors.aquaSoft,
                   tagFg: AppColors.aquaText,
                 ),
-                SizedBox(height: 12.sp),
-                Row(
-                  children: [
-                    for (var i = 0; i < controller.glassesGoal; i++) ...[
-                      if (i > 0) SizedBox(width: 5.sp),
-                      Expanded(
-                        child: AnimatedContainer(
-                          duration: Duration(milliseconds: 250 + i * 30),
-                          height: 30.sp,
-                          decoration: BoxDecoration(
-                            color: i < done
-                                ? AppColors.aqua
-                                : (dark ? k.cardAlt : AppColors.aquaSoft),
-                            borderRadius: BorderRadius.vertical(
-                              top: Radius.circular(6.sp),
-                              bottom: Radius.circular(9.sp),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
+                SizedBox(height: 10.sp),
+                _Bar(
+                  value: goal == 0 ? 0 : total / goal,
+                  track: dark ? k.cardAlt : AppColors.aquaSoft,
+                  fill: AppColors.aqua,
                 ),
                 SizedBox(height: 6.sp),
                 Text(
-                  groups.isEmpty ? 'Nothing logged.' : controller.waterLine,
+                  drinks.isEmpty ? 'Nothing logged.' : controller.waterLine,
                   style: AppText.small.copyWith(
                     fontSize: 12.5.sp,
                     fontWeight: FontWeight.w700,
@@ -560,10 +538,10 @@ class _WaterSection extends StatelessWidget {
               ],
             ),
           ),
-          if (groups.isNotEmpty) ...[
+          if (drinks.isNotEmpty) ...[
             _listLabel(context, 'WHAT YOU DRANK', swipeHint: true),
-            for (final (i, g) in groups.indexed)
-              _DrinkRow(controller: controller, group: g, first: i == 0),
+            for (final (i, e) in drinks.indexed)
+              _DrinkRow(controller: controller, entry: e, first: i == 0),
           ],
         ],
       ),
@@ -574,174 +552,37 @@ class _WaterSection extends StatelessWidget {
 class _DrinkRow extends StatelessWidget {
   const _DrinkRow({
     required this.controller,
-    required this.group,
+    required this.entry,
     required this.first,
   });
 
   final DayController controller;
-  final DrinkGroup group;
+  final LogEntry entry;
   final bool first;
-
-  String _amount(int ml) => Water.amount(ml);
 
   @override
   Widget build(BuildContext context) {
     final k = context.k;
     final dark = k.selectedBorder == AppColors.lime;
-    final n = group.entries.length;
-    final newest = group.entries.first;
-    final oldest = group.entries.last;
-    final time = n == 1
-        ? controller.entryTime(newest)
-        : '${controller.entryTime(oldest)} – ${controller.entryTime(newest)}';
-    final sub = n == 1
-        ? '${Water.amount(group.each)} · $time'
-        : '${Water.amount(group.each)} each · $time';
-    return _Swipe(
-      id: 'g-${newest.id}',
-      onRemove: () => controller.removeEntry(newest),
+    final name = controller.entryName(entry);
+    final amount = Water.amount(entry.amount);
+    final time = controller.entryTime(entry);
+    final icon = controller.drinkIcon(entry);
+    return SwipeToRemove(
+      id: entry.id,
+      onRemove: () => controller.removeEntry(entry),
       child: Semantics(
-        label:
-            '${group.name}${n > 1 ? ' times $n' : ''}, $sub, ${_amount(group.total)}. Swipe left to remove the latest.',
+        label: '$name, $amount, $time. Swipe left to remove.',
         excludeSemantics: true,
-        child: _EntryTile(
-          first: first,
-          icon: group.icon,
-          tint: dark ? k.cardAlt : DayController.tintFor(group.icon),
-          title: group.name,
-          count: n > 1 ? n : null,
-          sub: sub,
-          amount: '+${_amount(group.total)}',
+        child: EntryTile(
+          divider: !first,
+          icon: icon,
+          tint: dark ? k.cardAlt : DayController.tintFor(icon),
+          title: name,
+          sub: time,
+          amount: '+$amount',
           amountColor: dark ? k.text : AppColors.aquaText,
         ),
-      ),
-    );
-  }
-}
-
-/// Swipe left to remove, with the red trash background.
-class _Swipe extends StatelessWidget {
-  const _Swipe({required this.id, required this.onRemove, required this.child});
-
-  final String id;
-  final VoidCallback onRemove;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Dismissible(
-      key: ValueKey(id),
-      direction: DismissDirection.endToStart,
-      // Paywall before the row slides away; a locked swipe springs back.
-      confirmDismiss: (_) => AccessService.ensure(),
-      onDismissed: (_) => onRemove(),
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: EdgeInsets.only(right: 12.sp),
-        color: AppColors.dangerSoft,
-        child: Icon(
-          PhosphorIconsBold.trash,
-          size: 18.sp,
-          color: AppColors.danger,
-        ),
-      ),
-      child: child,
-    );
-  }
-}
-
-/// Icon, name (+ "× 4"), sub line and amount. Name and sub never share a
-/// line, so long food names don't push the amount off.
-class _EntryTile extends StatelessWidget {
-  const _EntryTile({
-    required this.first,
-    required this.icon,
-    required this.tint,
-    required this.title,
-    required this.sub,
-    required this.amount,
-    required this.amountColor,
-    this.count,
-  });
-
-  final bool first;
-  final String icon;
-  final Color tint;
-  final String title;
-  final String sub;
-  final String amount;
-  final Color amountColor;
-  final int? count;
-
-  @override
-  Widget build(BuildContext context) {
-    final k = context.k;
-    return Container(
-      decoration: BoxDecoration(
-        color: k.card,
-        border: first ? null : Border(top: BorderSide(color: k.border)),
-      ),
-      padding: EdgeInsets.symmetric(vertical: 10.sp),
-      child: Row(
-        children: [
-          Container(
-            width: 40.sp,
-            height: 40.sp,
-            decoration: BoxDecoration(
-              color: tint,
-              borderRadius: BorderRadius.circular(13.sp),
-            ),
-            alignment: Alignment.center,
-            child: ThreeD(icon, size: 26.sp),
-          ),
-          SizedBox(width: 12.sp),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(text: title),
-                      if (count != null)
-                        TextSpan(
-                          text: '  × $count',
-                          style: TextStyle(color: k.muted),
-                        ),
-                    ],
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppText.title.copyWith(
-                    fontSize: 14.5.sp,
-                    color: k.text,
-                  ),
-                ),
-                SizedBox(height: 1.sp),
-                Text(
-                  sub,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppText.small.copyWith(
-                    fontSize: 12.5.sp,
-                    fontWeight: FontWeight.w600,
-                    color: k.muted,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(width: 10.sp),
-          Text(
-            amount,
-            // Small amount: body font, equal-width digits.
-            style: AppText.title.copyWith(
-              fontSize: 15.sp,
-              color: amountColor,
-              fontFeatures: const [FontFeature.tabularFigures()],
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -759,7 +600,7 @@ class _WeightSection extends StatelessWidget {
     final k = context.k;
     final w = controller.weighIn;
     return _Section(
-      icon: PhosphorIconsBold.scales,
+      icon: Img3d.chartDown,
       tint: AppColors.violetSoft,
       title: 'Weight',
       child: w == null
@@ -789,7 +630,7 @@ class _FeelSection extends StatelessWidget {
     final c = controller;
     final chips = [...c.effects, ...c.scales];
     return _Section(
-      icon: PhosphorIconsBold.smiley,
+      icon: Img3d.nauseated,
       tint: AppColors.limeSoft,
       title: 'How I felt',
       trailing: c.isToday && !c.hasCheckIn

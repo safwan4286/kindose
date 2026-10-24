@@ -145,6 +145,7 @@ class NotificationsController extends GetxController
 
   String get visitSub => switch (prefs.visitDays.value) {
     1 => 'The day before, to get your report ready',
+    2 => '2 days before, to get your report ready',
     7 => 'A week before, to get your report ready',
     _ => '3 days before, to get your report ready',
   };

@@ -4,10 +4,12 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 import '../../resources/colors.dart';
 import '../../resources/date_utils.dart';
+import '../../services/haptics/haptics.dart';
 import '../../services/responsiveness/device_manager.dart';
 import '../../services/theme/theme.dart';
 import '../../widgets/buttons.dart';
 import '../../widgets/entrance.dart';
+import '../../widgets/k_sheet.dart';
 import '../../widgets/k_widgets.dart';
 import '../../widgets/press_scale.dart';
 import '../../widgets/safe_bottom.dart';
@@ -47,7 +49,7 @@ class NotificationsScreen extends GetView<NotificationsController> {
                         'Notifications',
                         style: AppText.h1.copyWith(fontSize: 28.sp, color: k.text),
                       ),
-                    ).enter(motion),
+                    ),
                     SizedBox(height: 6.sp),
                     Text(
                       'Pick what Kindose reminds you about. Everything else stays quiet.',
@@ -56,7 +58,7 @@ class NotificationsScreen extends GetView<NotificationsController> {
                         height: 1.4,
                         color: k.muted,
                       ),
-                    ).enter(motion, delay: 40),
+                    ),
                     _Reveal(
                       show: c.blocked,
                       child: Padding(
@@ -77,6 +79,7 @@ class NotificationsScreen extends GetView<NotificationsController> {
                           ),
                           if (c.doseOn)
                             _ValueRow(
+                              icon: PhosphorIconsRegular.clock,
                               label: 'Reminder time',
                               value: c.doseTime,
                               onTap: () => c.pickDoseTime(context),
@@ -96,7 +99,7 @@ class NotificationsScreen extends GetView<NotificationsController> {
                             ),
                           ],
                         ],
-                      ).enter(motion, delay: 80),
+                      ).enter(motion, delay: 140, dy: 0.04),
                     ],
                     const _Label('Daily habits'),
                     KGroup(
@@ -104,25 +107,31 @@ class NotificationsScreen extends GetView<NotificationsController> {
                       children: [
                         _ToggleRow(
                           label: 'Water',
-                          sub: 'Every ${p.waterEvery.value} hours, ${c.waterWindow}',
+                          sub:
+                              '${p.waterEvery.value == 1 ? 'Every hour' : 'Every ${p.waterEvery.value} hours'}, ${c.waterWindow}',
                           value: c.unlocked && p.waterOn.value,
                           plus: !c.unlocked,
                           onChanged: c.setWater,
                         ),
                         if (c.unlocked && p.waterOn.value) ...[
                           _ChoiceRow<int>(
+                            icon: PhosphorIconsRegular.repeat,
                             label: 'How often',
-                            options: const [2, 3],
+                            title: 'Water reminders',
+                            options: const [1, 2, 3, 4],
                             selected: p.waterEvery.value,
-                            labelOf: (h) => 'Every ${h}h',
+                            labelOf: (h) =>
+                                h == 1 ? 'Every hour' : 'Every $h hours',
                             onChanged: c.setWaterEvery,
                           ),
                           _ValueRow(
+                            icon: PhosphorIconsRegular.sun,
                             label: 'First reminder',
                             value: Dates.timeOfDay(p.waterStart.value),
                             onTap: () => c.pickWaterStart(context),
                           ),
                           _ValueRow(
+                            icon: PhosphorIconsRegular.moon,
                             label: 'Last reminder',
                             value: Dates.timeOfDay(p.waterEnd.value),
                             onTap: () => c.pickWaterEnd(context),
@@ -136,7 +145,7 @@ class NotificationsScreen extends GetView<NotificationsController> {
                           onChanged: c.setProtein,
                         ),
                       ],
-                    ).enter(motion, delay: 110),
+                    ).enter(motion, delay: 200, dy: 0.04),
                     const _Label('Visits & supplies'),
                     KGroup(
                       padded: true,
@@ -149,10 +158,14 @@ class NotificationsScreen extends GetView<NotificationsController> {
                         ),
                         if (c.visitOn)
                           _ChoiceRow<int>(
+                            icon: PhosphorIconsRegular.calendarBlank,
                             label: 'Remind me',
-                            options: const [1, 3, 7],
+                            title: 'Doctor visit reminder',
+                            options: const [1, 2, 3, 7],
                             selected: p.visitDays.value,
-                            labelOf: (d) => d == 7 ? '1 week' : '$d ${d == 1 ? 'day' : 'days'}',
+                            labelOf: (d) => d == 7
+                                ? '1 week before'
+                                : '$d ${d == 1 ? 'day' : 'days'} before',
                             onChanged: c.setVisitDays,
                           ),
                         _ToggleRow(
@@ -163,7 +176,7 @@ class NotificationsScreen extends GetView<NotificationsController> {
                           onChanged: c.setRefill,
                         ),
                       ],
-                    ).enter(motion, delay: 140),
+                    ).enter(motion, delay: 260, dy: 0.04),
                     if (!c.isPlus) ...[
                       const _Label('Kindose'),
                       KGroup(
@@ -176,7 +189,7 @@ class NotificationsScreen extends GetView<NotificationsController> {
                             onChanged: c.setOffers,
                           ),
                         ],
-                      ).enter(motion, delay: 170),
+                      ).enter(motion, delay: 320, dy: 0.04),
                     ],
                     const _Label('Quiet hours'),
                     KGroup(
@@ -192,18 +205,20 @@ class NotificationsScreen extends GetView<NotificationsController> {
                         ),
                         if (p.quietOn.value) ...[
                           _ValueRow(
+                            icon: PhosphorIconsRegular.moonStars,
                             label: 'From',
                             value: Dates.timeOfDay(p.quietStart.value),
                             onTap: () => c.pickQuietStart(context),
                           ),
                           _ValueRow(
+                            icon: PhosphorIconsRegular.sunHorizon,
                             label: 'Until',
                             value: Dates.timeOfDay(p.quietEnd.value),
                             onTap: () => c.pickQuietEnd(context),
                           ),
                         ],
                       ],
-                    ).enter(motion, delay: 200),
+                    ).enter(motion, delay: 380, dy: 0.04),
                     Padding(
                       padding: EdgeInsets.fromLTRB(4.sp, 10.sp, 4.sp, 0),
                       child: KBottomPadding(
@@ -346,11 +361,14 @@ class _ToggleRow extends StatelessWidget {
 /// "Reminder time   9:00 AM ›" — opens a picker.
 class _ValueRow extends StatelessWidget {
   const _ValueRow({
+    required this.icon,
     required this.label,
     required this.value,
     required this.onTap,
   });
 
+  /// Marks it as a setting of the row above, lined up with that row.
+  final IconData icon;
   final String label;
   final String value;
   final VoidCallback onTap;
@@ -359,92 +377,139 @@ class _ValueRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final k = context.k;
     return PressScale(
-        semanticLabel: '$label, $value',
-        onTap: onTap,
-        child: Container(
-          color: Colors.transparent,
-          constraints: BoxConstraints(minHeight: 48.sp),
-          padding: EdgeInsets.only(left: 12.sp, top: 10.sp, bottom: 10.sp),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  label,
-                  style: AppText.small.copyWith(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w700,
-                    color: k.muted,
-                  ),
-                ),
+      semanticLabel: '$label, $value',
+      onTap: onTap,
+      child: Container(
+        color: Colors.transparent,
+        constraints: BoxConstraints(minHeight: 52.sp),
+        padding: EdgeInsets.symmetric(vertical: 12.sp),
+        child: Row(
+          children: [
+            PhosphorIcon(icon, size: 20.sp, color: k.muted),
+            SizedBox(width: 12.sp),
+            Expanded(
+              child: Text(
+                label,
+                style: AppText.title.copyWith(fontSize: 15.sp, color: k.text),
               ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.sp, vertical: 6.sp),
-                decoration: BoxDecoration(
-                  color: k.cardAlt,
-                  borderRadius: BorderRadius.circular(12.sp),
-                ),
-                child: Text(
-                  value,
-                  style: AppText.title.copyWith(fontSize: 14.sp, color: k.text),
-                ),
+            ),
+            SizedBox(width: 8.sp),
+            Text(
+              value,
+              style: AppText.bodyStrong.copyWith(
+                fontSize: 14.5.sp,
+                color: k.muted,
               ),
-              SizedBox(width: 6.sp),
-              PhosphorIcon(
-                PhosphorIconsBold.caretRight,
-                size: 14.sp,
-                color: k.faint,
-              ),
-            ],
-          ),
+            ),
+            SizedBox(width: 6.sp),
+            PhosphorIcon(
+              PhosphorIconsBold.caretRight,
+              size: 14.sp,
+              color: k.faint,
+            ),
+          ],
         ),
+      ),
     );
   }
 }
 
-/// Label on the left, small segmented choice on the right.
+/// "How often   Every 2 hours ›": opens a sheet with every option, so
+/// the list can grow without crowding the row.
 class _ChoiceRow<T> extends StatelessWidget {
   const _ChoiceRow({
+    required this.icon,
     required this.label,
+    required this.title,
     required this.options,
     required this.selected,
     required this.labelOf,
     required this.onChanged,
   });
 
+  final IconData icon;
   final String label;
+
+  /// Heading of the sheet.
+  final String title;
   final List<T> options;
   final T selected;
   final String Function(T) labelOf;
   final ValueChanged<T> onChanged;
 
+  Future<void> _open() async {
+    Haptics.instance.selectionClick();
+    final picked = await Get.bottomSheet<T>(
+      _ChoiceSheet<T>(
+        title: title,
+        options: options,
+        selected: selected,
+        labelOf: labelOf,
+      ),
+      isScrollControlled: true,
+    );
+    if (picked != null) onChanged(picked);
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      _ValueRow(
+        icon: icon,
+        label: label,
+        value: labelOf(selected),
+        onTap: _open,
+      );
+}
+
+class _ChoiceSheet<T> extends StatelessWidget {
+  const _ChoiceSheet({
+    required this.title,
+    required this.options,
+    required this.selected,
+    required this.labelOf,
+  });
+
+  final String title;
+  final List<T> options;
+  final T selected;
+  final String Function(T) labelOf;
+
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(left: 12.sp, top: 8.sp, bottom: 8.sp),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: AppText.small.copyWith(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w700,
-                color: context.k.muted,
-              ),
+    final k = context.k;
+    return KSheetFrame(
+      title: title,
+      children: [
+        for (final o in options) ...[
+          ChoiceBox(
+            selected: o == selected,
+            alignment: Alignment.centerLeft,
+            height: 52,
+            padding: EdgeInsets.symmetric(horizontal: 16.sp, vertical: 10.sp),
+            semanticLabel: labelOf(o),
+            onTap: () {
+              Haptics.instance.selectionClick();
+              Navigator.of(context).pop(o);
+            },
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    labelOf(o),
+                    style: AppText.title.copyWith(
+                      fontSize: 15.sp,
+                      color: k.text,
+                    ),
+                  ),
+                ),
+                if (o == selected)
+                  Icon(PhosphorIconsBold.check, size: 18.sp, color: k.text),
+              ],
             ),
           ),
-          SizedBox(
-            width: (options.length * 70).sp,
-            child: KSegmented<T>(
-              options: options,
-              selected: selected,
-              onChanged: onChanged,
-              labelOf: labelOf,
-              dense: true,
-            ),
-          ),
+          SizedBox(height: 8.sp),
         ],
-      ),
+      ],
     );
   }
 }

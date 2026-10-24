@@ -757,9 +757,11 @@ class Catalog {
   /// the Today chip name "Greek yogurt"), or null.
   static Food? foodByLabel(String label) {
     for (final f in foods) {
+      // Servings are saved as "Eggs × 2" or "Eggs, 2 × 2 large".
       if (f.label == label ||
           f.name == label ||
-          label.startsWith('${f.name},')) {
+          label.startsWith('${f.name},') ||
+          label.startsWith('${f.name} × ')) {
         return f;
       }
     }

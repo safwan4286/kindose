@@ -40,7 +40,7 @@ class DietPage extends GetView<OnboardingController> {
       (
         'veg',
         'Vegetarian',
-        'Eggs and dairy, no meat or fish',
+        'No meat or fish',
         Img3d.egg,
         tint(const Color(0xFFFBEFD9), const Color(0xFFE0A23B)),
       ),

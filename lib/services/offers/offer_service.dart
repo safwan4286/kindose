@@ -5,6 +5,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 import '../plus/plus_access.dart';
 import 'offer_config.dart';
+import '../purchases/purchase_service.dart';
 
 /// Decides if the discount offer shows when someone closes the paywall,
 /// and remembers how often it was shown (on this phone).
@@ -50,6 +51,10 @@ class OfferService extends GetxService {
     if (fromOnboarding ? !c.showInOnboarding : !c.showInApp) return false;
     if (closes < c.minPaywallCloses) return false;
     if (c.maxShows > 0 && _shows >= c.maxShows) return false;
+    // Only when the store really has the discount (an intro price below
+    // the regular one). Otherwise the screen would say "30% off" for a
+    // full-price plan; skip it and keep the show for later.
+    if (!_discountReady(c.offeringId)) return false;
     final last = _lastShown;
     if (last != null &&
         DateTime.now().difference(last).inDays < c.cooldownDays) {
@@ -59,5 +64,14 @@ class OfferService extends GetxService {
     await _settings.put(_showsKey, _shows + 1);
     await _settings.put(_lastShownKey, DateTime.now().millisecondsSinceEpoch);
     return true;
+  }
+
+  static bool _discountReady(String offeringId) {
+    if (!Get.isRegistered<PurchaseService>()) return false;
+    final product = Get.find<PurchaseService>()
+        .package('year', offeringId: offeringId)
+        ?.storeProduct;
+    final intro = product?.introductoryPrice;
+    return product != null && intro != null && intro.price < product.price;
   }
 }

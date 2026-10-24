@@ -96,8 +96,10 @@ class WelcomeScreen extends GetView<WelcomeController> {
                         ).enter(motion, delay: 720),
                       ),
                       KBottomPadding(
-                        child: _LegalLine(onTap: controller.openLegal)
-                            .enter(motion, delay: 780),
+                        child: _LegalLine(
+                          onTerms: controller.openTerms,
+                          onPrivacy: controller.openPrivacy,
+                        ).enter(motion, delay: 780),
                       ),
                     ],
                   ),
@@ -225,9 +227,10 @@ class _Benefit extends StatelessWidget {
 }
 
 class _LegalLine extends StatelessWidget {
-  const _LegalLine({required this.onTap});
+  const _LegalLine({required this.onTerms, required this.onPrivacy});
 
-  final VoidCallback onTap;
+  final VoidCallback onTerms;
+  final VoidCallback onPrivacy;
 
   @override
   Widget build(BuildContext context) {
@@ -238,21 +241,26 @@ class _LegalLine extends StatelessWidget {
       fontWeight: FontWeight.w500,
       color: k.faint,
     );
-    Widget link(String t) => GestureDetector(
-      onTap: onTap,
-      child: Text(
-        t,
-        style: base.copyWith(
-          color: k.text,
-          fontWeight: FontWeight.w700,
-          decoration: TextDecoration.underline,
-          decorationColor: k.text,
+    // Each link opens its own page.
+    Widget link(String t, VoidCallback onTap) => Semantics(
+      link: true,
+      label: t,
+      excludeSemantics: true,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Text(
+          t,
+          style: base.copyWith(
+            color: k.text,
+            fontWeight: FontWeight.w700,
+            decoration: TextDecoration.underline,
+            decorationColor: k.text,
+          ),
         ),
       ),
     );
     return Semantics(
-      button: true,
-      label: 'Terms and Privacy Policy',
+      container: true,
       child: SizedBox(
         width: double.infinity,
         child: Text.rich(
@@ -265,13 +273,13 @@ class _LegalLine extends StatelessWidget {
               WidgetSpan(
                 alignment: PlaceholderAlignment.baseline,
                 baseline: TextBaseline.alphabetic,
-                child: link('Terms'),
+                child: link('Terms', onTerms),
               ),
               const TextSpan(text: ' and '),
               WidgetSpan(
                 alignment: PlaceholderAlignment.baseline,
                 baseline: TextBaseline.alphabetic,
-                child: link('Privacy Policy'),
+                child: link('Privacy Policy', onPrivacy),
               ),
               const TextSpan(text: ". Kindose doesn't give medical advice."),
             ],

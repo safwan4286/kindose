@@ -13,6 +13,7 @@ import '../../../widgets/entrance.dart';
 import '../../../widgets/k_widgets.dart';
 import '../../../widgets/press_scale.dart';
 import '../../today/next_bite.dart';
+import '../../common/goal_edit.dart';
 import '../intake_controller.dart';
 import 'intake_parts.dart';
 import '../../../services/plus/access_service.dart';
@@ -105,8 +106,14 @@ class _Hero extends GetView<IntakeController> {
             Semantics(
               label:
                   'Protein ${controller.dayTitle.toLowerCase()}: $total of ${controller.proteinGoal} grams. ${controller.proteinLine}',
+              onTapHint: 'change your daily goal',
+              onTap: () => GoalEdit.protein(context),
               excludeSemantics: true,
-              child: Column(
+              // The whole progress block opens the goal, not just "of 95 g".
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => GoalEdit.protein(context),
+                child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
@@ -139,12 +146,9 @@ class _Hero extends GetView<IntakeController> {
                                   ),
                                 ),
                                 SizedBox(width: 6.sp),
-                                Text(
-                                  'of ${controller.proteinGoal} g',
-                                  style: AppText.title.copyWith(
-                                    fontSize: 16.sp,
-                                    color: k.muted,
-                                  ),
+                                GoalLink(
+                                  text: 'of ${controller.proteinGoal} g',
+                                  onTap: () => GoalEdit.protein(context),
                                 ),
                               ],
                             ),
@@ -165,6 +169,7 @@ class _Hero extends GetView<IntakeController> {
                     ),
                   ),
                 ],
+              ),
               ),
             ),
             // Today's log: the newest entry, the rest on demand.

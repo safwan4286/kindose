@@ -11,7 +11,7 @@ import '../../../services/theme/theme.dart';
 import '../../../widgets/buttons.dart';
 import '../../../widgets/entrance.dart';
 import '../../../widgets/k_widgets.dart';
-import '../../legal/legal_sheet.dart';
+import '../../../resources/app_links.dart';
 import '../onboarding_controller.dart';
 import '../onboarding_screen.dart';
 import '../widgets/choice_tile.dart';
@@ -102,7 +102,7 @@ class WelcomePage extends GetView<OnboardingController> {
                         fontWeight: FontWeight.w800,
                       ),
                       recognizer: TapGestureRecognizer()
-                        ..onTap = showLegalSheet,
+                        ..onTap = () => AppLinks.open(AppLinks.termsUrl),
                     ),
                     const TextSpan(
                       text: ". Kindose doesn't give medical advice.",

@@ -22,7 +22,7 @@ class BackendKeys {
   // the platform keys and must never ship with the test key.
   static const String revenueCatTestKey = 'test_LkxKkxiyeybNCSlgrHzEexEyfxZ';
   static const String revenueCatAppleKey = 'appl_FevEnhjwyitZgRvkyIMkJLXJiDO';
-  static const String revenueCatGoogleKey = ''; // goog_… (after Play setup)
+  static const String revenueCatGoogleKey = 'goog_GpznarxyHwtrPobWIBxhUJCDkei';
 
   static bool get hasSupabase =>
       supabaseUrl.isNotEmpty && supabasePublishableKey.isNotEmpty;
