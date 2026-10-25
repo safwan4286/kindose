@@ -29,6 +29,7 @@ import '../features/pens/pens_screen.dart';
 import '../features/plus/plus_binding.dart';
 import '../features/plus/plus_screen.dart';
 import '../features/report/report_preview_screen.dart';
+import '../features/sources/sources_screen.dart';
 import '../features/splash/splash_binding.dart';
 import '../features/splash/splash_screen.dart';
 import '../features/welcome/welcome_binding.dart';
@@ -60,6 +61,7 @@ class Routes {
   /// Pass 'protein' or 'water' as the argument.
   static const String addIntake = '/add-intake';
   static const String checkIn = '/check-in';
+  static const String sources = '/sources';
 
   /// One day at a glance. Pass a DateTime (defaults to today).
   static const String day = '/day';
@@ -180,6 +182,10 @@ class AppPages {
       page: () => const WeighInsScreen(),
       binding: WeighInsBinding(),
       // Open for browsing; changes ask for Plus (AccessService.ensure).
+    ),
+    GetPage<dynamic>(
+      name: Routes.sources,
+      page: () => const SourcesScreen(),
     ),
     GetPage<dynamic>(
       name: Routes.notifications,

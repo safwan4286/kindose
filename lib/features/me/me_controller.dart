@@ -487,8 +487,10 @@ class MeController extends GetxController {
     if (v == null || v.isNaN) return;
     final newKg = kg ? v : v / _lbPerKg;
     await tracker.saveProfile(p.copyWith(startWeightKg: newKg));
+    // No weigh-ins yet: the profile value is the start. Don't invent a
+    // weigh-in for today.
     final first = tracker.weights.isEmpty ? null : tracker.weights.first;
-    await tracker.addWeight(newKg, first?.date);
+    if (first != null) await tracker.addWeight(newKg, first.date);
   }
 
   String get goalWeightLabel {
@@ -1030,6 +1032,11 @@ class MeController extends GetxController {
   }
 
   // ----------------------------------------------------------------- about
+
+  void openSources() {
+    Haptics.instance.selectionClick();
+    Get.toNamed<void>(Routes.sources);
+  }
 
   void openTerms() {
     Haptics.instance.selectionClick();

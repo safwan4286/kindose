@@ -243,6 +243,7 @@ class MeScreen extends GetView<MeController> {
               children: [
                 _NavRow(label: 'Privacy policy', onTap: c.openPrivacy),
                 _NavRow(label: 'Terms of use', onTap: c.openTerms),
+                _NavRow(label: 'Medical sources', onTap: c.openSources),
                 _NavRow(label: 'Help & FAQ', onTap: c.openHelp),
                 _NavRow(
                   label: 'Suggest a feature',

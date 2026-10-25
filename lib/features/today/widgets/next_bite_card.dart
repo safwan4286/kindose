@@ -3,9 +3,11 @@ import 'package:get/get.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 import '../../../resources/colors.dart';
+import '../../../resources/routes.dart';
 import '../../../resources/images.dart';
 import '../../../services/responsiveness/device_manager.dart';
 import '../../../services/theme/theme.dart';
+import '../../../widgets/buttons.dart';
 import '../../../widgets/entrance.dart';
 import '../../../widgets/k_sheet.dart';
 import '../../../widgets/k_widgets.dart';
@@ -558,7 +560,17 @@ class _WhySheet extends StatelessWidget {
             color: k.muted,
           ),
         ),
-        SizedBox(height: 8.sp),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: LinkButton(
+            label: 'See the sources',
+            color: k.text,
+            onTap: () {
+              Navigator.of(context).pop();
+              Get.toNamed<void>(Routes.sources);
+            },
+          ),
+        ),
       ],
     );
   }
