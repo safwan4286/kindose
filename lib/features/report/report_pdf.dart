@@ -8,6 +8,7 @@ import 'package:pdf/widgets.dart' as pw;
 import '../../resources/catalog.dart';
 import '../../resources/date_utils.dart';
 import '../../resources/water_units.dart';
+import 'pdf_text.dart';
 import 'report_data.dart';
 
 /// Builds the doctor report as PDF bytes: one A4 page for most periods,
@@ -25,13 +26,18 @@ class ReportPdf {
   static const PdfColor _lime = PdfColor.fromInt(0xFFD6F84C);
   static const PdfColor _limeText = PdfColor.fromInt(0xFF3E5205);
 
+  /// Glyph check and pictures for text Figtree can't draw. Loaded once.
+  static PdfText? _t;
+
   static Future<Uint8List> build(ReportData r) async {
-    final regular = pw.Font.ttf(
-      await rootBundle.load('assets/fonts/Figtree-Regular.ttf'),
+    final regularData = await rootBundle.load(
+      'assets/fonts/Figtree-Regular.ttf',
     );
-    final bold = pw.Font.ttf(
-      await rootBundle.load('assets/fonts/Figtree-Bold.ttf'),
-    );
+    final boldData = await rootBundle.load('assets/fonts/Figtree-Bold.ttf');
+    final regular = pw.Font.ttf(regularData);
+    final bold = pw.Font.ttf(boldData);
+    final t = _t ??= PdfText(regularData, boldData);
+    await _prepare(t, r);
 
     final doc = pw.Document(title: 'Treatment summary', author: 'Kindose');
     doc.addPage(
@@ -87,6 +93,42 @@ class ReportPdf {
     return doc.save();
   }
 
+  // Styles shared by the parts and [_prepare], so a prepared picture is
+  // found again by the same style.
+  static final _nameStyle = pw.TextStyle(
+    fontSize: 9,
+    fontWeight: pw.FontWeight.bold,
+    color: _text2,
+  );
+  static final _medicineStyle = pw.TextStyle(
+    fontSize: 9.5,
+    fontWeight: pw.FontWeight.bold,
+    color: _ink,
+  );
+  static const _cellStyle = pw.TextStyle(fontSize: 8.5, color: _ink);
+  static const _questionStyle = pw.TextStyle(fontSize: 9.5, color: _ink);
+
+  /// Text the person typed can hold emoji or other scripts; draw those
+  /// ahead of time (widths are the space each one gets on the page).
+  static Future<void> _prepare(PdfText t, ReportData r) async {
+    final name = r.patientName;
+    if (name != null) await t.prepare(name, _nameStyle, 200);
+    await t.prepare(r.medicineLine, _medicineStyle, 460);
+    for (final d in r.doses) {
+      final note = d.note;
+      if (note != null) await t.prepare(note, _cellStyle, 170);
+    }
+    for (final s in r.symptoms) {
+      await t.prepare(s.label, _cellStyle, 200);
+    }
+    for (var i = 0; i < r.questions.length; i++) {
+      await t.prepare('${i + 1}. ${r.questions[i]}', _questionStyle, 495);
+    }
+    for (final n in r.notes) {
+      await t.prepare(n, _cellStyle, 519);
+    }
+  }
+
   // ------------------------------------------------------------------ parts
 
   static pw.TextStyle _label() => pw.TextStyle(
@@ -105,23 +147,11 @@ class ReportPdf {
     final name = r.patientName;
     final dob = r.patientDob;
     final now = DateTime.now();
-    pw.Widget meta(String k, String v) => pw.RichText(
-      text: pw.TextSpan(
-        children: [
-          pw.TextSpan(
-            text: '$k  ',
-            style: const pw.TextStyle(fontSize: 9, color: _faint),
-          ),
-          pw.TextSpan(
-            text: v,
-            style: pw.TextStyle(
-              fontSize: 9,
-              fontWeight: pw.FontWeight.bold,
-              color: _text2,
-            ),
-          ),
-        ],
-      ),
+    pw.Widget meta(String k, String v) => _labelled(
+      k,
+      v,
+      const pw.TextStyle(fontSize: 9, color: _faint),
+      _nameStyle,
     );
     return pw.Container(
       padding: const pw.EdgeInsets.only(bottom: 10),
@@ -137,16 +167,8 @@ class ReportPdf {
               children: [
                 pw.Row(
                   children: [
-                    pw.Container(
-                      width: 9,
-                      height: 9,
-                      decoration: pw.BoxDecoration(
-                        color: _lime,
-                        shape: pw.BoxShape.circle,
-                        border: pw.Border.all(color: _ink, width: 1),
-                      ),
-                    ),
-                    pw.SizedBox(width: 5),
+                    pw.SvgImage(svg: _icon, width: 14, height: 14),
+                    pw.SizedBox(width: 6),
                     pw.Text(
                       'KINDOSE · PATIENT-LOGGED SUMMARY',
                       style: _label(),
@@ -188,23 +210,47 @@ class ReportPdf {
     );
   }
 
-  static pw.Widget _medicine(ReportData r) => pw.RichText(
-    text: pw.TextSpan(
-      children: [
-        const pw.TextSpan(
-          text: 'Medicine  ',
-          style: pw.TextStyle(fontSize: 9.5, color: _faint),
-        ),
-        pw.TextSpan(
-          text: r.medicineLine,
-          style: pw.TextStyle(
-            fontSize: 9.5,
-            fontWeight: pw.FontWeight.bold,
-            color: _ink,
-          ),
-        ),
-      ],
-    ),
+  /// The app icon, as drawn in assets/brand/app_icon_1024.svg, with the
+  /// corners iOS gives it.
+  static const _icon =
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">'
+      '<rect width="100" height="100" rx="23" fill="#15142B"/>'
+      '<path d="M50 14 C50 14 26 43 26 59 A24 24 0 0 0 74 59 C74 43 50 14 50 14 Z" fill="#D6F84C"/>'
+      '<path d="M38.5 42 Q34.2 48.5 33.6 55" fill="none" stroke="#FFFFFF" stroke-opacity="0.6" stroke-width="3.6" stroke-linecap="round"/>'
+      '<path d="M40.5 60 Q50 69 59.5 60" fill="none" stroke="#15142B" stroke-width="5" stroke-linecap="round"/>'
+      '</svg>';
+
+  /// "Label  value" on one line; the value may be a prepared picture.
+  static pw.Widget _labelled(
+    String label,
+    String value,
+    pw.TextStyle labelStyle,
+    pw.TextStyle valueStyle,
+  ) {
+    if (!_t!.fits(value, valueStyle)) {
+      return pw.Row(
+        mainAxisSize: pw.MainAxisSize.min,
+        children: [
+          pw.Text('$label  ', style: labelStyle),
+          pw.Flexible(child: _t!.text(value, valueStyle)),
+        ],
+      );
+    }
+    return pw.RichText(
+      text: pw.TextSpan(
+        children: [
+          pw.TextSpan(text: '$label  ', style: labelStyle),
+          pw.TextSpan(text: value, style: valueStyle),
+        ],
+      ),
+    );
+  }
+
+  static pw.Widget _medicine(ReportData r) => _labelled(
+    'Medicine',
+    r.medicineLine,
+    const pw.TextStyle(fontSize: 9.5, color: _faint),
+    _medicineStyle,
   );
 
   static pw.Widget _tile(String label, String value, String sub) => pw.Expanded(
@@ -546,7 +592,7 @@ class ReportPdf {
 
   static pw.Widget _table(
     List<String> headers,
-    List<List<String>> rows, {
+    List<List<Object>> rows, {
     Map<int, pw.TableColumnWidth>? widths,
   }) {
     return pw.TableHelper.fromTextArray(
@@ -564,7 +610,7 @@ class ReportPdf {
         color: _muted,
       ),
       headerAlignment: pw.Alignment.centerLeft,
-      cellStyle: const pw.TextStyle(fontSize: 8.5, color: _ink),
+      cellStyle: _cellStyle,
       cellAlignment: pw.Alignment.centerLeft,
       cellPadding: const pw.EdgeInsets.symmetric(horizontal: 5, vertical: 3.5),
       headerPadding: const pw.EdgeInsets.symmetric(
@@ -603,7 +649,7 @@ class ReportPdf {
                 if (injections) d.site.isEmpty ? '' : Catalog.siteName(d.site),
                 if (injections)
                   d.pain == null ? '' : Catalog.painLabels[d.pain!.clamp(0, 3)],
-                d.note ?? '',
+                _t!.text(d.note ?? '', _cellStyle),
               ],
           ],
         ),
@@ -628,7 +674,7 @@ class ReportPdf {
             [
               for (final s in r.symptoms)
                 [
-                  s.label,
+                  _t!.text(s.label, _cellStyle),
                   '${s.days}',
                   _cap(Catalog.levelWords[s.strongest]),
                   if (!r.isDaily) s.usualDay ?? '—',
@@ -716,10 +762,7 @@ class ReportPdf {
         for (var i = 0; i < r.questions.length; i++)
           pw.Padding(
             padding: const pw.EdgeInsets.only(top: 2),
-            child: pw.Text(
-              '${i + 1}. ${r.questions[i]}',
-              style: const pw.TextStyle(fontSize: 9.5, color: _ink),
-            ),
+            child: _t!.text('${i + 1}. ${r.questions[i]}', _questionStyle),
           ),
       ],
     ),
@@ -730,10 +773,7 @@ class ReportPdf {
     for (final n in r.notes)
       pw.Padding(
         padding: const pw.EdgeInsets.only(bottom: 3),
-        child: pw.Text(
-          n,
-          style: const pw.TextStyle(fontSize: 8.5, color: _ink),
-        ),
+        child: _t!.text(n, _cellStyle),
       ),
   ];
 }

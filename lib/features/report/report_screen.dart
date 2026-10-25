@@ -13,6 +13,7 @@ import '../../widgets/k_widgets.dart';
 import '../../widgets/press_scale.dart';
 import '../home/home_screen.dart';
 import 'report_controller.dart';
+import 'widgets/report_actions.dart';
 
 /// Doctor report tab: appointment, period, what to include, questions,
 /// optional name, then Preview (free) and Share PDF (Plus).
@@ -31,18 +32,16 @@ class ReportScreen extends GetView<ReportController> {
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           padding: EdgeInsets.fromLTRB(20.sp, 12.sp, 20.sp, kNavClearance),
           children: [
-            Text('DOCTOR REPORT', style: _caps(context)),
-            SizedBox(height: 4.sp),
             Semantics(
               header: true,
               child: Text(
-                'One page for your doctor',
+                'Doctor report',
                 style: AppText.h1.copyWith(fontSize: 30.sp, color: k.text),
               ),
             ).enter(motion),
             SizedBox(height: 6.sp),
             Text(
-              'Only what you logged. It goes to no one unless you share it.',
+              'One page with only what you logged. It goes to no one unless you share it.',
               style: AppText.bodyStrong.copyWith(
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w600,
@@ -62,20 +61,24 @@ class ReportScreen extends GetView<ReportController> {
             SizedBox(height: 12.sp),
             _NameCard(controller: controller),
             SizedBox(height: 18.sp),
-            PillButton(
-              label: controller.isPlus ? 'Share PDF' : 'Share PDF · Plus',
-              icon: PhosphorIconsBold.shareNetwork,
-              busy: controller.sharing.value,
-              onPressed: controller.sharePdf,
+            ReportActions(
+              plus: controller.isPlus,
+              sharing: controller.sharing.value,
+              saving: controller.saving.value,
+              onShare: controller.sharePdf,
+              onDownload: controller.downloadPdf,
             ),
-            SizedBox(height: 8.sp),
-            Text(
-              controller.isPlus
-                  ? 'Opens your share sheet: email, WhatsApp, print.'
-                  : 'Preview is free. Show it on your phone at the visit.',
-              textAlign: TextAlign.center,
-              style: AppText.small.copyWith(fontSize: 12.5.sp, color: k.muted),
-            ),
+            if (!controller.isPlus) ...[
+              SizedBox(height: 8.sp),
+              Text(
+                'Preview is free. Show it on your phone at the visit.',
+                textAlign: TextAlign.center,
+                style: AppText.small.copyWith(
+                  fontSize: 12.5.sp,
+                  color: k.muted,
+                ),
+              ),
+            ],
           ],
         );
       }),
@@ -97,6 +100,8 @@ TextStyle _caps(BuildContext c) => AppText.caps.copyWith(
   color: c.k.faint,
 );
 
+/// The next visit and its reminder in one dark card: the date on top,
+/// "Reminder · 3 days before ›" underneath. Each part opens its own picker.
 class _AppointmentCard extends StatelessWidget {
   const _AppointmentCard({required this.controller});
 
@@ -106,80 +111,135 @@ class _AppointmentCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final k = context.k;
     final has = controller.nextAppointment != null;
-    return PressScale(
-      semanticLabel: has
-          ? 'Next appointment ${controller.appointmentTitle}. Tap to change'
-          : 'Add your next appointment',
-      onTap: () => controller.pickAppointment(context),
-      child: ExcludeSemantics(
-        child: Container(
-          padding: EdgeInsets.fromLTRB(16.sp, 14.sp, 14.sp, 14.sp),
-          decoration: BoxDecoration(
-            color: AppColors.hero,
-            borderRadius: BorderRadius.circular(22.sp),
-            border: k.selectedBorder == AppColors.lime
-                ? Border.all(color: k.border)
-                : null,
-          ),
-          child: Row(
-            children: [
-              ThreeD(Img3d.calendar, size: 40.sp),
-              SizedBox(width: 12.sp),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.hero,
+        borderRadius: BorderRadius.circular(22.sp),
+        border: k.selectedBorder == AppColors.lime
+            ? Border.all(color: k.border)
+            : null,
+      ),
+      child: Column(
+        children: [
+          PressScale(
+            semanticLabel: has
+                ? 'Next appointment ${controller.appointmentTitle}. Tap to change'
+                : 'Add your next appointment',
+            onTap: () => controller.pickAppointment(context),
+            child: ExcludeSemantics(
+              child: Container(
+                color: Colors.transparent,
+                padding: EdgeInsets.fromLTRB(16.sp, 16.sp, 14.sp, 14.sp),
+                child: Row(
                   children: [
-                    Text(
-                      'NEXT APPOINTMENT',
-                      style: AppText.caps.copyWith(
-                        fontSize: 11.5.sp,
-                        letterSpacing: 0.8,
-                        color: AppColors.lime,
+                    ThreeD(Img3d.calendar, size: 40.sp),
+                    SizedBox(width: 12.sp),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'NEXT APPOINTMENT',
+                            style: AppText.caps.copyWith(
+                              fontSize: 11.5.sp,
+                              letterSpacing: 0.8,
+                              color: AppColors.lime,
+                            ),
+                          ),
+                          SizedBox(height: 3.sp),
+                          Text(
+                            controller.appointmentTitle,
+                            style: AppText.title.copyWith(
+                              fontSize: 16.sp,
+                              color: AppColors.white,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    SizedBox(height: 2.sp),
-                    Text(
-                      controller.appointmentTitle,
-                      style: AppText.title.copyWith(
-                        fontSize: 16.sp,
-                        color: AppColors.white,
+                    SizedBox(width: 8.sp),
+                    Container(
+                      height: 36.sp,
+                      padding: EdgeInsets.symmetric(horizontal: 14.sp),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(18.sp),
+                        border: Border.all(
+                          color: AppColors.white.withValues(alpha: 0.2),
+                          width: 1.5,
+                        ),
                       ),
-                    ),
-                    Text(
-                      controller.appointmentSub,
-                      style: AppText.small.copyWith(
-                        fontSize: 12.5.sp,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.heroMuted,
+                      child: Text(
+                        has ? 'Change' : 'Add',
+                        style: AppText.small.copyWith(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.white,
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-              SizedBox(width: 8.sp),
-              Container(
-                height: 36.sp,
-                padding: EdgeInsets.symmetric(horizontal: 12.sp),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(18.sp),
-                  border: Border.all(
-                    color: AppColors.white.withValues(alpha: 0.2),
-                    width: 1.5,
-                  ),
-                ),
-                child: Text(
-                  has ? 'Change' : 'Add',
-                  style: AppText.small.copyWith(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.white,
-                  ),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.sp),
+            child: Divider(
+              height: 1,
+              thickness: 1,
+              color: AppColors.white.withValues(alpha: 0.1),
+            ),
+          ),
+          PressScale(
+            semanticLabel:
+                'Visit reminder, ${controller.reminderLabel}. Tap to change',
+            onTap: controller.pickReminder,
+            child: ExcludeSemantics(
+              child: Container(
+                color: Colors.transparent,
+                constraints: BoxConstraints(minHeight: 48.sp),
+                padding: EdgeInsets.fromLTRB(16.sp, 12.sp, 16.sp, 14.sp),
+                child: Row(
+                  children: [
+                    // Same width as the calendar, so the text lines up.
+                    SizedBox(
+                      width: 40.sp,
+                      child: PhosphorIcon(
+                        PhosphorIconsRegular.bell,
+                        size: 20.sp,
+                        color: AppColors.heroMuted,
+                      ),
+                    ),
+                    SizedBox(width: 12.sp),
+                    Expanded(
+                      child: Text(
+                        'Reminder',
+                        style: AppText.title.copyWith(
+                          fontSize: 14.5.sp,
+                          color: AppColors.white,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      controller.reminderLabel,
+                      style: AppText.bodyStrong.copyWith(
+                        fontSize: 14.sp,
+                        color: AppColors.heroMuted,
+                      ),
+                    ),
+                    SizedBox(width: 6.sp),
+                    PhosphorIcon(
+                      PhosphorIconsBold.caretRight,
+                      size: 14.sp,
+                      color: AppColors.heroMuted,
+                    ),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -206,13 +266,14 @@ class _PeriodRow extends StatelessWidget {
               padding: EdgeInsets.symmetric(horizontal: 4.sp),
               semanticLabel:
                   '${controller.periodLabel(list[i])} ${controller.periodSub(list[i])}',
-              onTap: () => controller.pickPeriod(list[i]),
+              onTap: () => controller.pickPeriod(list[i], context),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     controller.periodLabel(list[i]),
                     maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: AppText.small.copyWith(
                       fontSize: 13.sp,
                       fontWeight: FontWeight.w800,
@@ -223,6 +284,7 @@ class _PeriodRow extends StatelessWidget {
                     Text(
                       controller.periodSub(list[i]),
                       maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: AppText.tiny.copyWith(
                         fontSize: 11.sp,
                         color: k.faint,
@@ -665,6 +727,7 @@ class _NameCard extends StatelessWidget {
                           controller: controller.nameCtrl,
                           textCapitalization: TextCapitalization.words,
                           autofillHints: const [AutofillHints.name],
+                          textInputAction: TextInputAction.next,
                           decoration: const InputDecoration(
                             hintText: 'Full name',
                           ),
@@ -672,7 +735,8 @@ class _NameCard extends StatelessWidget {
                         SizedBox(height: 8.sp),
                         TextField(
                           controller: controller.dobCtrl,
-                          keyboardType: TextInputType.datetime,
+                          // Plain keyboard: the hint has a month name.
+                          textInputAction: TextInputAction.done,
                           decoration: const InputDecoration(
                             hintText: 'Birth date, e.g. 12 Mar 1988',
                           ),

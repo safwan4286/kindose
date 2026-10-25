@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:printing/printing.dart';
 
 import '../../resources/date_utils.dart';
 import '../../resources/routes.dart';
 import '../../services/haptics/haptics.dart';
+import '../../services/notifications/notif_prefs.dart';
 import '../../services/plus/plus_access.dart';
 import '../../services/tracker_service.dart';
 import '../../widgets/toast.dart';
 import 'report_data.dart';
 import 'report_pdf.dart';
+import '../../widgets/choice_sheet.dart';
+import '../notifications/notification_permission.dart';
 import '../../widgets/k_date_picker.dart';
 
-enum ReportPeriod { lastVisit, weeks4, months3, all }
+enum ReportPeriod { lastVisit, weeks4, months3, all, custom }
 
 /// Doctor report tab. Name and birth date live only in memory for this
 /// screen and are never written to storage. Questions are saved so they
@@ -36,6 +40,7 @@ class ReportController extends GetxController {
   final RxBool notes = false.obs;
   final RxBool includeName = false.obs;
   final RxBool sharing = false.obs;
+  final RxBool saving = false.obs;
 
   /// Neutral questions people often bring. Never answers, only prompts.
   static const List<String> ideaPool = [
@@ -71,6 +76,9 @@ class ReportController extends GetxController {
     tracker.lastAppointment.value;
     tracker.reportQuestions.length;
     tracker.visitReminderOn.value;
+    _prefs.visitDays.value;
+    customFrom.value;
+    customTo.value;
     tracker.doses.length;
     tracker.days.length;
     tracker.weights.length;
@@ -92,7 +100,7 @@ class ReportController extends GetxController {
 
   String get appointmentTitle {
     final a = nextAppointment;
-    if (a == null) return 'Add your next appointment';
+    if (a == null) return 'Add your next visit';
     final days = Dates.daysBetween(DateTime.now(), a);
     final when = switch (days) {
       < 0 => 'passed',
@@ -103,11 +111,40 @@ class ReportController extends GetxController {
     return '${Dates.shortWithDay(a)} · $when';
   }
 
-  String get appointmentSub => nextAppointment == null
-      ? 'We’ll remind you 3 days before to get your report ready.'
-      : tracker.visitReminderOn.value
-      ? 'We’ll remind you 3 days before.'
-      : 'Turn on Doctor visit reminders in Me to get a nudge 3 days before.';
+  NotifPrefs get _prefs => Get.find<NotifPrefs>();
+
+  /// "3 days before" (from Notifications), or "Off".
+  String get reminderLabel {
+    if (!tracker.visitReminderOn.value) return 'Off';
+    final d = _prefs.visitDays.value;
+    return d == 7 ? '1 week before' : '$d ${d == 1 ? 'day' : 'days'} before';
+  }
+
+  /// Reminder timing, the same setting as Me → Notifications. 0 = off.
+  Future<void> pickReminder() async {
+    final current = tracker.visitReminderOn.value ? _prefs.visitDays.value : 0;
+    final picked = await showChoiceSheet<int>(
+      title: 'Visit reminder',
+      sub: 'A nudge at 9 AM to check your report and add questions.',
+      options: const [1, 2, 3, 7, 0],
+      selected: current,
+      labelOf: (d) => switch (d) {
+        0 => 'Off',
+        1 => '1 day before',
+        7 => '1 week before',
+        _ => '$d days before',
+      },
+    );
+    if (picked == null || picked == current) return;
+    if (picked == 0) {
+      await tracker.setVisitReminderOn(false);
+      return;
+    }
+    if (!await askForNotifications()) return;
+    _prefs.visitDays.value = picked;
+    await _prefs.save();
+    if (!tracker.visitReminderOn.value) await tracker.setVisitReminderOn(true);
+  }
 
   Future<void> pickAppointment(BuildContext context) async {
     Haptics.instance.selectionClick();
@@ -123,9 +160,15 @@ class ReportController extends GetxController {
       firstDate: first,
       lastDate: Dates.addDays(now, 365),
       title: 'Next appointment',
-      note: 'We’ll remind you 3 days before.',
+      note: tracker.visitReminderOn.value
+          ? 'We’ll remind you ${reminderLabel.toLowerCase()}.'
+          : null,
     );
-    if (picked != null) await tracker.setNextAppointment(picked);
+    if (picked == null) return;
+    await tracker.setNextAppointment(picked);
+    // First visit with the reminder on: ask the phone now, so the
+    // reminder can actually arrive.
+    if (tracker.visitReminderOn.value) await askForNotifications();
   }
 
   // ---------------------------------------------------------------- period
@@ -135,13 +178,49 @@ class ReportController extends GetxController {
     ReportPeriod.weeks4,
     ReportPeriod.months3,
     ReportPeriod.all,
+    ReportPeriod.custom,
   ];
+
+  /// Dates picked for [ReportPeriod.custom].
+  final Rxn<DateTime> customFrom = Rxn<DateTime>();
+  final Rxn<DateTime> customTo = Rxn<DateTime>();
+
+  /// Start, then end. Cancelling either keeps what was there.
+  Future<void> pickCustom(BuildContext context) async {
+    final today = Dates.dateOnly(DateTime.now());
+    final earliest = _treatmentStart == null
+        ? Dates.addDays(today, -365 * 3)
+        : Dates.dateOnly(_treatmentStart!);
+    final start = await showKDatePicker(
+      context: context,
+      initialDate: customFrom.value ?? Dates.addDays(today, -27),
+      firstDate: earliest.isAfter(today) ? today : earliest,
+      lastDate: today,
+      title: 'Report from',
+    );
+    if (start == null || !context.mounted) return;
+    final s = Dates.dateOnly(start);
+    final end = await showKDatePicker(
+      context: context,
+      initialDate: customTo.value == null || customTo.value!.isBefore(s)
+          ? today
+          : customTo.value!,
+      firstDate: s,
+      lastDate: today,
+      title: 'Report until',
+    );
+    if (end == null) return;
+    customFrom.value = s;
+    customTo.value = Dates.dateOnly(end);
+    period.value = ReportPeriod.custom;
+  }
 
   String periodLabel(ReportPeriod p) => switch (p) {
     ReportPeriod.lastVisit => 'Last visit',
     ReportPeriod.weeks4 => '4 weeks',
     ReportPeriod.months3 => '3 months',
     ReportPeriod.all => 'All',
+    ReportPeriod.custom => 'Custom',
   };
 
   String periodSub(ReportPeriod p) {
@@ -149,15 +228,21 @@ class ReportController extends GetxController {
       case ReportPeriod.lastVisit:
         final l = tracker.lastAppointment.value;
         return l == null ? '' : Dates.short(l);
-      case ReportPeriod.all:
-        final s = _treatmentStart;
-        return s == null ? '' : 'since ${Dates.monthShort(s.month)}';
+      case ReportPeriod.custom:
+        final f = customFrom.value;
+        return f == null ? '' : Dates.short(f);
       default:
         return '';
     }
   }
 
-  void pickPeriod(ReportPeriod p) {
+  void pickPeriod(ReportPeriod p, BuildContext context) {
+    // Custom always opens the dates, so they can be changed.
+    if (p == ReportPeriod.custom) {
+      Haptics.instance.selectionClick();
+      pickCustom(context);
+      return;
+    }
     if (period.value == p) return;
     Haptics.instance.selectionClick();
     period.value = p;
@@ -192,21 +277,31 @@ class ReportController extends GetxController {
         return Dates.dateOnly(
           _treatmentStart ?? Dates.addDays(today, -27),
         );
+      case ReportPeriod.custom:
+        return customFrom.value ?? Dates.addDays(today, -27);
     }
   }
 
-  DateTime get to => Dates.dateOnly(DateTime.now());
+  DateTime get to {
+    final end = customTo.value;
+    return period.value == ReportPeriod.custom && end != null
+        ? end
+        : Dates.dateOnly(DateTime.now());
+  }
 
   String get periodNote => switch (period.value) {
     ReportPeriod.lastVisit => 'since last visit',
     ReportPeriod.weeks4 => 'last 4 weeks',
     ReportPeriod.months3 => 'last 3 months',
     ReportPeriod.all => 'whole treatment',
+    ReportPeriod.custom => 'chosen dates',
   };
 
   String get periodTitle {
     final days = Dates.daysBetween(from, to) + 1;
-    final length = days >= 14 ? '${(days / 7).round()} weeks' : '$days days';
+    final length = days >= 14
+        ? '${(days / 7).round()} weeks'
+        : '$days ${days == 1 ? 'day' : 'days'}';
     return '${Dates.short(from)} – ${Dates.short(to)} · $length';
   }
 
@@ -299,6 +394,47 @@ class ReportController extends GetxController {
     await share(buildData(), sharing);
   }
 
+  Future<void> downloadPdf() async {
+    if (!anySection) {
+      showToast('Pick at least one section.');
+      return;
+    }
+    await download(buildData(), saving);
+  }
+
+  static String get _fileName =>
+      'kindose-report-${Dates.key(DateTime.now())}.pdf';
+
+  /// Save the PDF where the user picks, with the phone's own Save dialog
+  /// (Android: e.g. Downloads; iPhone: Files). Plus, like sharing.
+  static Future<void> download(ReportData data, RxBool busy) async {
+    if (!PlusAccess.unlocked) {
+      Haptics.instance.selectionClick();
+      await Get.toNamed<void>(Routes.plus);
+      return;
+    }
+    if (busy.value) return;
+    busy.value = true;
+    try {
+      Haptics.instance.lightImpact();
+      final bytes = await ReportPdf.build(data);
+      final saved = await FilePicker.saveFile(
+        fileName: _fileName,
+        bytes: bytes,
+        mimeType: 'application/pdf',
+        dialogTitle: 'Save report',
+      );
+      if (saved != null) {
+        Haptics.instance.mediumImpact();
+        showToast('Report saved');
+      }
+    } catch (_) {
+      showToast("Couldn't save the PDF. Please try again.");
+    } finally {
+      busy.value = false;
+    }
+  }
+
   /// Share the PDF (Plus). Free users are taken to the Plus screen.
   static Future<void> share(ReportData data, RxBool busy) async {
     if (!PlusAccess.unlocked) {
@@ -313,7 +449,7 @@ class ReportController extends GetxController {
       final bytes = await ReportPdf.build(data);
       await Printing.sharePdf(
         bytes: bytes,
-        filename: 'kindose-report-${Dates.key(DateTime.now())}.pdf',
+        filename: _fileName,
       );
     } catch (_) {
       showToast("Couldn't create the PDF. Please try again.");

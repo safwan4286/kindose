@@ -4,12 +4,11 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 import '../../resources/colors.dart';
 import '../../resources/date_utils.dart';
-import '../../services/haptics/haptics.dart';
 import '../../services/responsiveness/device_manager.dart';
 import '../../services/theme/theme.dart';
 import '../../widgets/buttons.dart';
+import '../../widgets/choice_sheet.dart';
 import '../../widgets/entrance.dart';
-import '../../widgets/k_sheet.dart';
 import '../../widgets/k_widgets.dart';
 import '../../widgets/press_scale.dart';
 import '../../widgets/safe_bottom.dart';
@@ -438,15 +437,11 @@ class _ChoiceRow<T> extends StatelessWidget {
   final ValueChanged<T> onChanged;
 
   Future<void> _open() async {
-    Haptics.instance.selectionClick();
-    final picked = await Get.bottomSheet<T>(
-      _ChoiceSheet<T>(
-        title: title,
-        options: options,
-        selected: selected,
-        labelOf: labelOf,
-      ),
-      isScrollControlled: true,
+    final picked = await showChoiceSheet<T>(
+      title: title,
+      options: options,
+      selected: selected,
+      labelOf: labelOf,
     );
     if (picked != null) onChanged(picked);
   }
@@ -459,59 +454,6 @@ class _ChoiceRow<T> extends StatelessWidget {
         value: labelOf(selected),
         onTap: _open,
       );
-}
-
-class _ChoiceSheet<T> extends StatelessWidget {
-  const _ChoiceSheet({
-    required this.title,
-    required this.options,
-    required this.selected,
-    required this.labelOf,
-  });
-
-  final String title;
-  final List<T> options;
-  final T selected;
-  final String Function(T) labelOf;
-
-  @override
-  Widget build(BuildContext context) {
-    final k = context.k;
-    return KSheetFrame(
-      title: title,
-      children: [
-        for (final o in options) ...[
-          ChoiceBox(
-            selected: o == selected,
-            alignment: Alignment.centerLeft,
-            height: 52,
-            padding: EdgeInsets.symmetric(horizontal: 16.sp, vertical: 10.sp),
-            semanticLabel: labelOf(o),
-            onTap: () {
-              Haptics.instance.selectionClick();
-              Navigator.of(context).pop(o);
-            },
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    labelOf(o),
-                    style: AppText.title.copyWith(
-                      fontSize: 15.sp,
-                      color: k.text,
-                    ),
-                  ),
-                ),
-                if (o == selected)
-                  Icon(PhosphorIconsBold.check, size: 18.sp, color: k.text),
-              ],
-            ),
-          ),
-          SizedBox(height: 8.sp),
-        ],
-      ],
-    );
-  }
 }
 
 /// Shown when the phone blocks Kindose notifications: no switch here can
