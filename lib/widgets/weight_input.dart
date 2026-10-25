@@ -24,6 +24,7 @@ class WeightInput extends StatelessWidget {
     this.minKg = 30,
     this.maxKg = 300,
     this.animate = true,
+    this.compact = false,
   });
 
   final double kg;
@@ -36,6 +37,9 @@ class WeightInput extends StatelessWidget {
   final double minKg;
   final double maxKg;
   final bool animate;
+
+  /// Tighter gaps, for short phones where a card follows below.
+  final bool compact;
 
   double _shown(double v) => useKg ? v : v * Imperial.lbPerKg;
   String get _unit => useKg ? 'kg' : 'lb';
@@ -79,14 +83,14 @@ class WeightInput extends StatelessWidget {
             labelOf: (v) => v ? 'kg' : 'lb',
           ),
         ).enter(motion, delay: 100, dy: 0.1),
-        SizedBox(height: 30.sp),
+        SizedBox(height: (compact ? 16 : 30).sp),
         BigValue(
           value: shown,
           unit: _unit,
           semanticLabel: '$typeTitle $shown $_unit',
           onTap: () => _type(context),
         ).enter(motion, delay: 160),
-        SizedBox(height: 26.sp),
+        SizedBox(height: (compact ? 14 : 26).sp),
         KRuler(
           // One ruler per unit, and each converts with its own unit, so a
           // fling that is still running during a unit switch can't save a

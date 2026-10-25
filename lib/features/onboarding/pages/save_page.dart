@@ -373,11 +373,13 @@ class _SavedDataHero extends StatelessWidget {
     return ExcludeSemantics(
       child: SizedBox(
         width: 270.sp + 32.sp,
-        height: 184.sp,
+        height: 206.sp,
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            Positioned(left: 16.sp, top: 8.sp, child: stack),
+            // The card sits lower than the badge, so the badge rests on
+            // its corner instead of covering the first row's value.
+            Positioned(left: 16.sp, top: 30.sp, child: stack),
             Positioned(right: 0, top: 0, child: badge),
           ],
         ),
