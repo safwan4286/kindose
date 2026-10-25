@@ -901,9 +901,19 @@ class Catalog {
     'dizzy': 'Dizziness',
     'bloat': 'Bloating',
     'vomit': 'Vomiting',
+    'stomach': 'Stomach pain',
+    'gas': 'Gas',
+    'site': 'Injection site reaction',
+    'hair': 'Hair loss',
+    'lowsugar': 'Low blood sugar',
+    'aches': 'Body aches',
+    'cold': 'Feeling cold',
+    'sleep': 'Trouble sleeping',
+    'anxious': 'Anxiety',
   };
 
-  /// Side-effect chips on the check-in, in order (nausea has its own row).
+  /// Side effects on the check-in before the person customises the list
+  /// (nausea has its own row).
   static const List<String> checkInEffects = [
     'tired',
     'constip',
@@ -915,6 +925,47 @@ class Catalog {
     'headache',
     'dizzy',
   ];
+
+  /// Every side effect in the Customise sheet, grouped.
+  static const List<(String, List<String>)> symptomGroups = [
+    (
+      'Stomach and digestion',
+      [
+        'vomit',
+        'diarrhoea',
+        'constip',
+        'bloat',
+        'gas',
+        'heartburn',
+        'burping',
+        'stomach',
+      ],
+    ),
+    (
+      'Whole body',
+      [
+        'tired',
+        'headache',
+        'dizzy',
+        'aches',
+        'cold',
+        'hair',
+        'site',
+        'lowsugar',
+      ],
+    ),
+    ('Sleep and mood', ['sleep', 'anxious']),
+  ];
+
+  /// Symptoms the person typed are stored as "custom:Their words".
+  static const String customPrefix = 'custom:';
+
+  static String customId(String name) => '$customPrefix$name';
+
+  /// Display name for any symptom id, built-in or custom.
+  static String symptomLabel(String id) => id.startsWith(customPrefix)
+      ? id.substring(customPrefix.length)
+      : symptoms[id] ?? id;
 
   /// Words for a side-effect level (index 1–3).
   static const List<String> levelWords = ['', 'mild', 'moderate', 'severe'];

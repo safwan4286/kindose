@@ -879,7 +879,7 @@ class MeController extends GetxController {
               .map(
                 (s) => s == 'nausea'
                     ? 'Nausea'
-                    : '${Catalog.symptoms[s] ?? s} (${Catalog.levelWords[d.levelOf(s)]})',
+                    : '${Catalog.symptomLabel(s)} (${Catalog.levelWords[d.levelOf(s)]})',
               )
               .join('; '),
           d.nausea == -1

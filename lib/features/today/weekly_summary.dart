@@ -198,7 +198,7 @@ class WeeklySummary {
     String? sub;
     if (effects.isNotEmpty) {
       final top = effects.entries.reduce((a, b) => a.value >= b.value ? a : b);
-      final name = Catalog.symptoms[top.key] ?? top.key;
+      final name = Catalog.symptomLabel(top.key);
       sub = '$name on ${top.value} ${top.value == 1 ? 'day' : 'days'}';
     } else {
       sub = 'No side effects logged';

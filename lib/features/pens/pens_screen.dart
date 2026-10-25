@@ -658,6 +658,7 @@ class _Purchases extends StatelessWidget {
                   Dismissible(
                     key: ValueKey<String>(p.id),
                     direction: DismissDirection.endToStart,
+                    confirmDismiss: (_) => c.confirmRemovePurchase(p),
                     onDismissed: (_) => c.removePurchase(p),
                     background: Container(
                       color: AppColors.dangerSoft,

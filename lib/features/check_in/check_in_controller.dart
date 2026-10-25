@@ -10,8 +10,9 @@ import '../../services/plus/access_service.dart';
 import '../../services/tracker_service.dart';
 import '../../widgets/toast.dart';
 
-/// How-I-feel check-in for today. Opens pre-filled with anything already
-/// logged today, so it works as an edit screen too.
+/// How-I-feel check-in, for today or a past day (pass the DateTime as the
+/// argument; 'note' opens today's with the note field focused). Opens
+/// pre-filled with anything already logged, so it works as an edit too.
 class CheckInController extends GetxController {
   final TrackerService tracker = Get.find<TrackerService>();
   final TextEditingController noteCtrl = TextEditingController();
@@ -24,7 +25,8 @@ class CheckInController extends GetxController {
   final RxnInt foodNoise = RxnInt();
   final RxnInt appetite = RxnInt();
 
-  /// Side effect id → 1 mild, 2 moderate, 3 severe (absent = not felt).
+  /// Side effect id → 1 mild, 2 moderate, 3 severe (absent = not felt),
+  /// in the order they were picked.
   final RxMap<String, int> levels = <String, int>{}.obs;
   final RxBool showNote = false.obs;
   final RxBool saving = false.obs;
@@ -32,19 +34,31 @@ class CheckInController extends GetxController {
   /// Opened from a "Note" shortcut: jump straight to the note field.
   late final bool focusNote = Get.arguments == 'note';
 
+  /// The day being logged; never after today.
+  late final DateTime day = () {
+    final arg = Get.arguments;
+    final today = Dates.dateOnly(DateTime.now());
+    if (arg is! DateTime) return today;
+    final d = Dates.dateOnly(arg);
+    return d.isAfter(today) ? today : d;
+  }();
+
+  bool get isToday => Dates.sameDay(day, DateTime.now());
+
   @override
   void onInit() {
     super.onInit();
-    final d = tracker.today;
+    final d = tracker.dayLog(day);
     mood.value = d.mood;
     nausea.value = d.symptoms.contains('nausea')
         ? (d.nausea ?? 0).clamp(0, 2)
         : (d.nausea == -1 ? -1 : null);
     foodNoise.value = d.foodNoise;
     appetite.value = d.appetite;
-    for (final id in Catalog.checkInEffects) {
+    for (final id in d.symptoms) {
+      if (id == 'nausea') continue;
       final l = d.levelOf(id);
-      if (l > 0) levels[id] = l;
+      if (l > 0) levels[id] = l.clamp(1, 3);
     }
     noteCtrl.text = d.note ?? '';
     showNote.value = focusNote || noteCtrl.text.isNotEmpty;
@@ -63,16 +77,25 @@ class CheckInController extends GetxController {
     super.onClose();
   }
 
-  /// "DAY 2 AFTER YOUR DOSE", "DOSE DAY", or today's date before any dose.
+  /// "DAY 2 AFTER YOUR DOSE", "DOSE DAY", or the date: always the date
+  /// for a past day, so it's clear which day is being logged.
   String get eyebrow {
+    final date = Dates.long(day).toUpperCase();
+    if (!isToday) return date;
     final last = tracker.lastDose;
     if (last == null || (tracker.profile.value?.isDaily ?? false)) {
-      return Dates.long(DateTime.now()).toUpperCase();
+      return date;
     }
-    final n = Dates.daysBetween(last.takenAt, DateTime.now());
+    final n = Dates.daysBetween(last.takenAt, day);
     if (n == 0) return 'DOSE DAY';
     return 'DAY $n AFTER YOUR DOSE';
   }
+
+  String get title => isToday ? 'How are you today?' : 'How did you feel?';
+
+  String get sub => isToday
+      ? 'About 20 seconds. Everything is optional.'
+      : 'Logging for ${Dates.shortWithDay(day)}. Everything is optional.';
 
   void pickMood(int i) {
     Haptics.instance.selectionClick();
@@ -98,19 +121,40 @@ class CheckInController extends GetxController {
     target.value = target.value == value ? null : value;
   }
 
-  /// Not felt → mild → moderate → severe → not felt.
-  void tapEffect(String id) {
-    final next = ((levels[id] ?? 0) + 1) % 4;
-    if (next == 3) {
+  /// Side effects on the screen: the person's list, then anything already
+  /// logged for this day that isn't on it (so it can still be changed).
+  List<String> get effects {
+    final custom = tracker.customSymptoms.map(Catalog.customId).toSet();
+    final shown = [
+      for (final id in tracker.checkInShown)
+        if (Catalog.symptoms.containsKey(id) || custom.contains(id)) id,
+    ];
+    return [
+      ...shown,
+      for (final id in levels.keys)
+        if (!shown.contains(id)) id,
+    ];
+  }
+
+  /// Picks a side effect (mild to start) or takes it off.
+  void toggleEffect(String id) {
+    Haptics.instance.selectionClick();
+    if (levels.containsKey(id)) {
+      levels.remove(id);
+    } else {
+      levels[id] = 1;
+    }
+  }
+
+  /// 1 mild, 2 moderate, 3 severe.
+  void setLevel(String id, int level) {
+    if (levels[id] == level) return;
+    if (level == 3) {
       Haptics.instance.mediumImpact();
     } else {
       Haptics.instance.selectionClick();
     }
-    if (next == 0) {
-      levels.remove(id);
-    } else {
-      levels[id] = next;
-    }
+    levels[id] = level;
   }
 
   int levelOf(String id) => levels[id] ?? 0;
@@ -129,7 +173,7 @@ class CheckInController extends GetxController {
     saving.value = true;
     try {
       final note = noteCtrl.text.trim();
-      final d = tracker.today;
+      final d = tracker.dayLog(day);
       final effects = Map<String, int>.from(levels);
       // Build a fresh record so cleared answers really become empty.
       await tracker.saveDay(
@@ -139,10 +183,7 @@ class CheckInController extends GetxController {
           waterMl: d.waterMl,
           entries: d.entries,
           mood: mood.value,
-          symptoms: [
-            if ((nausea.value ?? -1) >= 0) 'nausea',
-            ...effects.keys,
-          ],
+          symptoms: [if ((nausea.value ?? -1) >= 0) 'nausea', ...effects.keys],
           symptomLevels: effects,
           nausea: nausea.value,
           foodNoise: foodNoise.value,

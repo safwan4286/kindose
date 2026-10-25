@@ -171,7 +171,7 @@ class ReportData {
       if (count == 0) continue;
       rows.add(
         SymptomRow(
-          label: Catalog.symptoms[id] ?? id,
+          label: Catalog.symptomLabel(id),
           days: count,
           strongest: strongest.clamp(1, 3),
           usualDay: (p?.isDaily ?? false) || weeks.length < 3

@@ -8,6 +8,7 @@ import '../../resources/routes.dart';
 import '../../services/haptics/haptics.dart';
 import '../../services/plus/access_service.dart';
 import '../../services/tracker_service.dart';
+import '../../widgets/confirm_sheet.dart';
 import '../../widgets/toast.dart';
 import '../log_dose/log_dose_controller.dart' show logMissedDose;
 
@@ -228,10 +229,22 @@ class DosesController extends GetxController {
     Get.toNamed<void>(Routes.logDose, arguments: d);
   }
 
-  /// Delete with Undo (same record back, Pens & cost counts it again).
-  /// Returns false when nothing was deleted (paywall closed).
-  Future<bool> delete(DoseLog d) async {
+  /// Paywall, then "Delete this dose?". True when the person said yes.
+  Future<bool> confirmDelete(DoseLog d) async {
     if (!await AccessService.ensure()) return false;
+    return confirmRemove(
+      title: isTablet ? 'Delete this tablet?' : 'Delete this dose?',
+      message:
+          '${titleOf(d)} on ${Dates.shortWithDay(d.takenAt)}. It comes off '
+          'your history, injection spots and pen count.',
+    );
+  }
+
+  /// Delete after asking (pass [asked] when the swipe already asked),
+  /// still with Undo (same record back, Pens & cost counts it again).
+  /// Returns false when nothing was deleted.
+  Future<bool> delete(DoseLog d, {bool asked = false}) async {
+    if (!asked && !await confirmDelete(d)) return false;
     Haptics.instance.mediumImpact();
     final u = await tracker.removeDoseAndRestore(d.id);
     showUndoToast(

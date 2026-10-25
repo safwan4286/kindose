@@ -603,6 +603,11 @@ class _WeightSection extends StatelessWidget {
       icon: Img3d.chartDown,
       tint: AppColors.violetSoft,
       title: 'Weight',
+      trailing: _link(
+        context,
+        w == null ? 'Log' : 'Edit',
+        controller.logWeightForDay,
+      ),
       child: w == null
           ? _muted(context, 'No weigh-in this day.')
           : Text(
@@ -633,9 +638,11 @@ class _FeelSection extends StatelessWidget {
       icon: Img3d.nauseated,
       tint: AppColors.limeSoft,
       title: 'How I felt',
-      trailing: c.isToday && !c.hasCheckIn
-          ? _link(context, 'Check in', c.openCheckIn)
-          : null,
+      trailing: _link(
+        context,
+        c.hasCheckIn ? 'Edit' : 'Check in',
+        c.openCheckIn,
+      ),
       child: !c.hasCheckIn
           ? _muted(
               context,

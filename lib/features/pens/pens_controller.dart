@@ -11,6 +11,7 @@ import '../../services/plus/plus_access.dart';
 import '../../services/supply/supply_service.dart';
 import '../../services/tracker_service.dart';
 import '../../widgets/ask_number.dart';
+import '../../widgets/confirm_sheet.dart';
 import '../../widgets/toast.dart';
 import '../notifications/notification_permission.dart';
 import 'widgets/pens_sheets.dart';
@@ -202,6 +203,15 @@ class PensController extends GetxController {
     await supply.addPurchase(p);
     showToast(
       'Added · ${p.packs} spare ${p.packs == 1 ? pack : packs} at home',
+    );
+  }
+
+  /// "Delete this purchase?" before the row slides away.
+  Future<bool> confirmRemovePurchase(Purchase p) async {
+    if (!_allow()) return false;
+    return confirmRemove(
+      title: 'Delete this purchase?',
+      message: 'It comes off your cost totals and spare count.',
     );
   }
 

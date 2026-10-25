@@ -176,7 +176,7 @@ class _DoseDetailSheet extends StatelessWidget {
         action(
           PhosphorIconsBold.trash,
           tablet ? 'Delete tablet' : 'Delete dose',
-          'You can undo right after',
+          'Asks first',
           () => controller.delete(d),
           danger: true,
         ),

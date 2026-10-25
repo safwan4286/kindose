@@ -15,6 +15,7 @@ import '../../widgets/press_scale.dart';
 import '../../widgets/safe_bottom.dart';
 import '../../widgets/toast.dart';
 import 'check_in_controller.dart';
+import 'widgets/symptoms_sheet.dart';
 
 /// How I feel: mood, nausea / food noise / appetite, side effects with a
 /// strength, a safety card for anything severe, and a note. ~20 seconds.
@@ -58,7 +59,7 @@ class CheckInScreen extends GetView<CheckInController> {
                   Semantics(
                     header: true,
                     child: Text(
-                      'How are you today?',
+                      controller.title,
                       style: AppText.h1.copyWith(
                         fontSize: 30.sp,
                         color: k.text,
@@ -67,7 +68,7 @@ class CheckInScreen extends GetView<CheckInController> {
                   ).enter(motion),
                   SizedBox(height: 6.sp),
                   Text(
-                    'About 20 seconds. Everything is optional.',
+                    controller.sub,
                     style: AppText.bodyStrong.copyWith(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
@@ -85,36 +86,8 @@ class CheckInScreen extends GetView<CheckInController> {
                   ).enter(motion, delay: 80),
                   SizedBox(height: 18.sp),
                   const _Scales().enter(motion, delay: 120),
-                  _label(
-                    context,
-                    'Anything else?',
-                    'Tap again = stronger',
-                  ).enter(motion, delay: 160),
+                  _label(context, 'Anything else?').enter(motion, delay: 160),
                   const _Effects().enter(motion, delay: 180),
-                  SizedBox(height: 8.sp),
-                  ExcludeSemantics(
-                    child: Row(
-                      children: [
-                        for (var l = 1; l <= 3; l++) ...[
-                          _Bars(
-                            level: l,
-                            color: k.faint,
-                            faint: Colors.transparent,
-                            small: true,
-                          ),
-                          SizedBox(width: 4.sp),
-                          Text(
-                            Catalog.levelWords[l],
-                            style: AppText.small.copyWith(
-                              fontSize: 12.sp,
-                              color: k.faint,
-                            ),
-                          ),
-                          SizedBox(width: 14.sp),
-                        ],
-                      ],
-                    ),
-                  ),
                   const _SevereCard(),
                   SizedBox(height: 16.sp),
                   // The Plus advert only for people without Plus; they
@@ -151,10 +124,10 @@ class CheckInScreen extends GetView<CheckInController> {
     );
   }
 
-  Widget _label(BuildContext context, String text, String trailing) {
+  Widget _label(BuildContext context, String text) {
     final k = context.k;
     return Padding(
-      padding: EdgeInsets.only(top: 22.sp, bottom: 10.sp),
+      padding: EdgeInsets.only(top: 14.sp, bottom: 6.sp),
       child: Row(
         children: [
           Expanded(
@@ -170,9 +143,33 @@ class CheckInScreen extends GetView<CheckInController> {
               ),
             ),
           ),
-          Text(
-            trailing,
-            style: AppText.small.copyWith(fontSize: 12.5.sp, color: k.faint),
+          PressScale(
+            semanticLabel: 'Customise symptoms',
+            onTap: () => showSymptomsSheet(),
+            child: Container(
+              color: Colors.transparent,
+              constraints: BoxConstraints(minHeight: 44.sp),
+              padding: EdgeInsets.only(left: 12.sp),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  PhosphorIcon(
+                    PhosphorIconsBold.slidersHorizontal,
+                    size: 15.sp,
+                    color: k.text,
+                  ),
+                  SizedBox(width: 6.sp),
+                  Text(
+                    'Customise',
+                    style: AppText.small.copyWith(
+                      fontSize: 13.5.sp,
+                      fontWeight: FontWeight.w800,
+                      color: k.text,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -201,6 +198,7 @@ class _Scales extends GetView<CheckInController> {
               hint: 'Feeling sick',
               options: const ['None', 'Mild', 'Moderate', 'Severe'],
               selected: controller.nauseaOnScreen,
+              danger: 3,
               onPick: controller.pickNausea,
             ),
             Divider(height: 1, color: k.border),
@@ -233,6 +231,7 @@ class _ScaleRow extends StatelessWidget {
     required this.options,
     required this.selected,
     required this.onPick,
+    this.danger,
   });
 
   final String title;
@@ -240,6 +239,9 @@ class _ScaleRow extends StatelessWidget {
   final List<String> options;
   final int? selected;
   final ValueChanged<int> onPick;
+
+  /// Option drawn in red when picked (Severe).
+  final int? danger;
 
   @override
   Widget build(BuildContext context) {
@@ -285,7 +287,11 @@ class _ScaleRow extends StatelessWidget {
                         height: 40.sp,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: selected == i ? k.text : k.bg,
+                          color: selected != i
+                              ? k.bg
+                              : i == danger
+                              ? AppColors.danger
+                              : k.text,
                           borderRadius: BorderRadius.circular(14.sp),
                         ),
                         child: Text(
@@ -295,7 +301,11 @@ class _ScaleRow extends StatelessWidget {
                           style: AppText.small.copyWith(
                             fontSize: 13.sp,
                             fontWeight: FontWeight.w800,
-                            color: selected == i ? k.bg : k.textSoft,
+                            color: selected != i
+                                ? k.textSoft
+                                : i == danger
+                                ? AppColors.white
+                                : k.bg,
                           ),
                         ),
                       ),
@@ -311,7 +321,8 @@ class _ScaleRow extends StatelessWidget {
   }
 }
 
-/// Side-effect chips. Each tap raises the level; the 4th clears it.
+/// Side-effect chips to pick, then a Mild / Moderate / Severe row for
+/// each picked one, in the order they were picked.
 class _Effects extends GetView<CheckInController> {
   const _Effects();
 
@@ -320,95 +331,130 @@ class _Effects extends GetView<CheckInController> {
     final k = context.k;
     return Obx(() {
       controller.levels.length;
-      return Wrap(
-        spacing: 8.sp,
-        runSpacing: 8.sp,
+      controller.levels.values.toList();
+      final effects = controller.effects;
+      final picked = controller.levels.keys.toList();
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          for (final id in Catalog.checkInEffects)
-            Builder(
-              builder: (context) {
-                final l = controller.levelOf(id);
-                final name = Catalog.symptoms[id] ?? id;
-                final severe = l == 3;
-                final strong = severe ? AppColors.danger : k.text;
-                return Semantics(
-                  button: true,
-                  label: l == 0
-                      ? '$name, not felt. Tap to add'
-                      : '$name, ${Catalog.levelWords[l]}. Tap to change',
-                  excludeSemantics: true,
-                  child: PressScale(
-                    pressedScale: 0.94,
-                    onTap: () => controller.tapEffect(id),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 160),
-                      height: 42.sp,
-                      padding: EdgeInsets.fromLTRB(12.sp, 0, 14.sp, 0),
-                      decoration: BoxDecoration(
-                        color: severe ? AppColors.dangerSoft : k.card,
-                        borderRadius: BorderRadius.circular(21.sp),
-                        border: Border.all(
-                          color: l > 0 ? strong : k.border,
-                          width: 1.5,
-                        ),
+          if (effects.isEmpty)
+            Text(
+              'No symptoms on your list. Tap Customise to add some.',
+              style: AppText.small.copyWith(fontSize: 13.sp, color: k.muted),
+            )
+          else
+            Wrap(
+              spacing: 8.sp,
+              runSpacing: 8.sp,
+              children: [
+                for (final id in effects)
+                  _EffectChip(
+                    name: Catalog.symptomLabel(id),
+                    level: controller.levelOf(id),
+                    onTap: () => controller.toggleEffect(id),
+                  ),
+              ],
+            ),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.topCenter,
+            child: picked.isEmpty
+                ? const SizedBox(width: double.infinity)
+                : Padding(
+                    padding: EdgeInsets.only(top: 12.sp),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16.sp,
+                        vertical: 4.sp,
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
+                      decoration: BoxDecoration(
+                        color: k.card,
+                        borderRadius: BorderRadius.circular(22.sp),
+                      ),
+                      child: Column(
                         children: [
-                          _Bars(level: l, color: strong, faint: k.border),
-                          SizedBox(width: 8.sp),
-                          Text(
-                            name,
-                            style: AppText.small.copyWith(
-                              fontSize: 13.5.sp,
-                              fontWeight: FontWeight.w800,
-                              color: severe ? AppColors.dangerText : k.text,
+                          for (var i = 0; i < picked.length; i++) ...[
+                            if (i > 0) Divider(height: 1, color: k.border),
+                            _ScaleRow(
+                              title: Catalog.symptomLabel(picked[i]),
+                              hint: 'How strong',
+                              options: const ['Mild', 'Moderate', 'Severe'],
+                              selected: controller.levelOf(picked[i]) - 1,
+                              danger: 2,
+                              onPick: (v) =>
+                                  controller.setLevel(picked[i], v + 1),
                             ),
-                          ),
+                          ],
                         ],
                       ),
                     ),
                   ),
-                );
-              },
-            ),
+          ),
         ],
       );
     });
   }
 }
 
-class _Bars extends StatelessWidget {
-  const _Bars({
+/// A side effect to pick: outlined, or filled once picked (red when
+/// severe). Same size either way, so the chips never move under a finger.
+class _EffectChip extends StatelessWidget {
+  const _EffectChip({
+    required this.name,
     required this.level,
-    required this.color,
-    required this.faint,
-    this.small = false,
+    required this.onTap,
   });
 
+  final String name;
   final int level;
-  final Color color;
-  final Color faint;
-  final bool small;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        for (var i = 1; i <= 3; i++)
-          if (!small || i <= level)
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 160),
-              width: 5.sp,
-              height: (small ? 10 : 12).sp,
-              margin: EdgeInsets.only(right: 2.sp),
-              decoration: BoxDecoration(
-                color: i <= level ? color : faint,
-                borderRadius: BorderRadius.circular(3.sp),
-              ),
+    final k = context.k;
+    final on = level > 0;
+    final severe = level == 3;
+    final bg = severe ? AppColors.dangerSoft : (on ? k.text : k.card);
+    final fg = severe ? AppColors.dangerText : (on ? k.bg : k.text);
+    return Semantics(
+      button: true,
+      selected: on,
+      label: on
+          ? '$name, ${Catalog.levelWords[level]}. Tap to remove'
+          : '$name. Tap to add',
+      excludeSemantics: true,
+      child: PressScale(
+        pressedScale: 0.94,
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          height: 42.sp,
+          padding: EdgeInsets.symmetric(horizontal: 14.sp),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(21.sp),
+            border: Border.all(
+              color: severe ? AppColors.danger : (on ? k.text : k.border),
+              width: 1.5,
             ),
-      ],
+          ),
+          // A Row sizes to the name and centres it vertically.
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                name,
+                style: AppText.small.copyWith(
+                  fontSize: 13.5.sp,
+                  fontWeight: FontWeight.w800,
+                  color: fg,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -484,8 +530,7 @@ class _PatternTeaser extends GetView<CheckInController> {
   Widget build(BuildContext context) {
     final bordered = context.k.selectedBorder == AppColors.lime;
     return PressScale(
-      semanticLabel:
-          'Your pattern, a Kindose Plus feature. See which day after your dose feels hardest. Opens Plus',
+      semanticLabel: 'Your pattern, a Kindose Plus feature. See which day after your dose feels hardest. Opens Plus',
       onTap: controller.openPlus,
       child: ExcludeSemantics(
         child: Container(

@@ -942,8 +942,8 @@ class _DoseActionsSheet extends StatelessWidget {
         row(
           PhosphorIconsBold.trash,
           'Remove this dose',
-          'You can undo right after',
-          controller.undoDoseToday,
+          'Asks first',
+          controller.removeDoseToday,
           danger: true,
         ),
       ],

@@ -4,7 +4,9 @@ import 'package:get/get.dart';
 import '../../models/logs.dart';
 import '../../resources/date_utils.dart';
 import '../../services/haptics/haptics.dart';
+import '../../services/plus/access_service.dart';
 import '../../services/tracker_service.dart';
+import '../../widgets/confirm_sheet.dart';
 import '../../widgets/k_date_picker.dart';
 import '../../widgets/k_ruler.dart';
 import '../../widgets/toast.dart';
@@ -71,7 +73,18 @@ class WeighInsController extends GetxController {
     await showWeightSheet(day: day);
   }
 
-  /// Swipe to delete, with Undo.
+  /// Paywall, then "Delete this weigh-in?". Used before the row slides.
+  Future<bool> confirmDelete(WeightEntry w) async {
+    if (!await AccessService.ensure()) return false;
+    return confirmRemove(
+      title: 'Delete this weigh-in?',
+      message:
+          '${fmt(w.kg)} on ${Dates.shortWithDay(w.date)}. It comes off your '
+          'chart and progress.',
+    );
+  }
+
+  /// Swipe to delete (already asked), with Undo.
   Future<void> delete(WeightEntry w) async {
     final old = await tracker.removeWeight(w.date);
     if (old == null) return;

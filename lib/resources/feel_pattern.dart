@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 
 import '../models/logs.dart';
-import 'catalog.dart';
 import 'date_utils.dart';
 
 /// Which day after a dose usually feels hardest, from check-ins. Shared by
@@ -16,8 +15,8 @@ class FeelPattern {
   static int dayLevel(DayLog log) {
     if (!log.hasCheckIn) return -1;
     var l = log.symptoms.contains('nausea') ? (log.nausea ?? 0) + 1 : 0;
-    for (final id in Catalog.checkInEffects) {
-      l = math.max(l, log.levelOf(id));
+    for (final id in log.symptoms) {
+      if (id != 'nausea') l = math.max(l, log.levelOf(id));
     }
     return l.clamp(0, 3);
   }

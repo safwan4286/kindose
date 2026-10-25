@@ -45,6 +45,13 @@ class TrackerService extends GetxService {
   /// Questions the user wants printed on the doctor report.
   final RxList<String> reportQuestions = <String>[].obs;
 
+  /// Side effects shown on the check-in (ids, in order), and the ones the
+  /// person typed themselves. Set in the check-in's Customise sheet.
+  final RxList<String> checkInShown = <String>[
+    ...Catalog.checkInEffects,
+  ].obs;
+  final RxList<String> customSymptoms = <String>[].obs;
+
   /// Reminder 3 days before [nextAppointment]. On unless turned off in Me.
   final RxBool visitReminderOn = true.obs;
 
@@ -116,6 +123,14 @@ class TrackerService extends GetxService {
     final qs = _settings.get('reportQuestions');
     reportQuestions.assignAll(
       qs is List ? qs.whereType<String>() : const <String>[],
+    );
+    final shown = _settings.get('checkInShown');
+    checkInShown.assignAll(
+      shown is List ? shown.whereType<String>() : Catalog.checkInEffects,
+    );
+    final custom = _settings.get('customSymptoms');
+    customSymptoms.assignAll(
+      custom is List ? custom.whereType<String>() : const <String>[],
     );
     setupDismissed.value = _settings.get('setupDismissed') == true;
     visitReminderOn.value = _settings.get('visitReminderOn') != false;
@@ -660,6 +675,16 @@ class TrackerService extends GetxService {
     await _settings.put('visitReminderOn', on);
   }
 
+  Future<void> setCheckInSymptoms({
+    required List<String> shown,
+    required List<String> custom,
+  }) async {
+    checkInShown.assignAll(shown);
+    customSymptoms.assignAll(custom);
+    await _settings.put('checkInShown', shown);
+    await _settings.put('customSymptoms', custom);
+  }
+
   Future<void> setReportQuestions(List<String> list) async {
     reportQuestions.assignAll(list);
     await _settings.put('reportQuestions', list);
@@ -760,6 +785,8 @@ class TrackerService extends GetxService {
     nextAppointment.value = null;
     lastAppointment.value = null;
     reportQuestions.clear();
+    checkInShown.assignAll(Catalog.checkInEffects);
+    customSymptoms.clear();
     setupDismissed.value = false;
     visitReminderOn.value = true;
     todayOrder.clear();

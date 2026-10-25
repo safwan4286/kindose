@@ -12,6 +12,7 @@ import '../../services/responsiveness/device_manager.dart';
 import '../../services/theme/theme.dart';
 import '../../services/tracker_service.dart';
 import '../../widgets/buttons.dart';
+import '../../widgets/confirm_sheet.dart';
 import '../../widgets/day_switcher.dart';
 import '../../widgets/k_ruler.dart';
 import '../../widgets/k_widgets.dart';
@@ -120,9 +121,18 @@ class _WeightScreenState extends State<WeightScreen> {
     }
   }
 
-  /// Deletes this day's weigh-in; Undo puts it back.
+  /// Deletes this day's weigh-in after asking; Undo puts it back.
   Future<void> _delete() async {
     if (!await AccessService.ensure()) return;
+    final existing = _sameDay;
+    if (existing == null) return;
+    final ok = await confirmRemove(
+      title: 'Delete this weigh-in?',
+      message:
+          '${_fmt(existing.kg)} $_unit on ${Dates.shortWithDay(_day)}. It '
+          'comes off your chart and progress.',
+    );
+    if (!ok) return;
     final old = await _t.removeWeight(_day);
     if (old == null || !mounted) return;
     Haptics.instance.mediumImpact();

@@ -16,6 +16,7 @@ import '../../services/notifications/notification_service.dart';
 import '../../services/plus/access_service.dart';
 import '../../services/plus/plus_access.dart';
 import '../../services/tracker_service.dart';
+import '../../widgets/confirm_sheet.dart';
 import '../../widgets/k_ruler.dart';
 import '../../widgets/toast.dart';
 import '../home/home_controller.dart';
@@ -443,6 +444,22 @@ class TodayController extends GetxController with WidgetsBindingObserver {
   Future<void> undoDoseToday() async {
     final d = doseToday;
     if (d == null) return;
+    await _removeDose(d);
+  }
+
+  /// "Remove this dose" from the dose card menu: asks first.
+  Future<void> removeDoseToday() async {
+    final d = doseToday;
+    if (d == null) return;
+    final ok = await confirmRemove(
+      title: 'Remove today’s dose?',
+      message: 'It comes off your history, injection spots and pen count.',
+      action: 'Remove',
+    );
+    if (ok) await _removeDose(d);
+  }
+
+  Future<void> _removeDose(DoseLog d) async {
     Haptics.instance.selectionClick();
     final u = await tracker.removeDoseAndRestore(d.id);
     showUndoToast('Dose removed', () => tracker.restoreDose(d, u));
@@ -656,6 +673,22 @@ class TodayController extends GetxController with WidgetsBindingObserver {
     Haptics.instance.selectionClick();
     Get.toNamed<void>(Routes.checkIn);
   }
+
+  /// Side effects logged today, nausea first: (name, 1 mild … 3 severe).
+  List<(String, int)> get loggedEffects {
+    final d = day;
+    final nausea = d.symptoms.contains('nausea') ? d.nausea ?? 0 : -1;
+    return [
+      if (nausea >= 0) ('Nausea', (nausea + 1).clamp(1, 3)),
+      for (final id in d.symptoms)
+        if (id != 'nausea')
+          (Catalog.symptomLabel(id), d.levelOf(id).clamp(1, 3)),
+    ];
+  }
+
+  /// Side effects or a note logged today (a face alone doesn't count).
+  bool get hasSymptomsOrNote =>
+      loggedEffects.isNotEmpty || (day.note?.isNotEmpty ?? false);
 
   // ------------------------------------------------------------------- tip
 

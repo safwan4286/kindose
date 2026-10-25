@@ -11,6 +11,7 @@ import 'package:kindose/models/logs.dart';
 import 'package:kindose/models/user_profile.dart';
 import 'package:kindose/resources/catalog.dart';
 import 'package:kindose/resources/date_utils.dart';
+import 'package:kindose/resources/feel_pattern.dart';
 import 'package:kindose/services/tracker_service.dart';
 import 'package:kindose/widgets/mood_row.dart';
 import 'package:kindose/features/today/today_controller.dart';
@@ -129,6 +130,30 @@ void main() {
       expect(picked, 0); // Catalog.moods[0] is Great
       await tester.tap(find.text('Rough'));
       expect(picked, 4);
+    });
+  });
+
+  group('Symptoms', () {
+    test('custom symptoms show their own words', () {
+      expect(Catalog.symptomLabel(Catalog.customId('Dry mouth')), 'Dry mouth');
+      expect(Catalog.symptomLabel('stomach'), 'Stomach pain');
+    });
+
+    test('every grouped symptom has a name', () {
+      for (final (_, ids) in Catalog.symptomGroups) {
+        for (final id in ids) {
+          expect(Catalog.symptoms.containsKey(id), isTrue, reason: id);
+        }
+      }
+    });
+
+    test('new and custom symptoms count towards how a day felt', () {
+      final d = DayLog(
+        key: Dates.key(DateTime.now()),
+        symptoms: [Catalog.customId('Dry mouth'), 'stomach'],
+        symptomLevels: {Catalog.customId('Dry mouth'): 1, 'stomach': 3},
+      );
+      expect(FeelPattern.dayLevel(d), 3);
     });
   });
 }

@@ -15,6 +15,7 @@ import '../../services/plus/plus_access.dart';
 import '../../services/tracker_service.dart';
 import '../../widgets/toast.dart';
 import '../common/day_nav.dart';
+import '../home/weight_sheet.dart';
 import '../today/next_bite.dart';
 
 /// Everything logged on one day: dose, protein, water, weight and how it
@@ -256,6 +257,9 @@ class DayController extends GetxController with DayNav {
     return null;
   }
 
+  /// Log weight on this day, or change / delete its weigh-in.
+  void logWeightForDay() => showWeightSheet(day: day.value);
+
   bool get useKg => tracker.profile.value?.useKg ?? true;
 
   String weightLabel(double kg) => useKg
@@ -284,7 +288,7 @@ class DayController extends GetxController with DayNav {
       if (s == 'nausea')
         'Nausea${_word(log.nausea, const ['mild', 'moderate', 'severe'])}'
       else
-        '${Catalog.symptoms[s] ?? s}${log.levelOf(s) > 0 ? ' · ${Catalog.levelWords[log.levelOf(s)]}' : ''}',
+        '${Catalog.symptomLabel(s)}${log.levelOf(s) > 0 ? ' · ${Catalog.levelWords[log.levelOf(s)]}' : ''}',
   ];
 
   List<String> get scales => [
@@ -300,6 +304,6 @@ class DayController extends GetxController with DayNav {
 
   void openCheckIn() {
     Haptics.instance.selectionClick();
-    Get.toNamed<void>(Routes.checkIn);
+    Get.toNamed<void>(Routes.checkIn, arguments: day.value);
   }
 }

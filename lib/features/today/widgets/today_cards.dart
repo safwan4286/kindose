@@ -10,6 +10,7 @@ import '../../../services/haptics/haptics.dart';
 import '../../../services/responsiveness/device_manager.dart';
 import '../../../services/theme/theme.dart';
 import '../../../widgets/drop_mark.dart';
+import '../../../widgets/buttons.dart';
 import '../../../widgets/k_widgets.dart';
 import '../../../widgets/press_scale.dart';
 import '../../../widgets/toast.dart';
@@ -949,6 +950,8 @@ class FeelCard extends GetView<TodayController> {
     final k = context.k;
     final selected = controller.selectedFace;
     final note = controller.feelNote;
+    final effects = controller.loggedEffects;
+    final logged = controller.hasSymptomsOrNote;
     return TodaySection(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1032,49 +1035,60 @@ class FeelCard extends GetView<TodayController> {
               ],
             ],
           ),
-          // Always there: quiet grey before a face is picked, bold after,
-          // so someone who only wants to log a side effect can find it.
-          Padding(
-            padding: EdgeInsets.only(top: 6.sp),
-            child: Semantics(
-              button: true,
-              label: 'Add side effects or a note',
-              excludeSemantics: true,
-              child: PressScale(
-                onTap: controller.openCheckIn,
-                child: SizedBox(
-                  height: 40.sp,
-                  child: Row(
-                    children: [
-                      AnimatedDefaultTextStyle(
-                        duration: const Duration(milliseconds: 250),
-                        curve: Curves.easeOutCubic,
-                        style: AppText.small.copyWith(
-                          fontSize: 13.5.sp,
-                          fontWeight: selected == null
-                              ? FontWeight.w700
-                              : FontWeight.w800,
-                          color: selected == null ? k.muted : k.text,
-                        ),
-                        child: Text(
-                          selected == null
-                              ? 'Side effects or a note'
-                              : 'Add side effects or a note',
-                        ),
-                      ),
-                      SizedBox(width: 4.sp),
-                      Icon(
-                        PhosphorIconsBold.caretRight,
-                        size: 14.sp,
-                        color: selected == null ? k.muted : k.text,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+          if (effects.isNotEmpty) ...[
+            SizedBox(height: 12.sp),
+            Wrap(
+              spacing: 6.sp,
+              runSpacing: 6.sp,
+              children: [
+                for (final (name, level) in effects.take(4))
+                  _LoggedChip(name: name, level: level),
+                if (effects.length > 4)
+                  _LoggedChip(name: '+${effects.length - 4} more', level: 0),
+              ],
             ),
+          ],
+          SizedBox(height: 12.sp),
+          SoftButton(
+            label: logged ? 'Edit check-in' : 'Log symptoms',
+            icon: logged
+                ? PhosphorIconsBold.pencilSimple
+                : PhosphorIconsBold.plus,
+            height: 48,
+            background: k.bg,
+            onPressed: controller.openCheckIn,
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// A side effect logged today: "Nausea · mild", red when severe.
+/// [level] 0 is a plain label ("+2 more").
+class _LoggedChip extends StatelessWidget {
+  const _LoggedChip({required this.name, required this.level});
+
+  final String name;
+  final int level;
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    final severe = level == 3;
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 10.sp, vertical: 6.sp),
+      decoration: BoxDecoration(
+        color: severe ? AppColors.dangerSoft : k.bg,
+        borderRadius: BorderRadius.circular(12.sp),
+      ),
+      child: Text(
+        level == 0 ? name : '$name · ${Catalog.levelWords[level]}',
+        style: AppText.small.copyWith(
+          fontSize: 12.5.sp,
+          fontWeight: FontWeight.w700,
+          color: severe ? AppColors.dangerText : k.textSoft,
+        ),
       ),
     );
   }

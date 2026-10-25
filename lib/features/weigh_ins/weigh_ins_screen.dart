@@ -5,7 +5,6 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../../models/logs.dart';
 import '../../resources/colors.dart';
 import '../../resources/date_utils.dart';
-import '../../services/plus/access_service.dart';
 import '../../services/responsiveness/device_manager.dart';
 import '../../services/theme/theme.dart';
 import '../../widgets/entrance.dart';
@@ -171,8 +170,9 @@ class _Row extends StatelessWidget {
         child: Dismissible(
           key: ValueKey('weight-${entry.key}'),
           direction: DismissDirection.endToStart,
-          // Paywall before the row slides away; a locked swipe springs back.
-          confirmDismiss: (_) => AccessService.ensure(),
+          // Paywall and "Delete this weigh-in?" before the row slides
+          // away; Cancel springs it back.
+          confirmDismiss: (_) => c.confirmDelete(entry),
           onDismissed: (_) => c.delete(entry),
           background: Container(
             alignment: Alignment.centerRight,

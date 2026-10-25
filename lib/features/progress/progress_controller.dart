@@ -527,7 +527,7 @@ class ProgressController extends GetxController {
     }
     if (counts.isEmpty) return '$word.';
     final top = counts.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
-    return '$word. ${Catalog.symptoms[top] ?? top} came up most.';
+    return '$word. ${Catalog.symptomLabel(top)} came up most.';
   }
 
   /// "Day 1 after your dose is usually your hardest", or null when there

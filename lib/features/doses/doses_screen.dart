@@ -5,7 +5,6 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../../models/logs.dart';
 import '../../resources/colors.dart';
 import '../../resources/date_utils.dart';
-import '../../services/plus/access_service.dart';
 import '../../services/responsiveness/device_manager.dart';
 import '../../services/theme/theme.dart';
 import '../../widgets/buttons.dart';
@@ -284,9 +283,10 @@ class _DoseTile extends StatelessWidget {
         child: Dismissible(
           key: ValueKey('dose-${d.id}'),
           direction: DismissDirection.endToStart,
-          // Paywall before the row slides away; a locked swipe springs back.
-          confirmDismiss: (_) => AccessService.ensure(),
-          onDismissed: (_) => controller.delete(d),
+          // Paywall and "Delete this dose?" before the row slides away;
+          // Cancel springs it back.
+          confirmDismiss: (_) => controller.confirmDelete(d),
+          onDismissed: (_) => controller.delete(d, asked: true),
           background: Container(
             alignment: Alignment.centerRight,
             padding: EdgeInsets.only(right: 18.sp),

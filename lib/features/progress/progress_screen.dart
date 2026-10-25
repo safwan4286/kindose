@@ -1239,7 +1239,7 @@ class _FeelCardState extends State<_FeelCard> {
       c.level < 0
           ? 'No check-in'
           : ['Fine', 'Mild', 'Moderate', 'Severe'][c.level],
-      for (final s in log.symptoms.take(2)) Catalog.symptoms[s] ?? s,
+      for (final s in log.symptoms.take(2)) Catalog.symptomLabel(s),
       if (c.doseDay) 'dose day',
     ];
     final checkIn = isToday && c.level < 0;
