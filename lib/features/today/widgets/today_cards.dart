@@ -272,31 +272,43 @@ class SetupCard extends GetView<TodayController> {
 
   Widget _build(BuildContext context) {
     final k = context.k;
+    final dark = k.selectedBorder == AppColors.lime;
     final items = controller.setupItems;
     final done = controller.setupDone;
+    final left = items.length - done;
+    final next = items.indexWhere((i) => !i.done);
     return TodaySection(
-      padding: EdgeInsets.fromLTRB(16.sp, 12.sp, 8.sp, 6.sp),
+      padding: EdgeInsets.fromLTRB(16.sp, 14.sp, 8.sp, 8.sp),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Expanded(
-                child: Text(
-                  done == items.length ? 'All set' : 'Get set up',
-                  style: AppText.bodyStrong.copyWith(
-                    fontSize: 15.sp,
-                    fontWeight: FontWeight.w800,
-                    color: k.text,
-                  ),
-                ),
-              ),
-              Text(
-                '$done of ${items.length}',
-                style: AppText.small.copyWith(
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.w800,
-                  color: k.muted,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      left == 0 ? "You're all set" : 'Get set up',
+                      style: AppText.bodyStrong.copyWith(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w800,
+                        color: k.text,
+                      ),
+                    ),
+                    SizedBox(height: 2.sp),
+                    Text(
+                      left == 0
+                          ? 'Nice work. Kindose is ready for you.'
+                          : '$left ${left == 1 ? 'step' : 'steps'} left · '
+                                'about a minute',
+                      style: AppText.small.copyWith(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w600,
+                        color: k.muted,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               CircleIconButton(
@@ -309,16 +321,13 @@ class SetupCard extends GetView<TodayController> {
               ),
             ],
           ),
+          SizedBox(height: 12.sp),
           Padding(
             padding: EdgeInsets.only(right: 8.sp),
-            child: _Bar(
-              value: done / items.length,
-              track: k.border,
-              fill: AppColors.lime,
-            ),
+            child: _Steps(count: items.length, done: done, track: k.border),
           ),
-          SizedBox(height: 4.sp),
-          for (final item in items)
+          SizedBox(height: 6.sp),
+          for (final (i, item) in items.indexed)
             Semantics(
               button: !item.done,
               label: '${item.label}${item.done ? ', done' : ''}',
@@ -326,46 +335,41 @@ class SetupCard extends GetView<TodayController> {
               child: PressScale(
                 onTap: item.done ? null : item.onTap,
                 child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 9.sp),
+                  padding: EdgeInsets.symmetric(vertical: 6.sp),
                   child: Row(
                     children: [
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 250),
-                        width: 26.sp,
-                        height: 26.sp,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: item.done ? k.selectedBorder : null,
-                          border: item.done
-                              ? null
-                              : Border.all(color: k.border, width: 2),
-                        ),
-                        child: item.done
-                            ? Icon(
-                                PhosphorIconsBold.check,
-                                size: 14.sp,
-                                color: k.selectedBorder == AppColors.lime
-                                    ? AppColors.ink
-                                    : AppColors.lime,
-                              )
-                            : null,
-                      ),
+                      _SetupTile(item: item, dark: dark),
                       SizedBox(width: 12.sp),
                       Expanded(
-                        child: Text(
-                          item.label,
+                        child: AnimatedDefaultTextStyle(
+                          duration: const Duration(milliseconds: 250),
                           style: AppText.bodyStrong.copyWith(
                             fontSize: 14.5.sp,
                             fontWeight: FontWeight.w700,
                             color: item.done ? k.faint : k.text,
-                            decoration: item.done
-                                ? TextDecoration.lineThrough
-                                : null,
-                            decorationColor: k.faint,
                           ),
+                          child: Text(item.label),
                         ),
                       ),
-                      if (!item.done)
+                      if (i == next)
+                        Container(
+                          height: 30.sp,
+                          padding: EdgeInsets.symmetric(horizontal: 14.sp),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: AppColors.lime,
+                            borderRadius: BorderRadius.circular(15.sp),
+                          ),
+                          child: Text(
+                            'Start',
+                            style: AppText.bodyStrong.copyWith(
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.ink,
+                            ),
+                          ),
+                        )
+                      else if (!item.done)
                         Icon(
                           PhosphorIconsBold.caretRight,
                           size: 16.sp,
@@ -379,6 +383,94 @@ class SetupCard extends GetView<TodayController> {
             ),
         ],
       ),
+    );
+  }
+}
+
+/// One segment per set-up step, filled as each is done.
+class _Steps extends StatelessWidget {
+  const _Steps({required this.count, required this.done, required this.track});
+
+  final int count;
+  final int done;
+  final Color track;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        for (var i = 0; i < count; i++) ...[
+          if (i > 0) SizedBox(width: 4.sp),
+          Expanded(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeOutCubic,
+              height: 6.sp,
+              decoration: BoxDecoration(
+                color: i < done ? AppColors.lime : track,
+                borderRadius: BorderRadius.circular(3.sp),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// Coloured icon for a set-up step; turns into a check once it's done.
+class _SetupTile extends StatelessWidget {
+  const _SetupTile({required this.item, required this.dark});
+
+  final SetupItem item;
+  final bool dark;
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    final (icon, soft, accent, ink) = switch (item.step) {
+      SetupStep.weight => (
+        PhosphorIconsBold.scales,
+        AppColors.violetSoft,
+        AppColors.violetLight,
+        AppColors.violetDark,
+      ),
+      SetupStep.dose => (
+        Get.find<TodayController>().isTablet
+            ? PhosphorIconsBold.pill
+            : PhosphorIconsBold.syringe,
+        AppColors.limeSoft,
+        AppColors.lime,
+        AppColors.limeText,
+      ),
+      SetupStep.protein => (
+        PhosphorIconsBold.bowlFood,
+        AppColors.tangerineSoft,
+        AppColors.tangerine,
+        AppColors.tangerineText,
+      ),
+      SetupStep.reminders => (
+        PhosphorIconsBold.bellRinging,
+        AppColors.aquaSoft,
+        AppColors.aqua,
+        AppColors.aquaText,
+      ),
+    };
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 250),
+      width: 38.sp,
+      height: 38.sp,
+      decoration: BoxDecoration(
+        // Done tiles stay quiet in dark mode so the lime Start pill leads.
+        color: item.done
+            ? (dark ? AppColors.lime.withValues(alpha: 0.16) : k.selectedBorder)
+            : (dark ? accent.withValues(alpha: 0.16) : soft),
+        borderRadius: BorderRadius.circular(12.sp),
+      ),
+      alignment: Alignment.center,
+      child: item.done
+          ? Icon(PhosphorIconsBold.check, size: 18.sp, color: AppColors.lime)
+          : Icon(icon, size: 19.sp, color: dark ? accent : ink),
     );
   }
 }

@@ -71,9 +71,12 @@ class TodayCard {
   ];
 }
 
-class SetupItem {
-  const SetupItem(this.label, this.done, this.onTap);
+enum SetupStep { weight, dose, protein, reminders }
 
+class SetupItem {
+  const SetupItem(this.step, this.label, this.done, this.onTap);
+
+  final SetupStep step;
   final String label;
   final bool done;
   final VoidCallback? onTap;
@@ -789,21 +792,29 @@ class TodayController extends GetxController with WidgetsBindingObserver {
 
   List<SetupItem> get setupItems => [
     SetupItem(
+      SetupStep.weight,
       'Log your starting weight',
       tracker.weights.isNotEmpty,
       logWeight,
     ),
     SetupItem(
+      SetupStep.dose,
       isTablet ? 'Log your first tablet' : 'Log your first dose',
       tracker.doses.isNotEmpty,
       () => Get.toNamed<void>(Routes.logDose),
     ),
     SetupItem(
+      SetupStep.protein,
       'Add your first protein',
       tracker.days.values.any((d) => d.proteinG > 0),
       openProtein,
     ),
-    SetupItem('Turn on reminders', remindersWork, turnOnReminders),
+    SetupItem(
+      SetupStep.reminders,
+      'Turn on reminders',
+      remindersWork,
+      turnOnReminders,
+    ),
   ];
 
   /// The set-up card was on screen this session.
