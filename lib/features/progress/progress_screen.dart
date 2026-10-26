@@ -4,12 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
-import '../../resources/catalog.dart';
 import '../../resources/colors.dart';
 import '../../resources/date_utils.dart';
 import '../../resources/images.dart';
 import '../../resources/water_units.dart';
-import '../../services/haptics/haptics.dart';
 import '../../services/responsiveness/device_manager.dart';
 import '../../services/theme/theme.dart';
 import '../../widgets/buttons.dart';
@@ -82,6 +80,7 @@ class ProgressScreen extends GetView<ProgressController> {
               onDayTap: controller.openDay,
               color: AppColors.tangerine,
               valueLabel: (v) => '${v.round()} g',
+              shortLabel: (v) => '${v.round()}',
             ).enter(motion, delay: 140),
             SizedBox(height: 12.sp),
             _BarsCard(
@@ -96,6 +95,7 @@ class ProgressScreen extends GetView<ProgressController> {
               onDayTap: controller.openDay,
               color: AppColors.aqua,
               valueLabel: (v) => Water.totalWithUnit(v.round()),
+              shortLabel: (v) => Water.total(v.round()),
             ).enter(motion, delay: 170),
             SizedBox(height: 12.sp),
             _FeelCard(controller: controller).enter(motion, delay: 200),
@@ -673,7 +673,7 @@ class _WeighInsLink extends StatelessWidget {
   }
 }
 
-class _BarsCard extends StatefulWidget {
+class _BarsCard extends StatelessWidget {
   const _BarsCard({
     required this.title,
     required this.goalLabel,
@@ -682,9 +682,10 @@ class _BarsCard extends StatefulWidget {
     required this.onDayTap,
     required this.color,
     required this.valueLabel,
+    required this.shortLabel,
   });
 
-  /// "Open day" on a selected bar opens that day's view.
+  /// Tapping a bar opens that day.
   final void Function(DateTime day) onDayTap;
   final String title;
   final String goalLabel;
@@ -693,35 +694,20 @@ class _BarsCard extends StatefulWidget {
   final Color color;
   final String Function(double) valueLabel;
 
-  @override
-  State<_BarsCard> createState() => _BarsCardState();
-}
-
-/// Tapping a bar selects it and shows that day's amount in place of the
-/// headline; tapping it again clears it.
-class _BarsCardState extends State<_BarsCard> {
-  int? _sel;
-
-  void _tap(int i) {
-    Haptics.instance.selectionClick();
-    setState(() => _sel = _sel == i ? null : i);
-  }
+  /// The amount printed over each bar, without its unit (the goal names it).
+  final String Function(double) shortLabel;
 
   @override
   Widget build(BuildContext context) {
     final k = context.k;
-    final bars = widget.bars;
-    final color = widget.color;
-    final valueLabel = widget.valueLabel;
-    final sel = _sel != null && _sel! < bars.length ? bars[_sel!] : null;
     final goal = bars.isEmpty ? 1.0 : bars.first.goal;
     // A full slot is the goal: hitting it fills the bar, and days over it
-    // stay full (the tick marks them; tapping shows the real amount).
+    // stay full (the label above shows the real amount).
     final maxV = goal <= 0 ? 1.0 : goal;
     final chartH = 96.sp;
     final barW = 22.sp;
-    // Space for the goal tick over a bar.
-    final tickH = 16.sp;
+    // Space for the amount over a bar.
+    final labelH = 18.sp;
     final today = Dates.dateOnly(DateTime.now());
     return _Card(
       child: Column(
@@ -729,84 +715,58 @@ class _BarsCardState extends State<_BarsCard> {
         children: [
           Row(
             children: [
-              Expanded(
-                child: Text(widget.title.toUpperCase(), style: _caps(context)),
-              ),
+              Expanded(child: Text(title.toUpperCase(), style: _caps(context))),
               Text(
-                widget.goalLabel,
+                goalLabel,
                 style: AppText.small.copyWith(fontSize: 12.sp, color: k.faint),
               ),
             ],
           ),
           SizedBox(height: 6.sp),
-          if (sel == null)
-            Text(
-              widget.headline,
-              style: AppText.title.copyWith(fontSize: 15.sp, color: k.text),
-            )
-          else
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    '${Dates.sameDay(sel.date, today) ? 'Today' : Dates.weekdayName(sel.date.weekday)}'
-                    ' · ${valueLabel(sel.value)}${sel.hit ? ' · goal reached' : ''}',
-                    style: AppText.title.copyWith(
-                      fontSize: 15.sp,
-                      color: k.text,
-                    ),
-                  ),
-                ),
-                SizedBox(width: 10.sp),
-                PressScale(
-                  semanticLabel: 'Open this day',
-                  onTap: () => widget.onDayTap(sel.date),
-                  child: Text(
-                    'Open day ›',
-                    style: AppText.title.copyWith(
-                      fontSize: 13.sp,
-                      color: k.muted,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+          Text(
+            headline,
+            style: AppText.title.copyWith(fontSize: 15.sp, color: k.text),
+          ),
           SizedBox(height: 12.sp),
-          Semantics(
-            label: [
-              for (final b in bars)
-                '${Dates.weekdayName(b.date.weekday)} ${valueLabel(b.value)}',
-            ].join(', '),
-            hint: 'Tap a day to see its amount',
-            excludeSemantics: true,
-            child: SizedBox(
-              height: tickH + chartH + 24.sp,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  for (final (i, b) in bars.indexed) ...[
-                    if (i > 0) SizedBox(width: 4.sp),
-                    Expanded(
+          SizedBox(
+            height: labelH + chartH + 24.sp,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                for (final (i, b) in bars.indexed) ...[
+                  if (i > 0) SizedBox(width: 4.sp),
+                  Expanded(
+                    child: Semantics(
+                      button: true,
+                      label:
+                          '${Dates.weekdayName(b.date.weekday)} ${valueLabel(b.value)}'
+                          '${b.hit ? ', goal reached' : ''}. Opens the day',
+                      excludeSemantics: true,
                       child: GestureDetector(
                         behavior: HitTestBehavior.opaque,
-                        onTap: () => _tap(i),
+                        onTap: () => onDayTap(b.date),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            // A tick over days that reached the goal.
+                            // The day's amount, so no tap is needed to
+                            // read it. Goal days are bold in the colour.
                             SizedBox(
-                              height: tickH,
-                              child: b.hit
-                                  ? Icon(
-                                      PhosphorIconsBold.check,
-                                      size: 12.sp,
-                                      color: color.withValues(
-                                        alpha: _sel == null || _sel == i
-                                            ? 1.0
-                                            : 0.35,
+                              height: labelH,
+                              child: b.value <= 0
+                                  ? null
+                                  : FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Text(
+                                        shortLabel(b.value),
+                                        style: AppText.tiny.copyWith(
+                                          fontSize: 11.sp,
+                                          fontWeight: b.hit
+                                              ? FontWeight.w800
+                                              : FontWeight.w700,
+                                          color: b.hit ? color : k.muted,
+                                        ),
                                       ),
-                                    )
-                                  : null,
+                                    ),
                             ),
                             // Every day has a slot, so empty days read
                             // as "nothing logged", not as a gap.
@@ -836,14 +796,8 @@ class _BarsCardState extends State<_BarsCard> {
                                           chartH,
                                         ),
                                         decoration: BoxDecoration(
-                                          // A selected bar keeps its
-                                          // colour; the others fade back.
                                           color: color.withValues(
-                                            alpha:
-                                                (b.hit ? 1.0 : 0.62) *
-                                                (_sel == null || _sel == i
-                                                    ? 1.0
-                                                    : 0.35),
+                                            alpha: b.hit ? 1.0 : 0.62,
                                           ),
                                           borderRadius: BorderRadius.circular(
                                             barW / 2,
@@ -876,9 +830,9 @@ class _BarsCardState extends State<_BarsCard> {
                         ),
                       ),
                     ),
-                  ],
+                  ),
                 ],
-              ),
+              ],
             ),
           ),
         ],
@@ -896,11 +850,9 @@ class _FeelCard extends StatefulWidget {
   State<_FeelCard> createState() => _FeelCardState();
 }
 
-/// Tap a day to see it in place of the headline; tap it again to clear.
+/// Tap a day to open it (today without a check-in opens the check-in).
 /// ‹ › step through earlier 4-week periods.
 class _FeelCardState extends State<_FeelCard> {
-  DateTime? _sel;
-
   ProgressController get controller => widget.controller;
 
   /// Fine → severe, one warm hue light to dark. "Fine" is tinted enough to
@@ -912,17 +864,13 @@ class _FeelCardState extends State<_FeelCard> {
     Color(0xFF9A3F17),
   ];
 
-  void _tap(FeelCell c) {
+  void _tap(FeelCell c, DateTime today) {
     if (c.inFuture) return;
-    Haptics.instance.selectionClick();
-    setState(
-      () => _sel = _sel != null && Dates.sameDay(_sel!, c.date) ? null : c.date,
-    );
-  }
-
-  void _page(VoidCallback go) {
-    setState(() => _sel = null);
-    go();
+    if (Dates.sameDay(c.date, today) && c.level < 0) {
+      controller.openCheckIn();
+    } else {
+      controller.openDay(c.date);
+    }
   }
 
   @override
@@ -932,9 +880,6 @@ class _FeelCardState extends State<_FeelCard> {
     final pattern = controller.patternLine;
     final today = Dates.dateOnly(DateTime.now());
     final locked = controller.feelLocked;
-    final sel = _sel == null
-        ? null
-        : cells.firstWhereOrNull((c) => Dates.sameDay(c.date, _sel!));
     const names = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
     return _Card(
       child: Column(
@@ -954,31 +899,24 @@ class _FeelCardState extends State<_FeelCard> {
                 context,
                 PhosphorIconsBold.caretLeft,
                 'Earlier weeks',
-                controller.canFeelBack
-                    ? () => _page(controller.feelBack)
-                    : null,
+                controller.canFeelBack ? controller.feelBack : null,
               ),
               SizedBox(width: 6.sp),
               _arrow(
                 context,
                 PhosphorIconsBold.caretRight,
                 'Later weeks',
-                controller.feelPage.value > 0
-                    ? () => _page(controller.feelForward)
-                    : null,
+                controller.feelPage.value > 0 ? controller.feelForward : null,
               ),
             ],
           ),
           SizedBox(height: 6.sp),
-          if (sel != null)
-            _dayLine(context, sel, today)
-          else
-            Text(
-              locked
-                  ? 'Earlier months are part of Plus.'
-                  : controller.feelHeadline,
-              style: AppText.title.copyWith(fontSize: 15.sp, color: k.text),
-            ),
+          Text(
+            locked
+                ? 'Earlier months are part of Plus.'
+                : controller.feelHeadline,
+            style: AppText.title.copyWith(fontSize: 15.sp, color: k.text),
+          ),
           SizedBox(height: 12.sp),
           if (locked)
             PillButton(label: 'See Plus', onPressed: controller.openPlus)
@@ -1140,76 +1078,68 @@ class _FeelCardState extends State<_FeelCard> {
     final isToday = Dates.sameDay(c.date, today);
     final filled = !c.inFuture && c.level >= 0;
     final onDark = filled && c.level >= 2;
-    final picked = _sel != null && Dates.sameDay(_sel!, c.date);
-    final faded = _sel != null && !picked;
     return Semantics(
       button: !c.inFuture,
       label: c.inFuture
           ? ''
-          : '${Dates.shortWithDay(c.date)}: ${c.level < 0 ? 'no check-in' : ['fine', 'mild', 'moderate', 'severe'][c.level]}${c.doseDay ? ', dose day' : ''}',
+          : '${Dates.shortWithDay(c.date)}: ${c.level < 0 ? 'no check-in' : ['fine', 'mild', 'moderate', 'severe'][c.level]}${c.doseDay ? ', dose day' : ''}. Opens the day',
       excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: () => _tap(c),
-        child: AnimatedOpacity(
-          duration: const Duration(milliseconds: 150),
-          opacity: faded ? 0.45 : 1,
-          child: Container(
-            decoration: BoxDecoration(
-              color: c.inFuture
-                  ? Colors.transparent
-                  : (filled
-                        ? _heat[c.level]
-                        : k.border.withValues(alpha: 0.55)),
-              borderRadius: BorderRadius.circular(9.sp),
-              border: isToday || picked
-                  ? Border.all(color: k.text, width: 2)
-                  : (c.inFuture
-                        ? Border.all(color: k.border.withValues(alpha: 0.7))
-                        : null),
-            ),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                if (!c.inFuture)
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 2.sp),
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        c.date.day == 1
-                            ? '1 ${Dates.monthShort(c.date.month)}'
-                            : '${c.date.day}',
-                        style: AppText.tiny.copyWith(
-                          fontSize: 11.sp,
-                          fontWeight: isToday || c.date.day == 1
-                              ? FontWeight.w800
-                              : FontWeight.w600,
-                          // Dates read on every shade: white on the dark
-                          // ones, deep tangerine on the light ones.
-                          color: onDark
-                              ? AppColors.white
-                              : (filled
-                                    ? AppColors.tangerineText
-                                    : (isToday ? k.text : k.faint)),
-                        ),
+        onTap: () => _tap(c, today),
+        child: Container(
+          decoration: BoxDecoration(
+            color: c.inFuture
+                ? Colors.transparent
+                : (filled ? _heat[c.level] : k.border.withValues(alpha: 0.55)),
+            borderRadius: BorderRadius.circular(9.sp),
+            border: isToday
+                ? Border.all(color: k.text, width: 2)
+                : (c.inFuture
+                      ? Border.all(color: k.border.withValues(alpha: 0.7))
+                      : null),
+          ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              if (!c.inFuture)
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 2.sp),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      c.date.day == 1
+                          ? '1 ${Dates.monthShort(c.date.month)}'
+                          : '${c.date.day}',
+                      style: AppText.tiny.copyWith(
+                        fontSize: 11.sp,
+                        fontWeight: isToday || c.date.day == 1
+                            ? FontWeight.w800
+                            : FontWeight.w600,
+                        // Dates read on every shade: white on the dark
+                        // ones, deep tangerine on the light ones.
+                        color: onDark
+                            ? AppColors.white
+                            : (filled
+                                  ? AppColors.tangerineText
+                                  : (isToday ? k.text : k.faint)),
                       ),
                     ),
                   ),
-                if (c.doseDay)
-                  Positioned(
-                    bottom: 4.sp,
-                    child: Container(
-                      width: 5.sp,
-                      height: 5.sp,
-                      decoration: BoxDecoration(
-                        color: onDark ? AppColors.white : k.text,
-                        shape: BoxShape.circle,
-                      ),
+                ),
+              if (c.doseDay)
+                Positioned(
+                  bottom: 4.sp,
+                  child: Container(
+                    width: 5.sp,
+                    height: 5.sp,
+                    decoration: BoxDecoration(
+                      color: onDark ? AppColors.white : k.text,
+                      shape: BoxShape.circle,
                     ),
                   ),
-              ],
-            ),
+                ),
+            ],
           ),
         ),
       ),
@@ -1228,43 +1158,6 @@ class _FeelCardState extends State<_FeelCard> {
     background: context.k.text.withValues(alpha: 0.06),
     onTap: onTap,
   );
-
-  /// "Tue, 13 Oct · Mild · Nausea · dose day" with Open day / Check in.
-  Widget _dayLine(BuildContext context, FeelCell c, DateTime today) {
-    final k = context.k;
-    final log = controller.tracker.dayLog(c.date);
-    final isToday = Dates.sameDay(c.date, today);
-    final parts = <String>[
-      isToday ? 'Today' : Dates.shortWithDay(c.date),
-      c.level < 0
-          ? 'No check-in'
-          : ['Fine', 'Mild', 'Moderate', 'Severe'][c.level],
-      for (final s in log.symptoms.take(2)) Catalog.symptomLabel(s),
-      if (c.doseDay) 'dose day',
-    ];
-    final checkIn = isToday && c.level < 0;
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            parts.join(' · '),
-            style: AppText.title.copyWith(fontSize: 15.sp, color: k.text),
-          ),
-        ),
-        SizedBox(width: 10.sp),
-        PressScale(
-          semanticLabel: checkIn ? 'Check in today' : 'Open this day',
-          onTap: checkIn
-              ? controller.openCheckIn
-              : () => controller.openDay(c.date),
-          child: Text(
-            checkIn ? 'Check in ›' : 'Open day ›',
-            style: AppText.title.copyWith(fontSize: 13.sp, color: k.muted),
-          ),
-        ),
-      ],
-    );
-  }
 
   Widget _legendText(BuildContext context, String text) => Text(
     text,
