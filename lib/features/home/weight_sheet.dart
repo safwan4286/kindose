@@ -161,6 +161,7 @@ class _WeightScreenState extends State<WeightScreen> {
     return Scaffold(
       backgroundColor: k.bg,
       body: KSafeArea(
+        iosBottomPadding: 10,
         child: Column(
           children: [
             Padding(

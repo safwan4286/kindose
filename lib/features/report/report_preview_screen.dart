@@ -34,6 +34,7 @@ class _ReportPreviewScreenState extends State<ReportPreviewScreen> {
     return Scaffold(
       backgroundColor: k.cardAlt,
       body: KSafeArea(
+        iosBottomPadding: 10,
         child: Column(
           children: [
             Padding(

@@ -29,6 +29,7 @@ class CheckInScreen extends GetView<CheckInController> {
     return Scaffold(
       backgroundColor: k.bg,
       body: KSafeArea(
+        iosBottomPadding: 10,
         child: Column(
           children: [
             Padding(

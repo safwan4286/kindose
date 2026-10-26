@@ -29,6 +29,7 @@ class GuideScreen extends GetView<GuideController> {
       child: Scaffold(
         backgroundColor: k.bg,
         body: KSafeArea(
+          iosBottomPadding: 10,
           child: Padding(
             padding: EdgeInsets.fromLTRB(20.sp, 8.sp, 20.sp, 12.sp),
             child: Obx(() {

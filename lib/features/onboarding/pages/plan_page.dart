@@ -19,6 +19,7 @@ import '../../../widgets/goal_curve.dart';
 import '../../../widgets/k_ruler.dart';
 import '../../../widgets/k_widgets.dart';
 import '../../../widgets/press_scale.dart';
+import '../../../widgets/safe_bottom.dart';
 import '../onboarding_controller.dart';
 
 /// Wrap-up 3: the plan, built from the answers. Goal curve, dose schedule,
@@ -87,11 +88,13 @@ class PlanPage extends GetView<OnboardingController> {
         ),
         Padding(
           padding: EdgeInsets.fromLTRB(20.sp, 4.sp, 20.sp, 14.sp),
-          child: Obx(
-            () => PillButton(
-              label: 'Looks good',
-              busy: controller.saving.value,
-              onPressed: controller.confirmPlan,
+          child: KBottomPadding(
+            child: Obx(
+              () => PillButton(
+                label: 'Looks good',
+                busy: controller.saving.value,
+                onPressed: controller.confirmPlan,
+              ),
             ),
           ),
         ),

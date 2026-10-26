@@ -29,6 +29,7 @@ class LogDoseScreen extends GetView<LogDoseController> {
     return Scaffold(
       backgroundColor: k.bg,
       body: KSafeArea(
+        iosBottomPadding: 10,
         child: Column(
           children: [
             Padding(
