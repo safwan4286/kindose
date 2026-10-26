@@ -15,6 +15,7 @@ import 'widgets/edit_today_sheet.dart';
 // Hidden for now (6 Oct): FreeWeekStrip, WeekEndedCard, LockedCard.
 // import 'widgets/free_week.dart';
 import 'widgets/next_bite_card.dart';
+import 'widgets/offer_banner_card.dart';
 import 'widgets/today_cards.dart';
 import 'widgets/weekly_card.dart';
 
@@ -54,6 +55,7 @@ class TodayScreen extends GetView<TodayController> {
           children: [
             const TodayHeader().enter(motion, dy: 0.1),
             const AppBannerCard(),
+            const OfferBannerCard(),
             // Free week strip hidden for now (6 Oct). Bring back with:
             // if (controller.showFreeStrip) ...[
             //   SizedBox(height: 14.sp),

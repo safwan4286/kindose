@@ -37,6 +37,9 @@ class Analytics {
 
   static void offerView() => _log('offer_view');
 
+  /// A timed offer's window ended without a purchase (logged once).
+  static void offerExpired() => _log('offer_expired');
+
   /// [plan] is the RevenueCat package ('\$rc_annual'), [offering] its
   /// offering ('default' or 'offer_30'). No price: the stores report revenue.
   static void plusPurchase({required String plan, required String offering}) =>

@@ -11,9 +11,10 @@ import '../../widgets/entrance.dart';
 import '../../widgets/k_widgets.dart';
 import '../plus/plus_screen.dart';
 import 'offer_controller.dart';
+import 'offer_countdown.dart';
 
-/// One-time discount after closing the paywall (canvas E2). Close and
-/// "No thanks" are always visible; no fake timers.
+/// Discount after closing the paywall (canvas E2). Close is always
+/// visible. A timed offer shows its real countdown; it never resets.
 class OfferScreen extends GetView<OfferController> {
   const OfferScreen({super.key});
 
@@ -78,6 +79,12 @@ class OfferScreen extends GetView<OfferController> {
                         color: k.muted,
                       ),
                     ).enter(motion, delay: 160),
+                    if (controller.endsAt case final end?) ...[
+                      SizedBox(height: 14.sp),
+                      Center(
+                        child: OfferCountdown(endsAt: end),
+                      ).enter(motion, delay: 180),
+                    ],
                     SizedBox(height: 20.sp),
                     _PriceCard(
                       controller: controller,

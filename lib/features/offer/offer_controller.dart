@@ -21,7 +21,11 @@ class OfferArgs {
 /// Discount offer shown after someone closes the paywall. What it says and
 /// when it shows come from [OfferService] (backend-driven later).
 class OfferController extends GetxController {
-  final OfferConfig config = Get.find<OfferService>().config.value;
+  final OfferService _offers = Get.find<OfferService>();
+  late final OfferConfig config = _offers.config.value;
+
+  /// When a timed offer ends (null for the other modes).
+  DateTime? get endsAt => _offers.endsAt;
 
   late final bool fromOnboarding =
       Get.arguments is OfferArgs && (Get.arguments as OfferArgs).fromOnboarding;
@@ -38,9 +42,13 @@ class OfferController extends GetxController {
 
   /// Never claim "one time only" unless the rules really make it so.
   String get subtitle {
-    if (config.maxShows == 1 ||
-        config.subtitle != OfferConfig.defaults.subtitle) {
+    final custom = config.subtitle != OfferConfig.defaults.subtitle;
+    if (custom) return config.subtitle;
+    if (config.mode == OfferMode.once && config.maxShows == 1) {
       return config.subtitle;
+    }
+    if (config.mode == OfferMode.timer) {
+      return 'A thank-you for trying Kindose, for a limited time.';
     }
     return 'A thank-you for trying Kindose.';
   }

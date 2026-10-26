@@ -20,6 +20,9 @@
 ///   "fine_print": "$34.99 today for 12 months, then $49.99/year. Cancel anytime.",
 ///   "cta": "Get 30% off",
 ///   "perks": ["All-time charts and history", "Side-effect patterns", "Share your doctor report"],
+///   "mode": "timer",
+///   "timer_hours": 24,
+///   "show_banner": true,
 ///   "max_shows": 1,
 ///   "cooldown_days": 30,
 ///   "min_paywall_closes": 1,
@@ -27,6 +30,27 @@
 ///   "show_in_app": true
 /// }
 /// ```
+/// How long the offer stays available to one person.
+enum OfferMode {
+  /// Shown at most [OfferConfig.maxShows] times, [OfferConfig.cooldownDays]
+  /// apart. The original rule.
+  once,
+
+  /// Opens the first time it's shown and stays for
+  /// [OfferConfig.timerHours]: every paywall close in that window shows
+  /// it again, with a countdown. After that it's gone for good.
+  timer,
+
+  /// Shown on every paywall close until they buy.
+  untilClaimed;
+
+  static OfferMode parse(Object? v) => switch (v) {
+    'timer' => timer,
+    'until_claimed' => untilClaimed,
+    _ => once,
+  };
+}
+
 class OfferConfig {
   const OfferConfig({
     required this.enabled,
@@ -47,6 +71,9 @@ class OfferConfig {
     required this.minPaywallCloses,
     required this.showInOnboarding,
     required this.showInApp,
+    required this.mode,
+    required this.timerHours,
+    required this.showBanner,
   });
 
   /// Master switch. False = paywall close just closes.
@@ -91,6 +118,15 @@ class OfferConfig {
   final bool showInOnboarding;
   final bool showInApp;
 
+  final OfferMode mode;
+
+  /// Length of the [OfferMode.timer] window.
+  final int timerHours;
+
+  /// While a [OfferMode.timer] window is open, a banner on Today leads
+  /// back to the offer.
+  final bool showBanner;
+
   static const OfferConfig defaults = OfferConfig(
     enabled: true,
     offeringId: 'offer_30',
@@ -114,6 +150,9 @@ class OfferConfig {
     minPaywallCloses: 1,
     showInOnboarding: true,
     showInApp: true,
+    mode: OfferMode.once,
+    timerHours: 24,
+    showBanner: true,
   );
 
   /// Reads backend JSON. Wrong types or missing keys fall back to
@@ -163,6 +202,9 @@ class OfferConfig {
       ),
       showInOnboarding: pick('show_in_onboarding', d.showInOnboarding),
       showInApp: pick('show_in_app', d.showInApp),
+      mode: j.containsKey('mode') ? OfferMode.parse(j['mode']) : d.mode,
+      timerHours: pickInt('timer_hours', d.timerHours, min: 1, max: 720),
+      showBanner: pick('show_banner', d.showBanner),
     );
   }
 }

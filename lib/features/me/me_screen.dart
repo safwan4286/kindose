@@ -614,6 +614,7 @@ class _DebugAccess extends StatelessWidget {
           chip('Fill test data', controller.debugFillTestData),
           chip('Remove test data', controller.debugClearTestData),
           chip('Show offer', controller.debugShowOffer),
+          chip('Reset offer timer', controller.debugResetOfferTimer),
         ],
       ),
     );

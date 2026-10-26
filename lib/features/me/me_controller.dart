@@ -19,6 +19,7 @@ import '../../services/haptics/haptics.dart';
 import '../../services/notifications/notif_prefs.dart';
 import '../../services/notifications/notification_service.dart';
 import '../../services/notifications/reminder_service.dart';
+import '../../services/offers/offer_service.dart';
 import '../../services/plus/access_service.dart';
 import '../../services/plus/plus_access.dart';
 import '../../services/purchases/purchase_service.dart';
@@ -189,15 +190,23 @@ class MeController extends GetxController {
 
   bool get testDataOn => TestData.isOn;
 
-  /// Debug: the welcome offer screen. It normally shows once, after the
-  /// Plus screen is closed, and only when the store has the intro price
-  /// (the Test Store product has none, so debug builds never get there).
+  /// Debug: the welcome offer screen. It normally shows after the Plus
+  /// screen is closed, following the `paywall_offer` rules. Release builds
+  /// also need the store's intro price; debug builds skip that check.
   Future<void> debugShowOffer() async {
     Haptics.instance.selectionClick();
     await Get.toNamed<void>(
       Routes.offer,
       arguments: const OfferArgs(fromOnboarding: false),
     );
+  }
+
+  /// Debug: forget the timed offer's window, so the next Plus close
+  /// opens a fresh one.
+  Future<void> debugResetOfferTimer() async {
+    Haptics.instance.selectionClick();
+    await Get.find<OfferService>().debugResetTimer();
+    showToast('Offer timer reset');
   }
 
   /// Act as a paying Plus user (debug builds only).
