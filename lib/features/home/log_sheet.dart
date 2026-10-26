@@ -57,6 +57,13 @@ class LogSheet extends StatelessWidget {
           final waterGoal = p?.waterGoalMl ?? 2500;
           final lastKg = _t.latestWeightKg;
           final useKg = p?.useKg ?? true;
+          final mood = day.mood;
+          final checkedIn = day.hasCheckIn;
+          final feel = !checkedIn
+              ? 'Side effects, notes'
+              : mood == null
+              ? 'Checked in today'
+              : 'Today: ${Catalog.moods[mood].label}';
           final lastWeight = lastKg == null
               ? 'Not logged yet'
               : 'Last: ${(useKg ? lastKg : lastKg * 2.20462).toStringAsFixed(1)} ${useKg ? 'kg' : 'lb'}';
@@ -112,6 +119,7 @@ class LogSheet extends StatelessWidget {
                       bg: AppColors.tangerineSoft,
                       subColor: AppColors.tangerineText,
                       accent: AppColors.tangerine,
+                      progress: day.proteinG / proteinGoal,
                       onTap: () => _goTo(Routes.addIntake, 'protein'),
                     ),
                   ),
@@ -124,6 +132,7 @@ class LogSheet extends StatelessWidget {
                       bg: AppColors.aquaSoft,
                       subColor: AppColors.aquaText,
                       accent: AppColors.aqua,
+                      progress: day.waterMl / waterGoal,
                       onTap: () => _goTo(Routes.addIntake, 'water'),
                     ),
                   ),
@@ -152,10 +161,11 @@ class LogSheet extends StatelessWidget {
                     child: _Tile(
                       icon: Img3d.nauseated,
                       title: 'How I feel',
-                      sub: 'Side effects, notes',
+                      sub: feel,
                       bg: AppColors.limeSoft,
                       subColor: AppColors.limeText,
                       accent: AppColors.lime,
+                      done: checkedIn,
                       onTap: () => _goTo(Routes.checkIn),
                     ),
                   ),
@@ -308,6 +318,8 @@ class _Tile extends StatelessWidget {
     required this.subColor,
     required this.onTap,
     this.accent,
+    this.progress,
+    this.done = false,
   }) : titleColor = AppColors.ink;
 
   final String icon;
@@ -322,6 +334,12 @@ class _Tile extends StatelessWidget {
   final Color? accent;
   final VoidCallback onTap;
 
+  /// Today's share of the goal, drawn as a thin bar under the text.
+  final double? progress;
+
+  /// Already logged today: the + badge becomes a check.
+  final bool done;
+
   @override
   Widget build(BuildContext context) {
     final k = context.k;
@@ -333,12 +351,18 @@ class _Tile extends StatelessWidget {
         : bg;
     final titleC = tinted ? k.text : titleColor;
     final subC = tinted ? a : subColor;
+    final barFill = tinted ? a : subColor;
+    // Same wash as the + badge, so both read as part of the tile.
+    final wash = dark
+        ? k.bg.withValues(alpha: 0.5)
+        : AppColors.white.withValues(alpha: 0.75);
+    final p = progress;
     return PressScale(
       semanticLabel: 'Log $title. $sub',
       onTap: onTap,
       child: ExcludeSemantics(
         child: Container(
-          padding: EdgeInsets.all(14.sp),
+          padding: EdgeInsets.fromLTRB(14.sp, 14.sp, 12.sp, 14.sp),
           decoration: BoxDecoration(
             color: fill,
             borderRadius: BorderRadius.circular(22.sp),
@@ -346,8 +370,30 @@ class _Tile extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ThreeD(icon, size: 36.sp),
-              SizedBox(height: 10.sp),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ThreeD(icon, size: 34.sp),
+                  const Spacer(),
+                  Container(
+                    width: 28.sp,
+                    height: 28.sp,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: done ? barFill : wash,
+                    ),
+                    alignment: Alignment.center,
+                    child: PhosphorIcon(
+                      done ? PhosphorIconsBold.check : PhosphorIconsBold.plus,
+                      size: 14.sp,
+                      color: done
+                          ? (tinted ? AppColors.ink : AppColors.white)
+                          : subC,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 12.sp),
               Text(
                 title,
                 style: AppText.title.copyWith(
@@ -355,15 +401,37 @@ class _Tile extends StatelessWidget {
                   color: titleC,
                 ),
               ),
+              SizedBox(height: 1.sp),
               Text(
                 sub,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppText.small.copyWith(
                   fontSize: 12.5.sp,
+                  fontWeight: FontWeight.w600,
                   color: subC,
                 ),
               ),
+              if (p != null) ...[
+                SizedBox(height: 10.sp),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(3.sp),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 6.sp,
+                    child: Stack(
+                      children: [
+                        Positioned.fill(child: ColoredBox(color: wash)),
+                        FractionallySizedBox(
+                          widthFactor: p.clamp(0.0, 1.0),
+                          heightFactor: 1,
+                          child: ColoredBox(color: barFill),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
