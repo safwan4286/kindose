@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
@@ -22,6 +24,14 @@ import 'intake_controller.dart';
 import 'widgets/water_drop.dart';
 import 'widgets/intake_parts.dart';
 import 'widgets/protein_tab.dart';
+
+/// Water card style. true: the card fills with water as you drink.
+/// false: the original drop card.
+const bool _fillingWaterCard = true;
+
+/// Add-water buttons. true: two per row, each with its amount.
+/// false: the original row of four tiles.
+const bool _waterButtonRows = true;
 
 /// Protein and water. One tap adds, every add can be undone.
 class IntakeScreen extends GetView<IntakeController> {
@@ -209,6 +219,19 @@ class _WaterTab extends GetView<IntakeController> {
         physics: BouncingScrollPhysics(),
         padding: EdgeInsets.fromLTRB(20.sp, 8.sp, 20.sp, 32.sp),
         children: [
+          if (_fillingWaterCard)
+            _FillingWaterCard(
+              ml: controller.waterToday,
+              goalMl: controller.waterGoal,
+              progress: controller.waterProgress,
+              dayTitle: controller.dayTitle,
+              line: controller.waterLine,
+              amount: controller.litres,
+              animate: motion,
+              onEditGoal: () => GoalEdit.water(context),
+              onAddGlass: () => controller.addDrink(Catalog.waterSizes.first),
+            ).enter(motion)
+          else
           Semantics(
             label:
                 'Water ${controller.dayTitle.toLowerCase()}: ${controller.litres(controller.waterToday)} of ${controller.litres(controller.waterGoal)} ${Water.unitWords}. ${controller.waterLine}',
@@ -277,6 +300,12 @@ class _WaterTab extends GetView<IntakeController> {
             ),
           ).enter(motion),
           const IntakeLabel('Add water', trailing: 'One tap adds it'),
+          if (_waterButtonRows)
+            _WaterButtons(
+              onDrink: controller.addDrink,
+              onCustom: () => controller.addCustomWater(context),
+            ).enter(motion, delay: 80)
+          else
           Row(
             children: [
               for (final (i, d) in Catalog.waterSizes.indexed) ...[
@@ -404,6 +433,420 @@ class _WaterTab extends GetView<IntakeController> {
   }
 }
 
+/// Water card that fills from the bottom as the day's water goes in; the
+/// surface keeps a slow wave (still when reduce-motion is on). Tapping the
+/// card edits the goal; "+ Glass" adds one glass.
+class _FillingWaterCard extends StatefulWidget {
+  const _FillingWaterCard({
+    required this.ml,
+    required this.goalMl,
+    required this.progress,
+    required this.dayTitle,
+    required this.line,
+    required this.amount,
+    required this.animate,
+    required this.onEditGoal,
+    required this.onAddGlass,
+  });
+
+  final int ml;
+  final int goalMl;
+
+  /// 0–1 of the goal.
+  final double progress;
+  final String dayTitle;
+  final String line;
+
+  /// Number only ("1.25"); the unit is [Water.unit].
+  final String Function(int ml) amount;
+  final bool animate;
+  final VoidCallback onEditGoal;
+  final VoidCallback onAddGlass;
+
+  @override
+  State<_FillingWaterCard> createState() => _FillingWaterCardState();
+}
+
+class _FillingWaterCardState extends State<_FillingWaterCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _wave = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 3200),
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.animate) _wave.repeat();
+  }
+
+  @override
+  void didUpdateWidget(_FillingWaterCard old) {
+    super.didUpdateWidget(old);
+    if (widget.animate && !_wave.isAnimating) _wave.repeat();
+    if (!widget.animate && _wave.isAnimating) _wave.stop();
+  }
+
+  @override
+  void dispose() {
+    _wave.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    final dark = k.selectedBorder == AppColors.lime;
+    final pct = (widget.progress * 100).round();
+    final unit = Water.unit;
+    return Semantics(
+      label:
+          'Water ${widget.dayTitle.toLowerCase()}: ${widget.amount(widget.ml)} of ${widget.amount(widget.goalMl)} ${Water.unitWords}. ${widget.line}',
+      onTapHint: 'change your daily goal',
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: widget.onEditGoal,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24.sp),
+          child: Container(
+            height: 210.sp,
+            color: k.card,
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: TweenAnimationBuilder<double>(
+                    tween: Tween(end: widget.progress.clamp(0.0, 1.0)),
+                    duration: Duration(milliseconds: widget.animate ? 700 : 0),
+                    curve: Curves.easeOutCubic,
+                    builder: (context, level, _) => AnimatedBuilder(
+                      animation: _wave,
+                      builder: (context, _) => CustomPaint(
+                        painter: _WaterFillPainter(
+                          level: level,
+                          phase: _wave.value,
+                          back: dark
+                              ? AppColors.aqua.withValues(alpha: 0.14)
+                              : AppColors.aquaSoft,
+                          front: AppColors.aqua.withValues(
+                            alpha: dark ? 0.3 : 0.35,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(20.sp, 18.sp, 16.sp, 16.sp),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ExcludeSemantics(
+                        child: Text(
+                          'WATER · ${widget.dayTitle.toUpperCase()}',
+                          style: intakeCaps(context).copyWith(color: k.faint),
+                        ),
+                      ),
+                      SizedBox(height: 10.sp),
+                      ExcludeSemantics(
+                        child: Text.rich(
+                          TextSpan(
+                            children: [
+                              TextSpan(
+                                text: widget.amount(widget.ml),
+                                style: AppText.number(
+                                  44.sp,
+                                ).copyWith(color: k.text),
+                              ),
+                              TextSpan(
+                                text: ' $unit',
+                                style: AppText.title.copyWith(
+                                  fontSize: 18.sp,
+                                  color: k.muted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      ExcludeSemantics(
+                        child: GoalLink(
+                          text:
+                              'of ${widget.amount(widget.goalMl)} $unit goal · $pct%',
+                          fontSize: 14,
+                          onTap: widget.onEditGoal,
+                        ),
+                      ),
+                      const Spacer(),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ExcludeSemantics(
+                              child: Text(
+                                widget.line,
+                                style: AppText.small.copyWith(
+                                  fontSize: 13.5.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: dark
+                                      ? AppColors.aqua
+                                      : AppColors.aquaText,
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 10.sp),
+                          PressScale(
+                            semanticLabel:
+                                'Add a glass, ${Water.amount(Water.glassMl)}',
+                            onTap: widget.onAddGlass,
+                            child: Container(
+                              height: 38.sp,
+                              padding: EdgeInsets.symmetric(horizontal: 14.sp),
+                              decoration: BoxDecoration(
+                                color: dark ? AppColors.lime : AppColors.ink,
+                                borderRadius: BorderRadius.circular(19.sp),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    PhosphorIconsBold.plus,
+                                    size: 14.sp,
+                                    color: dark
+                                        ? AppColors.ink
+                                        : AppColors.white,
+                                  ),
+                                  SizedBox(width: 6.sp),
+                                  Text(
+                                    'Glass',
+                                    style: AppText.bodyStrong.copyWith(
+                                      fontSize: 13.5.sp,
+                                      fontWeight: FontWeight.w800,
+                                      color: dark
+                                          ? AppColors.ink
+                                          : AppColors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Two offset waves filling the card to [level] (0–1). A sliver always
+/// shows so an empty day still reads as "water goes here".
+class _WaterFillPainter extends CustomPainter {
+  _WaterFillPainter({
+    required this.level,
+    required this.phase,
+    required this.back,
+    required this.front,
+  });
+
+  final double level;
+  final double phase;
+  final Color back;
+  final Color front;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final top = size.height * (1 - (0.05 + 0.95 * level));
+    final amp = 5.0 * (level >= 1 ? 0.4 : 1);
+    void wave(Color c, double shift, double lift) {
+      double y(double x) =>
+          top +
+          lift +
+          amp *
+              math.sin(
+                x / size.width * 2 * math.pi * 1.3 +
+                    (phase + shift) * 2 * math.pi,
+              );
+      final path = Path()..moveTo(0, size.height);
+      for (var x = 0.0; x < size.width; x += 4) {
+        path.lineTo(x, y(x));
+      }
+      // End exactly on the right edge, whatever the width.
+      path.lineTo(size.width, y(size.width));
+      path
+        ..lineTo(size.width, size.height)
+        ..close();
+      canvas.drawPath(path, Paint()..color = c);
+    }
+
+    wave(back, 0, 0);
+    wave(front, 0.35, 6);
+  }
+
+  @override
+  bool shouldRepaint(_WaterFillPainter old) =>
+      old.level != level ||
+      old.phase != phase ||
+      old.back != back ||
+      old.front != front;
+}
+
+/// Add-water buttons, two per row: glass and bottle, large bottle and
+/// custom. Each names its size and how much one tap adds.
+class _WaterButtons extends StatelessWidget {
+  const _WaterButtons({required this.onDrink, required this.onCustom});
+
+  final void Function(Drink d) onDrink;
+  final VoidCallback onCustom;
+
+  @override
+  Widget build(BuildContext context) {
+    final sizes = Catalog.waterSizes;
+    final buttons = <Widget>[
+      for (final (i, d) in sizes.indexed)
+        _WaterButton(
+          label: d.label,
+          amount: Water.amount(d.mlFor(Water.oz)),
+          level: i,
+          onTap: () => onDrink(d),
+        ),
+      _WaterButton(
+        label: 'Custom',
+        amount: 'Any amount',
+        level: -1,
+        onTap: onCustom,
+      ),
+    ];
+    return Column(
+      children: [
+        for (var r = 0; r < buttons.length; r += 2) ...[
+          if (r > 0) SizedBox(height: 8.sp),
+          Row(
+            children: [
+              Expanded(child: buttons[r]),
+              SizedBox(width: 8.sp),
+              Expanded(
+                child: r + 1 < buttons.length
+                    ? buttons[r + 1]
+                    : const SizedBox.shrink(),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _WaterButton extends StatelessWidget {
+  const _WaterButton({
+    required this.label,
+    required this.amount,
+    required this.level,
+    required this.onTap,
+  });
+
+  final String label;
+  final String amount;
+
+  /// 0 glass, 1 bottle, 2 litre, -1 custom.
+  final int level;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    final dark = k.selectedBorder == AppColors.lime;
+    final custom = level < 0;
+    final accent = dark ? AppColors.aqua : AppColors.aquaText;
+    final h = switch (level) {
+      1 => 24.0,
+      2 => 27.0,
+      _ => 20.0,
+    };
+    return PressScale(
+      pressedScale: 0.96,
+      semanticLabel: custom
+          ? 'Add a custom amount'
+          : 'Add ${label.toLowerCase()}, $amount',
+      onTap: onTap,
+      child: ExcludeSemantics(
+        child: Container(
+          padding: EdgeInsets.fromLTRB(10.sp, 10.sp, 12.sp, 10.sp),
+          decoration: BoxDecoration(
+            color: k.card,
+            borderRadius: BorderRadius.circular(16.sp),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 40.sp,
+                height: 40.sp,
+                decoration: BoxDecoration(
+                  color: custom
+                      ? k.cardAlt
+                      : (dark
+                            ? AppColors.aqua.withValues(alpha: 0.16)
+                            : AppColors.aquaSoft),
+                  borderRadius: BorderRadius.circular(12.sp),
+                ),
+                alignment: Alignment.center,
+                child: custom
+                    ? Icon(
+                        PhosphorIconsBold.pencilSimple,
+                        size: 18.sp,
+                        color: k.muted,
+                      )
+                    : CustomPaint(
+                        size: Size((h * 0.75).sp, h.sp),
+                        painter: const _GlassPainter(),
+                      ),
+              ),
+              SizedBox(width: 10.sp),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        style: AppText.bodyStrong.copyWith(
+                          fontSize: 14.5.sp,
+                          fontWeight: FontWeight.w800,
+                          color: k.text,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 1.sp),
+                    Text(
+                      amount,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.small.copyWith(
+                        fontSize: 12.5.sp,
+                        fontWeight: FontWeight.w700,
+                        color: custom ? k.muted : accent,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _WaterTile extends StatelessWidget {
   const _WaterTile({
     required this.label,
@@ -475,6 +918,7 @@ class _WaterTile extends StatelessWidget {
                 ),
               ),
             ),
+
           ],
         ),
       ),
