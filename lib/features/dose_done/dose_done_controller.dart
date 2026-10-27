@@ -10,6 +10,7 @@ import '../../services/haptics/haptics.dart';
 import '../../services/plus/plus_access.dart';
 import '../../services/supply/supply_service.dart';
 import '../../services/tracker_service.dart';
+import '../../services/upsell/upsell_service.dart';
 import '../../services/review/review_service.dart';
 import '../../widgets/toast.dart';
 
@@ -31,6 +32,10 @@ class DoseDoneController extends GetxController {
   DoseLog? get dose => _args?.dose;
   final RxBool busy = false.obs;
 
+  /// Free-week milestone to celebrate with a Plus card, or null.
+  final RxnString upsell = RxnString();
+  UpsellService get _upsell => Get.find<UpsellService>();
+
   @override
   void onInit() {
     super.onInit();
@@ -46,12 +51,34 @@ class DoseDoneController extends GetxController {
       popRoute();
       return;
     }
-    // After logging a dose: ask for a rating once (skipped if the last ask
-    // was only days ago; then it waits for a later dose).
-    ReviewService.maybeAsk(
-      ReviewService.firstDose,
-      delay: const Duration(milliseconds: 1800),
-    );
+    _upsell.doseDoneCard().then((m) {
+      upsell.value = m;
+      // One ask per screen: the rating waits when a Plus card shows.
+      if (m != null) return;
+      // After logging a dose: ask for a rating once (skipped if the last
+      // ask was only days ago; then it waits for a later dose).
+      ReviewService.maybeAsk(
+        ReviewService.firstDose,
+        delay: const Duration(milliseconds: 1800),
+      );
+    });
+  }
+
+  /// "Your first dose is in." / "3 days in a row."
+  String get upsellTitle => upsell.value == 'streak_3'
+      ? '${tracker.logStreak} days in a row'
+      : 'Your first dose is in';
+
+  String get upsellSub {
+    final n = _upsell.daysLeft;
+    return 'Keep your log, reminders and reports after your free week '
+        '($n ${n == 1 ? 'day' : 'days'} left).';
+  }
+
+  void openPlus() {
+    Haptics.instance.selectionClick();
+    _upsell.tapped(upsell.value ?? '');
+    Get.toNamed<void>(Routes.plus);
   }
 
   UserProfile? get profile => tracker.profile.value;
@@ -195,6 +222,8 @@ class DoseDoneController extends GetxController {
   void done() {
     Haptics.instance.selectionClick();
     popRoute();
+    // Near the end of the free week, once: the Plus screen.
+    if (upsell.value == null) _upsell.afterLog();
   }
 
   void feeling() {

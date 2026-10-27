@@ -171,10 +171,13 @@ class ProgressController extends GetxController {
     Get.toNamed<void>(Routes.weighIns);
   }
 
-  /// A protein or water bar: that day's view.
-  void openDay(DateTime day) {
+  /// A protein or water bar: that screen, on that day.
+  void openIntake(String kind, DateTime day) {
     Haptics.instance.selectionClick();
-    Get.toNamed<void>(Routes.day, arguments: day);
+    Get.toNamed<void>(
+      Routes.addIntake,
+      arguments: {'kind': kind, 'day': day},
+    );
   }
 
   // ---------------------------------------------------------------- weight
@@ -497,12 +500,79 @@ class ProgressController extends GetxController {
     ];
   }
 
+  /// Side effects in the shown weeks, most days first: (id, days, worst
+  /// level 1–3). At most [limit].
+  List<(String, int, int)> feelEffects({int limit = 3}) {
+    final days = <String, int>{};
+    final worst = <String, int>{};
+    for (final c in feelCells) {
+      if (c.level < 0) continue;
+      final log = tracker.dayLog(c.date);
+      for (final id in log.symptoms) {
+        days[id] = (days[id] ?? 0) + 1;
+        final l = id == 'nausea'
+            ? ((log.nausea ?? 0) + 1).clamp(1, 3)
+            : log.levelOf(id).clamp(1, 3);
+        if (l > (worst[id] ?? 0)) worst[id] = l;
+      }
+    }
+    final ids = days.keys.toList()
+      ..sort((a, b) => days[b]!.compareTo(days[a]!));
+    return [for (final id in ids.take(limit)) (id, days[id]!, worst[id]!)];
+  }
+
+  /// Filter chips: nausea and every side effect on the check-in (custom
+  /// ones too), the ones that came up in these weeks first.
+  List<String> get feelFilters {
+    final custom = tracker.customSymptoms.map(Catalog.customId).toSet();
+    final ids = <String>[
+      'nausea',
+      for (final id in tracker.checkInShown)
+        if (id != 'nausea' &&
+            (Catalog.symptoms.containsKey(id) || custom.contains(id)))
+          id,
+    ];
+    final days = {for (final (id, d, _) in feelEffects(limit: 99)) id: d};
+    for (final id in days.keys) {
+      if (!ids.contains(id)) ids.add(id);
+    }
+    final order = {for (final (i, id) in ids.indexed) id: i};
+    ids.sort((a, b) {
+      final d = (days[b] ?? 0).compareTo(days[a] ?? 0);
+      return d != 0 ? d : order[a]!.compareTo(order[b]!);
+    });
+    return ids;
+  }
+
+  /// One side effect's strength that day: 0 not felt, 1 mild, 2 moderate,
+  /// 3 severe.
+  int symptomLevel(DayLog log, String id) {
+    if (!log.symptoms.contains(id)) return 0;
+    if (id == 'nausea') return ((log.nausea ?? 0) + 1).clamp(1, 3);
+    return log.levelOf(id).clamp(1, 3);
+  }
+
+  /// A day's colour level for the heatmap: -1 no check-in (or still to
+  /// come); otherwise 0–3 for the whole day ([filter] 'all') or for one
+  /// side effect.
+  int feelLevel(FeelCell c, String filter) {
+    if (c.inFuture || c.level < 0) return -1;
+    if (filter == 'all') return c.level;
+    return symptomLevel(tracker.dayLog(c.date), filter);
+  }
+
+  /// The mood picked that day (0 Great … 4 Rough), or one read from how
+  /// rough the day was when no mood was picked.
+  int feelMood(FeelCell c) =>
+      tracker.dayLog(c.date).mood ?? const [1, 2, 3, 4][c.level.clamp(0, 3)];
+
   /// Today's check-in is saved (hides "Check in today").
   bool get checkedInToday => tracker.today.hasCheckIn;
 
-  void openCheckIn() {
+  /// Today's check-in, or [day]'s from the calendar.
+  void openCheckIn([DateTime? day]) {
     Haptics.instance.selectionClick();
-    Get.toNamed<void>(Routes.checkIn);
+    Get.toNamed<void>(Routes.checkIn, arguments: day);
   }
 
   String get feelHeadline {

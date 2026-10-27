@@ -40,6 +40,14 @@ class Analytics {
   /// A timed offer's window ended without a purchase (logged once).
   static void offerExpired() => _log('offer_expired');
 
+  /// A free-week Plus prompt was shown. [where] 'dose_done' or 'week_end',
+  /// [id] the milestone ('first_dose', 'streak_3', 'week_end').
+  static void upsellView({required String where, required String id}) =>
+      _log('upsell_view', {'where': where, 'id': id});
+
+  static void upsellTap({required String id}) =>
+      _log('upsell_tap', {'id': id});
+
   /// [plan] is the RevenueCat package ('\$rc_annual'), [offering] its
   /// offering ('default' or 'offer_30'). No price: the stores report revenue.
   static void plusPurchase({required String plan, required String offering}) =>

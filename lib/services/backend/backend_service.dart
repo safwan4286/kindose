@@ -20,6 +20,7 @@ import '../app_status/app_status_service.dart';
 import '../debug/test_data.dart';
 import '../plus/access_service.dart';
 import '../offers/offer_service.dart';
+import '../upsell/upsell_service.dart';
 import '../notifications/notif_prefs.dart';
 import '../supply/supply_service.dart';
 import '../tracker_service.dart';
@@ -691,6 +692,9 @@ class BackendService extends GetxService {
         }
         if (r['key'] == 'access' && Get.isRegistered<AccessService>()) {
           Get.find<AccessService>().applyRemote(r['value']);
+        }
+        if (r['key'] == 'upsell' && Get.isRegistered<UpsellService>()) {
+          Get.find<UpsellService>().applyRemote(r['value']);
         }
         if (r['key'] == 'paywall_offer' && Get.isRegistered<OfferService>()) {
           final value = r['value'];

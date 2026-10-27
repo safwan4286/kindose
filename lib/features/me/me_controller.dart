@@ -20,6 +20,7 @@ import '../../services/notifications/notif_prefs.dart';
 import '../../services/notifications/notification_service.dart';
 import '../../services/notifications/reminder_service.dart';
 import '../../services/offers/offer_service.dart';
+import '../../services/upsell/upsell_service.dart';
 import '../../services/plus/access_service.dart';
 import '../../services/plus/plus_access.dart';
 import '../../services/purchases/purchase_service.dart';
@@ -207,6 +208,13 @@ class MeController extends GetxController {
     Haptics.instance.selectionClick();
     await Get.find<OfferService>().debugResetTimer();
     showToast('Offer timer reset');
+  }
+
+  /// Debug: forget the free-week Plus prompts already shown.
+  Future<void> debugResetUpsell() async {
+    Haptics.instance.selectionClick();
+    await Get.find<UpsellService>().debugReset();
+    showToast('Plus prompts reset');
   }
 
   /// Act as a paying Plus user (debug builds only).
