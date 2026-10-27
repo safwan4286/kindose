@@ -211,6 +211,63 @@ void main() {
       expect(c.feelHeadline, 'Mostly fine.');
     });
 
+    test('per side effect level and heatmap filter', () async {
+      await start();
+      await t.saveDay(
+        DayLog(
+          key: Dates.key(today),
+          symptoms: const ['nausea', 'tired'],
+          nausea: 2,
+          symptomLevels: const {'tired': 1},
+        ),
+      );
+      final log = t.dayLog(today);
+      expect(c.symptomLevel(log, 'nausea'), 3);
+      expect(c.symptomLevel(log, 'tired'), 1);
+      expect(c.symptomLevel(log, 'headache'), 0);
+      final cell = c.feelCells.firstWhere((x) => Dates.sameDay(x.date, today));
+      expect(c.feelLevel(cell, 'nausea'), 3);
+      expect(c.feelLevel(cell, 'tired'), 1);
+      expect(c.feelLevel(cell, 'headache'), 0);
+      final empty = c.feelCells.firstWhere((x) => x.level < 0);
+      expect(c.feelLevel(empty, 'all'), -1);
+    });
+
+    test('filters list every side effect, most logged first', () async {
+      await start();
+      await t.saveDay(
+        DayLog(
+          key: Dates.key(today),
+          symptoms: const ['heartburn'],
+          symptomLevels: const {'heartburn': 2},
+        ),
+      );
+      final f = c.feelFilters;
+      expect(f.first, 'heartburn');
+      expect(f, contains('nausea'));
+      expect(f, containsAll(t.checkInShown));
+      expect(f.toSet().length, f.length);
+    });
+
+    test('what came up counts days and keeps the worst level', () async {
+      await start();
+      await t.saveDay(
+        DayLog(
+          key: Dates.key(today),
+          symptoms: const ['tired'],
+          symptomLevels: const {'tired': 1},
+        ),
+      );
+      await t.saveDay(
+        DayLog(
+          key: Dates.key(Dates.addDays(today, -1)),
+          symptoms: const ['tired'],
+          symptomLevels: const {'tired': 3},
+        ),
+      );
+      expect(c.feelEffects(), [('tired', 2, 3)]);
+    });
+
     test('pattern needs 3 dose weeks', () async {
       await start();
       await dose(0);

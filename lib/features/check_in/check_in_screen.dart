@@ -8,6 +8,7 @@ import '../../services/plus/plus_access.dart';
 import '../../services/responsiveness/device_manager.dart';
 import '../../services/theme/theme.dart';
 import '../../widgets/buttons.dart';
+import '../../widgets/day_switcher.dart';
 import '../../widgets/entrance.dart';
 import '../../widgets/k_widgets.dart';
 import '../../widgets/mood_row.dart';
@@ -37,17 +38,8 @@ class CheckInScreen extends GetView<CheckInController> {
               child: Row(
                 children: [
                   BackCircle(onTap: popRoute),
-                  SizedBox(width: 12.sp),
-                  Expanded(
-                    child: Text(
-                      controller.eyebrow,
-                      style: AppText.caps.copyWith(
-                        fontSize: 12.sp,
-                        letterSpacing: 1.1,
-                        color: k.muted,
-                      ),
-                    ),
-                  ),
+                  const Spacer(),
+                  DaySwitcher(nav: controller),
                 ],
               ),
             ),
@@ -57,23 +49,38 @@ class CheckInScreen extends GetView<CheckInController> {
                     ScrollViewKeyboardDismissBehavior.onDrag,
                 padding: EdgeInsets.fromLTRB(20.sp, 16.sp, 20.sp, 24.sp),
                 children: [
-                  Semantics(
-                    header: true,
-                    child: Text(
-                      controller.title,
-                      style: AppText.h1.copyWith(
-                        fontSize: 30.sp,
-                        color: k.text,
+                  Obx(
+                    () => Text(
+                      controller.eyebrow,
+                      style: AppText.caps.copyWith(
+                        fontSize: 12.sp,
+                        letterSpacing: 1.1,
+                        color: k.muted,
+                      ),
+                    ),
+                  ).enter(motion),
+                  SizedBox(height: 8.sp),
+                  Obx(
+                    () => Semantics(
+                      header: true,
+                      child: Text(
+                        controller.title,
+                        style: AppText.h1.copyWith(
+                          fontSize: 30.sp,
+                          color: k.text,
+                        ),
                       ),
                     ),
                   ).enter(motion),
                   SizedBox(height: 6.sp),
-                  Text(
-                    controller.sub,
-                    style: AppText.bodyStrong.copyWith(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
-                      color: k.muted,
+                  Obx(
+                    () => Text(
+                      controller.sub,
+                      style: AppText.bodyStrong.copyWith(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                        color: k.muted,
+                      ),
                     ),
                   ).enter(motion, delay: 40),
                   SizedBox(height: 18.sp),

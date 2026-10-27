@@ -11,6 +11,7 @@ import '../../services/plus/access_service.dart';
 import '../../services/responsiveness/device_manager.dart';
 import '../../services/theme/theme.dart';
 import '../../services/tracker_service.dart';
+import '../../services/upsell/upsell_service.dart';
 import '../../widgets/buttons.dart';
 import '../../widgets/confirm_sheet.dart';
 import '../../widgets/day_switcher.dart';
@@ -114,6 +115,7 @@ class _WeightScreenState extends State<WeightScreen> {
       Haptics.instance.mediumImpact();
       popRoute();
       showToast('Weight saved: ${_fmt(_kg)} $_unit');
+      Get.find<UpsellService>().afterLog();
     } catch (_) {
       showToast("Couldn't save. Please try again.");
     } finally {

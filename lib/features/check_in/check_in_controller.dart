@@ -8,12 +8,16 @@ import '../../resources/routes.dart';
 import '../../services/haptics/haptics.dart';
 import '../../services/plus/access_service.dart';
 import '../../services/tracker_service.dart';
+import '../../services/upsell/upsell_service.dart';
+import '../../widgets/confirm_sheet.dart';
 import '../../widgets/toast.dart';
+import '../common/day_nav.dart';
 
 /// How-I-feel check-in, for today or a past day (pass the DateTime as the
 /// argument; 'note' opens today's with the note field focused). Opens
 /// pre-filled with anything already logged, so it works as an edit too.
-class CheckInController extends GetxController {
+/// ‹ day › moves between days; unsaved changes are confirmed first.
+class CheckInController extends GetxController with DayNav {
   final TrackerService tracker = Get.find<TrackerService>();
   final TextEditingController noteCtrl = TextEditingController();
   final FocusNode noteFocus = FocusNode();
@@ -34,34 +38,70 @@ class CheckInController extends GetxController {
   /// Opened from a "Note" shortcut: jump straight to the note field.
   late final bool focusNote = Get.arguments == 'note';
 
-  /// The day being logged; never after today.
-  late final DateTime day = () {
-    final arg = Get.arguments;
-    final today = Dates.dateOnly(DateTime.now());
-    if (arg is! DateTime) return today;
-    final d = Dates.dateOnly(arg);
-    return d.isAfter(today) ? today : d;
-  }();
-
-  bool get isToday => Dates.sameDay(day, DateTime.now());
+  /// The form as it was loaded, to tell when there are unsaved changes.
+  String _loaded = '';
 
   @override
   void onInit() {
     super.onInit();
-    final d = tracker.dayLog(day);
+    initDay(Get.arguments);
+    _load();
+    showNote.value = focusNote || noteCtrl.text.isNotEmpty;
+  }
+
+  /// Fills the form from [day]'s saved check-in (empty if none).
+  void _load() {
+    final d = tracker.dayLog(day.value);
     mood.value = d.mood;
     nausea.value = d.symptoms.contains('nausea')
         ? (d.nausea ?? 0).clamp(0, 2)
         : (d.nausea == -1 ? -1 : null);
     foodNoise.value = d.foodNoise;
     appetite.value = d.appetite;
+    levels.clear();
     for (final id in d.symptoms) {
       if (id == 'nausea') continue;
       final l = d.levelOf(id);
       if (l > 0) levels[id] = l.clamp(1, 3);
     }
     noteCtrl.text = d.note ?? '';
-    showNote.value = focusNote || noteCtrl.text.isNotEmpty;
+    showNote.value = noteCtrl.text.isNotEmpty;
+    _loaded = _form;
+  }
+
+  String get _form => [
+    mood.value,
+    nausea.value,
+    foodNoise.value,
+    appetite.value,
+    (levels.entries.map((e) => '${e.key}:${e.value}').toList()..sort()).join(
+      ',',
+    ),
+    noteCtrl.text.trim(),
+  ].join('|');
+
+  bool get _dirty => _form != _loaded;
+
+  @override
+  void onDayChanged() => _load();
+
+  /// Asks before leaving a day with unsaved changes.
+  @override
+  void setDay(DateTime d) {
+    if (Dates.sameDay(d, day.value) || !_dirty) {
+      super.setDay(d);
+      return;
+    }
+    () async {
+      final ok = await confirmRemove(
+        title: 'Discard your changes?',
+        message:
+            "You haven't saved this check-in. Switching to "
+            '${Dates.shortWithDay(d)} will lose them.',
+        action: 'Discard',
+      );
+      if (ok) super.setDay(d);
+    }();
   }
 
   @override
@@ -80,13 +120,13 @@ class CheckInController extends GetxController {
   /// "DAY 2 AFTER YOUR DOSE", "DOSE DAY", or the date: always the date
   /// for a past day, so it's clear which day is being logged.
   String get eyebrow {
-    final date = Dates.long(day).toUpperCase();
+    final date = Dates.long(day.value).toUpperCase();
     if (!isToday) return date;
     final last = tracker.lastDose;
     if (last == null || (tracker.profile.value?.isDaily ?? false)) {
       return date;
     }
-    final n = Dates.daysBetween(last.takenAt, day);
+    final n = Dates.daysBetween(last.takenAt, day.value);
     if (n == 0) return 'DOSE DAY';
     return 'DAY $n AFTER YOUR DOSE';
   }
@@ -95,7 +135,7 @@ class CheckInController extends GetxController {
 
   String get sub => isToday
       ? 'About 20 seconds. Everything is optional.'
-      : 'Logging for ${Dates.shortWithDay(day)}. Everything is optional.';
+      : 'Logging for ${Dates.shortWithDay(day.value)}. Everything is optional.';
 
   void pickMood(int i) {
     Haptics.instance.selectionClick();
@@ -173,7 +213,7 @@ class CheckInController extends GetxController {
     saving.value = true;
     try {
       final note = noteCtrl.text.trim();
-      final d = tracker.dayLog(day);
+      final d = tracker.dayLog(day.value);
       final effects = Map<String, int>.from(levels);
       // Build a fresh record so cleared answers really become empty.
       await tracker.saveDay(
@@ -194,6 +234,8 @@ class CheckInController extends GetxController {
       Haptics.instance.mediumImpact();
       popRoute();
       showToast('Check-in saved');
+      // Near the end of the free week, once (skipped on a severe day).
+      if (!anySevere) Get.find<UpsellService>().afterLog();
     } finally {
       saving.value = false;
     }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
+import '../../resources/catalog.dart';
 import '../../resources/colors.dart';
 import '../../resources/date_utils.dart';
 import '../../resources/images.dart';
@@ -17,6 +18,7 @@ import '../../widgets/press_scale.dart';
 import '../../widgets/weight_chart.dart';
 import '../home/home_screen.dart';
 import 'progress_controller.dart';
+import 'widgets/feel_heatmap.dart';
 
 /// Progress tab: weight trend, doses and spots, protein & water week, and
 /// how you felt over 4 weeks. 4 weeks are free; longer ranges need Plus.
@@ -77,7 +79,7 @@ class ProgressScreen extends GetView<ProgressController> {
                 water: false,
               ),
               bars: controller.proteinBars,
-              onDayTap: controller.openDay,
+              onDayTap: (d) => controller.openIntake('protein', d),
               color: AppColors.tangerine,
               valueLabel: (v) => '${v.round()} g',
               shortLabel: (v) => '${v.round()}',
@@ -92,7 +94,7 @@ class ProgressScreen extends GetView<ProgressController> {
                 water: true,
               ),
               bars: controller.waterBars,
-              onDayTap: controller.openDay,
+              onDayTap: (d) => controller.openIntake('water', d),
               color: AppColors.aqua,
               valueLabel: (v) => Water.totalWithUnit(v.round()),
               shortLabel: (v) => Water.total(v.round()),
@@ -685,7 +687,7 @@ class _BarsCard extends StatelessWidget {
     required this.shortLabel,
   });
 
-  /// Tapping a bar opens that day.
+  /// Tapping a bar opens that day's Protein or Water screen.
   final void Function(DateTime day) onDayTap;
   final String title;
   final String goalLabel;
@@ -740,7 +742,7 @@ class _BarsCard extends StatelessWidget {
                       button: true,
                       label:
                           '${Dates.weekdayName(b.date.weekday)} ${valueLabel(b.value)}'
-                          '${b.hit ? ', goal reached' : ''}. Opens the day',
+                          '${b.hit ? ', goal reached' : ''}. Opens that day',
                       excludeSemantics: true,
                       child: GestureDetector(
                         behavior: HitTestBehavior.opaque,
@@ -841,6 +843,15 @@ class _BarsCard extends StatelessWidget {
   }
 }
 
+/// How-you-felt style. true: recent check-ins as mood faces plus what came
+/// up, with the month calendar behind "Full month". false: the original
+/// month calendar only.
+const bool _feelFaces = true;
+
+/// The heatmap card (filter chips, Grid / Trend, day details). Takes
+/// precedence over [_feelFaces]; false falls back to the styles above.
+const bool _feelHeatmap = true;
+
 class _FeelCard extends StatefulWidget {
   const _FeelCard({required this.controller});
 
@@ -850,10 +861,13 @@ class _FeelCard extends StatefulWidget {
   State<_FeelCard> createState() => _FeelCardState();
 }
 
-/// Tap a day to open it (today without a check-in opens the check-in).
+/// Tap a day to open its check-in.
 /// ‹ › step through earlier 4-week periods.
 class _FeelCardState extends State<_FeelCard> {
   ProgressController get controller => widget.controller;
+
+  /// The month calendar opened from "Full month" (faces view only).
+  bool _month = false;
 
   /// Fine → severe, one warm hue light to dark. "Fine" is tinted enough to
   /// stand apart from an empty day.
@@ -864,13 +878,9 @@ class _FeelCardState extends State<_FeelCard> {
     Color(0xFF9A3F17),
   ];
 
-  void _tap(FeelCell c, DateTime today) {
+  void _tap(FeelCell c) {
     if (c.inFuture) return;
-    if (Dates.sameDay(c.date, today) && c.level < 0) {
-      controller.openCheckIn();
-    } else {
-      controller.openDay(c.date);
-    }
+    controller.openCheckIn(c.date);
   }
 
   @override
@@ -880,6 +890,17 @@ class _FeelCardState extends State<_FeelCard> {
     final pattern = controller.patternLine;
     final today = Dates.dateOnly(DateTime.now());
     final locked = controller.feelLocked;
+    if (_feelHeatmap && !locked) {
+      return _Card(
+        child: FeelHeatmap(
+          controller: controller,
+          heat: _heat,
+          patternCard: controller.isDaily
+              ? null
+              : _patternCard(context, pattern),
+        ),
+      );
+    }
     const names = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
     return _Card(
       child: Column(
@@ -921,6 +942,12 @@ class _FeelCardState extends State<_FeelCard> {
           if (locked)
             PillButton(label: 'See Plus', onPressed: controller.openPlus)
           else ...[
+            if (_feelFaces && !_month) ...[
+              _faces(context, cells, today),
+              _effects(context),
+              SizedBox(height: 10.sp),
+              _monthLink(context, 'Full month'),
+            ] else ...[
             ExcludeSemantics(
               child: Row(
                 children: [
@@ -986,6 +1013,12 @@ class _FeelCardState extends State<_FeelCard> {
                 ],
               ),
             ),
+          
+              if (_feelFaces) ...[
+                SizedBox(height: 10.sp),
+                _monthLink(context, 'Show less'),
+              ],
+            ],
           ],
           if (controller.feelPage.value == 0 && !controller.checkedInToday) ...[
             SizedBox(height: 14.sp),
@@ -1070,9 +1103,9 @@ class _FeelCardState extends State<_FeelCard> {
     );
   }
 
-  /// A soft cell with its date: empty days are a quiet tint, check-ins take
-  /// their level's colour, today and the picked day have a ring, and days
-  /// still to come are an outline only. The 1st names its month.
+  /// A cell with its date: check-ins take their level's colour, other days
+  /// are the date alone, today has a ring, and days still to come are
+  /// blank. The 1st names its month.
   Widget _cell(BuildContext context, FeelCell c, DateTime today) {
     final k = context.k;
     final isToday = Dates.sameDay(c.date, today);
@@ -1082,22 +1115,18 @@ class _FeelCardState extends State<_FeelCard> {
       button: !c.inFuture,
       label: c.inFuture
           ? ''
-          : '${Dates.shortWithDay(c.date)}: ${c.level < 0 ? 'no check-in' : ['fine', 'mild', 'moderate', 'severe'][c.level]}${c.doseDay ? ', dose day' : ''}. Opens the day',
+          : '${Dates.shortWithDay(c.date)}: ${c.level < 0 ? 'no check-in' : ['fine', 'mild', 'moderate', 'severe'][c.level]}${c.doseDay ? ', dose day' : ''}. Opens the check-in',
       excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: () => _tap(c, today),
+        onTap: () => _tap(c),
         child: Container(
           decoration: BoxDecoration(
-            color: c.inFuture
-                ? Colors.transparent
-                : (filled ? _heat[c.level] : k.border.withValues(alpha: 0.55)),
+            // Only check-ins get a colour; other days are just their date,
+            // and days still to come are left blank.
+            color: filled ? _heat[c.level] : Colors.transparent,
             borderRadius: BorderRadius.circular(9.sp),
-            border: isToday
-                ? Border.all(color: k.text, width: 2)
-                : (c.inFuture
-                      ? Border.all(color: k.border.withValues(alpha: 0.7))
-                      : null),
+            border: isToday ? Border.all(color: k.text, width: 2) : null,
           ),
           child: Stack(
             alignment: Alignment.center,
@@ -1157,6 +1186,210 @@ class _FeelCardState extends State<_FeelCard> {
     size: 30.sp,
     background: context.k.text.withValues(alpha: 0.06),
     onTap: onTap,
+  );
+
+  /// The latest check-ins as mood faces, oldest on the left; a "…" where
+  /// days were skipped, and today as an empty ring until checked in.
+  Widget _faces(BuildContext context, List<FeelCell> cells, DateTime today) {
+    final k = context.k;
+    final todayCell = cells.firstWhereOrNull(
+      (c) => Dates.sameDay(c.date, today),
+    );
+    final checked = [
+      for (final c in cells)
+        if (!c.inFuture && c.level >= 0) c,
+    ];
+    if (checked.isEmpty && todayCell == null) return const SizedBox.shrink();
+    // Newest first, then flipped: null is a gap.
+    final items = <FeelCell?>[];
+    DateTime? prev;
+    if (todayCell != null && todayCell.level < 0) {
+      items.add(todayCell);
+      prev = today;
+    }
+    for (final c in checked.reversed) {
+      if (items.length >= 7) break;
+      if (prev != null && Dates.daysBetween(c.date, prev) > 1) {
+        if (items.length >= 6) break;
+        items.add(null);
+      }
+      items.add(c);
+      prev = c.date;
+    }
+    final row = items.reversed.toList();
+    final size = 36.sp;
+    Widget face(FeelCell c) {
+      final isToday = Dates.sameDay(c.date, today);
+      final empty = c.level < 0;
+      return Semantics(
+        button: true,
+        label: empty
+            ? 'Today: no check-in. Opens the check-in'
+            : '${Dates.shortWithDay(c.date)}: '
+                  '${Catalog.moods[controller.feelMood(c)].label}. Opens the check-in',
+        excludeSemantics: true,
+        child: PressScale(
+          onTap: () => controller.openCheckIn(c.date),
+          child: Column(
+            children: [
+              Container(
+                width: size,
+                height: size,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: empty ? Colors.transparent : _heat[c.level],
+                  border: isToday
+                      ? Border.all(color: k.text, width: 2)
+                      : null,
+                ),
+                alignment: Alignment.center,
+                child: empty
+                    ? Icon(PhosphorIconsBold.plus, size: 16.sp, color: k.text)
+                    : ThreeD(
+                        Catalog.moods[controller.feelMood(c)].icon,
+                        size: 23.sp,
+                      ),
+              ),
+              SizedBox(height: 4.sp),
+              Text(
+                isToday ? 'Today' : '${c.date.day}',
+                style: AppText.tiny.copyWith(
+                  fontSize: 11.sp,
+                  fontWeight: isToday ? FontWeight.w800 : FontWeight.w600,
+                  color: isToday ? k.text : k.faint,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Row(
+      children: [
+        for (var i = 0; i < 7; i++)
+          Expanded(
+            child: Center(
+              child: i >= row.length
+                  ? const SizedBox.shrink()
+                  : (row[i] == null
+                        ? SizedBox(
+                            height: size,
+                            child: Center(
+                              child: Text(
+                                '…',
+                                style: AppText.title.copyWith(
+                                  fontSize: 16.sp,
+                                  color: k.faint,
+                                ),
+                              ),
+                            ),
+                          )
+                        : face(row[i]!)),
+            ),
+          ),
+      ],
+    );
+  }
+
+  /// "What came up": the side effects of these weeks, by days, each bar
+  /// in the colour of its worst day.
+  Widget _effects(BuildContext context) {
+    final k = context.k;
+    final list = controller.feelEffects();
+    if (list.isEmpty) return const SizedBox.shrink();
+    final most = list.first.$2;
+    return Padding(
+      padding: EdgeInsets.only(top: 14.sp),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(height: 1, color: k.border.withValues(alpha: 0.6)),
+          SizedBox(height: 12.sp),
+          Text('WHAT CAME UP', style: _caps(context)),
+          SizedBox(height: 8.sp),
+          for (final (id, days, worst) in list)
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 4.sp),
+              child: Semantics(
+                label:
+                    '${Catalog.symptomLabel(id)}, $days ${days == 1 ? 'day' : 'days'}',
+                excludeSemantics: true,
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 92.sp,
+                      child: Text(
+                        Catalog.symptomLabel(id),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppText.bodyStrong.copyWith(
+                          fontSize: 13.5.sp,
+                          fontWeight: FontWeight.w700,
+                          color: k.text,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4.sp),
+                        child: SizedBox(
+                          height: 8.sp,
+                          child: Stack(
+                            children: [
+                              Positioned.fill(
+                                child: ColoredBox(
+                                  color: k.border.withValues(alpha: 0.55),
+                                ),
+                              ),
+                              FractionallySizedBox(
+                                widthFactor: days / most,
+                                heightFactor: 1,
+                                child: ColoredBox(
+                                  color: _heat[worst.clamp(1, 3)],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 56.sp,
+                      child: Text(
+                        '$days ${days == 1 ? 'day' : 'days'}',
+                        textAlign: TextAlign.right,
+                        style: AppText.small.copyWith(
+                          fontSize: 12.5.sp,
+                          fontWeight: FontWeight.w700,
+                          color: k.muted,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _monthLink(BuildContext context, String label) => PressScale(
+    semanticLabel: label == 'Full month'
+        ? 'Show the full month'
+        : 'Hide the full month',
+    onTap: () => setState(() => _month = !_month),
+    child: Padding(
+      padding: EdgeInsets.symmetric(vertical: 4.sp),
+      child: Text(
+        label == 'Full month' ? 'Full month ›' : 'Show less',
+        style: AppText.title.copyWith(
+          fontSize: 13.sp,
+          color: context.k.muted,
+        ),
+      ),
+    ),
   );
 
   Widget _legendText(BuildContext context, String text) => Text(

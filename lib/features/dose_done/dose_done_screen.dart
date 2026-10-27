@@ -121,6 +121,18 @@ class DoseDoneScreen extends GetView<DoseDoneController> {
                     ),
                   ),
                 ),
+                Obx(
+                  () => controller.upsell.value == null
+                      ? const SizedBox.shrink()
+                      : Padding(
+                          padding: EdgeInsets.only(bottom: 10.sp),
+                          child: _PlusCard(
+                            title: controller.upsellTitle,
+                            sub: controller.upsellSub,
+                            onTap: controller.openPlus,
+                          ).enter(motion, delay: 560),
+                        ),
+                ),
                 _DoneButton(onTap: controller.done).enter(motion, delay: 600),
                 SizedBox(height: 6.sp),
                 TextButton(
@@ -369,6 +381,91 @@ class _PenRow extends StatelessWidget {
         ),
       );
     });
+  }
+}
+
+/// Free-week milestone card above Done: what they keep with Plus, and
+/// a way to see plans. Quiet on purpose; Done stays the main button.
+class _PlusCard extends StatelessWidget {
+  const _PlusCard({
+    required this.title,
+    required this.sub,
+    required this.onTap,
+  });
+
+  final String title;
+  final String sub;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: '$title. $sub See plans',
+      excludeSemantics: true,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: EdgeInsets.fromLTRB(14.sp, 12.sp, 12.sp, 12.sp),
+          decoration: BoxDecoration(
+            color: AppColors.white.withValues(alpha: 0.07),
+            borderRadius: BorderRadius.circular(16.sp),
+            border: Border.all(color: AppColors.lime.withValues(alpha: 0.35)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 36.sp,
+                height: 36.sp,
+                decoration: BoxDecoration(
+                  color: AppColors.lime,
+                  borderRadius: BorderRadius.circular(11.sp),
+                ),
+                alignment: Alignment.center,
+                child: PhosphorIcon(
+                  PhosphorIconsBold.sparkle,
+                  size: 18.sp,
+                  color: AppColors.ink,
+                ),
+              ),
+              SizedBox(width: 12.sp),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: AppText.title.copyWith(
+                        fontSize: 14.5.sp,
+                        color: AppColors.white,
+                      ),
+                    ),
+                    SizedBox(height: 2.sp),
+                    Text(
+                      sub,
+                      style: AppText.small.copyWith(
+                        fontSize: 12.5.sp,
+                        height: 1.35,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.heroMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(width: 8.sp),
+              Text(
+                'See plans',
+                style: AppText.title.copyWith(
+                  fontSize: 13.sp,
+                  color: AppColors.lime,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

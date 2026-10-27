@@ -22,6 +22,7 @@ import 'services/crash/crash_reporting.dart';
 import 'services/notifications/notif_prefs.dart';
 import 'services/notifications/reminder_service.dart';
 import 'services/offers/offer_service.dart';
+import 'services/upsell/upsell_service.dart';
 import 'services/app_status/app_status_service.dart';
 import 'services/plus/access_service.dart';
 import 'services/plus/plus_access.dart';
@@ -78,6 +79,8 @@ Future<void> main() async {
   Get.put<ReminderService>(ReminderService(), permanent: true);
   // Discount offer rules (backend-driven later via Remote Config).
   Get.put<OfferService>(OfferService(), permanent: true);
+  // Free-week Plus prompts (milestone card, end-of-week screen).
+  Get.put<UpsellService>(UpsellService(), permanent: true);
   // Sign-in, cloud backup and remote config (Supabase). The app works fully
   // without it; this only adds a copy in the cloud.
   await BackendService.initSupabase();
