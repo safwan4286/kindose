@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
@@ -852,32 +854,6 @@ class _TrendPainter extends CustomPainter {
     ];
     final pts = [for (final i in idx) Offset(i * step, y(levels[i]))];
     if (pts.isNotEmpty) {
-      final path = _smooth(pts);
-      if (pts.length > 1) {
-        final area = Path.from(path)
-          ..lineTo(pts.last.dx, bottom)
-          ..lineTo(pts.first.dx, bottom)
-          ..close();
-        canvas.drawPath(
-          area,
-          Paint()
-            ..shader = LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [line.withValues(alpha: 0.28), line.withValues(alpha: 0)],
-            ).createShader(Rect.fromLTRB(0, top, size.width, bottom)),
-        );
-      }
-      canvas.drawPath(
-        path,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2.4
-          ..strokeCap = StrokeCap.round
-          ..strokeJoin = StrokeJoin.round
-          ..color = line,
-      );
-
       void dot(Offset o, int l, double r) {
         canvas.drawCircle(o, r + 2, Paint()..color = surface);
         canvas.drawCircle(o, r, Paint()..color = heat[l]);
@@ -889,6 +865,67 @@ class _TrendPainter extends CustomPainter {
             ..strokeWidth = 2.4
             ..color = line,
         );
+      }
+
+      // Days without a check-in aren't drawn as if they had one: the
+      // solid line only joins back-to-back days; a gap gets a faint
+      // dashed link, and a lone check-in a small dot.
+      final runs = <List<int>>[];
+      for (var j = 0; j < idx.length; j++) {
+        if (j == 0 || idx[j] - idx[j - 1] > 1) {
+          runs.add([j]);
+        } else {
+          runs.last.add(j);
+        }
+      }
+
+      final gapPaint = Paint()
+        ..color = line.withValues(alpha: 0.45)
+        ..strokeWidth = 1.5
+        ..strokeCap = StrokeCap.round;
+      for (var r = 1; r < runs.length; r++) {
+        final a = pts[runs[r - 1].last];
+        final b = pts[runs[r].first];
+        final len = (b - a).distance;
+        final dir = (b - a) / len;
+        for (var d = 4.0; d < len - 4; d += 7) {
+          canvas.drawLine(
+            a + dir * d,
+            a + dir * math.min(d + 3, len - 4),
+            gapPaint,
+          );
+        }
+      }
+
+      final fill = Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [line.withValues(alpha: 0.28), line.withValues(alpha: 0)],
+        ).createShader(Rect.fromLTRB(0, top, size.width, bottom));
+      final stroke = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.4
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round
+        ..color = line;
+      for (final run in runs) {
+        final rp = [for (final j in run) pts[j]];
+        if (rp.length == 1) {
+          if (run.single != idx.length - 1) {
+            dot(rp.single, levels[idx[run.single]], 3.5);
+          }
+          continue;
+        }
+        final path = _smooth(rp);
+        canvas.drawPath(
+          Path.from(path)
+            ..lineTo(rp.last.dx, bottom)
+            ..lineTo(rp.first.dx, bottom)
+            ..close(),
+          fill,
+        );
+        canvas.drawPath(path, stroke);
       }
 
       // The latest check-in.
