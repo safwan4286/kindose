@@ -20,6 +20,7 @@
 ///   "fine_print": "$34.99 today for 12 months, then $49.99/year. Cancel anytime.",
 ///   "cta": "Get 30% off",
 ///   "perks": ["All-time charts and history", "Side-effect patterns", "Share your doctor report"],
+///   "trigger": "week_end",
 ///   "mode": "timer",
 ///   "timer_hours": 24,
 ///   "show_banner": true,
@@ -51,6 +52,31 @@ enum OfferMode {
   };
 }
 
+/// When the offer first appears. After that, [OfferMode] decides how long
+/// it stays (closing the paywall shows it again while it's open).
+enum OfferTrigger {
+  /// On Home, once the free week is on its last day or over.
+  weekEnd,
+
+  /// On Home, the first time after onboarding.
+  homeFirst,
+
+  /// When the paywall is closed (the original rule).
+  paywallClose;
+
+  static OfferTrigger parse(Object? v) => switch (v) {
+    'home_first' => homeFirst,
+    'paywall_close' => paywallClose,
+    _ => weekEnd,
+  };
+
+  String get id => switch (this) {
+    weekEnd => 'week_end',
+    homeFirst => 'home_first',
+    paywallClose => 'paywall_close',
+  };
+}
+
 class OfferConfig {
   const OfferConfig({
     required this.enabled,
@@ -71,6 +97,7 @@ class OfferConfig {
     required this.minPaywallCloses,
     required this.showInOnboarding,
     required this.showInApp,
+    required this.trigger,
     required this.mode,
     required this.timerHours,
     required this.showBanner,
@@ -118,6 +145,8 @@ class OfferConfig {
   final bool showInOnboarding;
   final bool showInApp;
 
+  final OfferTrigger trigger;
+
   final OfferMode mode;
 
   /// Length of the [OfferMode.timer] window.
@@ -150,6 +179,7 @@ class OfferConfig {
     minPaywallCloses: 1,
     showInOnboarding: true,
     showInApp: true,
+    trigger: OfferTrigger.weekEnd,
     mode: OfferMode.once,
     timerHours: 24,
     showBanner: true,
@@ -202,6 +232,9 @@ class OfferConfig {
       ),
       showInOnboarding: pick('show_in_onboarding', d.showInOnboarding),
       showInApp: pick('show_in_app', d.showInApp),
+      trigger: j.containsKey('trigger')
+          ? OfferTrigger.parse(j['trigger'])
+          : d.trigger,
       mode: j.containsKey('mode') ? OfferMode.parse(j['mode']) : d.mode,
       timerHours: pickInt('timer_hours', d.timerHours, min: 1, max: 720),
       showBanner: pick('show_banner', d.showBanner),

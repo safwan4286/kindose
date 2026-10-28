@@ -4,7 +4,9 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../resources/date_utils.dart';
 import '../../resources/routes.dart';
+import '../../features/offer/offer_controller.dart';
 import '../analytics/analytics.dart';
+import '../offers/offer_service.dart';
 import '../plus/access_service.dart';
 import '../plus/plus_access.dart';
 import '../tracker_service.dart';
@@ -98,6 +100,12 @@ class UpsellService extends GetxService {
     return !_shownToday && !_roughToday;
   }
 
+  /// Today a severe side effect was logged: no sales prompts.
+  bool get roughToday => _roughToday;
+
+  /// Counts a prompt shown elsewhere (the offer), so no second one today.
+  Future<void> markShown() => _mark();
+
   bool get _roughToday {
     final d = _tracker.today;
     return d.nausea == 2 || d.symptomLevels.values.any((l) => l >= 3);
@@ -135,9 +143,11 @@ class UpsellService extends GetxService {
     return hit;
   }
 
-  /// After a log near the end of the free week: opens the Plus screen once.
-  /// Returns true when it did.
+  /// After a log near the end of the free week: opens the welcome offer
+  /// when it's due (it is the end-of-week pitch), otherwise the Plus
+  /// screen once. Returns true when it opened something.
   Future<bool> afterLog() async {
+    if (_canPrompt && await openOfferIfDue()) return true;
     final days = config.value.fullScreenDaysLeft;
     if (days <= 0 || !_canPrompt) return false;
     if (_settings.get(_fullKey) == true) return false;
@@ -147,6 +157,19 @@ class UpsellService extends GetxService {
     await _mark();
     Analytics.upsellView(where: 'week_end', id: 'week_end');
     Get.toNamed<void>(Routes.plus);
+    return true;
+  }
+
+  /// Opens the welcome offer on Home when its trigger is due. Skipped on a
+  /// rough day; counts as today's prompt.
+  Future<bool> openOfferIfDue() async {
+    if (_roughToday || !Get.isRegistered<OfferService>()) return false;
+    if (!await Get.find<OfferService>().onHome()) return false;
+    await _mark();
+    Get.toNamed<void>(
+      Routes.offer,
+      arguments: const OfferArgs(fromOnboarding: false),
+    );
     return true;
   }
 

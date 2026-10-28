@@ -5,6 +5,7 @@ import '../../resources/routes.dart';
 import '../../services/haptics/haptics.dart';
 import '../../services/offers/offer_config.dart';
 import '../../services/offers/offer_service.dart';
+import '../../services/plus/access_service.dart';
 import '../../services/purchases/purchase_service.dart';
 import '../../widgets/toast.dart';
 import '../../services/analytics/analytics.dart';
@@ -48,6 +49,19 @@ class OfferController extends GetxController {
       return config.subtitle;
     }
     if (config.mode == OfferMode.timer) {
+      // Shown at the end of the free week: say so, it's the reason.
+      if (config.trigger == OfferTrigger.weekEnd &&
+          Get.isRegistered<AccessService>()) {
+        final a = Get.find<AccessService>();
+        if (a.started.value && a.locked) {
+          return 'Your free week has ended. Keep everything you logged, '
+              'for less, for a limited time.';
+        }
+        if (a.started.value && a.daysLeft <= 1) {
+          return 'Your free week ends today. Keep everything you logged, '
+              'for less, for a limited time.';
+        }
+      }
       return 'A thank-you for trying Kindose, for a limited time.';
     }
     return 'A thank-you for trying Kindose.';

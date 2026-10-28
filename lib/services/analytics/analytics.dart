@@ -37,6 +37,10 @@ class Analytics {
 
   static void offerView() => _log('offer_view');
 
+  /// What first showed the offer: 'week_end' or 'home_first'.
+  static void offerTrigger(String trigger) =>
+      _log('offer_trigger', {'trigger': trigger});
+
   /// A timed offer's window ended without a purchase (logged once).
   static void offerExpired() => _log('offer_expired');
 

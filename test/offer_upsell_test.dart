@@ -66,6 +66,11 @@ void main() {
       final c = OfferConfig.fromJson({'mode': 'timer', 'timer_hours': 24});
       expect(c.mode, OfferMode.timer);
       expect(c.timerHours, 24);
+      expect(OfferConfig.fromJson({}).trigger, OfferTrigger.weekEnd);
+      expect(
+        OfferConfig.fromJson({'trigger': 'home_first'}).trigger,
+        OfferTrigger.homeFirst,
+      );
       expect(
         OfferConfig.fromJson({'mode': 'until_claimed'}).mode,
         OfferMode.untilClaimed,
@@ -77,6 +82,7 @@ void main() {
     test('once: shows a single time', () async {
       await start();
       final o = Get.put(OfferService());
+      o.applyRemote({'trigger': 'paywall_close'});
       expect(await o.onPaywallClosed(fromOnboarding: false), isTrue);
       expect(await o.onPaywallClosed(fromOnboarding: false), isFalse);
     });
@@ -84,7 +90,11 @@ void main() {
     test('timer: every close inside the window, none after', () async {
       await start();
       final o = Get.put(OfferService());
-      o.applyRemote({'mode': 'timer', 'timer_hours': 24});
+      o.applyRemote({
+        'trigger': 'paywall_close',
+        'mode': 'timer',
+        'timer_hours': 24,
+      });
       expect(await o.onPaywallClosed(fromOnboarding: false), isTrue);
       expect(o.endsAt, isNotNull);
       expect(await o.onPaywallClosed(fromOnboarding: false), isTrue);
@@ -101,11 +111,60 @@ void main() {
     test('until claimed: keeps showing, stops with Plus', () async {
       await start();
       final o = Get.put(OfferService());
-      o.applyRemote({'mode': 'until_claimed'});
+      o.applyRemote({'trigger': 'paywall_close', 'mode': 'until_claimed'});
       expect(await o.onPaywallClosed(fromOnboarding: false), isTrue);
       expect(await o.onPaywallClosed(fromOnboarding: false), isTrue);
       PlusAccess.active.value = true;
       expect(await o.onPaywallClosed(fromOnboarding: false), isFalse);
+    });
+
+    test('default trigger: paywall close alone never shows it', () async {
+      await start();
+      final o = Get.put(OfferService());
+      o.applyRemote({'mode': 'timer'});
+      expect(o.config.value.trigger, OfferTrigger.weekEnd);
+      expect(await o.onPaywallClosed(fromOnboarding: true), isFalse);
+      expect(await o.onPaywallClosed(fromOnboarding: false), isFalse);
+    });
+
+    test('week end: waits for the last day, then the window opens', () async {
+      await start();
+      final a = Get.put<AccessService>(AccessService().init());
+      final o = Get.put(OfferService());
+      o.applyRemote({'mode': 'timer'});
+      // Free week running with 7 days left: not yet.
+      await t.addDose(takenAt: DateTime.now(), site: 'lbelly');
+      expect(await o.onHome(), isFalse);
+      // Free week over.
+      a.applyRemote({'free_days': 0, 'gating_on': true});
+      expect(await o.onHome(), isTrue);
+      expect(o.endsAt, isNotNull);
+      // Shown once on Home; closing the paywall brings it back.
+      expect(await o.onHome(), isFalse);
+      expect(await o.onPaywallClosed(fromOnboarding: false), isTrue);
+    });
+
+    test('week end: nothing before the free week starts', () async {
+      await start();
+      Get.put<AccessService>(AccessService().init());
+      final o = Get.put(OfferService());
+      expect(await o.onHome(), isFalse);
+    });
+
+    test('home first: shows on the first Home visit', () async {
+      await start();
+      final o = Get.put(OfferService());
+      o.applyRemote({'trigger': 'home_first', 'mode': 'timer'});
+      expect(await o.onHome(), isTrue);
+      expect(await o.onHome(), isFalse);
+    });
+
+    test('home trigger never shows for Plus users', () async {
+      await start();
+      final o = Get.put(OfferService());
+      o.applyRemote({'trigger': 'home_first'});
+      PlusAccess.active.value = true;
+      expect(await o.onHome(), isFalse);
     });
 
     test('disabled: never shows', () async {
@@ -118,7 +177,7 @@ void main() {
     test('banner can be hidden', () async {
       await start();
       final o = Get.put(OfferService());
-      o.applyRemote({'mode': 'timer'});
+      o.applyRemote({'trigger': 'paywall_close', 'mode': 'timer'});
       await o.onPaywallClosed(fromOnboarding: false);
       await o.hideBanner();
       expect(o.bannerVisible, isFalse);

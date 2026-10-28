@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../analytics/analytics.dart';
+import '../plus/access_service.dart';
 import '../plus/plus_access.dart';
 import 'offer_config.dart';
 import '../purchases/purchase_service.dart';
@@ -105,7 +106,42 @@ class OfferService extends GetxService {
     // the regular one). Otherwise the screen would say "30% off" for a
     // full-price plan; skip it and keep the show for later.
     if (!_discountReady(c.offeringId)) return false;
+    // With a Home trigger the first showing happens there; closing the
+    // paywall only brings the offer back once it has been shown.
+    if (c.trigger != OfferTrigger.paywallClose && _shows == 0) return false;
+    return _show();
+  }
 
+  /// The free week is on its last day or over (and someone has started
+  /// it), so the offer can make its "ends today" case honestly.
+  bool get _weekEnding {
+    if (!Get.isRegistered<AccessService>()) return false;
+    final a = Get.find<AccessService>();
+    if (!a.config.value.gatingOn || !a.started.value) return false;
+    return a.locked || a.daysLeft <= 1;
+  }
+
+  /// Call when Home opens or after a log. Returns true when the offer
+  /// should open now for its first showing (and counts it as shown);
+  /// the caller opens the screen.
+  Future<bool> onHome() async {
+    final c = config.value;
+    if (!c.enabled || !c.showInApp || PlusAccess.active.value) return false;
+    if (_shows > 0 || !_discountReady(c.offeringId)) return false;
+    final due = switch (c.trigger) {
+      OfferTrigger.weekEnd => _weekEnding,
+      OfferTrigger.homeFirst => true,
+      OfferTrigger.paywallClose => false,
+    };
+    if (!due) return false;
+    final ok = await _show();
+    if (ok) Analytics.offerTrigger(c.trigger.id);
+    return ok;
+  }
+
+  /// Applies [OfferConfig.mode] and counts the showing.
+  Future<bool> _show() async {
+    final c = config.value;
     switch (c.mode) {
       case OfferMode.once:
         if (c.maxShows > 0 && _shows >= c.maxShows) return false;
@@ -145,13 +181,15 @@ class OfferService extends GetxService {
     Analytics.offerExpired();
   }
 
-  /// Debug: forget the timer window, so the next paywall close opens a
-  /// new one.
+  /// Debug: forget the timer window and past showings, so the offer can
+  /// be triggered again.
   Future<void> debugResetTimer() async {
     if (!kDebugMode) return;
     startedAt.value = null;
     bannerHidden.value = false;
     await _settings.delete(_startedKey);
+    await _settings.delete(_showsKey);
+    await _settings.delete(_lastShownKey);
     await _settings.delete(_expiredLoggedKey);
     await _settings.delete(_bannerHiddenKey);
   }

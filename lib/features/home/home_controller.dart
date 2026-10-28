@@ -1,8 +1,10 @@
 import 'package:get/get.dart';
 
+import '../../resources/routes.dart';
 import '../../services/haptics/haptics.dart';
 import '../../services/notifications/reminder_service.dart';
 import '../../services/tracker_service.dart';
+import '../../services/upsell/upsell_service.dart';
 
 import 'log_sheet.dart';
 
@@ -29,6 +31,14 @@ class HomeController extends GetxController {
     if (Get.isRegistered<ReminderService>()) {
       Get.find<ReminderService>().openLaunchPayload();
     }
+    // The welcome offer's first showing (end of the free week by default).
+    // A moment later, so Home is on screen first; never over a reminder.
+    Future<void>.delayed(const Duration(milliseconds: 900), () {
+      if (Get.currentRoute != Routes.home) return;
+      if (Get.isRegistered<UpsellService>()) {
+        Get.find<UpsellService>().openOfferIfDue();
+      }
+    });
   }
 
   /// Daily-tablet plans call the tab "Tablets" with a pill icon.
