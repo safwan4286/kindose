@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -22,9 +21,9 @@ class PensController extends GetxController {
   final SupplyService supply = Get.find<SupplyService>();
   final TrackerService tracker = Get.find<TrackerService>();
 
-  /// Plus feature. Also open in debug builds, so it can be tested before
-  /// RevenueCat is connected.
-  bool get unlocked => PlusAccess.unlocked || kDebugMode;
+  /// Plus feature (the free week counts). Debug builds follow the same
+  /// rule; use Me → "Plus: on" to test it unlocked.
+  bool get unlocked => PlusAccess.unlocked;
 
   /// Every change here needs Plus; the screen itself is open to browse.
   bool _allow() => unlocked || AccessService.allow();

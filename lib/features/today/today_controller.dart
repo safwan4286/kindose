@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -194,8 +193,8 @@ class TodayController extends GetxController with WidgetsBindingObserver {
   /// takes their place for the rest of the day.
   final RxSet<String> biteAdded = <String>{}.obs;
 
-  /// Plus shows 3 ideas; free shows 1. Open in debug builds for testing.
-  bool get biteUnlocked => PlusAccess.unlocked || kDebugMode;
+  /// Plus shows 3 ideas; free shows 1.
+  bool get biteUnlocked => PlusAccess.unlocked;
 
   NextBite get nextBite {
     final key = Dates.key(now.value);

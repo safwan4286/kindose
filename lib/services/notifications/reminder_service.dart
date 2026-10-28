@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
@@ -377,9 +376,7 @@ class ReminderService extends GetxService {
   /// week's worth for daily tablets), one reminder at 10 AM the day after
   /// the latest dose. Past times are skipped, so it shows once.
   Future<void> _planRefill() async {
-    // Debug builds too, like the Pens screen, so it can be tested.
-    final plus = PlusAccess.unlocked || kDebugMode;
-    if (!plus || !supply.refillReminder.value) return;
+    if (!PlusAccess.unlocked || !supply.refillReminder.value) return;
     final settings = Hive.box<dynamic>('settings');
     if (!supply.runningLow) {
       // Topped up: the next low spell gets its own reminder.
@@ -443,14 +440,14 @@ class ReminderService extends GetxService {
   /// Plus, or the end of the free week (null when reminders may run on).
   /// Habit reminders stop when the free week does.
   DateTime? get _freeUntil {
-    if (PlusAccess.active.value || kDebugMode) return null;
+    if (PlusAccess.active.value) return null;
     if (!Get.isRegistered<AccessService>()) return null;
     final a = Get.find<AccessService>();
     if (!a.config.value.gatingOn) return null;
     return a.endsAt.value;
   }
 
-  bool get _habitsOpen => PlusAccess.unlocked || kDebugMode;
+  bool get _habitsOpen => PlusAccess.unlocked;
 
   static const List<String> _waterLines = [
     'A glass of water now helps with nausea and energy.',

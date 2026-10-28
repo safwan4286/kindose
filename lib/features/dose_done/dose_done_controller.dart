@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
 import '../../models/logs.dart';
@@ -182,7 +181,7 @@ class DoseDoneController extends GetxController {
   SupplyService get supply => Get.find<SupplyService>();
 
   /// Shown once Pens & cost (Plus) is set up.
-  bool get showPen => (PlusAccess.unlocked || kDebugMode) && supply.isSetUp;
+  bool get showPen => PlusAccess.unlocked && supply.isSetUp;
 
   String get _pack => switch (profile?.form) {
     'vial' => 'vial',
