@@ -59,7 +59,10 @@ class _FeelHeatmapState extends State<FeelHeatmap> {
     return checked.isEmpty ? null : checked.last.date;
   }
 
+  /// A tick only when the picked day changes, so dragging across the
+  /// trend clicks once per day, like the weight chart.
   void _pick(DateTime d) {
+    if (_sel != null && Dates.sameDay(_sel!, d)) return;
     Haptics.instance.selectionClick();
     setState(() => _sel = d);
   }
@@ -460,35 +463,40 @@ class _FeelHeatmapState extends State<FeelHeatmap> {
     return Column(
       children: [
         Semantics(
-          label: 'Trend of how rough each day was. Tap a day to see it',
+          label: 'Trend of how rough each day was. Tap or drag to see a day',
           child: LayoutBuilder(
-            builder: (context, box) => GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTapUp: (d) {
+            builder: (context, box) {
+              void pickAt(double dx) {
                 if (shown.isEmpty) return;
                 final step = box.maxWidth / (shown.length - 1).clamp(1, 27);
-                final i = (d.localPosition.dx / step).round().clamp(
-                  0,
-                  shown.length - 1,
-                );
+                final i = (dx / step).round().clamp(0, shown.length - 1);
                 _pick(shown[i].date);
-              },
-              child: CustomPaint(
-                size: Size(box.maxWidth, h),
-                painter: _TrendPainter(
-                  levels: levels,
-                  doses: [for (final x in shown) x.doseDay],
-                  selected: selIndex,
-                  heat: heat,
-                  line: AppColors.tangerine,
-                  grid: k.border,
-                  ink: k.text,
-                  dose: dark ? AppColors.lime : AppColors.ink,
-                  doseIcon: _doseIcon,
-                  surface: k.card,
+              }
+
+              return GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                // Tap or drag: the day under the finger, as on the weight
+                // chart. The day details below follow along.
+                onTapDown: (e) => pickAt(e.localPosition.dx),
+                onHorizontalDragStart: (e) => pickAt(e.localPosition.dx),
+                onHorizontalDragUpdate: (e) => pickAt(e.localPosition.dx),
+                child: CustomPaint(
+                  size: Size(box.maxWidth, h),
+                  painter: _TrendPainter(
+                    levels: levels,
+                    doses: [for (final x in shown) x.doseDay],
+                    selected: selIndex,
+                    heat: heat,
+                    line: AppColors.tangerine,
+                    grid: k.border,
+                    ink: k.text,
+                    dose: dark ? AppColors.lime : AppColors.ink,
+                    doseIcon: _doseIcon,
+                    surface: k.card,
+                  ),
                 ),
-              ),
-            ),
+              );
+            },
           ),
         ),
         SizedBox(height: 6.sp),
